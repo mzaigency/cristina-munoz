@@ -496,20 +496,46 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         .single();
       if (error) throw error;
 
+      // Email de la clienta: el escrito a mano manda; si no, lo buscamos en su
+      // ficha (por teléfono de la cita o por nombre) para enviarlo solo.
+      let resolvedEmail = customerEmail.trim();
+      if (!resolvedEmail) {
+        try {
+          const booking = todayBookings.find((b) => b.id === selectedBookingId);
+          let clientQuery = supabase
+            .from("clients")
+            .select("email")
+            .eq("tenant_id", tenantId)
+            .not("email", "is", null)
+            .limit(1);
+          if (booking?.Telefono) {
+            clientQuery = clientQuery.eq("phone", booking.Telefono);
+          } else if (customerName.trim()) {
+            clientQuery = clientQuery.ilike("name", customerName.trim());
+          } else {
+            clientQuery = null as never;
+          }
+          if (clientQuery) {
+            const { data: client } = await clientQuery.maybeSingle();
+            if (client?.email) resolvedEmail = client.email;
+          }
+        } catch (clientError) {
+          console.error("client email lookup", clientError);
+        }
+      }
+
       // Enlace de valoración de un solo uso: la clienta de mostrador no tiene
       // cuenta, así que el permiso se lo da este token, no una sesión.
       let reviewUrl: string | null = null;
       try {
-        // `as any`: los tipos generados de Supabase aún no incluyen la tabla
-        // (se regeneran al aplicar la migración 20260729140000_review_invites)
-        const { data: invite } = await (supabase as any)
+        const { data: invite } = await supabase
           .from("review_invites")
           .insert({
             tenant_id: tenantId,
             transaction_id: (inserted as any)?.id ?? null,
             booking_id: selectedBookingId || null,
             customer_name: customerName.trim() || null,
-            customer_email: customerEmail.trim() || null,
+            customer_email: resolvedEmail || null,
           })
           .select("token")
           .single();
@@ -518,6 +544,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         // Que falle la invitación no puede tumbar el cobro
         console.error("review invite", inviteError);
       }
+
 
       // If this was from a booking, mark it as completed and charged
       if (selectedBookingId) {
@@ -558,16 +585,30 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
       // Fiscal data is no longer saved to database
 
-      setLastTransaction({
+      const txSnapshot = {
         ...transactionData,
         stylistName: selectedStylist?.name || "Estilista",
         items: servicesData,
         grandTotal,
-        customerEmail,
+        customerEmail: resolvedEmail,
         wantsInvoice,
         invoiceData,
         reviewUrl,
-      });
+        autoSent: false as boolean,
+      };
+
+      // Si ya tenemos su email, el ticket se envía solo: la peluquera no hace nada
+      if (resolvedEmail) {
+        txSnapshot.autoSent = true;
+        void postTicket(txSnapshot, resolvedEmail)
+          .then(() => toast({ title: "Ticket enviado por email ✉️" }))
+          .catch((e) => {
+            console.error("auto ticket", e);
+            toast({ title: "No se pudo enviar el ticket automáticamente", variant: "destructive" });
+          });
+      }
+
+      setLastTransaction(txSnapshot);
 
       setPayOpen(false);
       setShowSuccess(true);
@@ -584,6 +625,34 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
   const getEmailToUse = () => customerEmail || lastTransaction?.customerEmail || "";
 
+  async function postTicket(tx: any, email: string) {
+    const { error } = await supabase.functions.invoke("send-ticket", {
+      body: {
+        type: "ticket",
+        customerEmail: email,
+        customerName: tx.customer_name,
+        tenantId,
+        items: tx.items,
+        subtotal: tx.subtotal,
+        discount: tx.discount,
+        discountReason: tx.discount_reason,
+        tip: tx.tip_amount,
+        total: tx.grandTotal,
+        paymentMethod: tx.payment_method,
+        stylistName: tx.stylistName,
+        reviewUrl: tx.reviewUrl || undefined,
+        date: new Date().toLocaleDateString("es-ES", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      },
+    });
+    if (error) throw error;
+  }
+
   const sendTicketEmail = async () => {
     const email = getEmailToUse();
     if (!lastTransaction || !email) {
@@ -593,32 +662,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
     try {
       setSendingEmail(true);
-      const { data, error } = await supabase.functions.invoke("send-ticket", {
-        body: {
-          type: "ticket",
-          customerEmail: email,
-          customerName: lastTransaction.customer_name,
-          tenantId,
-          items: lastTransaction.items,
-          subtotal: lastTransaction.subtotal,
-          discount: lastTransaction.discount,
-          discountReason: lastTransaction.discount_reason,
-          tip: lastTransaction.tip_amount,
-          total: lastTransaction.grandTotal,
-          paymentMethod: lastTransaction.payment_method,
-          stylistName: lastTransaction.stylistName,
-          reviewUrl: lastTransaction.reviewUrl || undefined,
-          date: new Date().toLocaleDateString("es-ES", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        },
-      });
-
-      if (error) throw error;
+      await postTicket(lastTransaction, email);
       toast({ title: "Ticket enviado por email ✉️" });
       setShowSuccess(false);
     } catch (error) {
@@ -628,6 +672,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       setSendingEmail(false);
     }
   };
+
 
   const downloadInvoicePdf = async () => {
     if (!lastTransaction || !tenantData) return;
@@ -946,13 +991,12 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
 
       {/* ── BARRA DE CARRITO ─────────────────────────────────
           Flota sobre el contenido en móvil (encima de la nav) y
-          en escritorio se queda al final del catálogo. */}
+          queda pegada abajo (sticky) en escritorio. */}
       {selectedItems.length > 0 && (
         <>
-          <div className="h-24 min-[920px]:h-0" />
+          <div className="h-24 min-[920px]:h-4" />
           <div
-            className="fixed left-0 right-0 z-30 px-3 min-[920px]:static min-[920px]:px-0 min-[920px]:mt-4"
-            style={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom))" }}
+            className="fixed left-0 right-0 z-30 px-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] min-[920px]:sticky min-[920px]:left-auto min-[920px]:right-auto min-[920px]:bottom-4 min-[920px]:px-0 min-[920px]:mt-2"
           >
             <div
               className="flex items-center gap-3 rounded-2xl bg-surface border border-line px-4 py-3"

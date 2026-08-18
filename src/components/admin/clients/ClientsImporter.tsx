@@ -150,8 +150,8 @@ export function ClientsImporter({ tenantId, existingClients, open, onOpenChange,
         />
 
         {done !== null ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--gp-ok)] bg-[var(--gp-ok-soft)] p-6 text-center">
-            <CheckCircle2 className="h-10 w-10 text-[var(--gp-ok)]" />
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 text-center">
+            <CheckCircle2 className="h-10 w-10 text-emerald-500" />
             <p className="font-semibold">{done} clientes importados</p>
             <p className="text-sm text-muted-foreground">Los encontrarás con la etiqueta "Importado"</p>
             <Button variant="outline" onClick={() => { reset(); onOpenChange(false); }}>Cerrar</Button>
@@ -170,10 +170,10 @@ export function ClientsImporter({ tenantId, existingClients, open, onOpenChange,
             <div className="rounded-2xl border border-border p-4">
               <p className="text-sm font-semibold">{fileName}</p>
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                <span className="font-medium text-[var(--gp-ok-ink)]">{rows.length} nuevos para importar</span>
+                <span className="font-medium text-emerald-600">{rows.length} nuevos para importar</span>
                 {duplicates > 0 && <span className="text-muted-foreground">{duplicates} ya existentes (se omiten)</span>}
                 {skipped > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[var(--gp-warn-ink)]">
+                  <span className="inline-flex items-center gap-1 text-amber-600">
                     <AlertTriangle className="h-3.5 w-3.5" /> {skipped} sin nombre (se omiten)
                   </span>
                 )}

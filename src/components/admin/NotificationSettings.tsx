@@ -126,8 +126,8 @@ export function NotificationSettings({
   const sections = [{
     title: "Citas",
     icon: Calendar,
-    color: "text-[var(--gp-info)]",
-    bgColor: "bg-[var(--gp-info-soft)]",
+    color: "text-blue-500",
+    bgColor: "bg-blue-500/10",
     items: [{
       key: "new_booking" as const,
       label: "Nueva reserva",
@@ -148,8 +148,8 @@ export function NotificationSettings({
   }, {
     title: "Mensajes",
     icon: MessageCircle,
-    color: "text-[var(--gp-ok)]",
-    bgColor: "bg-[var(--gp-ok-soft)]",
+    color: "text-green-500",
+    bgColor: "bg-green-500/10",
     items: [{
       key: "new_message" as const,
       label: "Nuevo mensaje",
@@ -158,8 +158,8 @@ export function NotificationSettings({
   }, {
     title: "Reseñas",
     icon: Star,
-    color: "text-[var(--gp-warn)]",
-    bgColor: "bg-[var(--gp-warn-soft)]",
+    color: "text-amber-500",
+    bgColor: "bg-amber-500/10",
     items: [{
       key: "new_review" as const,
       label: "Nueva reseña",
@@ -168,8 +168,8 @@ export function NotificationSettings({
   }, {
     title: "Resumen diario",
     icon: Sun,
-    color: "text-[var(--gp-warn)]",
-    bgColor: "bg-[var(--gp-warn-soft)]",
+    color: "text-orange-500",
+    bgColor: "bg-orange-500/10",
     items: [{
       key: "daily_summary" as const,
       label: "Resumen matutino",

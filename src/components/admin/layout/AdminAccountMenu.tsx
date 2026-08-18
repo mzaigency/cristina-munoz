@@ -53,7 +53,7 @@ export function AdminAccountMenu({
         align="end"
         side="top"
         sideOffset={8}
-        className="relative w-72 p-0 rounded-2xl overflow-hidden border border-white/40 dark:border-white/10 bg-white supports-[backdrop-filter]:bg-white/80  dark:supports-[backdrop-filter]:bg-[var(--gp-line)] backdrop-blur-2xl backdrop-saturate-150 shadow-[0_18px_50px_-16px_rgba(20,22,40,.34),0_0_0_1px_rgba(255,255,255,0.55)_inset] dark:shadow-[0_18px_50px_-16px_rgba(0,0,0,.55),0_0_0_1px_rgba(255,255,255,0.08)_inset]"
+        className="relative w-72 p-0 rounded-2xl overflow-hidden border border-white/40 dark:border-white/10 bg-white supports-[backdrop-filter]:bg-white/80 dark:bg-zinc-900 dark:supports-[backdrop-filter]:bg-zinc-900/80 backdrop-blur-2xl backdrop-saturate-150 shadow-[0_18px_50px_-16px_rgba(20,22,40,.34),0_0_0_1px_rgba(255,255,255,0.55)_inset] dark:shadow-[0_18px_50px_-16px_rgba(0,0,0,.55),0_0_0_1px_rgba(255,255,255,0.08)_inset]"
       >
         {/* Liquid glass refraction layers */}
         <div
@@ -135,7 +135,7 @@ export function AdminAccountMenu({
           <div className="p-1.5">
             <DropdownMenuItem
               onClick={onSignOut}
-              className="gap-3 cursor-pointer rounded-lg px-3 py-2.5 text-[13.5px] font-medium text-[var(--gp-danger-ink)] focus:bg-[var(--gp-danger-soft)] focus:text-[var(--gp-danger-ink)]"
+              className="gap-3 cursor-pointer rounded-lg px-3 py-2.5 text-[13.5px] font-medium text-red-600 focus:bg-red-50/80 focus:text-red-700"
             >
               <LogOut className="h-4 w-4" strokeWidth={2} />
               Cerrar sesión

@@ -210,7 +210,7 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
               <ul className="space-y-1 mb-3">
                 {guidelines.map((g) => (
                   <li key={g} className="flex items-center gap-2">
-                    <Check className="h-3.5 w-3.5 text-[var(--gp-ok-ink)] flex-shrink-0" /> {g}
+                    <Check className="h-3.5 w-3.5 text-green-600 flex-shrink-0" /> {g}
                   </li>
                 ))}
               </ul>
@@ -277,9 +277,9 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
         </Button>
 
         {isBusiness && (
-          <Card className="p-4 bg-gradient-to-br from-[var(--gp-warn-soft)] to-[var(--gp-warn-soft)] border-[var(--gp-warn)]">
+          <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-300">
             <div className="flex items-start gap-3">
-              <Crown className="h-5 w-5 text-[var(--gp-warn-ink)] flex-shrink-0 mt-0.5" />
+              <Crown className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="font-semibold text-sm mb-1">Servicio Guante Blanco (gratis con tu plan Business)</p>
                 <p className="text-xs text-muted-foreground mb-3">
@@ -315,8 +315,8 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
   if (step === "done" && result) {
     return (
       <Card className="p-8 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--gp-ok-soft)] flex items-center justify-center">
-          <Check className="h-8 w-8 text-[var(--gp-ok-ink)]" />
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+          <Check className="h-8 w-8 text-green-600" />
         </div>
         <h3 className="text-xl font-bold mb-2">¡Listo!</h3>
         <p className="text-muted-foreground mb-6">
@@ -359,17 +359,17 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
               className={cn(
                 "p-3 transition-opacity",
                 r._discarded && "opacity-40",
-                lowConf && !r._discarded && "border-[var(--gp-warn)] bg-[var(--gp-warn-soft)]",
+                lowConf && !r._discarded && "border-amber-400 bg-amber-50/30",
               )}
             >
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-1.5">
                   {lowConf ? (
-                    <Badge variant="outline" className="text-[10px] border-[var(--gp-warn)] text-[var(--gp-warn-ink)]">
+                    <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-700">
                       <AlertTriangle className="h-3 w-3 mr-1" /> Revisar
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-[10px] border-[var(--gp-ok)] text-[var(--gp-ok-ink)]">
+                    <Badge variant="outline" className="text-[10px] border-green-500 text-green-700">
                       <Check className="h-3 w-3 mr-1" /> OK
                     </Badge>
                   )}

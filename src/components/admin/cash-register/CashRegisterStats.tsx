@@ -21,7 +21,6 @@ import {
   Cell,
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GP_CHART, GP_CHART_COLORS } from "@/components/admin/chartPalette";
 
 type Period = "week" | "month" | "quarter";
 
@@ -50,7 +49,7 @@ interface ServiceStats {
   revenue: number;
 }
 
-const COLORS = GP_CHART_COLORS;
+const COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#6366F1", "#EF4444"];
 
 export const CashRegisterStats = () => {
   const [loading, setLoading] = useState(true);
@@ -134,7 +133,7 @@ export const CashRegisterStats = () => {
             stylistData[stylistId] = {
               id: stylistId,
               name: stylist.name,
-              color: stylist.color || GP_CHART.purple,
+              color: stylist.color || "#8B5CF6",
               total: 0,
               transactions: 0,
               avgTicket: 0,
@@ -251,13 +250,13 @@ export const CashRegisterStats = () => {
         <Card>
           <CardContent className="p-2.5 sm:p-4">
             <p className="text-[10px] sm:text-xs text-muted-foreground">Propinas</p>
-            <p className="text-base sm:text-xl font-bold text-[var(--gp-purple-ink)] truncate">{formatCurrency(totals.tips)}</p>
+            <p className="text-base sm:text-xl font-bold text-pink-600 truncate">{formatCurrency(totals.tips)}</p>
           </CardContent>
         </Card>
         <Card className="col-span-2 sm:col-span-1">
           <CardContent className="p-2.5 sm:p-4">
             <p className="text-[10px] sm:text-xs text-muted-foreground">Descuentos</p>
-            <p className="text-base sm:text-xl font-bold text-[var(--gp-warn-ink)] truncate">-{formatCurrency(totals.discounts)}</p>
+            <p className="text-base sm:text-xl font-bold text-orange-600 truncate">-{formatCurrency(totals.discounts)}</p>
           </CardContent>
         </Card>
       </div>
@@ -398,7 +397,7 @@ export const CashRegisterStats = () => {
                             <td className="text-right">{s.transactions}</td>
                             <td className="text-right">{s.services}</td>
                             <td className="text-right">{formatCurrency(s.avgTicket)}</td>
-                            <td className="text-right text-[var(--gp-purple-ink)]">{formatCurrency(s.tips)}</td>
+                            <td className="text-right text-pink-600">{formatCurrency(s.tips)}</td>
                           </tr>
                         ))}
                       </tbody>

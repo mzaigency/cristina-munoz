@@ -261,7 +261,7 @@ export function ProposeSlotDialog({
           </div>
 
           {conflictWarn && (
-            <div className="text-xs text-[var(--gp-warn-ink)] bg-[var(--gp-warn-soft)] border border-[var(--gp-warn-soft)] rounded-lg px-3 py-2">
+            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
               ⚠️ {conflictWarn}
             </div>
           )}

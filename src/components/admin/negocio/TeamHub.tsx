@@ -17,7 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { PlanUsageBar } from "@/components/admin/PlanUsageBar";
 import { UpgradePrompt } from "@/components/admin/UpgradePrompt";
-import { GP_STYLIST_COLORS } from "@/components/admin/chartPalette";
 
 /**
  * Equipo — lista tipo contactos, pensada para equipos de 1-10 personas.
@@ -53,7 +52,7 @@ interface TodayHours {
   end: string | null;
 }
 
-const PRESET_COLORS = GP_STYLIST_COLORS;
+const PRESET_COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#3B82F6", "#EF4444", "#06B6D4", "#84CC16"];
 
 const hhmm = (t: string | null) => (t ? t.slice(0, 5) : "");
 

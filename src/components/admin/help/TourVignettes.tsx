@@ -98,7 +98,7 @@ export function VignetteAgenda() {
       {/* Check al soltar */}
       {!reduced && (
         <motion.div
-          className="absolute right-7 top-[56%] flex h-6 w-6 items-center justify-center rounded-full bg-[var(--gp-ok)] text-white shadow"
+          className="absolute right-7 top-[56%] flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow"
           animate={{ scale: [0, 0, 1, 1, 0], opacity: [0, 0, 1, 1, 0] }}
           transition={{ duration: 5, times: [0, 0.62, 0.7, 0.9, 1], repeat: Infinity }}
         >
@@ -163,7 +163,7 @@ export function VignetteCaja() {
       </div>
       {/* Check de cobro completado */}
       <motion.div
-        className="absolute right-[12%] top-[14%] flex h-8 w-8 items-center justify-center rounded-full bg-[var(--gp-ok)] text-white shadow-lg"
+        className="absolute right-[12%] top-[14%] flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg"
         initial={false}
         animate={reduced ? { scale: 1, opacity: 1 } : { scale: [0, 0, 1, 1, 0], opacity: [0, 0, 1, 1, 0] }}
         transition={{ duration: 3.6, times: [0, 0.68, 0.78, 0.94, 1], repeat: Infinity }}
@@ -191,7 +191,7 @@ export function VignetteClientes() {
           </div>
           {/* Badge VIP */}
           <motion.div
-            className="flex items-center gap-1 rounded-full bg-[var(--gp-warn-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--gp-warn-ink)]  "
+            className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
             initial={false}
             animate={
               reduced
@@ -218,7 +218,7 @@ export function VignetteClientes() {
                 repeatDelay: 0.6,
               }}
             >
-              <Check className="h-2.5 w-2.5 text-[var(--gp-ok)]" strokeWidth={3} />
+              <Check className="h-2.5 w-2.5 text-emerald-500" strokeWidth={3} />
               {row}
             </motion.div>
           ))}

@@ -1307,7 +1307,7 @@
 
 @media (hover: hover) {
   .ag-slot-half:hover {
-    background: color-mix(in oklab, var(--stylist-c, #22408b), transparent 92%);
+    background: color-mix(in oklab, var(--stylist-c, #4361ee), transparent 92%);
   }
   .ag-slot-half:hover::before {
     content: "+ " attr(data-time);
@@ -1318,8 +1318,8 @@
     display: inline-flex;
     align-items: center;
     padding: 2px 7px 2px 6px;
-    background: color-mix(in oklab, var(--stylist-c, #22408b), white 86%);
-    color: color-mix(in oklab, var(--stylist-c, #22408b), black 22%);
+    background: color-mix(in oklab, var(--stylist-c, #4361ee), white 86%);
+    color: color-mix(in oklab, var(--stylist-c, #4361ee), black 22%);
     font-size: 10.5px;
     font-weight: 800;
     border-radius: 7px;
@@ -1423,10 +1423,10 @@
 
 .ag-detail-phone-btn {
   width: 38px; height: 38px; border-radius: 11px;
-  background: var(--ag-accent, #22408b); color: #fff;
+  background: var(--ag-accent, #4361ee); color: #fff;
   display: flex; align-items: center; justify-content: center;
   text-decoration: none; transition: .15s cubic-bezier(.3,.9,.3,1);
-  box-shadow: 0 4px 12px -4px color-mix(in oklab, var(--ag-accent, #22408b), transparent 50%);
+  box-shadow: 0 4px 12px -4px color-mix(in oklab, var(--ag-accent, #4361ee), transparent 50%);
 }
 .ag-detail-phone-btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
 .ag-detail-phone-btn.whatsapp { background: #25d366; box-shadow: 0 4px 12px -4px rgba(37,211,102,.5); }
@@ -1445,8 +1445,8 @@
 .ag-detail-action:hover { background: var(--ag-chip, oklch(0.968 0.006 265)); transform: translateY(-1px); }
 .ag-detail-action.primary {
   border-color: transparent; color: #fff;
-  background: linear-gradient(150deg, var(--ag-accent, #22408b), color-mix(in oklab, var(--ag-accent, #22408b), #000 18%));
-  box-shadow: 0 6px 16px -6px color-mix(in oklab, var(--ag-accent, #22408b), transparent 40%);
+  background: linear-gradient(150deg, var(--ag-accent, #4361ee), color-mix(in oklab, var(--ag-accent, #4361ee), #000 18%));
+  box-shadow: 0 6px 16px -6px color-mix(in oklab, var(--ag-accent, #4361ee), transparent 40%);
 }
 .ag-detail-action.primary:hover { filter: brightness(1.07); }
 .ag-detail-action.danger { color: oklch(0.55 0.18 25); }
@@ -1466,10 +1466,10 @@
 .ag-pay-method:hover { background: var(--ag-chip, oklch(0.968 0.006 265)); }
 .ag-pay-method:active { transform: scale(.97); }
 .ag-pay-method.on {
-  border-color: var(--ag-accent, #22408b);
-  background: color-mix(in oklab, var(--ag-accent, #22408b), white 92%);
-  color: var(--ag-accent, #22408b);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ag-accent, #22408b), transparent 88%);
+  border-color: var(--ag-accent, #4361ee);
+  background: color-mix(in oklab, var(--ag-accent, #4361ee), white 92%);
+  color: var(--ag-accent, #4361ee);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ag-accent, #4361ee), transparent 88%);
 }
 .ag-pay-method:disabled { opacity: .55; cursor: not-allowed; transform: none !important; }
 
@@ -1507,12 +1507,23 @@
    Variables scoped to .gp-shell to avoid shadcn/Tailwind conflicts
    ============================================================ */
 .gp-shell {
-  /* Los tokens de color/tipografía/espaciado viven en el bloque
-     "GLOWAPP ADMIN — DESIGN TOKENS" más abajo (:root, .gp-shell).
-     Aquí solo la métrica propia del shell. */
+  --gp-accent: #22408b;
+  --gp-accent-ink: #1a3270;
+  --gp-accent-soft: color-mix(in oklab, var(--gp-accent), white 88%);
+  --gp-accent-softer: color-mix(in oklab, var(--gp-accent), white 94%);
+  --gp-purple: #99329a;
+  --gp-bg: oklch(0.98 0.006 265);
+  --gp-surface: #ffffff;
+  --gp-ink: oklch(0.24 0.02 265);
+  --gp-ink2: oklch(0.45 0.02 265);
+  --gp-muted-c: oklch(0.62 0.015 265);
+  --gp-line: oklch(0.925 0.007 265);
+  --gp-chip: oklch(0.968 0.006 265);
+  --gp-shadow-xs: 0 1px 2px rgba(20,22,40,.05);
+  --gp-shadow-lg: 0 18px 50px -16px rgba(20,22,40,.34);
+  --gp-ease: cubic-bezier(.3,.9,.3,1);
   --gp-sidebar-w: 252px;
   --gp-topbar-h: 64px;
-
 
   height: 100vh;
   display: flex;
@@ -1873,106 +1884,20 @@
 }
 .gp-subtab-count { font-size: 11px; font-weight: 800; background: var(--gp-notif-badge-bg); color: var(--gp-notif-badge-fg); padding: 1px 6px; border-radius: 99px; }
 
-/* ════════════════════════════════════════════════════════════
-   GLOWAPP ADMIN — DESIGN TOKENS (fuente única de verdad)
-   Color · Tipografía · Espaciado · Radios · Sombras · Movimiento
-   Definidos en :root para que portales (dialogs, sheets, popovers)
-   fuera de .gp-shell resuelvan exactamente la misma paleta.
-   Regla: ningún componente del panel define colores propios;
-   todo sale de estos tokens. Nada de azules genéricos (indigo,
-   sky, blue-500): el azul del panel es SIEMPRE el azul Glowapp.
-   ════════════════════════════════════════════════════════════ */
-:root,
+/* ── Semantic color tokens (needed by component classes below) ── */
 .gp-shell {
-  /* ── Marca ── */
-  --gp-accent: #22408b;                 /* Azul Glowapp */
-  --gp-accent-ink: #1a3270;             /* Texto sobre fondos claros */
-  --gp-accent-strong: #16295c;          /* Hover / presionado */
-  --gp-accent-soft: color-mix(in oklab, var(--gp-accent), white 88%);
-  --gp-accent-softer: color-mix(in oklab, var(--gp-accent), white 94%);
-  --gp-purple: #99329a;                 /* Púrpura Glowapp */
-  --gp-purple-soft: color-mix(in oklab, var(--gp-purple), white 90%);
-  --gp-purple-ink: color-mix(in oklab, var(--gp-purple), black 22%);
-  --gp-gradient: linear-gradient(100deg, var(--gp-accent), var(--gp-purple));
-  --gp-gradient-deep: linear-gradient(150deg, var(--gp-accent), color-mix(in oklab, var(--gp-accent), var(--gp-purple) 55%));
-
-  /* ── Neutros (hue 265 = misma familia que el azul de marca) ── */
-  --gp-bg: oklch(0.98 0.006 265);
-  --gp-surface: #ffffff;
-  --gp-surface-2: oklch(0.985 0.004 265);
-  --gp-ink: oklch(0.24 0.02 265);       /* Texto principal */
-  --gp-ink2: oklch(0.45 0.02 265);      /* Texto secundario */
-  --gp-muted-c: oklch(0.62 0.015 265);  /* Texto terciario */
-  --gp-line: oklch(0.925 0.007 265);
-  --gp-line2: oklch(0.955 0.004 265);
-  --gp-chip: oklch(0.968 0.006 265);
-
-  /* ── Estados ── */
   --gp-ok: oklch(0.62 0.15 150);
   --gp-ok-soft: oklch(0.95 0.04 150);
-  --gp-ok-ink: oklch(0.44 0.13 150);
   --gp-warn: oklch(0.72 0.15 65);
   --gp-warn-soft: oklch(0.96 0.05 75);
-  --gp-warn-ink: oklch(0.48 0.13 65);
   --gp-danger: oklch(0.62 0.2 25);
   --gp-danger-soft: oklch(0.96 0.04 25);
-  --gp-danger-ink: oklch(0.5 0.18 25);
-  /* Info = azul de marca aclarado, NO un azul genérico */
-  --gp-info: color-mix(in oklab, var(--gp-accent), white 18%);
-  --gp-info-soft: color-mix(in oklab, var(--gp-accent), white 90%);
-  --gp-info-ink: var(--gp-accent-ink);
-
-  /* ── Tipografía ── */
-  --gp-font: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --gp-fs-display: 26px;   /* Títulos de página */
-  --gp-fs-h1: 20px;
-  --gp-fs-h2: 16px;        /* Cabeceras de tarjeta */
-  --gp-fs-h3: 14px;
-  --gp-fs-body: 13.5px;
-  --gp-fs-sm: 12.5px;      /* Texto secundario */
-  --gp-fs-xs: 11px;        /* Etiquetas, badges */
-  --gp-fw-regular: 500;
-  --gp-fw-medium: 600;
-  --gp-fw-bold: 700;
-  --gp-fw-black: 800;      /* Titulares y cifras */
-  --gp-lh-tight: 1.15;
-  --gp-lh-normal: 1.45;
-  --gp-ls-tight: -0.02em;  /* Titulares */
-  --gp-ls-caps: 0.1em;     /* Etiquetas en mayúsculas */
-
-  /* ── Espaciado (escala 4px) ── */
-  --gp-sp-1: 4px;
-  --gp-sp-2: 8px;
-  --gp-sp-3: 12px;
-  --gp-sp-4: 16px;
-  --gp-sp-5: 20px;
-  --gp-sp-6: 24px;
-  --gp-sp-8: 32px;
-  --gp-sp-10: 40px;
-  --gp-gutter: var(--gp-sp-4);          /* Padding lateral de sección */
-  --gp-gap: var(--gp-sp-3);             /* Separación entre tarjetas */
-
-  /* ── Radios ── */
-  --gp-r-xs: 8px;
-  --gp-r-sm: 11px;
-  --gp-r-md: 14px;
-  --gp-r-lg: 16px;                      /* Tarjetas */
-  --gp-r-xl: 22px;
-  --gp-r-pill: 999px;
-
-  /* ── Elevación ── */
-  --gp-shadow-xs: 0 1px 2px rgba(20,22,40,.05);
+  --gp-info: oklch(0.62 0.13 230);
+  --gp-info-soft: oklch(0.95 0.04 230);
+  --gp-line2: oklch(0.955 0.004 265);
+  --gp-surface-2: oklch(0.985 0.004 265);
   --gp-shadow: 0 1px 2px rgba(20,22,40,.04), 0 10px 30px -16px rgba(20,22,40,.18);
-  --gp-shadow-lg: 0 18px 50px -16px rgba(20,22,40,.34);
-  --gp-shadow-accent: 0 8px 18px -8px color-mix(in oklab, var(--gp-accent), transparent 35%);
 
-  /* ── Movimiento ── */
-  --gp-ease: cubic-bezier(.3,.9,.3,1);
-  --gp-dur-fast: .15s;
-  --gp-dur: .22s;
-}
-
-.gp-shell {
   /* Notification badges: centralized tokens; red solid on desktop, subtle accent on mobile */
   --gp-notif-badge-bg: color-mix(in oklab, var(--gp-accent), transparent 88%);
   --gp-notif-badge-fg: var(--gp-accent);
@@ -1983,23 +1908,6 @@
     --gp-notif-badge-fg: #fff;
   }
 }
-
-/* ── Utilidades tipográficas del panel ── */
-.gp-t-display { font-size: var(--gp-fs-display); font-weight: var(--gp-fw-black); letter-spacing: var(--gp-ls-tight); line-height: var(--gp-lh-tight); color: var(--gp-ink); }
-.gp-t-h1 { font-size: var(--gp-fs-h1); font-weight: var(--gp-fw-black); letter-spacing: var(--gp-ls-tight); color: var(--gp-ink); }
-.gp-t-h2 { font-size: var(--gp-fs-h2); font-weight: var(--gp-fw-black); letter-spacing: -.01em; color: var(--gp-ink); }
-.gp-t-body { font-size: var(--gp-fs-body); font-weight: var(--gp-fw-regular); line-height: var(--gp-lh-normal); color: var(--gp-ink2); }
-.gp-t-sm { font-size: var(--gp-fs-sm); font-weight: var(--gp-fw-medium); color: var(--gp-ink2); }
-.gp-t-muted { font-size: var(--gp-fs-sm); font-weight: var(--gp-fw-medium); color: var(--gp-muted-c); }
-.gp-t-label { font-size: var(--gp-fs-xs); font-weight: var(--gp-fw-black); letter-spacing: var(--gp-ls-caps); text-transform: uppercase; color: var(--gp-muted-c); }
-.gp-t-num { font-weight: var(--gp-fw-black); letter-spacing: var(--gp-ls-tight); color: var(--gp-ink); font-variant-numeric: tabular-nums; }
-.gp-t-grad { background: var(--gp-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }
-
-/* ── Utilidades de espaciado del panel ── */
-.gp-stack { display: flex; flex-direction: column; gap: var(--gp-gap); }
-.gp-stack-lg { display: flex; flex-direction: column; gap: var(--gp-sp-5); }
-.gp-section { padding: var(--gp-sp-4) var(--gp-gutter); }
-
 
 /* ── Card ── */
 .gp-card { background: var(--gp-surface); border: 1px solid var(--gp-line); border-radius: 16px; box-shadow: var(--gp-shadow-xs); }

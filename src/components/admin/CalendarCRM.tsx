@@ -946,11 +946,11 @@ export const CalendarCRM = () => {
                         <div className="grid grid-cols-[50px_1fr_1fr] md:grid-cols-[80px_1fr_1fr] gap-1 md:gap-3 pb-2 border-b mb-3 min-w-[320px]">
                           <div className="text-[10px] md:text-xs font-semibold text-muted-foreground">HORA</div>
                           <div className="flex items-center gap-1 md:gap-2">
-                            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[var(--gp-info)]" />
+                            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-blue-500" />
                             <span className="text-[10px] md:text-xs font-semibold">CRIS</span>
                           </div>
                           <div className="flex items-center gap-1 md:gap-2">
-                            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[var(--gp-purple)]" />
+                            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-purple-500" />
                             <span className="text-[10px] md:text-xs font-semibold">DESI</span>
                           </div>
                         </div>
@@ -980,11 +980,11 @@ export const CalendarCRM = () => {
                         const breakDurationMinutes = 150; // 2.5 horas de duración (acaba a las 15:00)
                         const top = (breakStartMinutes / 60) * hourRowHeight;
                         const height = (breakDurationMinutes / 60) * hourRowHeight;
-                        return <div className="absolute inset-x-0 bg-[var(--gp-chip)]  z-0 flex items-center justify-center pointer-events-none" style={{
+                        return <div className="absolute inset-x-0 bg-gray-200/40 dark:bg-gray-700/20 z-0 flex items-center justify-center pointer-events-none" style={{
                           top: `${top}px`,
                           height: `${height}px`
                         }}>
-                                    <span className="text-[8px] md:text-[10px] font-medium text-[var(--gp-ink2)]  bg-background/80 px-1 md:px-2 py-0.5 rounded">
+                                    <span className="text-[8px] md:text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-1 md:px-2 py-0.5 rounded">
                                       Descanso
                                     </span>
                                   </div>;
@@ -1005,7 +1005,7 @@ export const CalendarCRM = () => {
                         const widthPercentage = 100 / totalColumns;
                         const leftPercentage = column * widthPercentage;
                         const isHighlighted = highlightedBookingId === event.id;
-                        return <div key={event.id} data-event-id={event.id} className={`absolute group bg-[var(--gp-info-soft)]  border border-[var(--gp-info-soft)]  rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 animate-pulse z-30" : ""}`} style={{
+                        return <div key={event.id} data-event-id={event.id} className={`absolute group bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 animate-pulse z-30" : ""}`} style={{
                           top: `${position.top}px`,
                           height: `${position.height}px`,
                           left: `${leftPercentage}%`,
@@ -1018,7 +1018,7 @@ export const CalendarCRM = () => {
                                         <p className={`text-[10px] md:text-xs font-medium leading-tight truncate ${event.completed ? "line-through" : ""}`}>
                                           {event.skipAvailabilityCheck && (
                                             <span title="Cita sin restricciones">
-                                              <AlertTriangle className="inline-block h-3 w-3 mr-0.5 text-[var(--gp-warn)]" />
+                                              <AlertTriangle className="inline-block h-3 w-3 mr-0.5 text-amber-500" />
                                             </span>
                                           )}
                                           {event.summary}
@@ -1059,11 +1059,11 @@ export const CalendarCRM = () => {
                         const breakDurationMinutes = 150; // 2.5 horas de duración (acaba a las 15:00)
                         const top = (breakStartMinutes / 60) * hourRowHeight;
                         const height = (breakDurationMinutes / 60) * hourRowHeight;
-                        return <div className="absolute inset-x-0 bg-[var(--gp-chip)]  z-0 flex items-center justify-center pointer-events-none" style={{
+                        return <div className="absolute inset-x-0 bg-gray-200/40 dark:bg-gray-700/20 z-0 flex items-center justify-center pointer-events-none" style={{
                           top: `${top}px`,
                           height: `${height}px`
                         }}>
-                                    <span className="text-[8px] md:text-[10px] font-medium text-[var(--gp-ink2)]  bg-background/80 px-1 md:px-2 py-0.5 rounded">
+                                    <span className="text-[8px] md:text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-1 md:px-2 py-0.5 rounded">
                                       Descanso
                                     </span>
                                   </div>;
@@ -1084,7 +1084,7 @@ export const CalendarCRM = () => {
                         const widthPercentage = 100 / totalColumns;
                         const leftPercentage = column * widthPercentage;
                         const isHighlighted = highlightedBookingId === event.id;
-                        return <div key={event.id} data-event-id={event.id} className={`absolute group bg-[var(--gp-purple-soft)]  border border-[var(--gp-purple-soft)]  rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 animate-pulse z-30" : ""}`} style={{
+                        return <div key={event.id} data-event-id={event.id} className={`absolute group bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 animate-pulse z-30" : ""}`} style={{
                           top: `${position.top}px`,
                           height: `${position.height}px`,
                           left: `${leftPercentage}%`,
@@ -1097,7 +1097,7 @@ export const CalendarCRM = () => {
                                         <p className={`text-[10px] md:text-xs font-medium leading-tight truncate ${event.completed ? "line-through" : ""}`}>
                                           {event.skipAvailabilityCheck && (
                                             <span title="Cita sin restricciones">
-                                              <AlertTriangle className="inline-block h-3 w-3 mr-0.5 text-[var(--gp-warn)]" />
+                                              <AlertTriangle className="inline-block h-3 w-3 mr-0.5 text-amber-500" />
                                             </span>
                                           )}
                                           {event.summary}

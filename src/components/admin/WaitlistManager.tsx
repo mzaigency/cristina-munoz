@@ -40,6 +40,9 @@ import {
   XCircle,
   ChevronDown,
   ChevronUp,
+  Link as LinkIcon,
+  RotateCcw,
+  AlertTriangle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -70,6 +73,7 @@ interface WaitlistEntry {
   proposed_stylist_id?: string | null;
   proposed_at?: string | null;
   proposed_expires_at?: string | null;
+  proposal_token?: string | null;
 }
 
 interface Stylist {
@@ -94,6 +98,14 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
   const [proposeEntry, setProposeEntry] = useState<WaitlistEntry | null>(null);
   const [activeTab, setActiveTab] = useState<TabValue>("active");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [bookings, setBookings] = useState<{ Fecha: string; Hora: string; total_duration: number | null; stylist: string }[]>([]);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
 
   const [formData, setFormData] = useState({
     client_name: "",
@@ -112,6 +124,33 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
     fetchData();
   }, [tenantId]);
 
+  // Tiempo real: refresca cuando otra persona propone, confirma o libera un hueco
+  useEffect(() => {
+    if (!tenantId) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const refresh = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => fetchData(), 400);
+    };
+    const channel = supabase
+      .channel(`waitlist-admin-${tenantId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "waitlist", filter: `tenant_id=eq.${tenantId}` },
+        refresh,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings", filter: `tenant_id=eq.${tenantId}` },
+        refresh,
+      )
+      .subscribe();
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [tenantId]);
+
   const fetchData = async () => {
     try {
       const [waitlistRes, stylistsRes, tenantRes] = await Promise.all([
@@ -121,7 +160,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
           .eq("tenant_id", tenantId)
           .in("status", ["waiting", "notified", "proposed", "booked", "expired", "cancelled"])
           .order("priority", { ascending: false })
-          .order("created_at", { ascending: false }),
+          .order("created_at", { ascending: true }),
         supabase
           .from("tenant_stylists")
           .select("id, name, slug")
@@ -131,15 +170,124 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
       ]);
 
       if (waitlistRes.error) throw waitlistRes.error;
-      setEntries((waitlistRes.data || []) as unknown as WaitlistEntry[]);
+      const list = (waitlistRes.data || []) as unknown as WaitlistEntry[];
+      setEntries(list);
       setStylists(stylistsRes.data || []);
       setTenantSlug(tenantRes.data?.slug || "");
+
+      // Citas confirmadas de los días propuestos → para detectar conflictos
+      const dates = Array.from(
+        new Set(list.filter((e) => e.status === "proposed" && e.proposed_date).map((e) => e.proposed_date as string)),
+      );
+      if (dates.length > 0) {
+        const { data: bk } = await supabase
+          .from("bookings")
+          .select("Fecha, Hora, total_duration, stylist")
+          .eq("tenant_id", tenantId)
+          .eq("status", "confirmed")
+          .in("Fecha", dates);
+        setBookings((bk || []) as any);
+      } else {
+        setBookings([]);
+      }
     } catch (error) {
       console.error("Error fetching waitlist:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  const toMin = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + (m || 0);
+  };
+
+  const getDuration = (services: any[]) =>
+    Array.isArray(services) && services.length > 0
+      ? services.reduce((sum: number, s: any) => sum + (s.duration || s.total_duration || s.duration_part1_active || 30), 0)
+      : 60;
+
+  /** Devuelve true si el hueco propuesto choca con una cita confirmada */
+  const hasConflict = (entry: WaitlistEntry) => {
+    if (entry.status !== "proposed" || !entry.proposed_date || !entry.proposed_time) return false;
+    const slug = entry.proposed_stylist_id
+      ? stylists.find((s) => s.id === entry.proposed_stylist_id)?.slug
+      : null;
+    const start = toMin(String(entry.proposed_time).slice(0, 5));
+    const end = start + getDuration(entry.services);
+    return bookings.some((b) => {
+      if (b.Fecha !== entry.proposed_date) return false;
+      if (slug && b.stylist !== slug) return false;
+      const bStart = toMin(String(b.Hora).slice(0, 5));
+      const bEnd = bStart + (b.total_duration || 60);
+      return start < bEnd && end > bStart;
+    });
+  };
+
+  /** Texto de cuenta atrás de la propuesta */
+  const getExpiry = (entry: WaitlistEntry) => {
+    if (!entry.proposed_expires_at) return null;
+    const diff = new Date(entry.proposed_expires_at).getTime() - now;
+    if (diff <= 0) return { text: "Caducada", urgent: true, expired: true };
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    return {
+      text: h > 0 ? `Caduca en ${h}h ${m}m` : `Caduca en ${m} min`,
+      urgent: diff < 2 * 3600000,
+      expired: false,
+    };
+  };
+
+  const getProposalLink = (entry: WaitlistEntry) =>
+    entry.proposal_token ? `${window.location.origin}/lista-espera/${entry.proposal_token}` : null;
+
+  const handleCopyLink = async (entry: WaitlistEntry) => {
+    const link = getProposalLink(entry);
+    if (!link) {
+      toast({ title: "Esta propuesta no tiene enlace", variant: "destructive" });
+      return;
+    }
+    await navigator.clipboard.writeText(link);
+    toast({ title: "Enlace copiado" });
+  };
+
+  const handleRemindWhatsApp = (entry: WaitlistEntry) => {
+    if (!entry.client_phone) return;
+    const link = getProposalLink(entry);
+    const phone = entry.client_phone.replace(/\D/g, "");
+    const when =
+      entry.proposed_date && entry.proposed_time
+        ? `${format(new Date(entry.proposed_date), "EEEE d 'de' MMMM", { locale: es })} a las ${String(entry.proposed_time).slice(0, 5)}`
+        : "el hueco que te propusimos";
+    const msg = encodeURIComponent(
+      `¡Hola ${entry.client_name}! Te hemos guardado un hueco para ${when}. Confírmalo aquí 👉 ${link ?? ""}`,
+    );
+    window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+  };
+
+  /** Libera el hueco propuesto y devuelve a la clienta a la cola */
+  const handleReleaseSlot = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("waitlist" as any)
+        .update({
+          status: "waiting",
+          proposed_date: null,
+          proposed_time: null,
+          proposed_stylist_id: null,
+          proposed_at: null,
+          proposed_expires_at: null,
+          proposal_token: null,
+        })
+        .eq("id", id);
+      if (error) throw error;
+      toast({ title: "Hueco liberado", description: "La clienta vuelve a la cola de espera" });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
 
   const handleSave = async () => {
     if (!formData.client_name.trim()) {
@@ -253,9 +401,12 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
     ["waiting", "notified"].includes(e.status)
   );
   const proposedEntries = entries.filter((e) => e.status === "proposed");
-  const historyEntries = entries.filter((e) =>
-    ["booked", "cancelled", "expired"].includes(e.status)
-  );
+  const conflictCount = proposedEntries.filter((e) => hasConflict(e)).length;
+  const urgentCount = proposedEntries.filter((e) => getExpiry(e)?.urgent).length;
+  const historyEntries = entries
+    .filter((e) => ["booked", "cancelled", "expired"].includes(e.status))
+    .slice()
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const tabEntries =
     activeTab === "active"
@@ -320,6 +471,33 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
         </button>
       </div>
 
+      {/* Resumen rápido de propuestas: conflictos y caducidades */}
+      {activeTab === "proposed" && (conflictCount > 0 || urgentCount > 0) && (
+        <div
+          className="gp-card pad"
+          style={{
+            display: "flex",
+            gap: 10,
+            alignItems: "flex-start",
+            background: conflictCount > 0 ? "color-mix(in oklab, var(--gp-danger), white 92%)" : "var(--gp-chip)",
+            borderColor: conflictCount > 0 ? "color-mix(in oklab, var(--gp-danger), white 70%)" : "var(--gp-line)",
+          }}
+        >
+          <span style={{ width: 28, height: 28, borderRadius: 9, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: "color-mix(in oklab, var(--gp-danger), white 82%)", color: "var(--gp-danger)" }}>
+            <AlertTriangle style={{ width: 14, height: 14 }} />
+          </span>
+          <div>
+            <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 800, color: "var(--gp-ink)" }}>Requieren tu atención</p>
+            <p style={{ margin: 0, fontSize: 12.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>
+              {conflictCount > 0 && <>{conflictCount} con el hueco ya ocupado. </>}
+              {urgentCount > 0 && <>{urgentCount} caducan en menos de 2h.</>}
+            </p>
+          </div>
+        </div>
+      )}
+
+
+
       {/* Empty state */}
       {tabEntries.length === 0 ? (
         <div className="gp-card">
@@ -343,6 +521,8 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
             const servicesText = getServicesText(entry.services);
             const stylistName = getStylistName(entry.preferred_stylist_id);
             const proposedStylistName = getStylistName(entry.proposed_stylist_id);
+            const expiry = entry.status === "proposed" ? getExpiry(entry) : null;
+            const conflict = hasConflict(entry);
 
             return (
               <div
@@ -387,12 +567,39 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                       )}
                     </div>
 
+                    {activeTab === "active" && (() => {
+                      const days = Math.max(0, Math.floor((Date.now() - new Date(entry.created_at).getTime()) / 86400000));
+                      const left = entry.preferred_date ? null : Math.max(0, 60 - days);
+                      return (
+                        <p style={{ margin: "6px 0 0", fontSize: 11.5, fontWeight: 600, color: "var(--gp-muted-c)" }}>
+                          {days === 0 ? "Apuntada hoy" : `Esperando ${days} ${days === 1 ? "día" : "días"}`}
+                          {left !== null && ` · caduca en ${left} ${left === 1 ? "día" : "días"}`}
+                        </p>
+                      );
+                    })()}
+
+
+
                     {entry.status === "proposed" && entry.proposed_date && (
-                      <div style={{ marginTop: 8, padding: "8px 12px", background: "color-mix(in oklab, var(--gp-info), white 82%)", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--gp-info-soft)" }}>
+                      <div style={{ marginTop: 8, padding: "8px 12px", background: "color-mix(in oklab, var(--gp-info), white 82%)", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--gp-ink)" }}>
                         🎯 Propuesto: {format(new Date(entry.proposed_date), "d MMM", { locale: es })} · {String(entry.proposed_time).slice(0, 5)}
                         {proposedStylistName && ` · ${proposedStylistName}`}
+                        {expiry && (
+                          <span style={{ display: "block", marginTop: 4, fontSize: 11.5, fontWeight: 700, color: expiry.urgent ? "var(--gp-danger)" : "var(--gp-muted-c)" }}>
+                            <Clock style={{ width: 11, height: 11, display: "inline", marginRight: 4, verticalAlign: -1 }} />
+                            {expiry.text}
+                          </span>
+                        )}
                       </div>
                     )}
+
+                    {conflict && (
+                      <div style={{ marginTop: 8, padding: "8px 12px", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--gp-danger)", background: "color-mix(in oklab, var(--gp-danger), white 88%)", display: "flex", alignItems: "center", gap: 6 }}>
+                        <AlertTriangle style={{ width: 13, height: 13, flex: "none" }} />
+                        Conflicto: ese hueco ya tiene una cita confirmada
+                      </div>
+                    )}
+
 
                     {isExpanded && (
                       <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "var(--gp-muted-c)" }}>
@@ -468,6 +675,26 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                     </button>
                   </div>
                 )}
+
+                {entry.status === "proposed" && (
+                  <div style={{ display: "flex", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--gp-line2)", flexWrap: "wrap" }}>
+                    {entry.client_phone && (
+                      <button className="gp-btn primary sm" style={{ flex: 1, minWidth: 130 }} onClick={() => handleRemindWhatsApp(entry)}>
+                        <MessageCircle style={{ width: 13, height: 13 }} />
+                        Recordar
+                      </button>
+                    )}
+                    <button className="gp-btn sm" style={{ flex: 1, minWidth: 110 }} onClick={() => handleCopyLink(entry)}>
+                      <LinkIcon style={{ width: 13, height: 13 }} />
+                      Copiar enlace
+                    </button>
+                    <button className="gp-btn sm" style={{ flex: 1, minWidth: 110 }} onClick={() => handleReleaseSlot(entry.id)}>
+                      <RotateCcw style={{ width: 13, height: 13 }} />
+                      Liberar hueco
+                    </button>
+                  </div>
+                )}
+
               </div>
             );
           })}
@@ -615,13 +842,13 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                   </SelectItem>
                   <SelectItem value="1">
                     <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[var(--gp-warn)]" />
+                      <span className="w-2 h-2 rounded-full bg-amber-500" />
                       Media
                     </span>
                   </SelectItem>
                   <SelectItem value="2">
                     <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[var(--gp-danger)]" />
+                      <span className="w-2 h-2 rounded-full bg-red-500" />
                       Alta
                     </span>
                   </SelectItem>

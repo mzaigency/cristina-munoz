@@ -172,9 +172,9 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
 
   const getStoryTypeColor = (type: string) => {
     switch (type) {
-      case "work": return "bg-[var(--gp-purple-soft)] text-[var(--gp-purple)]";
-      case "promo": return "bg-[var(--gp-danger-soft)] text-[var(--gp-danger)]";
-      case "behind_scenes": return "bg-[var(--gp-info-soft)] text-[var(--gp-info)]";
+      case "work": return "bg-purple-500/20 text-purple-400";
+      case "promo": return "bg-rose-500/20 text-rose-400";
+      case "behind_scenes": return "bg-blue-500/20 text-blue-400";
       default: return "bg-muted text-muted-foreground";
     }
   };
@@ -225,8 +225,8 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-[var(--gp-purple-soft)]">
-                <ImageIcon className="w-5 h-5 text-[var(--gp-purple)]" />
+              <div className="p-2 rounded-lg bg-purple-500/20">
+                <ImageIcon className="w-5 h-5 text-purple-400" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Stories</p>
@@ -239,8 +239,8 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-[var(--gp-ok-soft)]">
-                <Sparkles className="w-5 h-5 text-[var(--gp-ok)]" />
+              <div className="p-2 rounded-lg bg-green-500/20">
+                <Sparkles className="w-5 h-5 text-green-400" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Activas</p>
@@ -253,8 +253,8 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-[var(--gp-info-soft)]">
-                <Eye className="w-5 h-5 text-[var(--gp-info)]" />
+              <div className="p-2 rounded-lg bg-blue-500/20">
+                <Eye className="w-5 h-5 text-blue-400" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Vistas</p>
@@ -267,8 +267,8 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-[var(--gp-warn-soft)]">
-                <TrendingUp className="w-5 h-5 text-[var(--gp-warn)]" />
+              <div className="p-2 rounded-lg bg-amber-500/20">
+                <TrendingUp className="w-5 h-5 text-amber-400" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Promedio/Story</p>
