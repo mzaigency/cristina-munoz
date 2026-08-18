@@ -22,7 +22,7 @@ import {
 } from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-type Period = "week" | "month" | "quarter";
+type Period = "week"|"month"|"quarter";
 
 interface DailyData {
   date: string;
@@ -203,10 +203,7 @@ export const CashRegisterStats = () => {
   };
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
-
-  const formatDateLabel = (dateStr: string) =>
-    format(new Date(dateStr), "d MMM", { locale: es });
+    new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR"}).format(amount); const formatDateLabel = (dateStr: string) => format(new Date(dateStr),"d MMM", { locale: es });
 
   if (loading) {
     return (
@@ -221,8 +218,8 @@ export const CashRegisterStats = () => {
       {/* Period Selector */}
       <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1">
         {(["week", "month", "quarter"] as Period[]).map(p => (
-          <Button key={p} variant={period === p ? "default" : "outline"} size="sm" onClick={() => setPeriod(p)} className="h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-3 shrink-0">
-            {p === "week" ? "Semana" : p === "month" ? "Mes" : "Trimestre"}
+          <Button key={p} variant={period === p ? "default":"outline"} size="sm" onClick={() => setPeriod(p)} className="h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-3 shrink-0">
+            {p === "week"?"Semana": p ==="month"?"Mes":"Trimestre"}
           </Button>
         ))}
       </div>
@@ -285,10 +282,8 @@ export const CashRegisterStats = () => {
                       <LineChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                         <XAxis dataKey="date" tickFormatter={formatDateLabel} className="text-[10px] sm:text-xs" tick={{ fontSize: 10 }} />
-                        <YAxis tickFormatter={(v) => `${v}€`} className="text-[10px] sm:text-xs" tick={{ fontSize: 10 }} width={40} />
-                        <Tooltip formatter={(value: number) => formatCurrency(value)}
-                          labelFormatter={(label) => format(new Date(label), "d MMMM yyyy", { locale: es })} />
-                        <Line type="monotone" dataKey="total" name="Total" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: "hsl(var(--primary))", r: 3 }} />
+                        <YAxis tickFormatter={(v) => `${v}€`} className="text-[10px] sm:text-xs"tick={{ fontSize: 10 }} width={40} /> <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(label) => format(new Date(label),"d MMMM yyyy", { locale: es })} />
+                        <Line type="monotone" dataKey="total" name="Total" stroke="hsl(var(--primary))"strokeWidth={2} dot={{ fill:"hsl(var(--primary))", r: 3 }} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
@@ -303,9 +298,7 @@ export const CashRegisterStats = () => {
                       <BarChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                         <XAxis dataKey="date" tickFormatter={formatDateLabel} className="text-[10px] sm:text-xs" tick={{ fontSize: 10 }} />
-                        <YAxis tickFormatter={(v) => `${v}€`} className="text-[10px] sm:text-xs" tick={{ fontSize: 10 }} width={40} />
-                        <Tooltip formatter={(value: number) => formatCurrency(value)}
-                          labelFormatter={(label) => format(new Date(label), "d MMMM yyyy", { locale: es })} />
+                        <YAxis tickFormatter={(v) => `${v}€`} className="text-[10px] sm:text-xs"tick={{ fontSize: 10 }} width={40} /> <Tooltip formatter={(value: number) => formatCurrency(value)} labelFormatter={(label) => format(new Date(label),"d MMMM yyyy", { locale: es })} />
                         <Bar dataKey="cash" name="Efectivo" fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} stackId="a" />
                         <Bar dataKey="card" name="Tarjeta" fill="hsl(217, 91%, 60%)" radius={[0, 0, 0, 0]} stackId="a" />
                         <Bar dataKey="mixed" name="Mixto" fill="hsl(280, 65%, 60%)" radius={[4, 4, 0, 0]} stackId="a" />
@@ -424,8 +417,7 @@ export const CashRegisterStats = () => {
                     <BarChart data={serviceStats} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis type="number" tickFormatter={(v) => `${v}€`} className="text-xs" />
-                      <YAxis type="category" dataKey="name" width={150} className="text-xs" />
-                      <Tooltip formatter={(value: number, name) => name === "revenue" ? formatCurrency(value) : value}
+                      <YAxis type="category" dataKey="name" width={150} className="text-xs"/> <Tooltip formatter={(value: number, name) => name ==="revenue" ? formatCurrency(value) : value}
                         labelFormatter={(label) => label} />
                       <Bar dataKey="revenue" name="Ingresos" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                     </BarChart>

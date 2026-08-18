@@ -24,15 +24,13 @@ interface PDFReportsGeneratorProps {
   tenantName?: string;
 }
 
-type ReportType = "monthly" | "productivity" | "services" | "fiscal";
-type RangeMode = "month" | "quarter" | "prev_quarter" | "custom";
+type ReportType = "monthly"|"productivity"|"services"|"fiscal";
+type RangeMode = "month"|"quarter"|"prev_quarter"|"custom";
 
 const BRAND_PRIMARY = "#22408b";
 const BRAND_ACCENT = "#99329a";
 
-const fmtEUR = (n: number) => new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n || 0);
-
-export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFReportsGeneratorProps) {
+const fmtEUR = (n: number) => new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR"}).format(n || 0); export function PDFReportsGenerator({ tenantId, tenantName ="Salón" }: PDFReportsGeneratorProps) {
   const [generating, setGenerating] = useState<ReportType | null>(null);
   const [rangeMode, setRangeMode] = useState<RangeMode>("month");
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
@@ -217,19 +215,7 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
         win.onload = () => setTimeout(() => win.print(), 350);
       }
 
-      toast({ title: "Informe generado", description: "Listo para imprimir o guardar como PDF" });
-    } catch (e: any) {
-      console.error(e);
-      toast({ title: "Error", description: e.message, variant: "destructive" });
-    } finally {
-      setGenerating(null);
-    }
-  };
-
-  // Opciones de mes (últimos 12 meses)
-  const monthOptions = Array.from({ length: 12 }).map((_, i) => {
-    const d = subMonths(new Date(), i);
-    return { value: format(d, "yyyy-MM"), label: format(d, "MMMM yyyy", { locale: es }) };
+      toast({ title: "Informe generado", description: "Listo para imprimir o guardar como PDF"}); } catch (e: any) { console.error(e); toast({ title:"Error", description: e.message, variant: "destructive"}); } finally { setGenerating(null); } }; // Opciones de mes (últimos 12 meses) const monthOptions = Array.from({ length: 12 }).map((_, i) => { const d = subMonths(new Date(), i); return { value: format(d,"yyyy-MM"), label: format(d, "MMMM yyyy", { locale: es }) };
   });
 
   const reports: { id: ReportType; title: string; desc: string; icon: React.ElementType }[] = [
@@ -284,22 +270,7 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
             </SelectContent>
           </Select>
 
-          {rangeMode === "month" && (
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {monthOptions.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {rangeMode === "custom" && (
+          {rangeMode === "month"&& ( <Select value={selectedMonth} onValueChange={setSelectedMonth}> <SelectTrigger> <SelectValue /> </SelectTrigger> <SelectContent> {monthOptions.map((o) => ( <SelectItem key={o.value} value={o.value}> {o.label} </SelectItem> ))} </SelectContent> </Select> )} {rangeMode ==="custom" && (
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[11px] text-muted-foreground">Desde</label>
@@ -781,7 +752,7 @@ function renderFiscal(d: any) {
 function renderGrowth(growth: number) {
   if (!isFinite(growth) || growth === 0) return "";
   const up = growth > 0;
-  return `<div class="growth-badge ${up ? "growth-up" : "growth-down"}">${up ? "↑" : "↓"} ${Math.abs(growth).toFixed(1)}%</div>`;
+  return `<div class="growth-badge ${up ? "growth-up":"growth-down"}">${up ? "↑":"↓"} ${Math.abs(growth).toFixed(1)}%</div>`;
 }
 
 function renderPaymentBars(cash: number, card: number, mixed: number, total: number) {
@@ -879,8 +850,8 @@ function renderSparkline(daily: any[]) {
     const y = H - P - (d.total / max) * (H - P * 2);
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   });
-  const path = "M " + points.join(" L ");
-  const area = `M ${P},${H - P} L ` + points.join(" L ") + ` L ${P + (daily.length - 1) * stepX},${H - P} Z`;
+  const path = "M " + points.join("L");
+  const area = `M ${P},${H - P} L ` + points.join("L") + ` L ${P + (daily.length - 1) * stepX},${H - P} Z`;
   const maxIdx = daily.reduce((best, d, i) => (d.total > daily[best].total ? i : best), 0);
   const maxDay = daily[maxIdx];
   const total = daily.reduce((s, d) => s + d.total, 0);

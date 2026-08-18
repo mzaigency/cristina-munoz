@@ -83,7 +83,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
     }
   };
 
-  const handleImageUpload = async (file: File, type: "logo" | "hero") => {
+  const handleImageUpload = async (file: File, type: "logo"|"hero") => {
     try {
       setUploading(type);
 
@@ -100,12 +100,12 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
         data: { publicUrl },
       } = supabase.storage.from("tenant-assets").getPublicUrl(fileName);
 
-      const fieldName = type === "logo" ? "logo_url" : "hero_image_url";
+      const fieldName = type === "logo"?"logo_url":"hero_image_url";
       setTenant((prev) => (prev ? { ...prev, [fieldName]: publicUrl } : null));
 
       toast({
         title: "Imagen subida",
-        description: `${type === "logo" ? "Logo" : "Imagen hero"} actualizado correctamente`,
+        description: `${type === "logo"?"Logo":"Imagen hero"} actualizado correctamente`,
       });
     } catch (error: any) {
       console.error("Error uploading image:", error);
@@ -191,7 +191,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
   return (
     <div className="space-y-5 pb-28">
       {/* Tip card - direct user to visual editor for landing visuals */}
-      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-purple-500/5 to-transparent p-4 flex items-start gap-3">
+      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-[var(--gp-purple)] to-transparent p-4 flex items-start gap-3">
         <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
           <Sparkles className="h-4 w-4 text-primary" />
         </div>
@@ -233,8 +233,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
               <div>
                 <Label htmlFor="heading_size">Tamaño en hero</Label>
                 <select
-                  id="heading_size"
-                  value={tenant.heading_size || "xlarge"}
+                  id="heading_size"value={tenant.heading_size ||"xlarge"}
                   onChange={(e) => setTenant({ ...tenant, heading_size: e.target.value })}
                   className="w-full h-10 px-3 mt-1 border rounded-md bg-background text-foreground text-sm"
                 >
@@ -247,8 +246,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
             <div>
               <Label htmlFor="tagline">Eslogan</Label>
               <Input
-                id="tagline"
-                value={tenant.tagline || ""}
+                id="tagline"value={tenant.tagline ||""}
                 onChange={(e) => setTenant({ ...tenant, tagline: e.target.value })}
                 placeholder="Tu peluquería de confianza"
                 className="mt-1"
@@ -257,8 +255,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
             <div>
               <Label htmlFor="description">Descripción</Label>
               <Textarea
-                id="description"
-                value={tenant.description || ""}
+                id="description"value={tenant.description ||""}
                 onChange={(e) => setTenant({ ...tenant, description: e.target.value })}
                 placeholder="Describe tu negocio en pocas líneas..."
                 rows={3}
@@ -268,8 +265,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
             <div>
               <Label htmlFor="language">Idioma de tu web pública</Label>
               <select
-                id="language"
-                value={tenant.language || "es"}
+                id="language"value={tenant.language ||"es"}
                 onChange={(e) => setTenant({ ...tenant, language: e.target.value })}
                 className="w-full h-10 px-3 mt-1 border rounded-md bg-background text-foreground text-sm sm:max-w-xs"
               >
@@ -298,13 +294,9 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
               <div className="flex gap-2">
                 <Input
                   type="color"
-                  id="primary_color"
-                  value={tenant.primary_color || "#8B5CF6"}
+                  id="primary_color"value={tenant.primary_color ||"#8B5CF6"}
                   onChange={(e) => setTenant({ ...tenant, primary_color: e.target.value })}
-                  className="w-16 h-10 p-1 cursor-pointer"
-                />
-                <Input
-                  value={tenant.primary_color || "#8B5CF6"}
+                  className="w-16 h-10 p-1 cursor-pointer"/> <Input value={tenant.primary_color ||"#8B5CF6"}
                   onChange={(e) => setTenant({ ...tenant, primary_color: e.target.value })}
                   placeholder="#8B5CF6"
                   className="flex-1"
@@ -316,13 +308,9 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
               <div className="flex gap-2">
                 <Input
                   type="color"
-                  id="secondary_color"
-                  value={tenant.secondary_color || "#D946EF"}
+                  id="secondary_color"value={tenant.secondary_color ||"#D946EF"}
                   onChange={(e) => setTenant({ ...tenant, secondary_color: e.target.value })}
-                  className="w-16 h-10 p-1 cursor-pointer"
-                />
-                <Input
-                  value={tenant.secondary_color || "#D946EF"}
+                  className="w-16 h-10 p-1 cursor-pointer"/> <Input value={tenant.secondary_color ||"#D946EF"}
                   onChange={(e) => setTenant({ ...tenant, secondary_color: e.target.value })}
                   placeholder="#D946EF"
                   className="flex-1"
@@ -333,17 +321,13 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
               <Label>Vista previa</Label>
               <div className="flex gap-2 mt-2">
                 <div
-                  className="w-12 h-12 rounded-lg shadow-sm"
-                  style={{ backgroundColor: tenant.primary_color || "#8B5CF6" }}
+                  className="w-12 h-12 rounded-lg shadow-sm"style={{ backgroundColor: tenant.primary_color ||"#8B5CF6" }}
                 />
                 <div
-                  className="w-12 h-12 rounded-lg shadow-sm"
-                  style={{ backgroundColor: tenant.secondary_color || "#D946EF" }}
+                  className="w-12 h-12 rounded-lg shadow-sm"style={{ backgroundColor: tenant.secondary_color ||"#D946EF" }}
                 />
                 <div
-                  className="flex-1 h-12 rounded-lg shadow-sm"
-                  style={{
-                    background: `linear-gradient(135deg, ${tenant.primary_color || "#8B5CF6"}, ${tenant.secondary_color || "#D946EF"})`,
+                  className="flex-1 h-12 rounded-lg shadow-sm"style={{ background: `linear-gradient(135deg, ${tenant.primary_color ||"#8B5CF6"}, ${tenant.secondary_color || "#D946EF"})`,
                   }}
                 />
               </div>
@@ -367,12 +351,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                 return (
                   <button
                     key={theme.id}
-                    type="button"
-                    onClick={() => setTenant({ ...tenant, theme_id: theme.id })}
-                    className={`group relative p-3 rounded-xl border-2 text-left transition-all overflow-hidden ${
-                      isActive
-                        ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                        : "border-border hover:border-primary/50"
+                    type="button"onClick={() => setTenant({ ...tenant, theme_id: theme.id })} className={`group relative p-3 rounded-xl border-2 text-left transition-all overflow-hidden ${ isActive ?"border-primary bg-primary/5 ring-2 ring-primary/20":"border-border hover:border-primary/50"
                     }`}
                   >
                     <div
@@ -432,19 +411,14 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                     {uploading === "logo" ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Upload className="h-4 w-4" />
-                    )}
-                    <span>{uploading === "logo" ? "Subiendo..." : "Subir logo"}</span>
+                      <Upload className="h-4 w-4"/> )} <span>{uploading ==="logo"?"Subiendo...":"Subir logo"}</span>
                   </div>
                 </Label>
                 <input
                   id="logo-upload"
                   type="file"
                   accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleImageUpload(file, "logo");
+                  className="hidden"onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file,"logo");
                   }}
                   disabled={uploading === "logo"}
                 />
@@ -467,19 +441,14 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                     {uploading === "hero" ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Upload className="h-4 w-4" />
-                    )}
-                    <span>{uploading === "hero" ? "Subiendo..." : "Subir imagen hero"}</span>
+                      <Upload className="h-4 w-4"/> )} <span>{uploading ==="hero"?"Subiendo...":"Subir imagen hero"}</span>
                   </div>
                 </Label>
                 <input
                   id="hero-upload"
                   type="file"
                   accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleImageUpload(file, "hero");
+                  className="hidden"onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file,"hero");
                   }}
                   disabled={uploading === "hero"}
                 />
@@ -503,8 +472,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
               <div>
                 <Label htmlFor="phone">Teléfono</Label>
                 <Input
-                  id="phone"
-                  value={tenant.phone || ""}
+                  id="phone"value={tenant.phone ||""}
                   onChange={(e) => setTenant({ ...tenant, phone: e.target.value })}
                   placeholder="+34 600 000 000"
                   className="h-11 md:h-10"
@@ -514,8 +482,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
-                  type="email"
-                  value={tenant.email || ""}
+                  type="email"value={tenant.email ||""}
                   onChange={(e) => setTenant({ ...tenant, email: e.target.value })}
                   placeholder="info@ejemplo.com"
                   className="h-11 md:h-10"
@@ -524,8 +491,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
               <div>
                 <Label htmlFor="city">Ciudad</Label>
                 <Input
-                  id="city"
-                  value={tenant.city || ""}
+                  id="city"value={tenant.city ||""}
                   onChange={(e) => setTenant({ ...tenant, city: e.target.value })}
                   placeholder="Madrid"
                   className="h-11 md:h-10"
@@ -534,8 +500,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
               <div className="sm:col-span-2">
                 <Label htmlFor="address">Dirección</Label>
                 <Input
-                  id="address"
-                  value={tenant.address || ""}
+                  id="address"value={tenant.address ||""}
                   onChange={(e) => setTenant({ ...tenant, address: e.target.value })}
                   placeholder="Calle Principal, 123"
                   className="h-11 md:h-10"
@@ -544,8 +509,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
               <div>
                 <Label htmlFor="postal_code">Código Postal</Label>
                 <Input
-                  id="postal_code"
-                  value={tenant.postal_code || ""}
+                  id="postal_code"value={tenant.postal_code ||""}
                   onChange={(e) => setTenant({ ...tenant, postal_code: e.target.value })}
                   placeholder="28001"
                   className="h-11 md:h-10"
@@ -558,8 +522,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
 
       {/* Sticky guided save bar */}
       <div
-        className="sticky bottom-0 left-0 right-0 z-30 -mx-4 md:-mx-6 mt-6 px-4 md:px-6 py-3 bg-background/90 backdrop-blur-xl border-t border-border flex items-center gap-3 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.15)]"
-        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        className="sticky bottom-0 left-0 right-0 z-30 -mx-4 md:-mx-6 mt-6 px-4 md:px-6 py-3 bg-background/90 backdrop-blur-xl border-t border-border flex items-center gap-3 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.15)]"style={{ paddingBottom:"calc(0.75rem + env(safe-area-inset-bottom))" }}
         role="status"
         aria-live="polite"
       >

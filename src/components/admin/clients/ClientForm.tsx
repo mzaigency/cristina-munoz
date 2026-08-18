@@ -122,9 +122,7 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
         if (error) throw error;
         toast({ title: "Cliente actualizado" });
       } else {
-        const { error } = await supabase.from("clients" as any).insert({ tenant_id: tenantId, ...payload });
-        if (error) throw error;
-        toast({ title: "Cliente creado" });
+        const { error } = await supabase.from("clients"as any).insert({ tenant_id: tenantId, ...payload }); if (error) throw error; toast({ title:"Cliente creado" });
       }
       onSaved();
     } catch (error) {
@@ -237,8 +235,7 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
           {TAG_OPTIONS.map(tag => (
             <Badge
               key={tag}
-              variant="outline"
-              className={`cursor-pointer transition-all ${formData.tags.includes(tag) ? TAG_COLORS[tag] : "opacity-50 hover:opacity-75"}`}
+              variant="outline"className={`cursor-pointer transition-all ${formData.tags.includes(tag) ? TAG_COLORS[tag] :"opacity-50 hover:opacity-75"}`}
               onClick={() => toggleTag(tag)}
             >
               {tag}
@@ -253,8 +250,7 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
       </div>
 
       <Button onClick={handleSave} className="w-full" disabled={saving}>
-        {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-        {editingClient ? "Guardar cambios" : "Crear cliente"}
+        {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin"/>} {editingClient ?"Guardar cambios":"Crear cliente"}
       </Button>
     </div>
   );

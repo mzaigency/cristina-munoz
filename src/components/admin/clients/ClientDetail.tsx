@@ -112,8 +112,7 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
             )}
             {client.birthday && (
               <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Gift className="h-3 w-3 text-[var(--gp-purple)]" />
-                {format(new Date(client.birthday + "T00:00:00"), "d MMMM", { locale: es })}
+                <Gift className="h-3 w-3 text-[var(--gp-purple)]"/> {format(new Date(client.birthday +"T00:00:00"), "d MMMM", { locale: es })}
               </p>
             )}
           </div>
@@ -122,10 +121,10 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
         {/* Linked profile badge */}
         <div className="mt-3">
           {linkedProfile ? (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/10 border border-green-500/20">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-[var(--gp-ok-soft)] border border-[var(--gp-ok)]">
               <Avatar className="h-6 w-6">
                 {linkedProfile.avatar_url && <AvatarImage src={linkedProfile.avatar_url} />}
-                <AvatarFallback className="text-[10px] bg-green-500/20 text-[var(--gp-ok-ink)]">
+                <AvatarFallback className="text-[10px] bg-[var(--gp-ok-soft)] text-[var(--gp-ok-ink)]">
                   {(linkedProfile.full_name || linkedProfile.email)?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -148,7 +147,7 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
         {client.tags && client.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
             {client.tags.map(tag => (
-              <Badge key={tag} variant="outline" className={TAG_COLORS[tag] || ""}>{tag}</Badge>
+              <Badge key={tag} variant="outline"className={TAG_COLORS[tag] ||""}>{tag}</Badge>
             ))}
           </div>
         )}
@@ -243,10 +242,8 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
                         {format(new Date(booking.Fecha), "d MMM yyyy", { locale: es })}
                       </span>
                       <Badge
-                        variant={booking.status === "confirmed" ? "default" : "secondary"}
-                        className="text-[10px]"
-                      >
-                        {booking.status === "confirmed" ? "Confirmada" : booking.status}
+                        variant={booking.status === "confirmed"?"default":"secondary"}
+                        className="text-[10px]"> {booking.status ==="confirmed"?"Confirmada" : booking.status}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">{booking.Hora} - {booking.stylist}</p>

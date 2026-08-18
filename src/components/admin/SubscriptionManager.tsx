@@ -34,24 +34,14 @@ interface StripeSubscriptionData {
   has_customer?: boolean;
   has_subscription?: boolean;
   status?: string;
-  plan?: "monthly" | "annual" | null;
-  plan_slug?: string | null;
-  price_id?: string;
-  subscription_end?: string | null;
-  trial_end?: string | null;
-  cancel_at_period_end?: boolean;
-}
-
-interface SubscriptionManagerProps {
-  tenantId: string;
-}
-
-type PlanSlug = "starter" | "pro" | "business";
+  plan?: "monthly"|"annual"| null; plan_slug?: string | null; price_id?: string; subscription_end?: string | null; trial_end?: string | null; cancel_at_period_end?: boolean;
+} interface SubscriptionManagerProps { tenantId: string;
+} type PlanSlug ="starter"|"pro"|"business";
 
 const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
-  starter: { icon: <Zap className="h-5 w-5" />, color: "text-[var(--gp-info)]", bgColor: "bg-blue-500/10" },
-  pro: { icon: <Crown className="h-5 w-5" />, color: "text-[var(--gp-warn)]", bgColor: "bg-amber-500/10" },
-  business: { icon: <Sparkles className="h-5 w-5" />, color: "text-[var(--gp-purple)]", bgColor: "bg-purple-500/10" },
+  starter: { icon: <Zap className="h-5 w-5"/>, color:"text-[var(--gp-info)]", bgColor: "bg-[var(--gp-info-soft)]" },
+  pro: { icon: <Crown className="h-5 w-5"/>, color:"text-[var(--gp-warn)]", bgColor: "bg-[var(--gp-warn-soft)]" },
+  business: { icon: <Sparkles className="h-5 w-5"/>, color:"text-[var(--gp-purple)]", bgColor: "bg-[var(--gp-purple-soft)]" },
 };
 
 const PLAN_ORDER: PlanSlug[] = ["starter", "pro", "business"];
@@ -115,25 +105,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
     setRefreshing(false);
     toast({
       title: "Actualizado",
-      description: "Estado de suscripción actualizado"
-    });
-  };
-
-  useEffect(() => {
-    fetchAllData();
-  }, [fetchAllData]);
-
-  const handleManageSubscription = async () => {
-    setPortalLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('customer-portal', {
-        body: { tenantId },
-      });
-
-      if (error) throw error;
-      
-      // Handle case where user has no Stripe customer record
-      if (data?.error === "no_customer") {
+      description: "Estado de suscripción actualizado"}); }; useEffect(() => { fetchAllData(); }, [fetchAllData]); const handleManageSubscription = async () => { setPortalLoading(true); try { const { data, error } = await supabase.functions.invoke('customer-portal', { body: { tenantId }, }); if (error) throw error; // Handle case where user has no Stripe customer record if (data?.error ==="no_customer") {
         toast({
           title: "Sin suscripción en Stripe",
           description: "Tu suscripción fue configurada manualmente. Contacta con soporte para gestionar cambios.",
@@ -164,31 +136,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
   if (loading || planLimits.loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  const syncedPlan = stripeData?.has_subscription && stripeData?.plan_slug ? stripeData.plan_slug : tenantPlan;
-  const currentPlan = (syncedPlan?.toLowerCase() || 'starter') as PlanSlug;
-  const currentDbPlan = getDbPlan(currentPlan);
-  const planIcons = PLAN_ICONS[currentPlan] || PLAN_ICONS.starter;
-  const planInfo = {
-    name: currentDbPlan?.name || currentPlan,
-    icon: planIcons.icon,
-    color: planIcons.color,
-    bgColor: planIcons.bgColor,
-    monthlyPrice: currentDbPlan?.monthly_price || 0,
-    annualPrice: currentDbPlan?.annual_price || 0,
-  };
-  const currentPlanIndex = PLAN_ORDER.indexOf(currentPlan);
-  
-  // Stripe tiene prioridad SOLO si existe cliente en Stripe.
-  // Si no hay cliente (pilotos / configuración manual), usamos el estado del tenant.
-  const stripeHasCustomer = stripeData?.has_customer === true;
-
-  const subscriptionEnd = stripeHasCustomer ? (stripeData?.subscription_end || null) : tenantExpires;
-  const isTrialing = stripeData?.status === "trialing";
+        <Loader2 className="h-8 w-8 animate-spin text-primary"/> </div> ); } const syncedPlan = stripeData?.has_subscription && stripeData?.plan_slug ? stripeData.plan_slug : tenantPlan; const currentPlan = (syncedPlan?.toLowerCase() || 'starter') as PlanSlug; const currentDbPlan = getDbPlan(currentPlan); const planIcons = PLAN_ICONS[currentPlan] || PLAN_ICONS.starter; const planInfo = { name: currentDbPlan?.name || currentPlan, icon: planIcons.icon, color: planIcons.color, bgColor: planIcons.bgColor, monthlyPrice: currentDbPlan?.monthly_price || 0, annualPrice: currentDbPlan?.annual_price || 0, }; const currentPlanIndex = PLAN_ORDER.indexOf(currentPlan); // Stripe tiene prioridad SOLO si existe cliente en Stripe. // Si no hay cliente (pilotos / configuración manual), usamos el estado del tenant. const stripeHasCustomer = stripeData?.has_customer === true; const subscriptionEnd = stripeHasCustomer ? (stripeData?.subscription_end || null) : tenantExpires; const isTrialing = stripeData?.status ==="trialing";
   const cancelAtPeriodEnd = stripeData?.cancel_at_period_end || false;
 
   const isTenantDateActive = tenantExpires ? new Date(tenantExpires) > new Date() : tenantIsActive;
@@ -204,7 +152,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
   const getStatusBadge = () => {
     if (isTrialing) {
       return (
-        <Badge className="bg-blue-500/10 text-[var(--gp-info)] border-blue-500/20 text-[10px]">
+        <Badge className="bg-[var(--gp-info-soft)] text-[var(--gp-info)] border-[var(--gp-info)] text-[10px]">
           <Clock className="h-2.5 w-2.5 mr-0.5" />
           Prueba
         </Badge>
@@ -213,7 +161,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
 
     if (cancelAtPeriodEnd) {
       return (
-        <Badge className="bg-amber-500/10 text-[var(--gp-warn-ink)] border-amber-500/30 text-[10px]">
+        <Badge className="bg-[var(--gp-warn-soft)] text-[var(--gp-warn-ink)] border-[var(--gp-warn)] text-[10px]">
           <AlertCircle className="h-2.5 w-2.5 mr-0.5" />
           Se cancelará
         </Badge>
@@ -222,7 +170,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
 
     if (isActive) {
       return (
-        <Badge className="bg-emerald-500/10 text-[var(--gp-ok-ink)] border-emerald-500/30 text-[10px]">
+        <Badge className="bg-[var(--gp-ok-soft)] text-[var(--gp-ok-ink)] border-[var(--gp-ok)] text-[10px]">
           <CheckCircle className="h-2.5 w-2.5 mr-0.5" />
           Activo
         </Badge>
@@ -230,7 +178,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
     }
 
     return (
-      <Badge className="bg-red-500/10 text-[var(--gp-danger-ink)] border-red-500/30 text-[10px]">
+      <Badge className="bg-[var(--gp-danger-soft)] text-[var(--gp-danger-ink)] border-[var(--gp-danger)] text-[10px]">
         <AlertCircle className="h-2.5 w-2.5 mr-0.5" />
         Expirado
       </Badge>
@@ -276,7 +224,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
                   {getStatusBadge()}
                   {billingCycle && (
                     <Badge variant="outline" className="text-[10px]">
-                      {billingCycle === "annual" ? "Anual" : "Mensual"}
+                      {billingCycle === "annual"?"Anual":"Mensual"}
                     </Badge>
                   )}
                 </div>
@@ -284,9 +232,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
                 {/* Subscription dates */}
                 {subscriptionEnd && isActive && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                    <Calendar className="h-3 w-3" />
-                    <span>
-                      {cancelAtPeriodEnd ? "Se cancela el" : "Renovación"}:{" "}
+                    <Calendar className="h-3 w-3"/> <span> {cancelAtPeriodEnd ?"Se cancela el":"Renovación"}:{" "}
                       {format(new Date(subscriptionEnd), "d MMM yyyy", { locale: es })}
                     </span>
                     {daysRemaining !== null && daysRemaining <= 7 && (
@@ -302,7 +248,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
 
           {/* Trial info */}
           {isTrialing && trialEnd && (
-            <div className="mt-3 p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
+            <div className="mt-3 p-3 rounded-lg bg-[var(--gp-info-soft)] border border-[var(--gp-info)]">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-[var(--gp-info)]" />
                 <div>
@@ -317,7 +263,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
 
           {/* Cancellation pending warning */}
           {cancelAtPeriodEnd && (
-            <div className="mt-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+            <div className="mt-3 p-3 rounded-lg bg-[var(--gp-warn-soft)] border border-[var(--gp-warn)]">
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-[var(--gp-warn)] mt-0.5" />
                 <div>
@@ -381,28 +327,13 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
                         </p>
                       </div>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Manage Subscription Button - Always visible */}
-      <Button
-        onClick={handleManageSubscription}
-        disabled={portalLoading}
-        variant={isActive ? "outline" : "default"}
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors"/> </button> ); })} </div> </CardContent> </Card> )} {/* Manage Subscription Button - Always visible */} <Button onClick={handleManageSubscription} disabled={portalLoading} variant={isActive ?"outline":"default"}
         className="w-full h-11 gap-2"
       >
         {portalLoading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
-          <Settings className="h-4 w-4" />
-        )}
-        {isActive ? "Gestionar suscripción" : "Reactivar suscripción"}
+          <Settings className="h-4 w-4"/> )} {isActive ?"Gestionar suscripción":"Reactivar suscripción"}
         <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
       </Button>
 

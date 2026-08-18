@@ -36,7 +36,7 @@ import type { PlanFeature } from "@/hooks/usePlanLimits";
 interface HelpBullet {
   text: string;
   requiredFeature?: PlanFeature;
-  requiredPlan?: "pro" | "business";
+  requiredPlan?: "pro"|"business";
 }
 
 interface HelpSection {
@@ -54,94 +54,42 @@ const HELP_SECTIONS: HelpSection[] = [
     icon: LayoutDashboard,
     hint: "Resumen del día, KPIs y checklist inicial",
     bullets: [
-      { text: "Métricas en vivo: citas, ingresos, ocupación" },
-      { text: "Acciones rápidas: crear cita, cobrar" },
-      { text: "Checklist de configuración del salón" },
-      { text: "Próximas citas y alertas" },
-    ],
-  },
-  {
-    id: "agenda",
+      { text: "Métricas en vivo: citas, ingresos, ocupación"}, { text:"Acciones rápidas: crear cita, cobrar"}, { text:"Checklist de configuración del salón"}, { text:"Próximas citas y alertas"}, ], }, { id:"agenda",
     label: "Agenda",
     icon: Calendar,
     hint: "Calendario por día/semana + lista de espera",
     bullets: [
-      { text: "Crea citas tocando un hueco vacío" },
-      { text: "Arrastra para mover, color por estilista" },
-      { text: "Confirmaciones por WhatsApp con 1 toque" },
-      { text: "Lista de espera con aviso automático" },
-    ],
-  },
-  {
-    id: "caja",
+      { text: "Crea citas tocando un hueco vacío"}, { text:"Arrastra para mover, color por estilista"}, { text:"Confirmaciones por WhatsApp con 1 toque"}, { text:"Lista de espera con aviso automático"}, ], }, { id:"caja",
     label: "Caja",
     icon: Wallet,
     hint: "Cobros, pedidos y cierre diario",
     bullets: [
-      { text: "Cobra al finalizar cita", requiredFeature: "cash_register", requiredPlan: "pro" },
-      { text: "Efectivo, tarjeta o mixto", requiredFeature: "cash_register", requiredPlan: "pro" },
-      { text: "Pedidos online de tu tienda" },
-      { text: "Cierre diario + Excel", requiredFeature: "cash_register", requiredPlan: "pro" },
-    ],
-  },
-  {
-    id: "clientes",
+      { text: "Cobra al finalizar cita", requiredFeature: "cash_register", requiredPlan: "pro"}, { text:"Efectivo, tarjeta o mixto", requiredFeature: "cash_register", requiredPlan: "pro"}, { text:"Pedidos online de tu tienda"}, { text:"Cierre diario + Excel", requiredFeature: "cash_register", requiredPlan: "pro"}, ], }, { id:"clientes",
     label: "Clientes",
     icon: Users,
     hint: "CRM, mensajes y notas",
     bullets: [
-      { text: "Directorio con historial completo" },
-      { text: "Etiquetas VIP automáticas" },
-      { text: "Notas privadas por cliente" },
-      { text: "Chat en tiempo real", requiredFeature: "messages", requiredPlan: "pro" },
-    ],
-  },
-  {
-    id: "catalogo",
+      { text: "Directorio con historial completo"}, { text:"Etiquetas VIP automáticas"}, { text:"Notas privadas por cliente"}, { text:"Chat en tiempo real", requiredFeature: "messages", requiredPlan: "pro"}, ], }, { id:"catalogo",
     label: "Catálogo",
     icon: ShoppingBag,
     hint: "Servicios, productos y paquetes",
     bullets: [
-      { text: "Servicios con precio y duración" },
-      { text: "Inventario de productos" },
-      { text: "Paquetes con descuento auto", requiredFeature: "packages", requiredPlan: "pro" },
-    ],
-  },
-  {
-    id: "marketing",
+      { text: "Servicios con precio y duración"}, { text:"Inventario de productos"}, { text:"Paquetes con descuento auto", requiredFeature: "packages", requiredPlan: "pro"}, ], }, { id:"marketing",
     label: "Marketing",
     icon: Megaphone,
     hint: "Posts, QR, promos y reseñas",
     bullets: [
-      { text: "Posts de tu portafolio visual" },
-      { text: "Tarjetas QR + cartel A4 para imprimir" },
-      { text: "Difusión por WhatsApp" },
-      { text: "Cupones de descuento", requiredFeature: "promotions", requiredPlan: "pro" },
-      { text: "Modera reseñas públicas" },
-    ],
-  },
-  {
-    id: "negocio",
+      { text: "Posts de tu portafolio visual"}, { text:"Tarjetas QR + cartel A4 para imprimir"}, { text:"Difusión por WhatsApp"}, { text:"Cupones de descuento", requiredFeature: "promotions", requiredPlan: "pro"}, { text:"Modera reseñas públicas"}, ], }, { id:"negocio",
     label: "Negocio",
     icon: Briefcase,
     hint: "Equipo, horarios, estadísticas y objetivos",
     bullets: [
-      { text: "Estilistas con color propio" },
-      { text: "Horarios y pausas" },
-      { text: "Comisiones automáticas", requiredFeature: "commissions", requiredPlan: "business" },
-      { text: "Estadísticas avanzadas", requiredFeature: "advanced_analytics", requiredPlan: "pro" },
-      { text: "Objetivos mensuales", requiredFeature: "monthly_goals", requiredPlan: "business" },
-    ],
-  },
-  {
-    id: "ajustes",
+      { text: "Estilistas con color propio"}, { text:"Horarios y pausas"}, { text:"Comisiones automáticas", requiredFeature: "commissions", requiredPlan: "business"}, { text:"Estadísticas avanzadas", requiredFeature: "advanced_analytics", requiredPlan: "pro"}, { text:"Objetivos mensuales", requiredFeature: "monthly_goals", requiredPlan: "business"}, ], }, { id:"ajustes",
     label: "Ajustes",
     icon: Settings,
     hint: "Logo, plan, notificaciones",
     bullets: [
-      { text: "Tema, colores y logo del salón" },
-      { text: "Plan de suscripción y facturación" },
-      { text: "Notificaciones push y email" },
+      { text: "Tema, colores y logo del salón"}, { text:"Plan de suscripción y facturación"}, { text:"Notificaciones push y email" },
     ],
   },
 ];
@@ -204,8 +152,7 @@ export function HelpCenter({ open, onOpenChange, onStartTour, hasFeature }: Help
                 exit={{ opacity: 0 }}
                 className="text-center py-8 text-muted-foreground text-sm"
               >
-                <Search className="h-7 w-7 mx-auto mb-2 opacity-40" />
-                Sin resultados para "{query}"
+                <Search className="h-7 w-7 mx-auto mb-2 opacity-40"/> Sin resultados para"{query}"
               </motion.div>
             ) : (
               filtered.map((section, idx) => {
@@ -236,20 +183,19 @@ export function HelpCenter({ open, onOpenChange, onStartTour, hasFeature }: Help
                             key={i}
                             className={cn(
                               "flex items-center gap-2 text-[12.5px] leading-snug",
-                              locked ? "text-muted-foreground/70" : "text-foreground/85",
+                              locked ? "text-muted-foreground/70":"text-foreground/85",
                             )}
                           >
                             <span
                               className={cn(
                                 "w-1 h-1 rounded-full shrink-0",
-                                locked ? "bg-muted-foreground/40" : "bg-[color:var(--gp-accent)]",
+                                locked ? "bg-muted-foreground/40":"bg-[color:var(--gp-accent)]",
                               )}
                             />
                             <span className="flex-1">{b.text}</span>
                             {locked && (
-                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[var(--gp-warn-soft)] text-[var(--gp-warn-ink)] dark:bg-amber-950/40  uppercase">
-                                <Lock className="h-2 w-2" />
-                                {b.requiredPlan === "business" ? "Biz" : "Pro"}
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-[var(--gp-warn-soft)] text-[var(--gp-warn-ink)]   uppercase">
+                                <Lock className="h-2 w-2"/> {b.requiredPlan ==="business"?"Biz":"Pro"}
                               </span>
                             )}
                           </li>

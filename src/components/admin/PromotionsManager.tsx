@@ -68,26 +68,17 @@ const PRESETS: TemplatePreset[] = [
     description: "10% off para nuevas clientas",
     icon: Sparkles,
     tone: "brand",
-    data: { name: "Bienvenida", discount_type: "percentage", discount_value: 10, code: "BIENVENIDA", applies_to: "all" },
-  },
-  {
-    id: "cumple",
+    data: { name: "Bienvenida", discount_type: "percentage", discount_value: 10, code: "BIENVENIDA", applies_to: "all"}, }, { id:"cumple",
     label: "Cumpleaños",
     description: "15% off el mes del cumple",
     icon: Cake,
     tone: "rose",
-    data: { name: "Cumpleaños", discount_type: "percentage", discount_value: 15, code: "CUMPLE", applies_to: "all" },
-  },
-  {
-    id: "reactivar",
+    data: { name: "Cumpleaños", discount_type: "percentage", discount_value: 15, code: "CUMPLE", applies_to: "all"}, }, { id:"reactivar",
     label: "Te echamos de menos",
     description: "20% off para reactivar inactivas",
     icon: Heart,
     tone: "warn",
-    data: { name: "Vuelve", discount_type: "percentage", discount_value: 20, code: "VUELVE", applies_to: "services" },
-  },
-  {
-    id: "primera",
+    data: { name: "Vuelve", discount_type: "percentage", discount_value: 20, code: "VUELVE", applies_to: "services"}, }, { id:"primera",
     label: "Primera visita",
     description: "5€ off mínimo 30€",
     icon: Gift,
@@ -252,13 +243,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
       } else {
         const { error } = await supabase.from("promotions").insert(payload);
         if (error) throw error;
-        toast({ title: "Promoción creada" });
-      }
-      setIsDialogOpen(false);
-      fetchPromotions();
-    } catch (e) {
-      const err = e as Error;
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+        toast({ title: "Promoción creada"}); } setIsDialogOpen(false); fetchPromotions(); } catch (e) { const err = e as Error; toast({ title:"Error", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -269,11 +254,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
     try {
       const { error } = await supabase.from("promotions").delete().eq("id", id);
       if (error) throw error;
-      toast({ title: "Promoción eliminada" });
-      fetchPromotions();
-    } catch (e) {
-      const err = e as Error;
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Promoción eliminada"}); fetchPromotions(); } catch (e) { const err = e as Error; toast({ title:"Error", description: err.message, variant: "destructive" });
     }
   };
 
@@ -287,20 +268,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
       fetchPromotions();
     } catch (e) {
       const err = e as Error;
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    }
-  };
-
-  const copyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    toast({ title: "Código copiado" });
-  };
-
-  const sharePromo = (promo: Promotion) => {
-    const link = `https://glowapp.app/${tenantSlug}`;
-    const valueLabel =
-      promo.discount_type === "percentage" ? `${promo.discount_value}%` : `${promo.discount_value}€`;
-    const codePart = promo.code ? ` con el código *${promo.code}*` : "";
+      toast({ title: "Error", description: err.message, variant: "destructive"}); } }; const copyCode = (code: string) => { navigator.clipboard.writeText(code); toast({ title:"Código copiado"}); }; const sharePromo = (promo: Promotion) => { const link = `https://glowapp.app/${tenantSlug}`; const valueLabel = promo.discount_type ==="percentage"? `${promo.discount_value}%` : `${promo.discount_value}€`; const codePart = promo.code ? ` con el código *${promo.code}*` :"";
     const text = `🎁 ${promo.name}: ${valueLabel} de descuento${codePart}. Reserva aquí: ${link}`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
@@ -308,19 +276,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
 
   const promoStatus = (p: Promotion): { label: string; tone: string } => {
     const now = new Date();
-    if (!p.is_active) return { label: "Inactiva", tone: "neutral" };
-    if (p.valid_until && new Date(p.valid_until) < now) return { label: "Expirada", tone: "neutral" };
-    if (p.max_uses && p.uses_count >= p.max_uses) return { label: "Agotada", tone: "neutral" };
-    if (p.valid_until) {
-      const diff = differenceInDays(new Date(p.valid_until), now);
-      if (diff <= 7 && diff >= 0) return { label: `Quedan ${diff}d`, tone: "warn" };
-    }
-    return { label: "Activa", tone: "ok" };
-  };
-
-  if (loading) {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
+    if (!p.is_active) return { label: "Inactiva", tone: "neutral"}; if (p.valid_until && new Date(p.valid_until) < now) return { label:"Expirada", tone: "neutral"}; if (p.max_uses && p.uses_count >= p.max_uses) return { label:"Agotada", tone: "neutral"}; if (p.valid_until) { const diff = differenceInDays(new Date(p.valid_until), now); if (diff <= 7 && diff >= 0) return { label: `Quedan ${diff}d`, tone:"warn"}; } return { label:"Activa", tone: "ok"}; }; if (loading) { return ( <div style={{ display:"flex", justifyContent: "center", padding: 48 }}>
         <Loader2 className="gp-spinner" />
       </div>
     );
@@ -344,7 +300,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
         <div className="gp-mkt-alert">
           <AlertTriangle style={{ width: 16, height: 16 }} />
           <div>
-            <strong>{stats.expiringSoon.length} expira{stats.expiringSoon.length === 1 ? "" : "n"} esta semana</strong>
+            <strong>{stats.expiringSoon.length} expira{stats.expiringSoon.length === 1 ? "":"n"} esta semana</strong>
             <span> · {stats.expiringSoon.map((p) => p.name).join(", ")}</span>
           </div>
         </div>
@@ -371,7 +327,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
             return (
               <div
                 key={promo.id}
-                className={`gp-card pad gp-mkt-promo${!promo.is_active ? " is-off" : ""}`}
+                className={`gp-card pad gp-mkt-promo${!promo.is_active ? " is-off":""}`}
               >
                 <div className="gp-mkt-promo-h">
                   <div className="gp-mkt-promo-title">
@@ -391,7 +347,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
                     <div>
                       <strong>{promo.name}</strong>
                       <span className={`gp-badge ${status.tone}`}>
-                        <span className="pip" style={{ background: "currentColor" }} />
+                        <span className="pip"style={{ background:"currentColor" }} />
                         {status.label}
                       </span>
                     </div>
@@ -404,8 +360,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
                       <Edit style={{ width: 14, height: 14 }} />
                     </button>
                     <button
-                      className="gp-icon-btn"
-                      style={{ color: "var(--gp-danger)" }}
+                      className="gp-icon-btn"style={{ color:"var(--gp-danger)" }}
                       onClick={() => handleDelete(promo.id)}
                       title="Eliminar"
                     >
@@ -427,7 +382,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
                   )}
                   {promo.applies_to !== "all" && (
                     <span className="gp-mkt-promo-tag">
-                      {promo.applies_to === "services" ? "Servicios" : "Productos"}
+                      {promo.applies_to === "services"?"Servicios":"Productos"}
                     </span>
                   )}
                   {promo.valid_until && (
@@ -468,7 +423,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingPromotion ? "Editar Promoción" : "Nueva Promoción"}
+              {editingPromotion ? "Editar Promoción":"Nueva Promoción"}
             </DialogTitle>
           </DialogHeader>
 
@@ -633,8 +588,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
             </button>
             {(!showPresets || editingPromotion) && (
               <button type="button" className="gp-btn primary" onClick={handleSave} disabled={saving}>
-                {saving && <Loader2 className="gp-spinner-sm" />}
-                {editingPromotion ? "Guardar" : "Crear"}
+                {saving && <Loader2 className="gp-spinner-sm"/>} {editingPromotion ?"Guardar":"Crear"}
               </button>
             )}
           </DialogFooter>

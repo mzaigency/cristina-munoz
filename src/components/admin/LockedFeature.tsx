@@ -12,7 +12,7 @@ interface LockedFeatureProps {
   tenantId: string;
   className?: string;
   children?: React.ReactNode;
-  variant?: "overlay" | "inline" | "badge";
+  variant?: "overlay"|"inline"|"badge";
 }
 
 const PLAN_NAMES: Record<string, string> = {
@@ -40,28 +40,12 @@ export const LockedFeature = ({
           onClick={() => setShowUpgrade(true)}
           className={cn(
             "inline-flex items-center gap-1.5 px-2 py-1 rounded-full",
-            "bg-[var(--gp-warn-soft)] dark:bg-amber-900/30 text-[var(--gp-warn-ink)] ",
-            "text-xs font-medium cursor-pointer hover:bg-[var(--gp-warn-soft)] dark:hover:bg-amber-900/50 transition-colors",
+            "bg-[var(--gp-warn-soft)]  text-[var(--gp-warn-ink)] ",
+            "text-xs font-medium cursor-pointer hover:bg-[var(--gp-warn-soft)]  transition-colors",
             className
           )}
         >
-          <Lock className="w-3 h-3" />
-          {planName}
-        </button>
-        
-        <UpgradePrompt
-          open={showUpgrade}
-          onOpenChange={setShowUpgrade}
-          currentPlan={currentPlan}
-          targetPlan={requiredPlan}
-          feature={featureName}
-          tenantId={tenantId}
-        />
-      </>
-    );
-  }
-
-  if (variant === "inline") {
+          <Lock className="w-3 h-3"/> {planName} </button> <UpgradePrompt open={showUpgrade} onOpenChange={setShowUpgrade} currentPlan={currentPlan} targetPlan={requiredPlan} feature={featureName} tenantId={tenantId} /> </> ); } if (variant ==="inline") {
     return (
       <>
         <motion.div
@@ -73,7 +57,7 @@ export const LockedFeature = ({
             className
           )}
         >
-          <div className="w-12 h-12 rounded-full bg-[var(--gp-warn-soft)] dark:bg-amber-900/30 flex items-center justify-center mb-3">
+          <div className="w-12 h-12 rounded-full bg-[var(--gp-warn-soft)]  flex items-center justify-center mb-3">
             <Crown className="w-6 h-6 text-[var(--gp-warn-ink)] " />
           </div>
           <h4 className="font-semibold text-foreground mb-1">{featureName}</h4>

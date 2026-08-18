@@ -62,11 +62,7 @@ const firstServiceName = (services: unknown): string | null => {
 };
 
 const STATUS_TONE: Record<string, { label: string; short: string; cls: string; dot: string }> = {
-  arrived: { label: "Llegada", short: "LLEG", cls: "bg-success-soft text-success", dot: "#16A249" },
-  confirmed: { label: "Confirmada", short: "CONF", cls: "bg-info-soft text-info", dot: "#2E7FD4" },
-  pending: { label: "Pendiente", short: "PEND", cls: "bg-warning-soft text-warning", dot: "#F59E0B" },
-  completed: {
-    label: "Completada",
+  arrived: { label: "Llegada", short: "LLEG", cls: "bg-success-soft text-success", dot: "#16A249"}, confirmed: { label:"Confirmada", short: "CONF", cls: "bg-info-soft text-info", dot: "#2E7FD4"}, pending: { label:"Pendiente", short: "PEND", cls: "bg-warning-soft text-warning", dot: "#F59E0B"}, completed: { label:"Completada",
     short: "HECHA",
     cls: "bg-success-soft text-success",
     dot: "#16A249",
@@ -137,9 +133,9 @@ function CardBody({
   const service = firstServiceName(b.services) || b.title || "";
   const done = isCompleted(b);
   const tone = done ? STATUS_TONE.completed : STATUS_TONE[b.status] || STATUS_TONE.confirmed;
-  const size: "sm" | "md" | "lg" = height < H_SM ? "sm" : height < H_LG ? "md" : "lg";
-  const strike = done ? "line-through decoration-[1.5px] decoration-success/70" : "";
-  const nameColor = done ? "text-success" : "text-ink-2";
+  const size: "sm"|"md"|"lg"= height < H_SM ?"sm": height < H_LG ?"md":"lg";
+  const strike = done ? "line-through decoration-[1.5px] decoration-success/70":"";
+  const nameColor = done ? "text-success":"text-ink-2";
 
   return (
     <>
@@ -149,10 +145,7 @@ function CardBody({
         style={{ background: done ? COMPLETED_COLOR : color }}
       />
       <span
-        className="relative flex-1 min-w-0 flex flex-col justify-center"
-        style={{ padding: size === "sm" ? "0 8px 3px 7px" : "7px 9px 7px 8px" }}
-      >
-        {size === "sm" ? (
+        className="relative flex-1 min-w-0 flex flex-col justify-center"style={{ padding: size ==="sm"?"0 8px 3px 7px":"7px 9px 7px 8px"}} > {size ==="sm" ? (
           /* Corta: nombre · servicio en una línea + punto de estado */
           <span className="flex items-center gap-1.5 w-full min-w-0">
             <span
@@ -183,18 +176,7 @@ function CardBody({
                   <span
                     className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full flex-none whitespace-nowrap ${tone.cls}`}
                   >
-                    {done && <Check className="w-2.5 h-2.5" strokeWidth={3} />}
-                    {narrow ? tone.short : tone.label}
-                  </span>
-                )}
-              </span>
-              {service && (
-                <span className={`block text-[12px] text-outline truncate mt-0.5 ${strike}`}>
-                  {service}
-                </span>
-              )}
-            </span>
-            {size === "lg" ? (
+                    {done && <Check className="w-2.5 h-2.5"strokeWidth={3} />} {narrow ? tone.short : tone.label} </span> )} </span> {service && ( <span className={`block text-[12px] text-outline truncate mt-0.5 ${strike}`}> {service} </span> )} </span> {size ==="lg" ? (
               /* Grande: hora inicio–fin abajo */
               <span
                 className={`mt-auto text-[11px] font-medium text-outline tabular-nums ${strike}`}
@@ -302,7 +284,7 @@ export function AgendaDayTimeline({
     <div className="font-body">
       <div className="flex items-center justify-center">
         <p className="text-xs font-medium text-outline tracking-wide">
-          {summary.totalCitas} {summary.totalCitas === 1 ? "CITA" : "CITAS"} · {summary.libres} LIBRES ·{" "}
+          {summary.totalCitas} {summary.totalCitas === 1 ? "CITA":"CITAS"} · {summary.libres} LIBRES ·{" "}
           {summary.occ}% OCUPACIÓN
         </p>
       </div>
@@ -352,22 +334,18 @@ export function AgendaDayTimeline({
                     <span className="truncate">{stylist.name}</span>
                     {blockCount > 0 && (
                       <span
-                        title={`${blockCount} bloqueo${blockCount > 1 ? "s" : ""}`}
-                        className="inline-flex items-center gap-0.5 flex-none rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-outline"
+                        title={`${blockCount} bloqueo${blockCount > 1 ? "s":""}`}
+                        className="inline-flex items-center gap-0.5 flex-none rounded-full bg-[var(--gp-chip)] px-1.5 py-0.5 text-[10px] font-bold text-outline"
                       >
-                        <Lock className="w-2.5 h-2.5" />
-                        {blockCount > 1 ? blockCount : ""}
+                        <Lock className="w-2.5 h-2.5"/> {blockCount > 1 ? blockCount :""}
                       </span>
                     )}
                   </h4>
                   <div className="flex gap-1 mt-0.5">
                     <span
-                      className="text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
-                      style={{ background: `${stylist.color}1a`, color: stylist.color }}
-                    >
-                      {realCount} {realCount === 1 ? "CITA" : "CITAS"}
+                      className="text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap"style={{ background: `${stylist.color}1a`, color: stylist.color }} > {realCount} {realCount === 1 ?"CITA":"CITAS"}
                     </span>
-                    <span className="text-[10px] font-bold bg-slate-100 text-outline px-1.5 py-0.5 rounded whitespace-nowrap">
+                    <span className="text-[10px] font-bold bg-[var(--gp-chip)] text-outline px-1.5 py-0.5 rounded whitespace-nowrap">
                       {occupancy}%
                     </span>
                   </div>
@@ -396,8 +374,7 @@ export function AgendaDayTimeline({
                 {/* Franja de descanso del horario */}
                 {hasBreak && breakH > 0 && (
                   <div
-                    className="absolute left-0 right-0 pointer-events-none flex items-center justify-center"
-                    style={{ top: breakTop, height: breakH, background: "rgba(245,158,11,.06)" }}
+                    className="absolute left-0 right-0 pointer-events-none flex items-center justify-center"style={{ top: breakTop, height: breakH, background:"rgba(245,158,11,.06)" }}
                   >
                     <span className="ag-break-pill">Descanso</span>
                   </div>
@@ -419,11 +396,7 @@ export function AgendaDayTimeline({
                           if (suppressClick.current) return;
                           onQuickCreate(stylist.slug, time);
                         }}
-                        className="absolute left-0 right-0 group flex items-center justify-center z-[7]"
-                        style={{
-                          top: i * 30 * PPM,
-                          height: 30 * PPM,
-                          pointerEvents: dragActive ? "none" : undefined,
+                        className="absolute left-0 right-0 group flex items-center justify-center z-[7]"style={{ top: i * 30 * PPM, height: 30 * PPM, pointerEvents: dragActive ?"none" : undefined,
                         }}
                       >
                         {/* Hueco resaltado: ratón (hover) o toque sostenido (active).
@@ -451,8 +424,7 @@ export function AgendaDayTimeline({
                   return (
                     <div
                       key={b.id}
-                      className="absolute z-[1] bg-striped-gray border border-line rounded-xl opacity-90 flex flex-col items-center justify-center gap-2 px-3 text-center overflow-hidden pointer-events-none"
-                      style={{ left: 0, width: "100%", top: 0, height: railHeight }}
+                      className="absolute z-[1] bg-striped-gray border border-line rounded-xl opacity-90 flex flex-col items-center justify-center gap-2 px-3 text-center overflow-hidden pointer-events-none"style={{ left: 0, width:"100%", top: 0, height: railHeight }}
                     >
                       <Lock className="w-5 h-5 text-outline" />
                       <span className="text-[13px] font-semibold text-outline">{label}</span>
@@ -463,20 +435,7 @@ export function AgendaDayTimeline({
                           onClick={() => onUnblock(b)}
                           className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-full bg-white border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
                         >
-                          <LockOpen className="w-3.5 h-3.5" />
-                          Quitar bloqueo
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {/* Capa 2 — citas y bloqueos de horas, repartiéndose el hueco */}
-                {items.map(({ b, start, end, col, cols }) => {
-                  const dragged = drag?.active && drag.b.id === b.id;
-                  const blocked = isBlocked(b);
-                  // Al mover, en su sitio original queda el hueco marcado
-                  if (dragged && drag!.mode === "move") {
+                          <LockOpen className="w-3.5 h-3.5"/> Quitar bloqueo </button> )} </div> ); })} {/* Capa 2 — citas y bloqueos de horas, repartiéndose el hueco */} {items.map(({ b, start, end, col, cols }) => { const dragged = drag?.active && drag.b.id === b.id; const blocked = isBlocked(b); // Al mover, en su sitio original queda el hueco marcado if (dragged && drag!.mode ==="move") {
                     const hTop = Math.max(0, (start - dayStart) * PPM);
                     const hH = Math.max(
                       24,
@@ -527,11 +486,7 @@ export function AgendaDayTimeline({
 
                         {canDrag && (
                           <span
-                            role="separator"
-                            aria-label={`Mover el bloqueo de ${fromMinutes(start)} a ${fromMinutes(end)}`}
-                            onPointerDown={(e) => {
-                              e.stopPropagation();
-                              beginDrag(e, b, "move", {
+                            role="separator"aria-label={`Mover el bloqueo de ${fromMinutes(start)} a ${fromMinutes(end)}`} onPointerDown={(e) => { e.stopPropagation(); beginDrag(e, b,"move", {
                                 start,
                                 dur: end - start,
                                 col,
@@ -539,12 +494,10 @@ export function AgendaDayTimeline({
                                 colId: stylist.slug,
                               });
                             }}
-                            className="pointer-events-auto absolute left-0 top-0 bottom-0 w-5 flex items-center justify-center cursor-grab active:cursor-grabbing"
-                            style={{ touchAction: "none", ...NO_SELECT }}
+                            className="pointer-events-auto absolute left-0 top-0 bottom-0 w-5 flex items-center justify-center cursor-grab active:cursor-grabbing"style={{ touchAction:"none", ...NO_SELECT }}
                           >
                             <span
-                              className="flex flex-col gap-[3px] rounded-full bg-white px-[3px] py-1"
-                              style={{ boxShadow: "0 0 0 1px rgba(20,22,40,.06)" }}
+                              className="flex flex-col gap-[3px] rounded-full bg-white px-[3px] py-1"style={{ boxShadow:"0 0 0 1px rgba(20,22,40,.06)" }}
                             >
                               {[0, 1, 2].map((i) => (
                                 <span key={i} className="w-[3px] h-[3px] rounded-full bg-outline/70" />
@@ -554,7 +507,7 @@ export function AgendaDayTimeline({
                         )}
 
                         <span
-                          className="pointer-events-auto absolute top-1 inline-flex items-center gap-1 rounded-full bg-slate-200 pl-2 pr-1 py-0.5 text-[10px] font-bold text-outline"
+                          className="pointer-events-auto absolute top-1 inline-flex items-center gap-1 rounded-full bg-[var(--gp-chip)] pl-2 pr-1 py-0.5 text-[10px] font-bold text-outline"
                           style={{
                             left: canDrag ? 22 : 6,
                             maxWidth: `calc(100% - ${canDrag ? 28 : 12}px)`,
@@ -587,10 +540,7 @@ export function AgendaDayTimeline({
                         {onResize && (
                           <span
                             role="separator"
-                            aria-label="Cambiar las horas bloqueadas"
-                            onPointerDown={(e) => {
-                              e.stopPropagation();
-                              beginDrag(e, b, "resize", {
+                            aria-label="Cambiar las horas bloqueadas"onPointerDown={(e) => { e.stopPropagation(); beginDrag(e, b,"resize", {
                                 start,
                                 dur: end - start,
                                 col,
@@ -598,18 +548,9 @@ export function AgendaDayTimeline({
                                 colId: stylist.slug,
                               });
                             }}
-                            className="pointer-events-auto absolute bottom-0 left-0 right-0 h-3 flex items-end justify-center cursor-ns-resize"
-                            style={{ touchAction: "none", ...NO_SELECT }}
+                            className="pointer-events-auto absolute bottom-0 left-0 right-0 h-3 flex items-end justify-center cursor-ns-resize"style={{ touchAction:"none", ...NO_SELECT }}
                           >
-                            <span className="h-[3px] w-7 rounded-full bg-outline/45" />
-                          </span>
-                        )}
-                      </div>
-                    );
-                  }
-                  const done = isCompleted(b);
-                  const size: "sm" | "md" | "lg" =
-                    height < H_SM ? "sm" : height < H_LG ? "md" : "lg";
+                            <span className="h-[3px] w-7 rounded-full bg-outline/45"/> </span> )} </div> ); } const done = isCompleted(b); const size:"sm"|"md"|"lg"= height < H_SM ?"sm": height < H_LG ?"md":"lg";
                   // reparto horizontal cuando hay solapes entre citas
                   const left = `calc(4px + (100% - 8px) * ${col / cols})`;
                   const width = `calc((100% - 8px) / ${cols} - ${cols > 1 ? 3 : 0}px)`;
@@ -618,14 +559,7 @@ export function AgendaDayTimeline({
                   return (
                     <div
                       key={b.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        if (suppressClick.current) return;
-                        onSelect(b);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
+                      role="button"tabIndex={0} onClick={() => { if (suppressClick.current) return; onSelect(b); }} onKeyDown={(e) => { if (e.key ==="Enter"|| e.key ===" ") {
                           e.preventDefault();
                           onSelect(b);
                         }
@@ -643,14 +577,7 @@ export function AgendaDayTimeline({
                         });
                       }}
                       className={`absolute z-10 text-left rounded-2xl flex overflow-hidden select-none active:scale-[.98] transition-transform ease-brand group/card min-[920px]:hover:-translate-y-px min-[920px]:hover:outline min-[920px]:hover:outline-1 min-[920px]:hover:outline-primary/25 ${
-                        canDrag ? "cursor-grab active:cursor-grabbing" : ""
-                      }`}
-                      style={{
-                        left,
-                        width,
-                        top,
-                        height,
-                        background: done ? COMPLETED_BG : "#fff",
+                        canDrag ? "cursor-grab active:cursor-grabbing":""}`} style={{ left, width, top, height, background: done ? COMPLETED_BG :"#fff",
                         boxShadow: size === "sm" ? SHADOW_SM : IOS_SHADOW,
                         opacity: done ? 0.9 : 1,
                         ...NO_SELECT,
@@ -669,11 +596,7 @@ export function AgendaDayTimeline({
                           es el único sitio desde el que se puede arrastrar. */}
                       {canDrag && (
                         <span
-                          role="separator"
-                          aria-label={`Mover la cita de ${b.customer_name}`}
-                          onPointerDown={(e) => {
-                            e.stopPropagation();
-                            beginDrag(e, b, "move", {
+                          role="separator"aria-label={`Mover la cita de ${b.customer_name}`} onPointerDown={(e) => { e.stopPropagation(); beginDrag(e, b,"move", {
                               start,
                               dur: end - start,
                               col,
@@ -682,8 +605,7 @@ export function AgendaDayTimeline({
                             });
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="absolute left-0 top-0 bottom-0 w-5 flex items-center cursor-grab active:cursor-grabbing"
-                          style={{ touchAction: "none", paddingLeft: 5.5, ...NO_SELECT }}
+                          className="absolute left-0 top-0 bottom-0 w-5 flex items-center cursor-grab active:cursor-grabbing"style={{ touchAction:"none", paddingLeft: 5.5, ...NO_SELECT }}
                         >
                           <span className="flex flex-col gap-[3px]">
                             {[0, 1, 2].map((i) => (
@@ -697,54 +619,15 @@ export function AgendaDayTimeline({
                           cortas: son justo las que más falta hace poder estirar. */}
                       {onResize && (
                         <span
-                          role="separator"
-                          aria-label={`Cambiar duración de la cita de ${b.customer_name}`}
-                          onPointerDown={(e) => {
-                            e.stopPropagation();
-                            beginDrag(e, b, "resize", { start, dur: end - start, col, cols, colId: stylist.slug });
+                          role="separator"aria-label={`Cambiar duración de la cita de ${b.customer_name}`} onPointerDown={(e) => { e.stopPropagation(); beginDrag(e, b,"resize", { start, dur: end - start, col, cols, colId: stylist.slug });
                           }}
                           onClick={(e) => e.stopPropagation()}
                           className={`absolute bottom-0 left-0 right-0 flex items-end justify-center pb-0.5 cursor-ns-resize opacity-45 min-[920px]:opacity-0 min-[920px]:group-hover/card:opacity-100 transition-opacity ${
-                            size === "sm" ? "h-2.5" : "h-3.5"
-                          }`}
-                          style={{ touchAction: "none", ...NO_SELECT }}
+                            size === "sm"?"h-2.5":"h-3.5"}`} style={{ touchAction:"none", ...NO_SELECT }}
                         >
                           <span
                             className={`h-[3px] rounded-full bg-outline/40 ${
-                              size === "sm" ? "w-5" : "w-7"
-                            }`}
-                          />
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {/* Arrastre: guía de encaje (dónde cae) + holograma (dónde está el dedo) */}
-                {ghost &&
-                  (() => {
-                    const ghostBlock = isBlocked(ghost.b);
-                    const gCols = ghost.mode === "resize" ? ghost.cols : 1;
-                    const gCol = ghost.mode === "resize" ? ghost.col : 0;
-                    const left = `calc(4px + (100% - 8px) * ${gCol / gCols})`;
-                    const width = `calc((100% - 8px) / ${gCols} - ${gCols > 1 ? 3 : 0}px)`;
-
-                    const snapTop = Math.max(0, (ghost.start - dayStart) * PPM);
-                    const snapH = Math.max(
-                      24,
-                      Math.min(ghost.dur, dayEnd - ghost.start) * PPM,
-                    );
-                    // el holograma va en la posición libre: se mueve 1:1 con el puntero
-                    const rawTop =
-                      ghost.mode === "resize" ? snapTop : (ghost.rawStart - dayStart) * PPM;
-                    const rawH =
-                      ghost.mode === "resize" ? Math.max(24, ghost.rawDur * PPM) : snapH;
-                    const done = isCompleted(ghost.b);
-                    const badgeTop = Math.max(
-                      2,
-                      Math.min(
-                        railHeight - 20,
-                        ghost.mode === "resize" ? rawTop + rawH + 2 : rawTop - 21,
+                              size === "sm"?"w-5":"w-7"}`} /> </span> )} </div> ); })} {/* Arrastre: guía de encaje (dónde cae) + holograma (dónde está el dedo) */} {ghost && (() => { const ghostBlock = isBlocked(ghost.b); const gCols = ghost.mode ==="resize"? ghost.cols : 1; const gCol = ghost.mode ==="resize"? ghost.col : 0; const left = `calc(4px + (100% - 8px) * ${gCol / gCols})`; const width = `calc((100% - 8px) / ${gCols} - ${gCols > 1 ? 3 : 0}px)`; const snapTop = Math.max(0, (ghost.start - dayStart) * PPM); const snapH = Math.max( 24, Math.min(ghost.dur, dayEnd - ghost.start) * PPM, ); // el holograma va en la posición libre: se mueve 1:1 con el puntero const rawTop = ghost.mode ==="resize"? snapTop : (ghost.rawStart - dayStart) * PPM; const rawH = ghost.mode ==="resize"? Math.max(24, ghost.rawDur * PPM) : snapH; const done = isCompleted(ghost.b); const badgeTop = Math.max( 2, Math.min( railHeight - 20, ghost.mode ==="resize" ? rawTop + rawH + 2 : rawTop - 21,
                       ),
                     );
 
@@ -752,27 +635,14 @@ export function AgendaDayTimeline({
                       <>
                         {/* Guía punteada en la posición encajada (15 min) */}
                         <div
-                          className="absolute z-[15] rounded-2xl border-2 border-dashed pointer-events-none transition-all duration-100 ease-out"
-                          style={{
-                            left,
-                            width,
-                            top: snapTop,
-                            height: snapH,
-                            borderColor: "hsl(var(--primary) / 0.5)",
+                          className="absolute z-[15] rounded-2xl border-2 border-dashed pointer-events-none transition-all duration-100 ease-out"style={{ left, width, top: snapTop, height: snapH, borderColor:"hsl(var(--primary) / 0.5)",
                             background: "hsl(var(--primary) / 0.06)",
                           }}
                         />
                         {/* Holograma translúcido siguiendo al puntero */}
                         <div
-                          className="absolute z-20 rounded-2xl flex overflow-hidden pointer-events-none"
-                          style={{
-                            left,
-                            width,
-                            top: 0,
-                            height: rawH,
-                            transform: `translate3d(0, ${rawTop}px, 0) scale(1.03)`,
-                            willChange: "transform",
-                            background: done ? "rgba(241,250,244,.82)" : "rgba(255,255,255,.82)",
+                          className="absolute z-20 rounded-2xl flex overflow-hidden pointer-events-none"style={{ left, width, top: 0, height: rawH, transform: `translate3d(0, ${rawTop}px, 0) scale(1.03)`, willChange:"transform",
+                            background: done ? "rgba(241,250,244,.82)":"rgba(255,255,255,.82)",
                             backdropFilter: "blur(8px)",
                             WebkitBackdropFilter: "blur(8px)",
                             boxShadow: `${SHADOW_DRAG}, 0 0 0 1.5px hsl(var(--primary) / 0.35)`,
@@ -782,8 +652,7 @@ export function AgendaDayTimeline({
                             <span className="relative flex-1 flex items-center justify-center overflow-hidden">
                               <span className="absolute inset-0 bg-striped-gray opacity-60" />
                               <span className="relative inline-flex items-center gap-1 text-[11px] font-bold text-outline">
-                                <Lock className="w-3 h-3" />
-                                {ghost.b.title || "Bloqueado"}
+                                <Lock className="w-3 h-3"/> {ghost.b.title ||"Bloqueado"}
                               </span>
                             </span>
                           ) : (
@@ -818,8 +687,7 @@ export function AgendaDayTimeline({
               <div className="flex items-center">
                 <div className="w-11 h-0.5 bg-gradient-brand" />
                 <div
-                  className="w-2.5 h-2.5 rounded-full bg-accent -ml-1 border-2 border-white flex-none"
-                  style={{ boxShadow: "0 0 8px rgba(152,50,154,0.6)" }}
+                  className="w-2.5 h-2.5 rounded-full bg-accent -ml-1 border-2 border-white flex-none"style={{ boxShadow:"0 0 8px rgba(152,50,154,0.6)" }}
                 />
                 <div className="flex-1 h-0.5 bg-gradient-brand opacity-40" />
                 <div className="bg-gradient-brand text-white text-[9px] font-bold px-2 py-0.5 rounded-l flex-none">

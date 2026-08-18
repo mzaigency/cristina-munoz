@@ -82,8 +82,8 @@ export const CalendarCRM = () => {
   }, []); // El array vacío [] asegura que esto se ejecute solo una vez.
   const [blockStartDate, setBlockStartDate] = useState<Date | undefined>(undefined);
   const [blockEndDate, setBlockEndDate] = useState<Date | undefined>(undefined);
-  const [blockPeriod, setBlockPeriod] = useState<"day" | "week" | "month" | "hours">("day");
-  const [blockStylist, setBlockStylist] = useState<"cris" | "desi" | "both">("both");
+  const [blockPeriod, setBlockPeriod] = useState<"day"|"week"|"month"|"hours">("day");
+  const [blockStylist, setBlockStylist] = useState<"cris"|"desi"|"both">("both");
   const [blockStartTime, setBlockStartTime] = useState<string>("09:00");
   const [blockEndTime, setBlockEndTime] = useState<string>("19:00");
   const [completionDialogOpen, setCompletionDialogOpen] = useState(false);
@@ -134,17 +134,7 @@ export const CalendarCRM = () => {
       toast({
         title: "Error en la búsqueda",
         description: error.message || "No se pudo realizar la búsqueda",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleSelectSearchResult = (result: typeof searchResults[0]) => {
-    // Jump to the exact date of the selected appointment
-    const appointmentDate = parseISO(result.Fecha);
-    const dateKey = format(appointmentDate, "yyyy-MM-dd");
+        variant: "destructive"}); } finally { setIsSearching(false); } }; const handleSelectSearchResult = (result: typeof searchResults[0]) => { // Jump to the exact date of the selected appointment const appointmentDate = parseISO(result.Fecha); const dateKey = format(appointmentDate,"yyyy-MM-dd");
     setWeekStart(startOfWeek(appointmentDate, { weekStartsOn: 1 }));
     setActiveTab(dateKey);
     setShowSearchResults(false);
@@ -158,18 +148,7 @@ export const CalendarCRM = () => {
       setTimeout(() => {
         const eventElement = document.querySelector(`[data-event-id="${result.google_calendar_event_id}"]`);
         if (eventElement) {
-          eventElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 300);
-      
-      // Clear highlight after 5 seconds
-      setTimeout(() => {
-        setHighlightedBookingId(null);
-      }, 5000);
-    }
-    
-    toast({
-      title: "Cita encontrada",
+          eventElement.scrollIntoView({ behavior: "smooth", block: "center"}); } }, 300); // Clear highlight after 5 seconds setTimeout(() => { setHighlightedBookingId(null); }, 5000); } toast({ title:"Cita encontrada",
       description: `${result.customer_name} - ${format(appointmentDate, "d MMM yyyy", { locale: es })}`
     });
   };
@@ -272,32 +251,9 @@ export const CalendarCRM = () => {
       if (error) throw error;
       toast({
         title: "Cita actualizada",
-        description: "Los cambios se han guardado correctamente"
-      });
-      setIsEditDialogOpen(false);
-      setSelectedEvent(null);
-      fetchEvents();
-    } catch (error: any) {
-      toast({
-        title: "Error",
+        description: "Los cambios se han guardado correctamente"}); setIsEditDialogOpen(false); setSelectedEvent(null); fetchEvents(); } catch (error: any) { toast({ title:"Error",
         description: error.message || "Error al actualizar la cita",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  const handleToggleCompleted = async (event: CalendarEvent) => {
-    try {
-      // Si está marcando como completada, mostrar el diálogo
-      if (!event.completed) {
-        setPendingCompletionEvent(event);
-        setCompletionDialogOpen(true);
-        return;
-      }
-
-      // Si está desmarcando como completada, actualizar directamente
-      const updatedDescription = (event.description || "").replace("[✓ COMPLETADA] ", "");
+        variant: "destructive"}); } finally { setLoading(false); } }; const handleToggleCompleted = async (event: CalendarEvent) => { try { // Si está marcando como completada, mostrar el diálogo if (!event.completed) { setPendingCompletionEvent(event); setCompletionDialogOpen(true); return; } // Si está desmarcando como completada, actualizar directamente const updatedDescription = (event.description ||"").replace("[✓ COMPLETADA] ", "");
       const {
         error
       } = await supabase.functions.invoke("update-calendar-event", {
@@ -320,11 +276,7 @@ export const CalendarCRM = () => {
       } : e));
       toast({
         title: "Cita desmarcada",
-        description: "La cita se ha desmarcado"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
+        description: "La cita se ha desmarcado"}); } catch (error: any) { toast({ title:"Error",
         description: error.message || "Error al actualizar la cita",
         variant: "destructive"
       });
@@ -391,24 +343,9 @@ export const CalendarCRM = () => {
       }
       toast({
         title: "Cita completada",
-        description: booking ? "¡Cliente atendido! Mensaje de valoración enviado" : "¡Cliente atendido!"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
+        description: booking ? "¡Cliente atendido! Mensaje de valoración enviado":"¡Cliente atendido!"}); } catch (error: any) { toast({ title:"Error",
         description: error.message || "Error al completar la cita",
-        variant: "destructive"
-      });
-    } finally {
-      setCompletionDialogOpen(false);
-      setPendingCompletionEvent(null);
-    }
-  };
-  const handleCancelCompletion = async () => {
-    if (!pendingCompletionEvent) return;
-    try {
-      // Solo actualizar el estado sin enviar mensaje
-      const updatedDescription = `[✓ COMPLETADA] ${pendingCompletionEvent.description || ""}`;
+        variant: "destructive"}); } finally { setCompletionDialogOpen(false); setPendingCompletionEvent(null); } }; const handleCancelCompletion = async () => { if (!pendingCompletionEvent) return; try { // Solo actualizar el estado sin enviar mensaje const updatedDescription = `[✓ COMPLETADA] ${pendingCompletionEvent.description ||""}`;
       const {
         error
       } = await supabase.functions.invoke("update-calendar-event", {
@@ -431,11 +368,7 @@ export const CalendarCRM = () => {
       } : e));
       toast({
         title: "Cita completada",
-        description: "¡Cliente atendido!"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
+        description: "¡Cliente atendido!"}); } catch (error: any) { toast({ title:"Error",
         description: error.message || "Error al completar la cita",
         variant: "destructive"
       });
@@ -459,30 +392,11 @@ export const CalendarCRM = () => {
       if (error) throw error;
       toast({
         title: "Cita eliminada",
-        description: "La cita se ha eliminado del calendario"
-      });
-      fetchEvents();
-    } catch (error: any) {
-      toast({
-        title: "Error",
+        description: "La cita se ha eliminado del calendario"}); fetchEvents(); } catch (error: any) { toast({ title:"Error",
         description: error.message || "Error al eliminar la cita",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  const handleBlockPeriod = async () => {
-    if (!blockStartDate) {
-      toast({
-        title: "Error",
+        variant: "destructive"}); } finally { setLoading(false); } }; const handleBlockPeriod = async () => { if (!blockStartDate) { toast({ title:"Error",
         description: "Debes seleccionar una fecha de inicio",
-        variant: "destructive"
-      });
-      return;
-    }
-    let endDate = blockStartDate;
-    if (blockPeriod === "week") {
+        variant: "destructive"}); return; } let endDate = blockStartDate; if (blockPeriod ==="week") {
       endDate = addWeeks(blockStartDate, 1);
     } else if (blockPeriod === "month") {
       endDate = addMonths(blockStartDate, 1);
@@ -546,7 +460,7 @@ export const CalendarCRM = () => {
       }
       toast({
         title: "Periodo bloqueado",
-        description: blockPeriod === "hours" ? "Se han bloqueado las horas correctamente" : `Se ha bloqueado el periodo de vacaciones correctamente`
+        description: blockPeriod === "hours"?"Se han bloqueado las horas correctamente" : `Se ha bloqueado el periodo de vacaciones correctamente`
       });
       setIsBlockDialogOpen(false);
       setBlockStartDate(undefined);
@@ -560,15 +474,7 @@ export const CalendarCRM = () => {
       toast({
         title: "Error",
         description: error.message || "Error al bloquear el periodo",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  const handleJumpToDate = (date: Date | undefined) => {
-    if (date) {
-      const dateKey = format(date, "yyyy-MM-dd");
+        variant: "destructive"}); } finally { setLoading(false); } }; const handleJumpToDate = (date: Date | undefined) => { if (date) { const dateKey = format(date,"yyyy-MM-dd");
       setWeekStart(startOfWeek(date, {
         weekStartsOn: 1
       }));
@@ -790,10 +696,7 @@ export const CalendarCRM = () => {
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Input
-                placeholder="Buscar por nombre, teléfono..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="Buscar por nombre, teléfono..."value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key ==="Enter" && handleSearch()}
                 className="pr-8"
               />
               {searchQuery && (
@@ -882,8 +785,7 @@ export const CalendarCRM = () => {
       </div>
 
       {loading ? <div className="flex justify-center items-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div> : <Tabs value={activeTab || format(weekDays.find(day => isSameDay(day, new Date())) || weekDays[0], "yyyy-MM-dd")} onValueChange={setActiveTab} className="w-full">
+          <Loader2 className="h-8 w-8 animate-spin text-primary"/> </div> : <Tabs value={activeTab || format(weekDays.find(day => isSameDay(day, new Date())) || weekDays[0],"yyyy-MM-dd")} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full justify-start overflow-x-auto flex-nowrap md:flex-wrap h-auto gap-1 bg-muted/50 p-1">
             {weekDays.map(day => {
           const dateKey = format(day, "yyyy-MM-dd");
@@ -926,7 +828,7 @@ export const CalendarCRM = () => {
                     )}
                   </div>
                   <span className="text-[10px] md:text-xs text-muted-foreground">
-                    {dayEvents.length} {dayEvents.length === 1 ? "cita" : "citas"}
+                    {dayEvents.length} {dayEvents.length === 1 ? "cita":"citas"}
                   </span>
                 </TabsTrigger>;
         })}
@@ -980,11 +882,11 @@ export const CalendarCRM = () => {
                         const breakDurationMinutes = 150; // 2.5 horas de duración (acaba a las 15:00)
                         const top = (breakStartMinutes / 60) * hourRowHeight;
                         const height = (breakDurationMinutes / 60) * hourRowHeight;
-                        return <div className="absolute inset-x-0 bg-gray-200/40 dark:bg-gray-700/20 z-0 flex items-center justify-center pointer-events-none" style={{
+                        return <div className="absolute inset-x-0 bg-[var(--gp-chip)]  z-0 flex items-center justify-center pointer-events-none" style={{
                           top: `${top}px`,
                           height: `${height}px`
                         }}>
-                                    <span className="text-[8px] md:text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-1 md:px-2 py-0.5 rounded">
+                                    <span className="text-[8px] md:text-[10px] font-medium text-[var(--gp-ink2)]  bg-background/80 px-1 md:px-2 py-0.5 rounded">
                                       Descanso
                                     </span>
                                   </div>;
@@ -1005,7 +907,7 @@ export const CalendarCRM = () => {
                         const widthPercentage = 100 / totalColumns;
                         const leftPercentage = column * widthPercentage;
                         const isHighlighted = highlightedBookingId === event.id;
-                        return <div key={event.id} data-event-id={event.id} className={`absolute group bg-[var(--gp-info-soft)] dark:bg-blue-950/20 border border-[var(--gp-info-soft)]  rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 animate-pulse z-30" : ""}`} style={{
+                        return <div key={event.id} data-event-id={event.id} className={`absolute group bg-[var(--gp-info-soft)]  border border-[var(--gp-info-soft)]  rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50":""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 animate-pulse z-30":""}`} style={{
                           top: `${position.top}px`,
                           height: `${position.height}px`,
                           left: `${leftPercentage}%`,
@@ -1015,7 +917,7 @@ export const CalendarCRM = () => {
                                     <div className="flex items-start gap-1 md:gap-2 h-full">
                                       <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-3 h-3 md:w-4 md:h-4 rounded border cursor-pointer accent-blue-500 flex-shrink-0" />
                                       <div className="flex-1 min-w-0 overflow-hidden">
-                                        <p className={`text-[10px] md:text-xs font-medium leading-tight truncate ${event.completed ? "line-through" : ""}`}>
+                                        <p className={`text-[10px] md:text-xs font-medium leading-tight truncate ${event.completed ? "line-through":""}`}>
                                           {event.skipAvailabilityCheck && (
                                             <span title="Cita sin restricciones">
                                               <AlertTriangle className="inline-block h-3 w-3 mr-0.5 text-[var(--gp-warn)]" />
@@ -1059,11 +961,11 @@ export const CalendarCRM = () => {
                         const breakDurationMinutes = 150; // 2.5 horas de duración (acaba a las 15:00)
                         const top = (breakStartMinutes / 60) * hourRowHeight;
                         const height = (breakDurationMinutes / 60) * hourRowHeight;
-                        return <div className="absolute inset-x-0 bg-gray-200/40 dark:bg-gray-700/20 z-0 flex items-center justify-center pointer-events-none" style={{
+                        return <div className="absolute inset-x-0 bg-[var(--gp-chip)]  z-0 flex items-center justify-center pointer-events-none" style={{
                           top: `${top}px`,
                           height: `${height}px`
                         }}>
-                                    <span className="text-[8px] md:text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-background/80 px-1 md:px-2 py-0.5 rounded">
+                                    <span className="text-[8px] md:text-[10px] font-medium text-[var(--gp-ink2)]  bg-background/80 px-1 md:px-2 py-0.5 rounded">
                                       Descanso
                                     </span>
                                   </div>;
@@ -1084,7 +986,7 @@ export const CalendarCRM = () => {
                         const widthPercentage = 100 / totalColumns;
                         const leftPercentage = column * widthPercentage;
                         const isHighlighted = highlightedBookingId === event.id;
-                        return <div key={event.id} data-event-id={event.id} className={`absolute group bg-[var(--gp-purple-soft)] dark:bg-purple-950/20 border border-[var(--gp-purple-soft)]  rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50" : ""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 animate-pulse z-30" : ""}`} style={{
+                        return <div key={event.id} data-event-id={event.id} className={`absolute group bg-[var(--gp-purple-soft)]  border border-[var(--gp-purple-soft)]  rounded-md p-1 md:p-2 transition-all hover:shadow-md hover:z-20 overflow-hidden ${event.completed ? "opacity-50":""} ${isHighlighted ? "ring-4 ring-primary ring-offset-2 animate-pulse z-30":""}`} style={{
                           top: `${position.top}px`,
                           height: `${position.height}px`,
                           left: `${leftPercentage}%`,
@@ -1094,7 +996,7 @@ export const CalendarCRM = () => {
                                     <div className="flex items-start gap-1 md:gap-2 h-full">
                                       <input type="checkbox" checked={event.completed || false} onChange={() => handleToggleCompleted(event)} className="mt-0.5 w-3 h-3 md:w-4 md:h-4 rounded border cursor-pointer accent-purple-500 flex-shrink-0" />
                                       <div className="flex-1 min-w-0 overflow-hidden">
-                                        <p className={`text-[10px] md:text-xs font-medium leading-tight truncate ${event.completed ? "line-through" : ""}`}>
+                                        <p className={`text-[10px] md:text-xs font-medium leading-tight truncate ${event.completed ? "line-through":""}`}>
                                           {event.skipAvailabilityCheck && (
                                             <span title="Cita sin restricciones">
                                               <AlertTriangle className="inline-block h-3 w-3 mr-0.5 text-[var(--gp-warn)]" />
@@ -1159,14 +1061,14 @@ export const CalendarCRM = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-description">Descripción</Label>
-                <Textarea id="edit-description" value={selectedEvent.description || ""} onChange={e => setSelectedEvent({
+                <Textarea id="edit-description"value={selectedEvent.description ||""} onChange={e => setSelectedEvent({
               ...selectedEvent,
               description: e.target.value
             })} rows={3} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-date">Fecha</Label>
-                <Input id="edit-date" type="date" value={safeFormatDateTime(selectedEvent.start?.dateTime, "yyyy-MM-dd")} onChange={e => {
+                <Input id="edit-date" type="date"value={safeFormatDateTime(selectedEvent.start?.dateTime,"yyyy-MM-dd")} onChange={e => {
               const newDate = e.target.value;
               const startTime = safeFormatDateTime(selectedEvent.start?.dateTime, "HH:mm");
               const endTime = safeFormatDateTime(selectedEvent.end?.dateTime, "HH:mm");
@@ -1186,7 +1088,7 @@ export const CalendarCRM = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-startTime">Hora inicio</Label>
-                  <Input id="edit-startTime" type="time" value={safeFormatDateTime(selectedEvent.start?.dateTime, "HH:mm")} onChange={e => {
+                  <Input id="edit-startTime" type="time"value={safeFormatDateTime(selectedEvent.start?.dateTime,"HH:mm")} onChange={e => {
                 const date = safeFormatDateTime(selectedEvent.start?.dateTime, "yyyy-MM-dd");
                 setSelectedEvent({
                   ...selectedEvent,
@@ -1199,7 +1101,7 @@ export const CalendarCRM = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-endTime">Hora fin</Label>
-                  <Input id="edit-endTime" type="time" value={safeFormatDateTime(selectedEvent.end?.dateTime, "HH:mm")} onChange={e => {
+                  <Input id="edit-endTime" type="time"value={safeFormatDateTime(selectedEvent.end?.dateTime,"HH:mm")} onChange={e => {
                 const date = safeFormatDateTime(selectedEvent.end?.dateTime, "yyyy-MM-dd");
                 setSelectedEvent({
                   ...selectedEvent,
@@ -1217,7 +1119,7 @@ export const CalendarCRM = () => {
                 Cancelar
               </Button>
               <Button onClick={handleUpdateEvent} disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar Cambios"}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin"/> :"Guardar Cambios"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1287,12 +1189,11 @@ export const CalendarCRM = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Fecha{blockPeriod === "hours" ? "" : " de inicio"}</Label>
+              <Label>Fecha{blockPeriod === "hours"?"":" de inicio"}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !blockStartDate && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {blockStartDate ? format(blockStartDate, "PPP", {
+                    <CalendarIcon className="mr-2 h-4 w-4"/> {blockStartDate ? format(blockStartDate,"PPP", {
                     locale: es
                   }) : "Selecciona una fecha"}
                   </Button>
@@ -1303,37 +1204,19 @@ export const CalendarCRM = () => {
                     selected={blockStartDate} 
                     onSelect={setBlockStartDate} 
                     initialFocus 
-                    className="pointer-events-auto" 
-                    weekStartsOn={1}
-                    modifiers={{
-                      blocked: getBlockedDates()
-                    }}
-                    modifiersClassNames={{
-                      blocked: "relative after:content-['🔒'] after:absolute after:top-0 after:right-0 after:text-[8px] after:leading-none"
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {blockPeriod === "hours" && <div className="grid grid-cols-2 gap-4">
+                    className="pointer-events-auto"weekStartsOn={1} modifiers={{ blocked: getBlockedDates() }} modifiersClassNames={{ blocked:"relative after:content-['🔒'] after:absolute after:top-0 after:right-0 after:text-[8px] after:leading-none"}} /> </PopoverContent> </Popover> </div> {blockPeriod ==="hours" && <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="block-startTime">Hora inicio</Label>
                   <Input id="block-startTime" type="time" value={blockStartTime} onChange={e => setBlockStartTime(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="block-endTime">Hora fin</Label>
-                  <Input id="block-endTime" type="time" value={blockEndTime} onChange={e => setBlockEndTime(e.target.value)} />
-                </div>
-              </div>}
-
-            {blockPeriod === "day" && <div className="space-y-2">
+                  <Input id="block-endTime" type="time"value={blockEndTime} onChange={e => setBlockEndTime(e.target.value)} /> </div> </div>} {blockPeriod ==="day" && <div className="space-y-2">
                 <Label>Fecha de fin (opcional)</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !blockEndDate && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {blockEndDate ? format(blockEndDate, "PPP", {
+                      <CalendarIcon className="mr-2 h-4 w-4"/> {blockEndDate ? format(blockEndDate,"PPP", {
                     locale: es
                   }) : "Mismo día que inicio"}
                     </Button>
@@ -1345,13 +1228,7 @@ export const CalendarCRM = () => {
                       onSelect={setBlockEndDate} 
                       disabled={date => blockStartDate ? date < blockStartDate : false} 
                       initialFocus 
-                      className="pointer-events-auto" 
-                      weekStartsOn={1}
-                      modifiers={{
-                        blocked: getBlockedDates()
-                      }}
-                      modifiersClassNames={{
-                        blocked: "relative after:content-['🔒'] after:absolute after:top-0 after:right-0 after:text-[8px] after:leading-none"
+                      className="pointer-events-auto"weekStartsOn={1} modifiers={{ blocked: getBlockedDates() }} modifiersClassNames={{ blocked:"relative after:content-['🔒'] after:absolute after:top-0 after:right-0 after:text-[8px] after:leading-none"
                       }}
                     />
                   </PopoverContent>

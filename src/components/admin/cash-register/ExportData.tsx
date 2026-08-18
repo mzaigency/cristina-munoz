@@ -107,15 +107,7 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      toast({ title: "Excel generado", description: "Fórmulas de suma incluidas automáticamente." });
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const setQuickPeriod = (period: "week" | "month" | "quarter" | "year") => {
+      toast({ title: "Excel generado", description: "Fórmulas de suma incluidas automáticamente."}); } catch (error: any) { toast({ title:"Error", description: error.message, variant: "destructive"}); } finally { setLoading(false); } }; const setQuickPeriod = (period:"week"|"month"|"quarter"|"year") => {
     const now = new Date();
     let start: Date;
     let end = now;
@@ -144,36 +136,19 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ textAlign: "center", paddingTop: 8 }}>
-        <div className="gp-empty-ic" style={{ margin: "0 auto 10px" }}>
-          <FileSpreadsheet style={{ width: 24, height: 24 }} />
-        </div>
-        <h4 style={{ margin: 0 }}>Exportar caja</h4>
-        <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--gp-muted-c)" }}>
-          Excel con fórmulas automáticas
-        </p>
-      </div>
-
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+        <div className="gp-empty-ic"style={{ margin:"0 auto 10px"}}> <FileSpreadsheet style={{ width: 24, height: 24 }} /> </div> <h4 style={{ margin: 0 }}>Exportar caja</h4> <p style={{ margin:"4px 0 0", fontSize: 13, color: "var(--gp-muted-c)"}}> Excel con fórmulas automáticas </p> </div> <div style={{ display:"flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
         <button className="gp-btn sm" onClick={() => setQuickPeriod("week")}>Semana</button>
         <button className="gp-btn sm" onClick={() => setQuickPeriod("month")}>Mes</button>
         <button className="gp-btn sm" onClick={() => setQuickPeriod("year")}>Año</button>
       </div>
 
-      <div className="gp-card" style={{ padding: "14px 16px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="gp-card"style={{ padding:"14px 16px"}}> <div style={{ display:"grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: "var(--gp-muted-c)", display: "block", marginBottom: 6 }}>
               Desde
             </label>
             <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--gp-muted-c)", display: "block", marginBottom: 6 }}>
+              type="date"value={startDate} onChange={(e) => setStartDate(e.target.value)} style={inputStyle} /> </div> <div> <label style={{ fontSize: 12, fontWeight: 600, color:"var(--gp-muted-c)", display: "block", marginBottom: 6 }}>
               Hasta
             </label>
             <input
@@ -187,8 +162,7 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
       </div>
 
       <button
-        className="gp-btn primary"
-        style={{ width: "100%", justifyContent: "center", padding: "12px 20px", fontSize: 15 }}
+        className="gp-btn primary"style={{ width:"100%", justifyContent: "center", padding: "12px 20px", fontSize: 15 }}
         onClick={exportToCSV}
         disabled={loading || !startDate || !endDate}
       >

@@ -15,7 +15,7 @@ interface AgendaSectionProps {
   hideTabs?: boolean;
 }
 
-type AgendaTab = "dia" | "semana" | "espera";
+type AgendaTab = "dia"|"semana"|"espera";
 
 const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideTabs }: AgendaSectionProps) => {
   const [internalTab, setInternalTab] = useState<AgendaTab>("dia");
@@ -89,13 +89,13 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       {!hideTabs && (
         <div className="gp-subtabs">
-          <button className={`gp-subtab${activeTab === "dia" ? " on" : ""}`} onClick={() => setActiveTab("dia")}>
+          <button className={`gp-subtab${activeTab === "dia"?" on":""}`} onClick={() => setActiveTab("dia")}>
             Día
           </button>
-          <button className={`gp-subtab${activeTab === "semana" ? " on" : ""}`} onClick={() => setActiveTab("semana")}>
+          <button className={`gp-subtab${activeTab === "semana"?" on":""}`} onClick={() => setActiveTab("semana")}>
             Semana
           </button>
-          <button className={`gp-subtab${activeTab === "espera" ? " on" : ""}`} onClick={() => setActiveTab("espera")}>
+          <button className={`gp-subtab${activeTab === "espera"?" on":""}`} onClick={() => setActiveTab("espera")}>
             Lista de espera
             {waitlistCount > 0 && <span className="gp-subtab-count">{waitlistCount}</span>}
           </button>
@@ -121,35 +121,13 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
                   <SheetHeader className="text-left mb-2">
                     <SheetTitle>Importar citas</SheetTitle>
                   </SheetHeader>
-                  <AgendaImporter tenantId={tenantId} defaultMode="bookings" />
-                </SheetContent>
-              </Sheet>
-            }
-          />
-        </div>
-      )}
-
-      {activeTab === "semana" && (
+                  <AgendaImporter tenantId={tenantId} defaultMode="bookings"/> </SheetContent> </Sheet> } /> </div> )} {activeTab ==="semana" && (
         <LocalCalendarCRM
-          view="semana"
-          tenantId={tenantId}
-          stylists={stylists}
-          onSelectClient={onSelectClient}
-        />
-      )}
-
-      {activeTab === "espera" && (
-        <WaitlistManager tenantId={tenantId} />
-      )}
-
-      {/* FAB "Nueva cita" — solo móvil, solo en Día */}
-      {activeTab === "dia" && (
+          view="semana"tenantId={tenantId} stylists={stylists} onSelectClient={onSelectClient} /> )} {activeTab ==="espera"&& ( <WaitlistManager tenantId={tenantId} /> )} {/* FAB"Nueva cita"— solo móvil, solo en Día */} {activeTab ==="dia" && (
         <button
           onClick={() => setFabOpen(true)}
           aria-label="Nueva cita"
-          className="md:hidden fixed z-40 flex items-center justify-center rounded-full text-white shadow-lg active:scale-95 transition-transform"
-          style={{
-            right: "calc(1rem + env(safe-area-inset-right))",
+          className="md:hidden fixed z-40 flex items-center justify-center rounded-full text-white shadow-lg active:scale-95 transition-transform"style={{ right:"calc(1rem + env(safe-area-inset-right))",
             bottom: "calc(5rem + env(safe-area-inset-bottom))",
             width: 56,
             height: 56,
@@ -157,18 +135,7 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
             boxShadow: "0 8px 24px -6px hsl(var(--primary) / 0.45)",
           }}
         >
-          <Plus className="h-6 w-6" strokeWidth={2.5} />
-        </button>
-      )}
-
-      <QuickBookingSheet
-        key={refreshKey}
-        open={fabOpen}
-        onOpenChange={setFabOpen}
-        tenantId={tenantId}
-        initialDate={new Date()}
-        initialTime={nextQuarterSlot()}
-        initialStylistSlug={stylists[0]?.slug || "any"}
+          <Plus className="h-6 w-6"strokeWidth={2.5} /> </button> )} <QuickBookingSheet key={refreshKey} open={fabOpen} onOpenChange={setFabOpen} tenantId={tenantId} initialDate={new Date()} initialTime={nextQuarterSlot()} initialStylistSlug={stylists[0]?.slug ||"any"}
         stylists={stylists}
         onCreated={() => {
           setFabOpen(false);

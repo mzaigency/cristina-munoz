@@ -196,25 +196,7 @@ export function GoalsReports({ tenantId, tenantName }: GoalsReportsProps) {
         .single();
       setSaving(false);
       if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-        return;
-      }
-      setGoal({ ...draft, id: (data as { id: string } | null)?.id ?? null });
-    }
-    toast({ title: "Objetivos guardados" });
-    setEditing(false);
-    load();
-  };
-
-  const revPct = goal.revenue_goal > 0 ? Math.min(100, (progress.revenue / goal.revenue_goal) * 100) : 0;
-  const bkPct = goal.bookings_goal > 0 ? Math.min(100, (progress.bookings / goal.bookings_goal) * 100) : 0;
-  const ncPct = goal.new_clients_goal > 0 ? Math.min(100, (progress.newClients / goal.new_clients_goal) * 100) : 0;
-
-  const maxHistRev = Math.max(1, ...history.map((h) => Math.max(h.revenue, h.goal)));
-
-  if (loading) {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
+        toast({ title: "Error", description: error.message, variant: "destructive"}); return; } setGoal({ ...draft, id: (data as { id: string } | null)?.id ?? null }); } toast({ title:"Objetivos guardados"}); setEditing(false); load(); }; const revPct = goal.revenue_goal > 0 ? Math.min(100, (progress.revenue / goal.revenue_goal) * 100) : 0; const bkPct = goal.bookings_goal > 0 ? Math.min(100, (progress.bookings / goal.bookings_goal) * 100) : 0; const ncPct = goal.new_clients_goal > 0 ? Math.min(100, (progress.newClients / goal.new_clients_goal) * 100) : 0; const maxHistRev = Math.max(1, ...history.map((h) => Math.max(h.revenue, h.goal))); if (loading) { return ( <div style={{ display:"flex", justifyContent: "center", padding: 48 }}>
         <Loader2 className="gp-spinner" />
       </div>
     );
@@ -314,13 +296,7 @@ export function GoalsReports({ tenantId, tenantName }: GoalsReportsProps) {
                 <div className="gp-neg-history-bars">
                   {h.goal > 0 && (
                     <div
-                      className="gp-neg-history-goal"
-                      style={{ bottom: `${goalH}%` }}
-                      title={`Objetivo ${h.goal}€`}
-                    />
-                  )}
-                  <div
-                    className={`gp-neg-history-rev${hit ? " hit" : ""}`}
+                      className="gp-neg-history-goal"style={{ bottom: `${goalH}%` }} title={`Objetivo ${h.goal}€`} /> )} <div className={`gp-neg-history-rev${hit ?" hit":""}`}
                     style={{ height: `${revH}%` }}
                     title={`${Math.round(h.revenue)}€`}
                   />
@@ -335,31 +311,9 @@ export function GoalsReports({ tenantId, tenantName }: GoalsReportsProps) {
         </div>
         <div className="gp-neg-history-legend">
           <span><span className="dot rev" /> Ingresos</span>
-          <span><span className="dot goal" /> Objetivo</span>
-        </div>
-      </section>
-
-      {/* PDF reports */}
-      <section>
-        <PDFReportsGenerator tenantId={tenantId} tenantName={tenantName} />
-      </section>
-    </div>
-  );
-}
-
-function GoalCard({
-  icon,
-  tone,
-  label,
-  current,
-  goal,
-  unit,
-  editing,
-  draftValue,
-  onChange,
-}: {
-  icon: React.ReactNode;
-  tone: "ok" | "brand" | "warn";
+          <span><span className="dot goal"/> Objetivo</span> </div> </section> {/* PDF reports */} <section> <PDFReportsGenerator tenantId={tenantId} tenantName={tenantName} /> </section> </div> );
+} function GoalCard({ icon, tone, label, current, goal, unit, editing, draftValue, onChange,
+}: { icon: React.ReactNode; tone:"ok"|"brand"|"warn";
   label: string;
   current: number;
   goal: number;

@@ -31,9 +31,7 @@ export function VignettePanel() {
           {!reduced && (
             <motion.div
               aria-hidden
-              className="absolute left-1.5 right-1.5 h-8 rounded-lg bg-primary/15"
-              animate={{ y: [0, 36, 72, 108, 0] }}
-              transition={{ duration: 6, times: [0, 0.25, 0.5, 0.75, 1], repeat: Infinity, ease: "easeInOut" }}
+              className="absolute left-1.5 right-1.5 h-8 rounded-lg bg-primary/15"animate={{ y: [0, 36, 72, 108, 0] }} transition={{ duration: 6, times: [0, 0.25, 0.5, 0.75, 1], repeat: Infinity, ease:"easeInOut" }}
               style={{ top: 8 }}
             />
           )}
@@ -79,11 +77,7 @@ export function VignetteAgenda() {
       </div>
       {/* Bloque de cita: cae en las 10:00 y se arrastra a las 12:00 */}
       <motion.div
-        className="absolute left-[72px] right-6 h-9 rounded-lg bg-primary/90 px-2.5 py-1.5 shadow-lg shadow-primary/25"
-        initial={false}
-        animate={
-          reduced
-            ? { top: "58%", opacity: 1, scale: 1 }
+        className="absolute left-[72px] right-6 h-9 rounded-lg bg-primary/90 px-2.5 py-1.5 shadow-lg shadow-primary/25"initial={false} animate={ reduced ? { top:"58%", opacity: 1, scale: 1 }
             : {
                 top: ["6%", "14%", "14%", "58%", "58%", "6%"],
                 opacity: [0, 1, 1, 1, 1, 0],
@@ -191,7 +185,7 @@ export function VignetteClientes() {
           </div>
           {/* Badge VIP */}
           <motion.div
-            className="flex items-center gap-1 rounded-full bg-[var(--gp-warn-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--gp-warn-ink)] dark:bg-amber-950/60 "
+            className="flex items-center gap-1 rounded-full bg-[var(--gp-warn-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--gp-warn-ink)]  "
             initial={false}
             animate={
               reduced
@@ -250,14 +244,7 @@ export function VignetteWeb() {
       </div>
       {/* Notificación entrando en tu panel */}
       <motion.div
-        className="absolute right-[8%] top-[28%] w-[46%] max-w-[200px] rounded-xl bg-card p-2.5 shadow-lg ring-1 ring-border/60"
-        initial={false}
-        animate={
-          reduced
-            ? { x: 0, opacity: 1 }
-            : { x: [60, 0, 0, 60], opacity: [0, 1, 1, 0] }
-        }
-        transition={{ duration: 4.2, times: [0.42, 0.52, 0.9, 1], repeat: Infinity, ease: "easeOut" }}
+        className="absolute right-[8%] top-[28%] w-[46%] max-w-[200px] rounded-xl bg-card p-2.5 shadow-lg ring-1 ring-border/60"initial={false} animate={ reduced ? { x: 0, opacity: 1 } : { x: [60, 0, 0, 60], opacity: [0, 1, 1, 0] } } transition={{ duration: 4.2, times: [0.42, 0.52, 0.9, 1], repeat: Infinity, ease:"easeOut" }}
       >
         <div className="flex items-center gap-1.5 text-[10px] font-semibold text-foreground">
           <Sparkles className="h-3 w-3 gp-text-brand" />

@@ -14,36 +14,7 @@ export const TOUR_STORAGE_KEY = "glowapp_admin_tour_v8_completed";
  * Tour guiado sobre el panel real, en dos fases por paso:
  *
  *  Fase MENÚ: antes de cambiar de sección, el foco viaja al ítem del menú
- *  (sidebar en desktop, bottom bar o botón "Más" en móvil) y el puntero
- *  hace tap ahí. El usuario VE desde dónde se llega a cada sección.
- *
- *  Fase CONTENIDO: se navega de verdad, el motor espera a que el objetivo
- *  exista y sea estable, lo centra en la zona visible (descontando la
- *  tarjeta y la bottom bar) y el foco viaja hasta él.
- *
- *  La tarjeta nunca tapa lo que se enseña: en desktop se coloca en el
- *  lado con hueco; en móvil es una tarjeta flotante que salta arriba o
- *  abajo según dónde esté el objetivo, siempre por encima de la bottom bar.
- *  Si un objetivo no aparece, el paso degrada a tarjeta centrada con su
- *  viñeta animada. El tour no se rompe.
- */
-
-interface TourStep {
-  id: string;
-  emoji: string;
-  title: string;
-  body: string;
-  /** Valor de data-tour-target del elemento real a destacar. */
-  target?: string;
-  /** Navegación previa (sección, subTab); activa la fase MENÚ. */
-  goto?: { section: string; subTab?: string };
-  /** Viñeta animada: visual de pasos centrados y fallback si falta el target. */
-  vignette?: ComponentType;
-  /** Muestra el puntero haciendo tap en el objetivo (fase contenido). */
-  tap?: boolean;
-  tips?: string[];
-  requiredFeature?: PlanFeature;
-  requiredPlan?: "pro" | "business";
+ *  (sidebar en desktop, bottom bar o botón "Más"en móvil) y el puntero * hace tap ahí. El usuario VE desde dónde se llega a cada sección. * * Fase CONTENIDO: se navega de verdad, el motor espera a que el objetivo * exista y sea estable, lo centra en la zona visible (descontando la * tarjeta y la bottom bar) y el foco viaja hasta él. * * La tarjeta nunca tapa lo que se enseña: en desktop se coloca en el * lado con hueco; en móvil es una tarjeta flotante que salta arriba o * abajo según dónde esté el objetivo, siempre por encima de la bottom bar. * Si un objetivo no aparece, el paso degrada a tarjeta centrada con su * viñeta animada. El tour no se rompe. */ interface TourStep { id: string; emoji: string; title: string; body: string; /** Valor de data-tour-target del elemento real a destacar. */ target?: string; /** Navegación previa (sección, subTab); activa la fase MENÚ. */ goto?: { section: string; subTab?: string }; /** Viñeta animada: visual de pasos centrados y fallback si falta el target. */ vignette?: ComponentType; /** Muestra el puntero haciendo tap en el objetivo (fase contenido). */ tap?: boolean; tips?: string[]; requiredFeature?: PlanFeature; requiredPlan?:"pro"|"business";
   celebrate?: boolean;
 }
 
@@ -77,8 +48,7 @@ const STEPS: TourStep[] = [
     id: "inicio",
     emoji: "📊",
     target: "inicio-stats",
-    goto: { section: "inicio", subTab: "resumen" },
-    title: "El pulso del día",
+    goto: { section: "inicio", subTab: "resumen"}, title:"El pulso del día",
     body: "Ingresos, próximas citas y avisos. Tu primera mirada cada mañana.",
     tips: ["KPIs en vivo"],
   },
@@ -86,8 +56,7 @@ const STEPS: TourStep[] = [
     id: "agenda",
     emoji: "📅",
     target: "agenda-calendar",
-    goto: { section: "agenda", subTab: "dia" },
-    title: "La agenda es el centro",
+    goto: { section: "agenda", subTab: "dia"}, title:"La agenda es el centro",
     body: "Toca un hueco para crear una cita. Arrastra para cambiarla de hora.",
     tips: ["Drag & drop", "Color por estilista"],
     vignette: VignetteAgenda,
@@ -98,8 +67,7 @@ const STEPS: TourStep[] = [
     id: "caja",
     emoji: "💰",
     target: "caja-cobros",
-    goto: { section: "caja", subTab: "cobros" },
-    title: "Cobra en dos toques",
+    goto: { section: "caja", subTab: "cobros"}, title:"Cobra en dos toques",
     body: "Efectivo, tarjeta o mixto al cerrar la cita. El día se cuadra solo.",
     tips: ["Cierre diario"],
     vignette: VignetteCaja,
@@ -111,8 +79,7 @@ const STEPS: TourStep[] = [
     id: "clientes",
     emoji: "👥",
     target: "clientes-directorio",
-    goto: { section: "clientes", subTab: "directorio" },
-    title: "Conoce a tus clientes",
+    goto: { section: "clientes", subTab: "directorio"}, title:"Conoce a tus clientes",
     body: "Historial, notas privadas y VIPs automáticos en cada ficha.",
     tips: ["VIP automático", "Vas por la mitad 🔥"],
     vignette: VignetteClientes,
@@ -122,16 +89,14 @@ const STEPS: TourStep[] = [
     id: "catalogo",
     emoji: "✂️",
     target: "catalogo-services",
-    goto: { section: "catalogo", subTab: "services" },
-    title: "Tus servicios",
+    goto: { section: "catalogo", subTab: "services"}, title:"Tus servicios",
     body: "Precio, duración y categoría. Se publican solos en tu web de reservas.",
   },
   {
     id: "marketing",
     emoji: "🔳",
     target: "marketing-qr",
-    goto: { section: "marketing", subTab: "qr" },
-    title: "Tráete clientes",
+    goto: { section: "marketing", subTab: "qr"}, title:"Tráete clientes",
     body: "Tarjetas y carteles con tu QR de reserva, listos para imprimir o compartir.",
     tips: ["Ya casi está ✨"],
   },
@@ -139,8 +104,7 @@ const STEPS: TourStep[] = [
     id: "negocio",
     emoji: "💼",
     target: "negocio-equipo",
-    goto: { section: "negocio", subTab: "equipo" },
-    title: "Equipo y horarios",
+    goto: { section: "negocio", subTab: "equipo"}, title:"Equipo y horarios",
     body: "Estilistas, horarios, comisiones y objetivos. El back-office completo.",
   },
   {
@@ -249,26 +213,14 @@ interface AdminTourProps {
 export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminTourProps) {
   const [stepIdx, setStepIdx] = useState(0);
   const [direction, setDirection] = useState(1);
-  const [phase, setPhase] = useState<"nav" | "content">("content");
+  const [phase, setPhase] = useState<"nav"|"content">("content");
   const [rect, setRect] = useState<Rect | null>(null);
   /** false mientras se busca el objetivo del paso actual. */
   const [settled, setSettled] = useState(false);
   const [confettiTick, setConfettiTick] = useState(0);
   const [cardH, setCardH] = useState(200);
   const [viewport, setViewport] = useState({
-    w: typeof window !== "undefined" ? window.innerWidth : 1024,
-    h: typeof window !== "undefined" ? window.innerHeight : 768,
-  });
-  const isMobile = useIsMobile();
-  const isMobileRef = useRef(isMobile);
-  isMobileRef.current = isMobile;
-  const cardRef = useRef<HTMLDivElement | null>(null);
-
-  const step = STEPS[stepIdx];
-  const isLast = stepIdx === STEPS.length - 1;
-  const locked = !!(step.requiredFeature && hasFeature && !hasFeature(step.requiredFeature));
-  const Vignette = step.vignette;
-  const navLabel = step.goto ? (SECTION_LABELS[step.goto.section] ?? step.goto.section) : "";
+    w: typeof window !== "undefined"? window.innerWidth : 1024, h: typeof window !=="undefined"? window.innerHeight : 768, }); const isMobile = useIsMobile(); const isMobileRef = useRef(isMobile); isMobileRef.current = isMobile; const cardRef = useRef<HTMLDivElement | null>(null); const step = STEPS[stepIdx]; const isLast = stepIdx === STEPS.length - 1; const locked = !!(step.requiredFeature && hasFeature && !hasFeature(step.requiredFeature)); const Vignette = step.vignette; const navLabel = step.goto ? (SECTION_LABELS[step.goto.section] ?? step.goto.section) :"";
   /** Tarjeta centrada: pasos sin target o cuyo target no se encontró. */
   const centered = phase === "content" && (!step.target || (settled && !rect));
 
@@ -419,18 +371,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
   useEffect(() => {
     if (!open || !step.celebrate) return;
     setConfettiTick((t) => t + 1);
-    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-      try {
-        navigator.vibrate(12);
-      } catch {
-        // sin haptics
-      }
-    }
-  }, [open, stepIdx, step.celebrate]);
-
-  const complete = useCallback(() => {
-    try {
-      localStorage.setItem(TOUR_STORAGE_KEY, "true");
+    if (typeof navigator !== "undefined"&&"vibrate"in navigator) { try { navigator.vibrate(12); } catch { // sin haptics } } }, [open, stepIdx, step.celebrate]); const complete = useCallback(() => { try { localStorage.setItem(TOUR_STORAGE_KEY,"true");
     } catch {
       // localStorage no disponible
     }
@@ -457,7 +398,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") complete();
-      else if (e.key === "ArrowRight" || e.key === "Enter") next();
+      else if (e.key === "ArrowRight"|| e.key ==="Enter") next();
       else if (e.key === "ArrowLeft") prev();
     };
     window.addEventListener("keydown", onKey);
@@ -479,72 +420,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
     if (centered || !rect) {
       return { top: viewport.h / 2, left: viewport.w / 2, width: 0, height: 0, r: 24 };
     }
-    return { top: rect.top, left: rect.left, width: rect.width, height: rect.height, r: phase === "nav" ? 12 : 16 };
-  }, [centered, rect, viewport.w, viewport.h, phase]);
-
-  /* ── Posición de la tarjeta ── */
-  const calloutPos = useMemo(() => {
-    if (isMobile) {
-      // Móvil: tarjeta flotante arriba o abajo, nunca sobre la bottom bar
-      const topPos = 12;
-      const bottomPos = viewport.h - bottomBarH - cardH - 10;
-      if (centered || !rect) {
-        return { top: Math.max(12, (viewport.h - bottomBarH - cardH) / 2), left: 12, width: viewport.w - 24 };
-      }
-      const rectCenter = rect.top + rect.height / 2;
-      // Objetivo en la mitad superior → tarjeta abajo; y al revés
-      const top = rectCenter < viewport.h / 2 ? bottomPos : topPos;
-      return { top: Math.max(12, top), left: 12, width: viewport.w - 24 };
-    }
-
-    if (centered || !rect) {
-      return { top: viewport.h / 2 - cardH / 2 - 20, left: viewport.w / 2 - CALLOUT_W / 2, width: CALLOUT_W };
-    }
-    const spaceRight = viewport.w - (rect.left + rect.width) - GAP;
-    const spaceLeft = rect.left - GAP;
-    const spaceBottom = viewport.h - (rect.top + rect.height) - GAP;
-
-    const clampTop = (t: number) => Math.max(16, Math.min(t, viewport.h - cardH - 16));
-    const clampLeft = (l: number) => Math.max(16, Math.min(l, viewport.w - CALLOUT_W - 16));
-
-    if (spaceRight >= CALLOUT_W) {
-      return {
-        top: clampTop(rect.top + rect.height / 2 - cardH / 2),
-        left: rect.left + rect.width + GAP,
-        width: CALLOUT_W,
-      };
-    }
-    if (spaceLeft >= CALLOUT_W) {
-      return {
-        top: clampTop(rect.top + rect.height / 2 - cardH / 2),
-        left: rect.left - CALLOUT_W - GAP,
-        width: CALLOUT_W,
-      };
-    }
-    if (spaceBottom >= cardH * 0.8) {
-      return {
-        top: clampTop(rect.top + rect.height + GAP),
-        left: clampLeft(rect.left + rect.width / 2 - CALLOUT_W / 2),
-        width: CALLOUT_W,
-      };
-    }
-    return {
-      top: clampTop(rect.top - cardH - GAP),
-      left: clampLeft(rect.left + rect.width / 2 - CALLOUT_W / 2),
-      width: CALLOUT_W,
-    };
-  }, [isMobile, centered, rect, viewport.w, viewport.h, cardH, bottomBarH]);
-
-  const slideVariants = useMemo(
-    () => ({
-      enter: (d: number) => ({ x: d > 0 ? 44 : -44, opacity: 0 }),
-      center: { x: 0, opacity: 1 },
-      exit: (d: number) => ({ x: d > 0 ? -44 : 44, opacity: 0 }),
-    }),
-    [],
-  );
-
-  if (typeof document === "undefined") return null;
+    return { top: rect.top, left: rect.left, width: rect.width, height: rect.height, r: phase === "nav"? 12 : 16 }; }, [centered, rect, viewport.w, viewport.h, phase]); /* ── Posición de la tarjeta ── */ const calloutPos = useMemo(() => { if (isMobile) { // Móvil: tarjeta flotante arriba o abajo, nunca sobre la bottom bar const topPos = 12; const bottomPos = viewport.h - bottomBarH - cardH - 10; if (centered || !rect) { return { top: Math.max(12, (viewport.h - bottomBarH - cardH) / 2), left: 12, width: viewport.w - 24 }; } const rectCenter = rect.top + rect.height / 2; // Objetivo en la mitad superior → tarjeta abajo; y al revés const top = rectCenter < viewport.h / 2 ? bottomPos : topPos; return { top: Math.max(12, top), left: 12, width: viewport.w - 24 }; } if (centered || !rect) { return { top: viewport.h / 2 - cardH / 2 - 20, left: viewport.w / 2 - CALLOUT_W / 2, width: CALLOUT_W }; } const spaceRight = viewport.w - (rect.left + rect.width) - GAP; const spaceLeft = rect.left - GAP; const spaceBottom = viewport.h - (rect.top + rect.height) - GAP; const clampTop = (t: number) => Math.max(16, Math.min(t, viewport.h - cardH - 16)); const clampLeft = (l: number) => Math.max(16, Math.min(l, viewport.w - CALLOUT_W - 16)); if (spaceRight >= CALLOUT_W) { return { top: clampTop(rect.top + rect.height / 2 - cardH / 2), left: rect.left + rect.width + GAP, width: CALLOUT_W, }; } if (spaceLeft >= CALLOUT_W) { return { top: clampTop(rect.top + rect.height / 2 - cardH / 2), left: rect.left - CALLOUT_W - GAP, width: CALLOUT_W, }; } if (spaceBottom >= cardH * 0.8) { return { top: clampTop(rect.top + rect.height + GAP), left: clampLeft(rect.left + rect.width / 2 - CALLOUT_W / 2), width: CALLOUT_W, }; } return { top: clampTop(rect.top - cardH - GAP), left: clampLeft(rect.left + rect.width / 2 - CALLOUT_W / 2), width: CALLOUT_W, }; }, [isMobile, centered, rect, viewport.w, viewport.h, cardH, bottomBarH]); const slideVariants = useMemo( () => ({ enter: (d: number) => ({ x: d > 0 ? 44 : -44, opacity: 0 }), center: { x: 0, opacity: 1 }, exit: (d: number) => ({ x: d > 0 ? -44 : 44, opacity: 0 }), }), [], ); if (typeof document ==="undefined") return null;
 
   const showVignette = !!Vignette && centered;
   const showPointer = rect && !centered && (phase === "nav" || step.tap);
@@ -576,8 +452,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
             animate={{ ...spot, borderRadius: spot.r, opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={SPRING}
-            className="pointer-events-none fixed z-[9998]"
-            style={{ boxShadow: "0 0 0 9999px rgba(2, 6, 23, 0.62)" }}
+            className="pointer-events-none fixed z-[9998]"style={{ boxShadow:"0 0 0 9999px rgba(2, 6, 23, 0.62)" }}
           />
 
           {/* Beacon: anillo que acompaña al foco y respira */}
@@ -595,10 +470,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
               className="pointer-events-none fixed z-[9998]"
             >
               <motion.div
-                className="h-full w-full rounded-[18px] border-2"
-                style={{ borderColor: "hsl(var(--primary) / 0.65)" }}
-                animate={{ scale: [1, 1.025, 1], opacity: [0.85, 0.3, 0.85] }}
-                transition={{ duration: 1.9, repeat: Infinity, ease: "easeInOut" }}
+                className="h-full w-full rounded-[18px] border-2"style={{ borderColor:"hsl(var(--primary) / 0.65)"}} animate={{ scale: [1, 1.025, 1], opacity: [0.85, 0.3, 0.85] }} transition={{ duration: 1.9, repeat: Infinity, ease:"easeInOut" }}
               />
             </motion.div>
           )}
@@ -606,10 +478,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
           {/* Puntero que hace tap (fase menú y pasos de acción) */}
           {showPointer && (
             <motion.div
-              key="tour-pointer"
-              initial={false}
-              animate={{
-                top: spot.top + spot.height * (phase === "nav" ? 0.5 : 0.55),
+              key="tour-pointer"initial={false} animate={{ top: spot.top + spot.height * (phase ==="nav" ? 0.5 : 0.55),
                 left: spot.left + spot.width * 0.5,
               }}
               transition={{ ...SPRING, damping: 32 }}
@@ -633,13 +502,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
 
           {/* ── Tarjeta del paso ── */}
           <motion.div
-            key="tour-card"
-            ref={cardRef}
-            initial={{ opacity: 0, scale: 0.94, top: calloutPos.top, left: calloutPos.left }}
-            animate={{ opacity: 1, scale: 1, top: calloutPos.top, left: calloutPos.left }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={SPRING}
-            drag={isMobile ? "x" : false}
+            key="tour-card"ref={cardRef} initial={{ opacity: 0, scale: 0.94, top: calloutPos.top, left: calloutPos.left }} animate={{ opacity: 1, scale: 1, top: calloutPos.top, left: calloutPos.left }} exit={{ opacity: 0, scale: 0.95 }} transition={SPRING} drag={isMobile ?"x" : false}
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.18}
             onDragEnd={isMobile ? handleDragEnd : undefined}
@@ -655,12 +518,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
                 <button
                   key={s.id}
                   onClick={() => goTo(i)}
-                  className="relative h-1 flex-1 overflow-hidden rounded-full bg-muted"
-                  aria-label={`Ir al paso ${i + 1}`}
-                >
-                  <motion.div
-                    initial={false}
-                    animate={{ width: i <= stepIdx ? "100%" : "0%" }}
+                  className="relative h-1 flex-1 overflow-hidden rounded-full bg-muted"aria-label={`Ir al paso ${i + 1}`} > <motion.div initial={false} animate={{ width: i <= stepIdx ?"100%":"0%" }}
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                     className="absolute inset-y-0 left-0 gp-grad-bar"
                   />
@@ -680,7 +538,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
                 className="px-4 pt-3"
               >
                 {showVignette && (
-                  <div className={cn("mb-3 select-none", isMobile ? "h-32" : "h-40")} aria-hidden>
+                  <div className={cn("mb-3 select-none", isMobile ? "h-32":"h-40")} aria-hidden>
                     <Vignette />
                   </div>
                 )}
@@ -699,9 +557,8 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-[15px] font-semibold leading-tight text-foreground">{step.title}</h3>
                       {locked && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--gp-warn-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--gp-warn-ink)] dark:bg-amber-950/50 ">
-                          <Lock className="h-2.5 w-2.5" />
-                          {step.requiredPlan === "business" ? "Business" : "Pro"}
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--gp-warn-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--gp-warn-ink)]  ">
+                          <Lock className="h-2.5 w-2.5"/> {step.requiredPlan ==="business"?"Business":"Pro"}
                         </span>
                       )}
                     </div>
@@ -777,7 +634,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
 
               <motion.div whileTap={{ scale: 0.95 }}>
                 <Button size="sm" onClick={next} className="h-8 gap-1 px-4 gp-grad-brand text-white">
-                  <span className="text-xs font-semibold">{isLast ? "¡A trabajar!" : "Siguiente"}</span>
+                  <span className="text-xs font-semibold">{isLast ? "¡A trabajar!":"Siguiente"}</span>
                   {!isLast && <ArrowRight className="h-3.5 w-3.5" />}
                 </Button>
               </motion.div>
@@ -788,20 +645,9 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
               aria-label="Cerrar tour"
               className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>,
-    document.body,
-  );
-}
-
-/** True si el tour ya se completó en este dispositivo. */
-export function tourHasBeenSeen(): boolean {
-  try {
-    return localStorage.getItem(TOUR_STORAGE_KEY) === "true";
+              <X className="h-3.5 w-3.5"/> </button> </motion.div> </> )} </AnimatePresence>, document.body, );
+} /** True si el tour ya se completó en este dispositivo. */
+export function tourHasBeenSeen(): boolean { try { return localStorage.getItem(TOUR_STORAGE_KEY) ==="true";
   } catch {
     return false;
   }

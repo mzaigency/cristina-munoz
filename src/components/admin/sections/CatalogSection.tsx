@@ -15,7 +15,7 @@ interface CatalogSectionProps {
   hideTabs?: boolean;
 }
 
-type CatalogTab = "services" | "products" | "packages";
+type CatalogTab = "services"|"products"|"packages";
 
 interface TabConfig {
   id: CatalogTab;
@@ -46,21 +46,7 @@ const CatalogSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CatalogS
   const tabs: TabConfig[] = [
     { id: "services", label: "Servicios", icon: Scissors },
     { id: "products", label: "Productos", icon: ShoppingBag },
-    { id: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages", requiredPlan: "pro" },
-  ];
-
-  const isTabLocked = (tab: TabConfig): boolean => {
-    if (!tab.requiredFeature) return false;
-    return !hasFeature(tab.requiredFeature);
-  };
-
-  const handleTabChange = (tabId: CatalogTab) => {
-    const tab = tabs.find((t) => t.id === tabId);
-    if (tab && !isTabLocked(tab)) setActiveTab(tabId);
-  };
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+    { id: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages", requiredPlan: "pro"}, ]; const isTabLocked = (tab: TabConfig): boolean => { if (!tab.requiredFeature) return false; return !hasFeature(tab.requiredFeature); }; const handleTabChange = (tabId: CatalogTab) => { const tab = tabs.find((t) => t.id === tabId); if (tab && !isTabLocked(tab)) setActiveTab(tabId); }; return ( <div style={{ display:"flex", flexDirection: "column", gap: 0 }}>
       {!hideTabs && (
         <div className="gp-subtabs">
           {tabs.map((tab) => {
@@ -68,14 +54,9 @@ const CatalogSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CatalogS
             return (
               <button
                 key={tab.id}
-                className={`gp-subtab${activeTab === tab.id ? " on" : ""}`}
+                className={`gp-subtab${activeTab === tab.id ? " on":""}`}
                 onClick={() => handleTabChange(tab.id)}
-                style={locked ? { opacity: 0.5, cursor: "not-allowed" } : {}}
-              >
-                {locked ? <Lock style={{ width: 11, height: 11 }} /> : <tab.icon style={{ width: 12, height: 12 }} />}
-                {tab.label}
-                {locked && (
-                  <span style={{ fontSize: 9, fontWeight: 800, color: "var(--gp-warn)", background: "var(--gp-warn-soft)", padding: "1px 5px", borderRadius: 99 }}>
+                style={locked ? { opacity: 0.5, cursor: "not-allowed"} : {}} > {locked ? <Lock style={{ width: 11, height: 11 }} /> : <tab.icon style={{ width: 12, height: 12 }} />} {tab.label} {locked && ( <span style={{ fontSize: 9, fontWeight: 800, color:"var(--gp-warn)", background: "var(--gp-warn-soft)", padding: "1px 5px", borderRadius: 99 }}>
                     Pro
                   </span>
                 )}
@@ -86,10 +67,10 @@ const CatalogSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CatalogS
       )}
 
       {activeTab === "services" && (
-        <div data-tour-target="catalogo-services" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div data-tour-target="catalogo-services"style={{ display:"flex", flexDirection: "column", gap: 12 }}>
           <Sheet>
             <SheetTrigger asChild>
-              <button className="gp-btn sm" style={{ alignSelf: "flex-start" }}>
+              <button className="gp-btn sm"style={{ alignSelf:"flex-start" }}>
                 <Sparkles style={{ width: 13, height: 13 }} />
                 Importar carta desde foto con IA
               </button>
@@ -98,18 +79,7 @@ const CatalogSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: CatalogS
               <SheetHeader className="text-left mb-2">
                 <SheetTitle>Importar servicios</SheetTitle>
               </SheetHeader>
-              <AgendaImporter tenantId={tenantId} defaultMode="services" />
-            </SheetContent>
-          </Sheet>
-          <ServicesManager tenantId={tenantId} />
-        </div>
-      )}
-
-      {activeTab === "products" && (
-        <ProductsManager tenantId={tenantId} />
-      )}
-
-      {activeTab === "packages" && (
+              <AgendaImporter tenantId={tenantId} defaultMode="services"/> </SheetContent> </Sheet> <ServicesManager tenantId={tenantId} /> </div> )} {activeTab ==="products"&& ( <ProductsManager tenantId={tenantId} /> )} {activeTab ==="packages" && (
         isTabLocked(tabs[2]) ? (
           <LockedFeature featureName="Paquetes" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
         ) : (

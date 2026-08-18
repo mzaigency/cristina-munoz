@@ -30,13 +30,8 @@ interface Props {
 }
 
 const STATUS_LABELS: Record<string, { label: string; tone: string }> = {
-  pending: { label: "Nuevo", tone: "warn" },
-  ready: { label: "Reservado", tone: "info" },
-  delivered: { label: "Entregado", tone: "ok" },
-  cancelled: { label: "Cancelado", tone: "neutral" },
-};
-
-import { markOrdersSeen } from "@/hooks/useUnseenOrders";
+  pending: { label: "Nuevo", tone: "warn"}, ready: { label:"Reservado", tone: "info"}, delivered: { label:"Entregado", tone: "ok"}, cancelled: { label:"Cancelado", tone: "neutral"},
+}; import { markOrdersSeen } from"@/hooks/useUnseenOrders";
 
 export const ProductOrdersManager = ({ tenantId }: Props) => {
   const [orders, setOrders] = useState<ProductOrder[]>([]);
@@ -85,14 +80,7 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
   const updateStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("product_orders").update({ status }).eq("id", id);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Estado actualizado" });
-    }
-  };
-
-  const filtered = orders.filter((o) => {
-    if (filter === "active") return o.status === "pending" || o.status === "ready";
+      toast({ title: "Error", description: error.message, variant: "destructive"}); } else { toast({ title:"Estado actualizado"}); } }; const filtered = orders.filter((o) => { if (filter ==="active") return o.status === "pending"|| o.status ==="ready";
     if (filter === "all") return true;
     return o.status === filter;
   });
@@ -108,7 +96,7 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
   }
 
   return (
-    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div className="gp-fade"style={{ display:"flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
       <div className="gp-page-h">
         <div>
@@ -123,12 +111,7 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
       {/* Filter tabs */}
       <div className="gp-subtabs">
         {[
-          { id: "active", label: "Activos" },
-          { id: "delivered", label: "Entregados" },
-          { id: "cancelled", label: "Cancelados" },
-          { id: "all", label: "Todos" },
-        ].map((t) => (
-          <button key={t.id} className={`gp-subtab${filter === t.id ? " on" : ""}`} onClick={() => setFilter(t.id)}>
+          { id: "active", label: "Activos"}, { id:"delivered", label: "Entregados"}, { id:"cancelled", label: "Cancelados"}, { id:"all", label: "Todos"}, ].map((t) => ( <button key={t.id} className={`gp-subtab${filter === t.id ?" on":""}`} onClick={() => setFilter(t.id)}>
             {t.label}
           </button>
         ))}
@@ -147,7 +130,7 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
           {filtered.map((o) => {
             const statusInfo = STATUS_LABELS[o.status] || STATUS_LABELS.pending;
             return (
-              <div key={o.id} className="gp-card pad" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div key={o.id} className="gp-card pad"style={{ display:"flex", flexDirection: "column", gap: 14 }}>
                 {/* Top row */}
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
@@ -156,7 +139,7 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
                         <User style={{ width: 14, height: 14, color: "var(--gp-muted-c)" }} />
                         {o.customer_name}
                       </span>
-                      <span className={`gp-badge ${statusInfo.tone}`}><span className="pip" style={{ background: "currentColor" }} />{statusInfo.label}</span>
+                      <span className={`gp-badge ${statusInfo.tone}`}><span className="pip"style={{ background:"currentColor" }} />{statusInfo.label}</span>
                       {o.booking_id && <span className="gp-badge neutral"><Calendar style={{ width: 10, height: 10 }} />Con cita</span>}
                     </div>
                     <div style={{ fontSize: 12.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>
@@ -168,20 +151,14 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
                       </a>
                     )}
                   </div>
-                  <span className="gp-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--gp-accent)", flex: "none" }}>
-                    {o.total.toFixed(2)} €
-                  </span>
-                </div>
-
-                {/* Items */}
-                <div style={{ paddingLeft: 12, borderLeft: `2px solid var(--gp-accent-soft)`, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <span className="gp-mono"style={{ fontSize: 20, fontWeight: 800, color:"var(--gp-accent)", flex: "none"}}> {o.total.toFixed(2)} € </span> </div> {/* Items */} <div style={{ paddingLeft: 12, borderLeft: `2px solid var(--gp-accent-soft)`, display:"flex", flexDirection: "column", gap: 6 }}>
                   {o.items?.map((item, idx) => (
                     <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13.5, fontWeight: 600 }}>
                       <span style={{ color: "var(--gp-ink2)", display: "flex", alignItems: "center", gap: 6 }}>
                         <PackageIcon style={{ width: 13, height: 13, color: "var(--gp-muted-c)" }} />
                         {item.quantity}× {item.name}
                       </span>
-                      <span className="gp-mono" style={{ color: "var(--gp-muted-c)", fontSize: 13 }}>
+                      <span className="gp-mono"style={{ color:"var(--gp-muted-c)", fontSize: 13 }}>
                         {(item.quantity * item.price).toFixed(2)} €
                       </span>
                     </div>
@@ -189,24 +166,17 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
                 </div>
 
                 {o.notes && (
-                  <div style={{ fontSize: 13, background: "var(--gp-chip)", borderRadius: 10, padding: "10px 14px", color: "var(--gp-ink2)" }}>
-                    <span style={{ fontWeight: 700 }}>Notas:</span> {o.notes}
-                  </div>
-                )}
-
-                {o.status !== "delivered" && o.status !== "cancelled" && (
-                  <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px solid var(--gp-line2)" }}>
-                    {o.status === "pending" && (
-                      <button className="gp-btn primary sm" style={{ flex: 1 }} onClick={() => updateStatus(o.id, "ready")}>
+                  <div style={{ fontSize: 13, background: "var(--gp-chip)", borderRadius: 10, padding: "10px 14px", color: "var(--gp-ink2)"}}> <span style={{ fontWeight: 700 }}>Notas:</span> {o.notes} </div> )} {o.status !=="delivered"&& o.status !=="cancelled"&& ( <div style={{ display:"flex", gap: 8, paddingTop: 4, borderTop: "1px solid var(--gp-line2)"}}> {o.status ==="pending" && (
+                      <button className="gp-btn primary sm"style={{ flex: 1 }} onClick={() => updateStatus(o.id,"ready")}>
                         <Check style={{ width: 14, height: 14 }} /> Reservar pedido
                       </button>
                     )}
                     {o.status === "ready" && (
-                      <button className="gp-btn sm" style={{ flex: 1, background: "var(--gp-ok)", color: "#fff", borderColor: "transparent" }} onClick={() => updateStatus(o.id, "delivered")}>
+                      <button className="gp-btn sm"style={{ flex: 1, background:"var(--gp-ok)", color: "#fff", borderColor: "transparent"}} onClick={() => updateStatus(o.id,"delivered")}>
                         <PackageIcon style={{ width: 14, height: 14 }} /> Marcar entregado
                       </button>
                     )}
-                    <button className="gp-btn sm danger" onClick={() => updateStatus(o.id, "cancelled")}>
+                    <button className="gp-btn sm danger"onClick={() => updateStatus(o.id,"cancelled")}>
                       <X style={{ width: 14, height: 14 }} />
                     </button>
                   </div>

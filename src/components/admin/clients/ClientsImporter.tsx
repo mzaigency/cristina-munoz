@@ -113,12 +113,7 @@ export function ClientsImporter({ tenantId, existingClients, open, onOpenChange,
           birthday: r.birthday,
           tags: ["Importado"],
         }));
-        const { error } = await supabase.from("clients" as any).insert(batch);
-        if (error) throw error;
-        inserted += batch.length;
-      }
-      setDone(inserted);
-      toast({ title: "Importación completada", description: `${inserted} clientes añadidos a tu CRM` });
+        const { error } = await supabase.from("clients"as any).insert(batch); if (error) throw error; inserted += batch.length; } setDone(inserted); toast({ title:"Importación completada", description: `${inserted} clientes añadidos a tu CRM` });
       onImported();
     } catch (error) {
       console.error("Error importing clients:", error);
@@ -150,7 +145,7 @@ export function ClientsImporter({ tenantId, existingClients, open, onOpenChange,
         />
 
         {done !== null ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 text-center">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--gp-ok)] bg-[var(--gp-ok-soft)] p-6 text-center">
             <CheckCircle2 className="h-10 w-10 text-[var(--gp-ok)]" />
             <p className="font-semibold">{done} clientes importados</p>
             <p className="text-sm text-muted-foreground">Los encontrarás con la etiqueta "Importado"</p>

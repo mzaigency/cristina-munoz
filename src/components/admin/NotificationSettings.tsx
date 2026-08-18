@@ -94,15 +94,7 @@ export function NotificationSettings({
         // Insert new
         const {
           error
-        } = await supabase.from("notification_preferences" as any).insert({
-          ...prefsWithoutId,
-          user_id: userId,
-          tenant_id: tenantId
-        });
-        if (error) throw error;
-      }
-      toast({
-        title: "Preferencias guardadas"
+        } = await supabase.from("notification_preferences"as any).insert({ ...prefsWithoutId, user_id: userId, tenant_id: tenantId }); if (error) throw error; } toast({ title:"Preferencias guardadas"
       });
       setHasChanges(false);
       fetchPreferences();
@@ -120,59 +112,33 @@ export function NotificationSettings({
   if (loading) {
     return <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
-        {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full" />)}
-      </div>;
-  }
-  const sections = [{
-    title: "Citas",
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full"/>)} </div>; } const sections = [{ title:"Citas",
     icon: Calendar,
     color: "text-[var(--gp-info)]",
-    bgColor: "bg-blue-500/10",
+    bgColor: "bg-[var(--gp-info-soft)]",
     items: [{
-      key: "new_booking" as const,
-      label: "Nueva reserva",
-      description: "Cuando un cliente hace una reserva"
-    }, {
-      key: "booking_cancelled" as const,
-      label: "Cita cancelada",
-      description: "Cuando se cancela una cita"
-    }, {
-      key: "booking_reminder_1h" as const,
-      label: "Recordatorio 1h antes",
-      description: "Una hora antes de cada cita"
-    }, {
-      key: "booking_reminder_24h" as const,
-      label: "Recordatorio 24h antes",
-      description: "Un día antes de cada cita"
-    }]
-  }, {
-    title: "Mensajes",
+      key: "new_booking"as const, label:"Nueva reserva",
+      description: "Cuando un cliente hace una reserva"}, { key:"booking_cancelled"as const, label:"Cita cancelada",
+      description: "Cuando se cancela una cita"}, { key:"booking_reminder_1h"as const, label:"Recordatorio 1h antes",
+      description: "Una hora antes de cada cita"}, { key:"booking_reminder_24h"as const, label:"Recordatorio 24h antes",
+      description: "Un día antes de cada cita"}] }, { title:"Mensajes",
     icon: MessageCircle,
     color: "text-[var(--gp-ok)]",
-    bgColor: "bg-green-500/10",
+    bgColor: "bg-[var(--gp-ok-soft)]",
     items: [{
-      key: "new_message" as const,
-      label: "Nuevo mensaje",
-      description: "Cuando recibes un mensaje de un cliente"
-    }]
-  }, {
-    title: "Reseñas",
+      key: "new_message"as const, label:"Nuevo mensaje",
+      description: "Cuando recibes un mensaje de un cliente"}] }, { title:"Reseñas",
     icon: Star,
     color: "text-[var(--gp-warn)]",
-    bgColor: "bg-amber-500/10",
+    bgColor: "bg-[var(--gp-warn-soft)]",
     items: [{
-      key: "new_review" as const,
-      label: "Nueva reseña",
-      description: "Cuando un cliente deja una reseña"
-    }]
-  }, {
-    title: "Resumen diario",
+      key: "new_review"as const, label:"Nueva reseña",
+      description: "Cuando un cliente deja una reseña"}] }, { title:"Resumen diario",
     icon: Sun,
     color: "text-[var(--gp-warn)]",
-    bgColor: "bg-orange-500/10",
+    bgColor: "bg-[var(--gp-warn-soft)]",
     items: [{
-      key: "daily_summary" as const,
-      label: "Resumen matutino",
+      key: "daily_summary"as const, label:"Resumen matutino",
       description: "Recibe un resumen de las citas del día"
     }]
   }];

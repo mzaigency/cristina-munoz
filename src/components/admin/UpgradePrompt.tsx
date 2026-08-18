@@ -62,7 +62,7 @@ export const UpgradePrompt = ({
     const list: string[] = [];
     const ms = plan.max_stylists;
     const sv = plan.max_services;
-    list.push(ms && ms >= 999 ? "Estilistas ilimitados" : `${ms || 1} estilista${(ms || 1) > 1 ? "s" : ""}`);
+    list.push(ms && ms >= 999 ? "Estilistas ilimitados": `${ms || 1} estilista${(ms || 1) > 1 ?"s":""}`);
     list.push(sv && sv >= 999 ? "Servicios ilimitados" : `${sv || 15} servicios`);
     if (plan.features) {
       Object.entries(plan.features).forEach(([key, enabled]) => {
@@ -76,11 +76,7 @@ export const UpgradePrompt = ({
     try {
       setLoading(true);
       const { data, error } = await supabase.functions.invoke("upgrade-subscription", {
-        body: { tenantId, planSlug: targetPlan, billingCycle: "monthly" },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
+        body: { tenantId, planSlug: targetPlan, billingCycle: "monthly"}, }); if (error) throw error; if (data?.url) { window.open(data.url,"_blank");
         onOpenChange(false);
       }
     } catch (error) {
@@ -149,7 +145,7 @@ export const UpgradePrompt = ({
               transition={{ delay: index * 0.05 }}
               className="flex items-center gap-2 text-sm"
             >
-              <div className="w-5 h-5 rounded-full bg-[var(--gp-ok-soft)] dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+              <div className="w-5 h-5 rounded-full bg-[var(--gp-ok-soft)]  flex items-center justify-center flex-shrink-0">
                 <Check className="w-3 h-3 text-[var(--gp-ok-ink)] " />
               </div>
               <span className="text-foreground">{feat}</span>

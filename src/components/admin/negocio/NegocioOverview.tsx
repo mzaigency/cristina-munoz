@@ -229,24 +229,7 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
           });
         }
       } else if (now.getDate() > 5) {
-        alerts.push({ type: "goal", text: "Sin objetivo definido este mes." });
-      }
-      if (activeStylists === 0) {
-        alerts.push({ type: "stylist", text: "No hay estilistas activos. Activa al menos uno." });
-      }
-
-      setData({
-        activeStylists,
-        totalStylists: stylists.length,
-        monthRevenue,
-        revenueGoal,
-        monthBookings,
-        avgRating,
-        reviewsCount: reviews.length,
-        occupancy,
-        leaders,
-        bestDay: bestDayIdx >= 0 ? DAY_NAMES[bestDayIdx] : null,
-        bestHour: bestHourIdx >= 0 ? `${bestHourIdx.toString().padStart(2, "0")}:00` : null,
+        alerts.push({ type: "goal", text: "Sin objetivo definido este mes."}); } if (activeStylists === 0) { alerts.push({ type:"stylist", text: "No hay estilistas activos. Activa al menos uno."}); } setData({ activeStylists, totalStylists: stylists.length, monthRevenue, revenueGoal, monthBookings, avgRating, reviewsCount: reviews.length, occupancy, leaders, bestDay: bestDayIdx >= 0 ? DAY_NAMES[bestDayIdx] : null, bestHour: bestHourIdx >= 0 ? `${bestHourIdx.toString().padStart(2,"0")}:00` : null,
         alerts,
       });
       setLoading(false);
@@ -266,12 +249,7 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 className="gp-spinner" />
-      </div>
-    );
-  }
-
-  const monthLabel = format(new Date(), "MMMM yyyy", { locale: es });
+        <Loader2 className="gp-spinner"/> </div> ); } const monthLabel = format(new Date(),"MMMM yyyy", { locale: es });
 
   return (
     <div className="gp-fade gp-neg-overview">
@@ -302,8 +280,7 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
           onClick={() => onNavigate("estadisticas")}
         />
         <NegKpi
-          label="Valoración"
-          value={data.avgRating ? data.avgRating.toFixed(1) : "—"}
+          label="Valoración"value={data.avgRating ? data.avgRating.toFixed(1) :"—"}
           sub={`${data.reviewsCount} reseñas`}
           icon={<Star />}
           tone="warn"
@@ -348,9 +325,7 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
               <span className="gp-neg-ring-sub">
                 {data.revenueGoal > 0
                   ? goalPct >= 100
-                    ? "Objetivo superado 🎉"
-                    : `Faltan ${Math.max(0, data.revenueGoal - Math.round(data.monthRevenue))}€`
-                  : "Sin meta"}
+                    ? "Objetivo superado 🎉": `Faltan ${Math.max(0, data.revenueGoal - Math.round(data.monthRevenue))}€` :"Sin meta"}
               </span>
             </div>
           </div>
@@ -379,8 +354,7 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
                     {i === 0 ? <Crown style={{ width: 13, height: 13 }} /> : `#${i + 1}`}
                   </div>
                   <div
-                    className="gp-neg-leader-avatar"
-                    style={{ background: l.color || "var(--gp-accent)" }}
+                    className="gp-neg-leader-avatar"style={{ background: l.color ||"var(--gp-accent)" }}
                   >
                     {l.avatar_url ? (
                       <img src={l.avatar_url} alt={l.name} />
@@ -394,7 +368,7 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
                       {l.bookings} citas
                       {l.rating > 0 && (
                         <>
-                          {" · "}
+                          {"·"}
                           {l.rating.toFixed(1)}★
                         </>
                       )}
@@ -420,43 +394,20 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
         </div>
         <div className="gp-neg-insights">
           <div className="gp-neg-insight">
-            <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
-              <Calendar />
-            </div>
-            <div>
-              <span>Mejor día</span>
-              <strong>{data.bestDay ?? "—"}</strong>
+            <div className="gp-mkt-quick-ic"style={{ background:"var(--gp-accent-soft)", color: "var(--gp-accent)"}}> <Calendar /> </div> <div> <span>Mejor día</span> <strong>{data.bestDay ??"—"}</strong>
             </div>
           </div>
           <div className="gp-neg-insight">
-            <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
-              <Clock />
-            </div>
-            <div>
-              <span>Hora pico</span>
-              <strong>{data.bestHour ?? "—"}</strong>
+            <div className="gp-mkt-quick-ic"style={{ background:"var(--gp-warn-soft)", color: "var(--gp-warn)"}}> <Clock /> </div> <div> <span>Hora pico</span> <strong>{data.bestHour ??"—"}</strong>
             </div>
           </div>
           <div className="gp-neg-insight">
-            <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
-              <TrendingUp />
-            </div>
-            <div>
-              <span>Ticket medio</span>
-              <strong>
-                {data.monthBookings > 0
-                  ? `${Math.round(data.monthRevenue / data.monthBookings)}€`
-                  : "—"}
+            <div className="gp-mkt-quick-ic"style={{ background:"var(--gp-ok-soft)", color: "var(--gp-ok)"}}> <TrendingUp /> </div> <div> <span>Ticket medio</span> <strong> {data.monthBookings > 0 ? `${Math.round(data.monthRevenue / data.monthBookings)}€` :"—"}
               </strong>
             </div>
           </div>
           <div className="gp-neg-insight">
-            <div className="gp-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--gp-mkt-rose), white 80%)", color: "var(--gp-mkt-rose)" }}>
-              <Trophy />
-            </div>
-            <div>
-              <span>Top earner</span>
-              <strong>{data.leaders[0]?.name ?? "—"}</strong>
+            <div className="gp-mkt-quick-ic"style={{ background:"color-mix(in oklab, var(--gp-mkt-rose), white 80%)", color: "var(--gp-mkt-rose)"}}> <Trophy /> </div> <div> <span>Top earner</span> <strong>{data.leaders[0]?.name ??"—"}</strong>
             </div>
           </div>
         </div>
@@ -477,7 +428,7 @@ function NegKpi({
   value: string | number;
   sub?: string;
   icon: React.ReactNode;
-  tone: "brand" | "accent" | "warn" | "ok";
+  tone: "brand"|"accent"|"warn"|"ok";
   onClick: () => void;
 }) {
   return (

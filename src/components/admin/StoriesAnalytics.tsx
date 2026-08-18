@@ -51,7 +51,7 @@ interface DailyStats {
 }
 
 export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
-  const [selectedPeriod, setSelectedPeriod] = useState<"7d" | "30d" | "all">("7d");
+  const [selectedPeriod, setSelectedPeriod] = useState<"7d"|"30d"|"all">("7d");
 
   // Fetch all stories with views
   const { data: stories, isLoading, refetch } = useQuery({
@@ -116,12 +116,7 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
 
   // Generate daily stats for chart
   const generateDailyStats = (): DailyStats[] => {
-    const days = selectedPeriod === "7d" ? 7 : selectedPeriod === "30d" ? 30 : 60;
-    const stats: DailyStats[] = [];
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const date = subDays(new Date(), i);
-      const dateStr = format(date, "yyyy-MM-dd");
+    const days = selectedPeriod === "7d"? 7 : selectedPeriod ==="30d"? 30 : 60; const stats: DailyStats[] = []; for (let i = days - 1; i >= 0; i--) { const date = subDays(new Date(), i); const dateStr = format(date,"yyyy-MM-dd");
       const dayStories = stories?.filter(s => 
         format(new Date(s.created_at), "yyyy-MM-dd") === dateStr
       ) || [];
@@ -172,9 +167,9 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
 
   const getStoryTypeColor = (type: string) => {
     switch (type) {
-      case "work": return "bg-purple-500/20 text-[var(--gp-purple)]";
-      case "promo": return "bg-rose-500/20 text-[var(--gp-danger)]";
-      case "behind_scenes": return "bg-blue-500/20 text-[var(--gp-info)]";
+      case "work": return "bg-[var(--gp-purple-soft)] text-[var(--gp-purple)]";
+      case "promo": return "bg-[var(--gp-danger-soft)] text-[var(--gp-danger)]";
+      case "behind_scenes": return "bg-[var(--gp-info-soft)] text-[var(--gp-info)]";
       default: return "bg-muted text-muted-foreground";
     }
   };
@@ -210,11 +205,8 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
           {(["7d", "30d", "all"] as const).map((period) => (
             <Button
               key={period}
-              variant={selectedPeriod === period ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedPeriod(period)}
-            >
-              {period === "7d" ? "7 días" : period === "30d" ? "30 días" : "Todo"}
+              variant={selectedPeriod === period ? "default":"outline"}
+              size="sm"onClick={() => setSelectedPeriod(period)} > {period ==="7d"?"7 días": period ==="30d"?"30 días":"Todo"}
             </Button>
           ))}
         </div>
@@ -225,7 +217,7 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/20">
+              <div className="p-2 rounded-lg bg-[var(--gp-purple-soft)]">
                 <ImageIcon className="w-5 h-5 text-[var(--gp-purple)]" />
               </div>
               <div>
@@ -239,7 +231,7 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/20">
+              <div className="p-2 rounded-lg bg-[var(--gp-ok-soft)]">
                 <Sparkles className="w-5 h-5 text-[var(--gp-ok)]" />
               </div>
               <div>
@@ -253,7 +245,7 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/20">
+              <div className="p-2 rounded-lg bg-[var(--gp-info-soft)]">
                 <Eye className="w-5 h-5 text-[var(--gp-info)]" />
               </div>
               <div>
@@ -267,7 +259,7 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/20">
+              <div className="p-2 rounded-lg bg-[var(--gp-warn-soft)]">
                 <TrendingUp className="w-5 h-5 text-[var(--gp-warn)]" />
               </div>
               <div>
@@ -299,12 +291,7 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
                     fontSize={12}
                   />
                   <YAxis 
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
+                    stroke="hsl(var(--muted-foreground))"fontSize={12} /> <Tooltip contentStyle={{ backgroundColor:"hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "8px",
                     }}
@@ -334,9 +321,7 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={[
-                  { name: "Trabajo", value: storyTypeDistribution.work, fill: "hsl(var(--primary))" },
-                  { name: "Promo", value: storyTypeDistribution.promo, fill: "#f43f5e" },
-                  { name: "Detrás", value: storyTypeDistribution.behind_scenes, fill: "#3b82f6" },
+                  { name: "Trabajo", value: storyTypeDistribution.work, fill: "hsl(var(--primary))"}, { name:"Promo", value: storyTypeDistribution.promo, fill: "#f43f5e"}, { name:"Detrás", value: storyTypeDistribution.behind_scenes, fill: "#3b82f6" },
                 ]}>
                   <XAxis 
                     dataKey="name" 
@@ -344,12 +329,7 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
                     fontSize={12}
                   />
                   <YAxis 
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
+                    stroke="hsl(var(--muted-foreground))"fontSize={12} /> <Tooltip contentStyle={{ backgroundColor:"hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "8px",
                     }}
@@ -387,7 +367,7 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
                     key={story.id}
                     className={cn(
                       "flex items-center gap-4 p-3 rounded-lg border transition-colors",
-                      isExpired ? "bg-muted/50 opacity-60" : "hover:bg-muted/30"
+                      isExpired ? "bg-muted/50 opacity-60":"hover:bg-muted/30"
                     )}
                   >
                     {/* Thumbnail */}

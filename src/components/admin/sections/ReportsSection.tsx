@@ -14,7 +14,7 @@ interface ReportsSectionProps {
   onSubTabChange?: (subTab: string) => void;
 }
 
-type ReportsTab = "stats" | "feed" | "goals" | "pdf";
+type ReportsTab = "stats"|"feed"|"goals"|"pdf";
 
 interface TabConfig {
   id: ReportsTab;
@@ -49,26 +49,8 @@ const ReportsSection = ({ tenantId, subTab, onSubTabChange }: ReportsSectionProp
   }, [subTab]);
 
   const tabs: TabConfig[] = [
-    { id: "stats", label: "Stats", icon: BarChart3, requiredFeature: "advanced_analytics", requiredPlan: "pro" },
-    { id: "feed", label: "Feed", icon: Sparkles },
-    { id: "goals", label: "Objetivos", icon: Target, requiredFeature: "monthly_goals", requiredPlan: "business" },
-    { id: "pdf", label: "Reportes", icon: FileText, requiredFeature: "advanced_analytics", requiredPlan: "pro" },
-  ];
-
-  const isTabLocked = (tab: TabConfig): boolean => {
-    if (!tab.requiredFeature) return false;
-    return !hasFeature(tab.requiredFeature);
-  };
-
-  const handleTabChange = (tabId: ReportsTab) => {
-    const tab = tabs.find((t) => t.id === tabId);
-    if (tab && !isTabLocked(tab)) setActiveTab(tabId);
-  };
-
-  // If current tab is locked, fall back to first unlocked
-  const lockedActive = isTabLocked(tabs.find((t) => t.id === activeTab)!);
-  const currentTab = lockedActive
-    ? (tabs.find((t) => !isTabLocked(t))?.id || "stats")
+    { id: "stats", label: "Stats", icon: BarChart3, requiredFeature: "advanced_analytics", requiredPlan: "pro"}, { id:"feed", label: "Feed", icon: Sparkles },
+    { id: "goals", label: "Objetivos", icon: Target, requiredFeature: "monthly_goals", requiredPlan: "business"}, { id:"pdf", label: "Reportes", icon: FileText, requiredFeature: "advanced_analytics", requiredPlan: "pro"}, ]; const isTabLocked = (tab: TabConfig): boolean => { if (!tab.requiredFeature) return false; return !hasFeature(tab.requiredFeature); }; const handleTabChange = (tabId: ReportsTab) => { const tab = tabs.find((t) => t.id === tabId); if (tab && !isTabLocked(tab)) setActiveTab(tabId); }; // If current tab is locked, fall back to first unlocked const lockedActive = isTabLocked(tabs.find((t) => t.id === activeTab)!); const currentTab = lockedActive ? (tabs.find((t) => !isTabLocked(t))?.id ||"stats")
     : activeTab;
 
   return (
@@ -79,15 +61,10 @@ const ReportsSection = ({ tenantId, subTab, onSubTabChange }: ReportsSectionProp
           return (
             <button
               key={tab.id}
-              className={`gp-subtab${currentTab === tab.id ? " on" : ""}`}
+              className={`gp-subtab${currentTab === tab.id ? " on":""}`}
               onClick={() => handleTabChange(tab.id)}
-              style={locked ? { opacity: 0.5, cursor: "not-allowed" } : {}}
-            >
-              {locked ? <Lock style={{ width: 11, height: 11 }} /> : <tab.icon style={{ width: 12, height: 12 }} />}
-              {tab.label}
-              {locked && (
-                <span style={{ fontSize: 9, fontWeight: 800, color: "var(--gp-warn)", background: "var(--gp-warn-soft)", padding: "1px 5px", borderRadius: 99 }}>
-                  {tab.requiredPlan === "business" ? "Business" : "Pro"}
+              style={locked ? { opacity: 0.5, cursor: "not-allowed"} : {}} > {locked ? <Lock style={{ width: 11, height: 11 }} /> : <tab.icon style={{ width: 12, height: 12 }} />} {tab.label} {locked && ( <span style={{ fontSize: 9, fontWeight: 800, color:"var(--gp-warn)", background: "var(--gp-warn-soft)", padding: "1px 5px", borderRadius: 99 }}>
+                  {tab.requiredPlan === "business"?"Business":"Pro"}
                 </span>
               )}
             </button>
@@ -97,25 +74,9 @@ const ReportsSection = ({ tenantId, subTab, onSubTabChange }: ReportsSectionProp
 
       {currentTab === "stats" && (
         isTabLocked(tabs[0]) ? (
-          <LockedFeature featureName="Estadísticas" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
-        ) : (
-          <BusinessStats tenantId={tenantId} />
-        )
-      )}
-
-      {currentTab === "feed" && (
-        <TenantFeedAnalytics tenantId={tenantId} />
-      )}
-
-      {currentTab === "goals" && (
+          <LockedFeature featureName="Estadísticas" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline"/> ) : ( <BusinessStats tenantId={tenantId} /> ) )} {currentTab ==="feed"&& ( <TenantFeedAnalytics tenantId={tenantId} /> )} {currentTab ==="goals" && (
         isTabLocked(tabs[2]) ? (
-          <LockedFeature featureName="Objetivos" currentPlan={planSlug} requiredPlan="business" tenantId={tenantId} variant="inline" />
-        ) : (
-          <MonthlyGoals tenantId={tenantId} />
-        )
-      )}
-
-      {currentTab === "pdf" && (
+          <LockedFeature featureName="Objetivos" currentPlan={planSlug} requiredPlan="business" tenantId={tenantId} variant="inline"/> ) : ( <MonthlyGoals tenantId={tenantId} /> ) )} {currentTab ==="pdf" && (
         isTabLocked(tabs[3]) ? (
           <LockedFeature featureName="Reportes PDF" currentPlan={planSlug} requiredPlan="pro" tenantId={tenantId} variant="inline" />
         ) : (

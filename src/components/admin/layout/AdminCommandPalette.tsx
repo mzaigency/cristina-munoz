@@ -56,7 +56,7 @@ export function AdminCommandPalette({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) {
+      if ((e.key === "k"|| e.key ==="K") && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setOpen((o) => !o);
       }

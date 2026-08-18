@@ -56,8 +56,7 @@ export function ClientCard({ client, index, onClick }: ClientCardProps) {
               {client.tags?.slice(0, 2).map(tag => (
                 <Badge
                   key={tag}
-                  variant="outline"
-                  className={`text-[10px] px-1.5 py-0 ${TAG_COLORS[tag] || ""}`}
+                  variant="outline"className={`text-[10px] px-1.5 py-0 ${TAG_COLORS[tag] ||""}`}
                 >
                   {tag}
                 </Badge>

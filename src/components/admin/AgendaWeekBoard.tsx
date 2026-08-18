@@ -126,7 +126,7 @@ function CardBody({
   startMin: number;
 }) {
   const done = isCompleted(b);
-  const strike = done ? "line-through decoration-[1.5px] decoration-success/70" : "";
+  const strike = done ? "line-through decoration-[1.5px] decoration-success/70":"";
 
   return (
     <>
@@ -135,12 +135,7 @@ function CardBody({
         style={{ background: done ? COMPLETED_COLOR : color }}
       />
       <span
-        className="relative flex-1 min-w-0 flex flex-col justify-center gap-px"
-        style={{ padding: height < 26 ? "0 4px 0 5px" : "2px 5px 2px 5px" }}
-      >
-        <span
-          className={`block text-[11px] font-semibold truncate leading-tight tracking-[-0.01em] ${
-            done ? "text-success" : "text-ink-2"
+        className="relative flex-1 min-w-0 flex flex-col justify-center gap-px"style={{ padding: height < 26 ?"0 4px 0 5px":"2px 5px 2px 5px"}} > <span className={`block text-[11px] font-semibold truncate leading-tight tracking-[-0.01em] ${ done ?"text-success":"text-ink-2"
           } ${strike}`}
         >
           {b.customer_name}
@@ -152,8 +147,7 @@ function CardBody({
         )}
         {height < H_TIME && (
           <span
-            className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
-            style={{ background: done ? COMPLETED_COLOR : STATUS_DOT[b.status] || "#2E7FD4" }}
+            className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"style={{ background: done ? COMPLETED_COLOR : STATUS_DOT[b.status] ||"#2E7FD4" }}
           />
         )}
       </span>
@@ -310,7 +304,7 @@ export function AgendaWeekBoard({
   return (
     <div className="font-body">
       <p className="text-xs font-medium text-outline tracking-wide text-center">
-        {summary.total} {summary.total === 1 ? "CITA" : "CITAS"} · {summary.occ}% OCUPACIÓN
+        {summary.total} {summary.total === 1 ? "CITA":"CITAS"} · {summary.occ}% OCUPACIÓN
       </p>
 
       <div ref={scrollerRef} className="overflow-x-auto no-scrollbar pt-4">
@@ -346,50 +340,19 @@ export function AgendaWeekBoard({
                 key={day.key}
                 className={
                   laneCount > 1
-                    ? "flex-shrink-0"
-                    : "w-[118px] flex-shrink-0 min-[920px]:flex-1 min-[920px]:w-auto min-[920px]:min-w-0"
+                    ? "flex-shrink-0":"w-[118px] flex-shrink-0 min-[920px]:flex-1 min-[920px]:w-auto min-[920px]:min-w-0"
                 }
                 style={laneCount > 1 ? { width: laneCount * LANE_W_SPLIT } : undefined}
               >
                 {/* Cabecera del día */}
                 <div
-                  className="flex flex-col items-center justify-center gap-0.5 rounded-t-xl"
-                  style={{
-                    height: HEAD_PX,
-                    background: day.isToday
-                      ? "linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))"
-                      : undefined,
-                    color: day.isToday ? "#fff" : undefined,
-                  }}
-                >
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-[.06em] ${
-                      day.isToday ? "opacity-80" : "text-outline"
-                    }`}
-                  >
-                    {day.label}
-                  </span>
-                  <span
-                    className={`text-[17px] font-bold leading-none ${
-                      day.isToday ? "" : day.closed ? "text-outline/60" : "text-ink-2"
+                  className="flex flex-col items-center justify-center gap-0.5 rounded-t-xl"style={{ height: HEAD_PX, background: day.isToday ?"linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)))": undefined, color: day.isToday ?"#fff": undefined, }} > <span className={`text-[10px] font-bold uppercase tracking-[.06em] ${ day.isToday ?"opacity-80":"text-outline"}`} > {day.label} </span> <span className={`text-[17px] font-bold leading-none ${ day.isToday ?"": day.closed ?"text-outline/60":"text-ink-2"
                     }`}
                   >
                     {day.dayNum}
                   </span>
                   {day.closed ? (
-                    <Lock className="w-2.5 h-2.5 text-outline/60" />
-                  ) : (
-                    <span
-                      className={`text-[10px] font-semibold tabular-nums ${
-                        day.isToday ? "opacity-85" : "text-outline"
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </div>
-
-                {/* Una calle por profesional cuando el filtro está en "Todas" */}
+                    <Lock className="w-2.5 h-2.5 text-outline/60"/> ) : ( <span className={`text-[10px] font-semibold tabular-nums ${ day.isToday ?"opacity-85":"text-outline"}`} > {count} </span> )} </div> {/* Una calle por profesional cuando el filtro está en"Todas" */}
                 <div className="flex">
                   {lanes.map((lane, li) => {
                     const ghost = drag?.active && drag.colId === lane.id ? drag : null;
@@ -403,8 +366,7 @@ export function AgendaWeekBoard({
                         {lane.stylist && (
                           <div
                             className={`flex items-center justify-center gap-1 px-1 border-b border-line ${
-                              first ? "border-l" : "border-l border-outline/25"
-                            } ${last ? "border-r" : ""}`}
+                              first ? "border-l":"border-l border-outline/25"} ${last ?"border-r":""}`}
                             style={{ height: LANE_HEAD }}
                           >
                             <span
@@ -422,15 +384,11 @@ export function AgendaWeekBoard({
                             railRefs.current[lane.id] = el;
                           }}
                           className={`relative overflow-hidden transition-colors border-line ${
-                            first ? "border-l rounded-bl-xl" : "border-l border-outline/25"
-                          } ${last ? "border-r rounded-br-xl" : ""}`}
+                            first ? "border-l rounded-bl-xl":"border-l border-outline/25"} ${last ?"border-r rounded-br-xl":""}`}
                           style={{
                             height: railHeight,
                             background: isDropTarget
-                              ? "hsl(var(--primary) / 0.05)"
-                              : day.isToday
-                                ? "hsl(var(--primary) / 0.03)"
-                                : "rgba(255,255,255,.3)",
+                              ? "hsl(var(--primary) / 0.05)": day.isToday ?"hsl(var(--primary) / 0.03)":"rgba(255,255,255,.3)",
                             boxShadow: isDropTarget
                               ? "inset 0 0 0 2px hsl(var(--primary) / 0.4)"
                               : undefined,
@@ -473,11 +431,7 @@ export function AgendaWeekBoard({
                               {/* Descanso */}
                               {hasBreak && (
                                 <div
-                                  className="absolute left-0 right-0 pointer-events-none"
-                                  style={{
-                                    top: Math.max(0, (day.breakStart! - dayStart) * PPM),
-                                    height: Math.max(0, (day.breakEnd! - day.breakStart!) * PPM),
-                                    background: "rgba(245,158,11,.06)",
+                                  className="absolute left-0 right-0 pointer-events-none"style={{ top: Math.max(0, (day.breakStart! - dayStart) * PPM), height: Math.max(0, (day.breakEnd! - day.breakStart!) * PPM), background:"rgba(245,158,11,.06)",
                                   }}
                                 />
                               )}
@@ -497,11 +451,7 @@ export function AgendaWeekBoard({
                                         if (suppressClick.current) return;
                                         onQuickCreate(day.key, time, lane.stylist?.slug);
                                       }}
-                                      className="absolute left-0 right-0 group flex items-center justify-center z-[7]"
-                                      style={{
-                                        top: i * 30 * PPM,
-                                        height: 30 * PPM,
-                                        pointerEvents: dragActive ? "none" : undefined,
+                                      className="absolute left-0 right-0 group flex items-center justify-center z-[7]"style={{ top: i * 30 * PPM, height: 30 * PPM, pointerEvents: dragActive ?"none" : undefined,
                                       }}
                                     >
                                       <span className="pointer-events-none absolute inset-x-0.5 inset-y-[1px] rounded-lg border border-dashed border-primary/45 bg-background/90 flex items-center justify-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-active:opacity-100">
@@ -523,7 +473,7 @@ export function AgendaWeekBoard({
                                     className="absolute left-0 right-0 z-[1] overflow-hidden rounded-lg border border-line pointer-events-none"
                                      style={{ top: 0, height: railHeight, background: STRIPES }}
                                    >
-                                     <span className="pointer-events-auto absolute top-0.5 left-1 inline-flex items-center gap-0.5 rounded-full bg-slate-200 pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline max-w-[calc(100%-8px)]">
+                                     <span className="pointer-events-auto absolute top-0.5 left-1 inline-flex items-center gap-0.5 rounded-full bg-[var(--gp-chip)] pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline max-w-[calc(100%-8px)]">
                                       <Lock className="w-2 h-2 flex-none" />
                                       <span className="truncate">{label}</span>
                                       {onUnblock && (
@@ -544,36 +494,11 @@ export function AgendaWeekBoard({
                                         onClick={() => onUnblock(b)}
                                         className="pointer-events-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 inline-flex items-center gap-1 rounded-full bg-white border border-line px-2 py-1 text-[11px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
                                       >
-                                        <LockOpen className="w-3 h-3" />
-                                        Quitar
-                                      </button>
-                                    )}
-                                  </div>
-                                );
-                              })}
-
-                              {/* Citas */}
-                              {lane.items.map(({ b, start, end, col, cols }) => {
-                                const dragged = drag?.active && drag.b.id === b.id;
-                                const top = Math.max(0, (start - dayStart) * PPM);
-                                const bottom = Math.min(railHeight, (end - dayStart) * PPM);
-                                if (bottom <= 0) return null;
-                                const height = Math.max(18, bottom - top);
-                                const left = `calc(2px + (100% - 4px) * ${col / cols})`;
-                                const width = `calc((100% - 4px) / ${cols} - ${cols > 1 ? 2 : 0}px)`;
-
-                                // Al mover, en su sitio original queda el hueco marcado
-                                if (dragged && drag!.mode === "move") {
+                                        <LockOpen className="w-3 h-3"/> Quitar </button> )} </div> ); })} {/* Citas */} {lane.items.map(({ b, start, end, col, cols }) => { const dragged = drag?.active && drag.b.id === b.id; const top = Math.max(0, (start - dayStart) * PPM); const bottom = Math.min(railHeight, (end - dayStart) * PPM); if (bottom <= 0) return null; const height = Math.max(18, bottom - top); const left = `calc(2px + (100% - 4px) * ${col / cols})`; const width = `calc((100% - 4px) / ${cols} - ${cols > 1 ? 2 : 0}px)`; // Al mover, en su sitio original queda el hueco marcado if (dragged && drag!.mode ==="move") {
                                   return (
                                     <div
                                       key={b.id}
-                                      className="absolute z-[5] rounded-lg border-2 border-dashed pointer-events-none"
-                                      style={{
-                                        left,
-                                        width,
-                                        top,
-                                        height,
-                                        borderColor: "hsl(var(--primary) / 0.35)",
+                                      className="absolute z-[5] rounded-lg border-2 border-dashed pointer-events-none"style={{ left, width, top, height, borderColor:"hsl(var(--primary) / 0.35)",
                                         background: "hsl(var(--primary) / 0.05)",
                                       }}
                                     />
@@ -591,11 +516,7 @@ export function AgendaWeekBoard({
                                     >
                                       {onMove && (
                                         <span
-                                          role="separator"
-                                          aria-label={`Mover el bloqueo de ${fromMinutes(start)} a ${fromMinutes(end)}`}
-                                          onPointerDown={(e) => {
-                                            e.stopPropagation();
-                                            beginDrag(e, b, "move", {
+                                          role="separator"aria-label={`Mover el bloqueo de ${fromMinutes(start)} a ${fromMinutes(end)}`} onPointerDown={(e) => { e.stopPropagation(); beginDrag(e, b,"move", {
                                               start,
                                               dur: end - start,
                                               col,
@@ -603,12 +524,10 @@ export function AgendaWeekBoard({
                                               colId: lane.id,
                                             });
                                           }}
-                                          className="pointer-events-auto absolute left-0 top-0 bottom-0 w-3.5 flex items-center justify-center z-[2] cursor-grab active:cursor-grabbing"
-                                          style={{ touchAction: "none", ...NO_SELECT }}
+                                          className="pointer-events-auto absolute left-0 top-0 bottom-0 w-3.5 flex items-center justify-center z-[2] cursor-grab active:cursor-grabbing"style={{ touchAction:"none", ...NO_SELECT }}
                                         >
                                           <span
-                                            className="flex flex-col gap-[2px] rounded-full bg-white px-[2px] py-0.5"
-                                            style={{ boxShadow: "0 0 0 1px rgba(20,22,40,.06)" }}
+                                            className="flex flex-col gap-[2px] rounded-full bg-white px-[2px] py-0.5"style={{ boxShadow:"0 0 0 1px rgba(20,22,40,.06)" }}
                                           >
                                             {[0, 1, 2].map((i) => (
                                               <span
@@ -621,7 +540,7 @@ export function AgendaWeekBoard({
                                       )}
 
                                       <span
-                                        className="pointer-events-auto absolute top-0.5 inline-flex items-center gap-0.5 rounded-full bg-slate-200 pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline"
+                                        className="pointer-events-auto absolute top-0.5 inline-flex items-center gap-0.5 rounded-full bg-[var(--gp-chip)] pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline"
                                         style={{
                                           left: onMove ? 15 : 4,
                                           maxWidth: `calc(100% - ${onMove ? 19 : 8}px)`,
@@ -656,10 +575,7 @@ export function AgendaWeekBoard({
                                       {onResize && (
                                         <span
                                           role="separator"
-                                          aria-label="Cambiar las horas bloqueadas"
-                                          onPointerDown={(e) => {
-                                            e.stopPropagation();
-                                            beginDrag(e, b, "resize", {
+                                          aria-label="Cambiar las horas bloqueadas"onPointerDown={(e) => { e.stopPropagation(); beginDrag(e, b,"resize", {
                                               start,
                                               dur: end - start,
                                               col,
@@ -667,30 +583,14 @@ export function AgendaWeekBoard({
                                               colId: lane.id,
                                             });
                                           }}
-                                          className="absolute bottom-0 left-0 right-0 h-2.5 flex items-end justify-center z-[2] cursor-ns-resize"
-                                          style={{ touchAction: "none", ...NO_SELECT }}
+                                          className="absolute bottom-0 left-0 right-0 h-2.5 flex items-end justify-center z-[2] cursor-ns-resize"style={{ touchAction:"none", ...NO_SELECT }}
                                         >
-                                          <span className="h-[3px] w-4 rounded-full bg-outline/45" />
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                }
-
-                                const done = isCompleted(b);
-                                const color = stylistColors[b.stylist] || "#22408C";
+                                          <span className="h-[3px] w-4 rounded-full bg-outline/45"/> </span> )} </div> ); } const done = isCompleted(b); const color = stylistColors[b.stylist] ||"#22408C";
 
                                 return (
                                   <div
                                     key={b.id}
-                                    role="button"
-                                    tabIndex={0}
-                                    onClick={() => {
-                                      if (suppressClick.current) return;
-                                      onSelect(b);
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter" || e.key === " ") {
+                                    role="button"tabIndex={0} onClick={() => { if (suppressClick.current) return; onSelect(b); }} onKeyDown={(e) => { if (e.key ==="Enter"|| e.key ===" ") {
                                         e.preventDefault();
                                         onSelect(b);
                                       }
@@ -707,14 +607,7 @@ export function AgendaWeekBoard({
                                       });
                                     }}
                                     className={`absolute z-10 text-left rounded-lg flex overflow-hidden select-none active:scale-[.98] transition-transform ease-brand group/card min-[920px]:hover:-translate-y-px min-[920px]:hover:outline min-[920px]:hover:outline-1 min-[920px]:hover:outline-primary/25 ${
-                                      onMove ? "cursor-grab active:cursor-grabbing" : ""
-                                    }`}
-                                    style={{
-                                      left,
-                                      width,
-                                      top,
-                                      height,
-                                      background: done ? COMPLETED_BG : "#fff",
+                                      onMove ? "cursor-grab active:cursor-grabbing":""}`} style={{ left, width, top, height, background: done ? COMPLETED_BG :"#fff",
                                       boxShadow: CARD_SHADOW,
                                       opacity: done ? 0.9 : 1,
                                       ...NO_SELECT,
@@ -726,11 +619,7 @@ export function AgendaWeekBoard({
                                         En táctil es el único sitio desde el que se arrastra. */}
                                     {onMove && (
                                       <span
-                                        role="separator"
-                                        aria-label={`Mover la cita de ${b.customer_name}`}
-                                        onPointerDown={(e) => {
-                                          e.stopPropagation();
-                                          beginDrag(e, b, "move", {
+                                        role="separator"aria-label={`Mover la cita de ${b.customer_name}`} onPointerDown={(e) => { e.stopPropagation(); beginDrag(e, b,"move", {
                                             start,
                                             dur: end - start,
                                             col,
@@ -739,8 +628,7 @@ export function AgendaWeekBoard({
                                           });
                                         }}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="absolute left-0 top-0 bottom-0 w-4 flex items-center cursor-grab active:cursor-grabbing"
-                                        style={{ touchAction: "none", paddingLeft: 4, ...NO_SELECT }}
+                                        className="absolute left-0 top-0 bottom-0 w-4 flex items-center cursor-grab active:cursor-grabbing"style={{ touchAction:"none", paddingLeft: 4, ...NO_SELECT }}
                                       >
                                         <span className="flex flex-col gap-[2px]">
                                           {[0, 1, 2].map((i) => (
@@ -755,11 +643,7 @@ export function AgendaWeekBoard({
 
                                     {onResize && (
                                       <span
-                                        role="separator"
-                                        aria-label={`Cambiar duración de la cita de ${b.customer_name}`}
-                                        onPointerDown={(e) => {
-                                          e.stopPropagation();
-                                          beginDrag(e, b, "resize", {
+                                        role="separator"aria-label={`Cambiar duración de la cita de ${b.customer_name}`} onPointerDown={(e) => { e.stopPropagation(); beginDrag(e, b,"resize", {
                                             start,
                                             dur: end - start,
                                             col,
@@ -768,62 +652,22 @@ export function AgendaWeekBoard({
                                           });
                                         }}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="absolute bottom-0 left-0 right-0 h-2.5 flex items-end justify-center cursor-ns-resize opacity-45 min-[920px]:opacity-0 min-[920px]:group-hover/card:opacity-100 transition-opacity"
-                                        style={{ touchAction: "none", ...NO_SELECT }}
+                                        className="absolute bottom-0 left-0 right-0 h-2.5 flex items-end justify-center cursor-ns-resize opacity-45 min-[920px]:opacity-0 min-[920px]:group-hover/card:opacity-100 transition-opacity"style={{ touchAction:"none", ...NO_SELECT }}
                                       >
-                                        <span className="h-[3px] w-4 rounded-full bg-outline/40" />
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })}
-
-                              {/* Guía de encaje + holograma */}
-                              {ghost &&
-                                (() => {
-                                  const ghostBlock = isBlocked(ghost.b);
-                                  const gCols = ghost.mode === "resize" ? ghost.cols : 1;
-                                  const gCol = ghost.mode === "resize" ? ghost.col : 0;
-                                  const gLeft = `calc(2px + (100% - 4px) * ${gCol / gCols})`;
-                                  const gWidth = `calc((100% - 4px) / ${gCols} - ${gCols > 1 ? 2 : 0}px)`;
-                                  const snapTop = Math.max(0, (ghost.start - dayStart) * PPM);
-                                  const snapH = Math.max(
-                                    18,
-                                    Math.min(ghost.dur, dayEnd - ghost.start) * PPM,
-                                  );
-                                  const rawTop =
-                                    ghost.mode === "resize"
-                                      ? snapTop
-                                      : (ghost.rawStart - dayStart) * PPM;
-                                  const rawH =
-                                    ghost.mode === "resize" ? Math.max(18, ghost.rawDur * PPM) : snapH;
+                                        <span className="h-[3px] w-4 rounded-full bg-outline/40"/> </span> )} </div> ); })} {/* Guía de encaje + holograma */} {ghost && (() => { const ghostBlock = isBlocked(ghost.b); const gCols = ghost.mode ==="resize"? ghost.cols : 1; const gCol = ghost.mode ==="resize"? ghost.col : 0; const gLeft = `calc(2px + (100% - 4px) * ${gCol / gCols})`; const gWidth = `calc((100% - 4px) / ${gCols} - ${gCols > 1 ? 2 : 0}px)`; const snapTop = Math.max(0, (ghost.start - dayStart) * PPM); const snapH = Math.max( 18, Math.min(ghost.dur, dayEnd - ghost.start) * PPM, ); const rawTop = ghost.mode ==="resize"? snapTop : (ghost.rawStart - dayStart) * PPM; const rawH = ghost.mode ==="resize" ? Math.max(18, ghost.rawDur * PPM) : snapH;
                                   const done = isCompleted(ghost.b);
 
                                   return (
                                     <>
                                       <div
-                                        className="absolute z-[15] rounded-lg border-2 border-dashed pointer-events-none transition-all duration-100 ease-out"
-                                        style={{
-                                          left: gLeft,
-                                          width: gWidth,
-                                          top: snapTop,
-                                          height: snapH,
-                                          borderColor: "hsl(var(--primary) / 0.5)",
+                                        className="absolute z-[15] rounded-lg border-2 border-dashed pointer-events-none transition-all duration-100 ease-out"style={{ left: gLeft, width: gWidth, top: snapTop, height: snapH, borderColor:"hsl(var(--primary) / 0.5)",
                                           background: "hsl(var(--primary) / 0.06)",
                                         }}
                                       />
                                       <div
-                                        className="absolute z-20 rounded-lg flex overflow-hidden pointer-events-none"
-                                        style={{
-                                          left: gLeft,
-                                          width: gWidth,
-                                          top: 0,
-                                          height: rawH,
-                                          transform: `translate3d(0, ${rawTop}px, 0) scale(1.04)`,
-                                          willChange: "transform",
+                                        className="absolute z-20 rounded-lg flex overflow-hidden pointer-events-none"style={{ left: gLeft, width: gWidth, top: 0, height: rawH, transform: `translate3d(0, ${rawTop}px, 0) scale(1.04)`, willChange:"transform",
                                           background: done
-                                            ? "rgba(241,250,244,.82)"
-                                            : "rgba(255,255,255,.82)",
+                                            ? "rgba(241,250,244,.82)":"rgba(255,255,255,.82)",
                                           backdropFilter: "blur(8px)",
                                           WebkitBackdropFilter: "blur(8px)",
                                           boxShadow: `${SHADOW_DRAG}, 0 0 0 1.5px hsl(var(--primary) / 0.35)`,
@@ -836,35 +680,14 @@ export function AgendaWeekBoard({
                                               style={{ background: STRIPES }}
                                             />
                                             <span className="relative inline-flex items-center gap-1 text-[10px] font-bold text-outline tabular-nums">
-                                              <Lock className="w-2.5 h-2.5" />
-                                              {fromMinutes(ghost.start)}
-                                            </span>
-                                          </span>
-                                        ) : (
-                                          <CardBody
-                                            b={ghost.b}
-                                            color={stylistColors[ghost.b.stylist] || "#22408C"}
+                                              <Lock className="w-2.5 h-2.5"/> {fromMinutes(ghost.start)} </span> </span> ) : ( <CardBody b={ghost.b} color={stylistColors[ghost.b.stylist] ||"#22408C"}
                                             height={rawH}
                                             startMin={ghost.start}
                                           />
                                         )}
                                       </div>
                                       <span
-                                        className="absolute z-30 left-1/2 -translate-x-1/2 rounded-full bg-gradient-brand px-1.5 py-0.5 text-[10px] font-bold text-white tabular-nums shadow-fab pointer-events-none whitespace-nowrap"
-                                        style={{
-                                          top: Math.max(
-                                            2,
-                                            Math.min(
-                                              railHeight - 18,
-                                              ghost.mode === "resize"
-                                                ? rawTop + rawH + 2
-                                                : rawTop - 19,
-                                            ),
-                                          ),
-                                        }}
-                                      >
-                                        {fromMinutes(ghost.start)}
-                                        {ghost.mode === "resize" &&
+                                        className="absolute z-30 left-1/2 -translate-x-1/2 rounded-full bg-gradient-brand px-1.5 py-0.5 text-[10px] font-bold text-white tabular-nums shadow-fab pointer-events-none whitespace-nowrap"style={{ top: Math.max( 2, Math.min( railHeight - 18, ghost.mode ==="resize"? rawTop + rawH + 2 : rawTop - 19, ), ), }} > {fromMinutes(ghost.start)} {ghost.mode ==="resize" &&
                                           ` – ${fromMinutes(ghost.start + ghost.dur)}`}
                                       </span>
                                     </>

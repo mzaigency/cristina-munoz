@@ -19,10 +19,7 @@ export function ClientStats({ clients }: ClientStatsProps) {
   ).length;
 
   const stats = [
-    { icon: Users, label: "Total", value: clients.length, color: "text-primary" },
-    { icon: UserPlus, label: "Nuevos", value: newThisMonth, color: "text-[var(--gp-ok-ink)]" },
-    { icon: TrendingUp, label: "Gasto medio", value: `${avgSpent.toFixed(0)}€`, color: "text-[var(--gp-info-ink)]" },
-    { icon: UserX, label: "Inactivos", value: inactive, color: "text-[var(--gp-warn)]" },
+    { icon: Users, label: "Total", value: clients.length, color: "text-primary"}, { icon: UserPlus, label:"Nuevos", value: newThisMonth, color: "text-[var(--gp-ok-ink)]"}, { icon: TrendingUp, label:"Gasto medio", value: `${avgSpent.toFixed(0)}€`, color: "text-[var(--gp-info-ink)]"}, { icon: UserX, label:"Inactivos", value: inactive, color: "text-[var(--gp-warn)]" },
   ];
 
   return (

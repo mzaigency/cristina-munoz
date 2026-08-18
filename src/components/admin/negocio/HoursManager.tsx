@@ -72,13 +72,7 @@ interface FormState {
 }
 
 const DAYS_OF_WEEK = [
-  { value: 1, label: "Lun" },
-  { value: 2, label: "Mar" },
-  { value: 3, label: "Mié" },
-  { value: 4, label: "Jue" },
-  { value: 5, label: "Vie" },
-  { value: 6, label: "Sáb" },
-  { value: 0, label: "Dom" },
+  { value: 1, label: "Lun"}, { value: 2, label:"Mar"}, { value: 3, label:"Mié"}, { value: 4, label:"Jue"}, { value: 5, label:"Vie"}, { value: 6, label:"Sáb"}, { value: 0, label:"Dom" },
 ];
 
 const DAYS_LONG = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -95,19 +89,8 @@ const DEFAULT_HOURS: BusinessHour[] = DAYS_OF_WEEK.map((day) => ({
 
 // Spanish national holidays (year-agnostic dates that always happen)
 const ES_HOLIDAYS_FIXED = [
-  { md: "01-01", label: "Año Nuevo" },
-  { md: "01-06", label: "Reyes" },
-  { md: "05-01", label: "Día del Trabajo" },
-  { md: "08-15", label: "Asunción" },
-  { md: "10-12", label: "Fiesta Nacional" },
-  { md: "11-01", label: "Todos los Santos" },
-  { md: "12-06", label: "Día de la Constitución" },
-  { md: "12-08", label: "Inmaculada" },
-  { md: "12-25", label: "Navidad" },
-];
-
-function todayISO() {
-  return format(new Date(), "yyyy-MM-dd");
+  { md: "01-01", label: "Año Nuevo"}, { md:"01-06", label: "Reyes"}, { md:"05-01", label: "Día del Trabajo"}, { md:"08-15", label: "Asunción"}, { md:"10-12", label: "Fiesta Nacional"}, { md:"11-01", label: "Todos los Santos"}, { md:"12-06", label: "Día de la Constitución"}, { md:"12-08", label: "Inmaculada"}, { md:"12-25", label: "Navidad"},
+]; function todayISO() { return format(new Date(),"yyyy-MM-dd");
 }
 
 function fromDbHour(r: { id: string; day_of_week: number; is_open: boolean | null; open_time: string | null; close_time: string | null; break_start: string | null; break_end: string | null }): BusinessHour {
@@ -158,7 +141,7 @@ function toDbHour(h: BusinessHour, tenantId: string) {
   };
 }
 
-const initialForm = (mode: "day" | "week" | "range", base?: Partial<FormState>): FormState => {
+const initialForm = (mode: "day"|"week"|"range", base?: Partial<FormState>): FormState => {
   const start = base?.date_from || todayISO();
   let end = start;
   if (mode === "week") end = format(addDays(parseISO(start), 6), "yyyy-MM-dd");
@@ -180,7 +163,7 @@ const formatHM = (t?: string | null) => (t ? t.slice(0, 5) : "");
 
 export function HoursManager({ tenantId }: HoursManagerProps) {
   const { toast } = useToast();
-  const [tab, setTab] = useState<"semana" | "especiales">("semana");
+  const [tab, setTab] = useState<"semana"|"especiales">("semana");
 
   // Weekly hours
   const [hours, setHours] = useState<BusinessHour[]>(DEFAULT_HOURS);
@@ -195,7 +178,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(initialForm("day"));
-  const [formMode, setFormMode] = useState<"day" | "week" | "range">("day");
+  const [formMode, setFormMode] = useState<"day"|"week"|"range">("day");
   const [saving, setSaving] = useState(false);
 
   // Calendar
@@ -235,32 +218,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
       .insert(hours.map((h) => toDbHour(h, tenantId)));
     setSavingWeekly(false);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return;
-    }
-    toast({ title: "Horario guardado" });
-    load();
-  };
-
-  const updateHour = (dow: number, patch: Partial<BusinessHour>) => {
-    setHours((prev) => prev.map((h) => (h.day_of_week === dow ? { ...h, ...patch } : h)));
-  };
-
-  const copyToAll = (sourceDow: number) => {
-    const src = hours.find((h) => h.day_of_week === sourceDow);
-    if (!src) return;
-    setHours((prev) =>
-      prev.map((h) => ({
-        ...h,
-        is_open: src.is_open,
-        morning_start: src.morning_start,
-        morning_end: src.morning_end,
-        afternoon_start: src.afternoon_start,
-        afternoon_end: src.afternoon_end,
-        has_afternoon: src.has_afternoon,
-      }))
-    );
-    toast({ title: "Copiado a todos los días" });
+      toast({ title: "Error", description: error.message, variant: "destructive"}); return; } toast({ title:"Horario guardado"}); load(); }; const updateHour = (dow: number, patch: Partial<BusinessHour>) => { setHours((prev) => prev.map((h) => (h.day_of_week === dow ? { ...h, ...patch } : h))); }; const copyToAll = (sourceDow: number) => { const src = hours.find((h) => h.day_of_week === sourceDow); if (!src) return; setHours((prev) => prev.map((h) => ({ ...h, is_open: src.is_open, morning_start: src.morning_start, morning_end: src.morning_end, afternoon_start: src.afternoon_start, afternoon_end: src.afternoon_end, has_afternoon: src.has_afternoon, })) ); toast({ title:"Copiado a todos los días" });
   };
 
   // Quick actions for special hours
@@ -316,7 +274,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
 
   const openEdit = (it: Override) => {
     const isSingle = it.date_from === it.date_to;
-    setFormMode(isSingle ? "day" : "range");
+    setFormMode(isSingle ? "day":"range");
     setEditingId(it.id);
     setForm({
       label: it.label ?? "",
@@ -355,35 +313,8 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
 
     const { error } = await supabase.from("tenant_hours_overrides").insert(toInsert);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return;
-    }
-    toast({
-      title: `${toInsert.length} festivos añadidos`,
-      description: `Festivos nacionales ${year}`,
-    });
-    load();
-  };
-
-  const saveForm = async () => {
-    if (form.date_to < form.date_from) {
-      toast({ title: "Rango inválido", variant: "destructive" });
-      return;
-    }
-    if (!form.is_closed && form.close_time <= form.open_time) {
-      toast({ title: "Horario inválido", description: "Cierre debe ser posterior a apertura", variant: "destructive" });
-      return;
-    }
-
-    // Conflict check (skip self when editing)
-    const conflicts = overrides.filter(
-      (o) => o.id !== editingId && o.date_from <= form.date_to && o.date_to >= form.date_from
-    );
-    if (conflicts.length > 0) {
-      const first = conflicts[0];
-      toast({
-        title: "Solape detectado",
-        description: `Se solapa con "${first.label || (first.is_closed ? "Cerrado" : "Horario")}" del ${format(parseISO(first.date_from), "d MMM", { locale: es })}.`,
+      toast({ title: "Error", description: error.message, variant: "destructive"}); return; } toast({ title: `${toInsert.length} festivos añadidos`, description: `Festivos nacionales ${year}`, }); load(); }; const saveForm = async () => { if (form.date_to < form.date_from) { toast({ title:"Rango inválido", variant: "destructive"}); return; } if (!form.is_closed && form.close_time <= form.open_time) { toast({ title:"Horario inválido", description: "Cierre debe ser posterior a apertura", variant: "destructive"}); return; } // Conflict check (skip self when editing) const conflicts = overrides.filter( (o) => o.id !== editingId && o.date_from <= form.date_to && o.date_to >= form.date_from ); if (conflicts.length > 0) { const first = conflicts[0]; toast({ title:"Solape detectado",
+        description: `Se solapa con "${first.label || (first.is_closed ? "Cerrado":"Horario")}"del ${format(parseISO(first.date_from),"d MMM", { locale: es })}.`,
         variant: "destructive",
       });
       return;
@@ -409,18 +340,12 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
         .eq("id", editingId);
       setSaving(false);
       if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-        return;
-      }
-      toast({ title: "Actualizado" });
+        toast({ title: "Error", description: error.message, variant: "destructive"}); return; } toast({ title:"Actualizado" });
     } else {
       const { error } = await supabase.from("tenant_hours_overrides").insert(payload);
       setSaving(false);
       if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-        return;
-      }
-      toast({ title: "Horario especial añadido" });
+        toast({ title: "Error", description: error.message, variant: "destructive"}); return; } toast({ title:"Horario especial añadido" });
     }
     setShowForm(false);
     setEditingId(null);
@@ -431,27 +356,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
     if (!confirm("¿Eliminar este horario especial?")) return;
     const { error } = await supabase.from("tenant_hours_overrides").delete().eq("id", id);
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return;
-    }
-    toast({ title: "Eliminado" });
-    load();
-  };
-
-  // Categorize
-  const today = todayISO();
-  const active = overrides.filter((o) => o.date_from <= today && o.date_to >= today);
-  const upcoming = overrides.filter((o) => o.date_from > today);
-  const past = overrides.filter((o) => o.date_to < today);
-
-  // Calendar days
-  const calStart = startOfMonth(calMonth);
-  const calEnd = endOfMonth(calMonth);
-  const calStartWeekday = (calStart.getDay() + 6) % 7; // Monday-start
-  const calDaysCount = differenceInCalendarDays(calEnd, calStart) + 1;
-
-  const overrideForDate = (d: Date): Override | undefined => {
-    const iso = format(d, "yyyy-MM-dd");
+      toast({ title: "Error", description: error.message, variant: "destructive"}); return; } toast({ title:"Eliminado"}); load(); }; // Categorize const today = todayISO(); const active = overrides.filter((o) => o.date_from <= today && o.date_to >= today); const upcoming = overrides.filter((o) => o.date_from > today); const past = overrides.filter((o) => o.date_to < today); // Calendar days const calStart = startOfMonth(calMonth); const calEnd = endOfMonth(calMonth); const calStartWeekday = (calStart.getDay() + 6) % 7; // Monday-start const calDaysCount = differenceInCalendarDays(calEnd, calStart) + 1; const overrideForDate = (d: Date): Override | undefined => { const iso = format(d,"yyyy-MM-dd");
     return overrides.find((o) => o.date_from <= iso && o.date_to >= iso);
   };
 
@@ -478,8 +383,8 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
           <h2>Horarios</h2>
           <p>
             {active.length > 0
-              ? `${active.length} horario${active.length === 1 ? "" : "s"} especial${active.length === 1 ? "" : "es"} activo${active.length === 1 ? "" : "s"} ahora`
-              : `${upcoming.length} próximo${upcoming.length === 1 ? "" : "s"} cambio${upcoming.length === 1 ? "" : "s"}`}
+              ? `${active.length} horario${active.length === 1 ? "":"s"} especial${active.length === 1 ? "":"es"} activo${active.length === 1 ? "":"s"} ahora`
+              : `${upcoming.length} próximo${upcoming.length === 1 ? "":"s"} cambio${upcoming.length === 1 ? "":"s"}`}
           </p>
         </div>
         {tab === "semana" && (
@@ -500,27 +405,16 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
       {/* Sub-tabs */}
       <div className="gp-neg-hours-tabs">
         <button
-          className={`gp-mkt-chip${tab === "semana" ? " on" : ""}`}
+          className={`gp-mkt-chip${tab === "semana"?" on":""}`}
           onClick={() => setTab("semana")}
-          type="button"
-        >
-          <Calendar style={{ width: 13, height: 13 }} /> Semanal
-        </button>
-        <button
-          className={`gp-mkt-chip${tab === "especiales" ? " on" : ""}`}
+          type="button"> <Calendar style={{ width: 13, height: 13 }} /> Semanal </button> <button className={`gp-mkt-chip${tab ==="especiales"?" on":""}`}
           onClick={() => setTab("especiales")}
-          type="button"
-        >
-          <Sparkles style={{ width: 13, height: 13 }} /> Especiales ({overrides.length})
-        </button>
-      </div>
-
-      {tab === "semana" && (
+          type="button"> <Sparkles style={{ width: 13, height: 13 }} /> Especiales ({overrides.length}) </button> </div> {tab ==="semana" && (
         <div className="gp-neg-week">
           {DAYS_OF_WEEK.map((day, idx) => {
             const h = hours.find((x) => x.day_of_week === day.value)!;
             return (
-              <div key={day.value} className={`gp-card pad gp-neg-week-day${!h.is_open ? " is-off" : ""}`}>
+              <div key={day.value} className={`gp-card pad gp-neg-week-day${!h.is_open ? " is-off":""}`}>
                 <div className="gp-neg-week-h">
                   <div className="gp-neg-week-title">
                     <input
@@ -551,20 +445,11 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                         />
                         <span>→</span>
                         <input
-                          type="time"
-                          value={h.morning_end}
-                          onChange={(e) => updateHour(day.value, { morning_end: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div className={`gp-neg-shift gp-neg-shift-afternoon${!h.has_afternoon ? " is-off" : ""}`}>
+                          type="time"value={h.morning_end} onChange={(e) => updateHour(day.value, { morning_end: e.target.value })} /> </div> </div> <div className={`gp-neg-shift gp-neg-shift-afternoon${!h.has_afternoon ?" is-off":""}`}>
                       <div className="gp-neg-shift-h">
                         <Moon style={{ width: 13, height: 13 }} /> Tarde
                         <input
-                          type="checkbox"
-                          checked={h.has_afternoon}
-                          onChange={(e) => updateHour(day.value, { has_afternoon: e.target.checked })}
-                          style={{ marginLeft: "auto" }}
+                          type="checkbox"checked={h.has_afternoon} onChange={(e) => updateHour(day.value, { has_afternoon: e.target.checked })} style={{ marginLeft:"auto" }}
                         />
                       </div>
                       {h.has_afternoon ? (
@@ -602,7 +487,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                 <div className="gp-neg-hero-active">
                   <CheckCircle2 style={{ width: 16, height: 16 }} />
                   <div>
-                    <strong>Activo ahora: {active[0].label || (active[0].is_closed ? "Cerrado" : "Horario especial")}</strong>
+                    <strong>Activo ahora: {active[0].label || (active[0].is_closed ? "Cerrado":"Horario especial")}</strong>
                     <span>
                       Hasta {format(parseISO(active[0].date_to), "d MMM", { locale: es })}
                     </span>
@@ -614,13 +499,13 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                   <AlertCircle style={{ width: 16, height: 16 }} />
                   <div>
                     <strong>
-                      Próximo: {nextSpecial.label || (nextSpecial.is_closed ? "Cerrado" : "Horario especial")}
+                      Próximo: {nextSpecial.label || (nextSpecial.is_closed ? "Cerrado":"Horario especial")}
                     </strong>
                     <span>
                       {format(parseISO(nextSpecial.date_from), "d MMM", { locale: es })}
                       {nextSpecial.date_from !== nextSpecial.date_to &&
                         ` → ${format(parseISO(nextSpecial.date_to), "d MMM", { locale: es })}`}
-                      {" · "}
+                      {"·"}
                       {differenceInCalendarDays(parseISO(nextSpecial.date_from), new Date())} días
                     </span>
                   </div>
@@ -632,28 +517,28 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
           {/* Quick action toolbar */}
           <div className="gp-neg-quick-actions">
             <button className="gp-neg-quick-action tone-rose" onClick={openVacaciones} type="button">
-              <span className="gp-mkt-quick-ic" style={{ background: "var(--gp-mkt-rose-soft)", color: "var(--gp-mkt-rose)" }}>
+              <span className="gp-mkt-quick-ic"style={{ background:"var(--gp-mkt-rose-soft)", color: "var(--gp-mkt-rose)" }}>
                 <Plane />
               </span>
               <strong>Vacaciones</strong>
               <span>Rango cerrado</span>
             </button>
             <button className="gp-neg-quick-action tone-warn" onClick={openFestivo} type="button">
-              <span className="gp-mkt-quick-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
+              <span className="gp-mkt-quick-ic"style={{ background:"var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
                 <PartyPopper />
               </span>
               <strong>Festivo</strong>
               <span>Día cerrado</span>
             </button>
             <button className="gp-neg-quick-action tone-ok" onClick={openHorarioVerano} type="button">
-              <span className="gp-mkt-quick-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
+              <span className="gp-mkt-quick-ic"style={{ background:"var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
                 <Sun />
               </span>
               <strong>Horario verano</strong>
               <span>Jul-Ago reducido</span>
             </button>
             <button className="gp-neg-quick-action tone-brand" onClick={openCustom} type="button">
-              <span className="gp-mkt-quick-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
+              <span className="gp-mkt-quick-ic"style={{ background:"var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
                 <Plus />
               </span>
               <strong>Personalizado</strong>
@@ -712,18 +597,13 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
               </div>
               <div className="gp-neg-cal-grid">
                 {Array.from({ length: calStartWeekday }).map((_, i) => (
-                  <div key={`pad-${i}`} className="gp-neg-cal-cell is-pad" />
-                ))}
-                {Array.from({ length: calDaysCount }).map((_, i) => {
-                  const d = addDays(calStart, i);
-                  const dow = d.getDay();
-                  const iso = format(d, "yyyy-MM-dd");
+                  <div key={`pad-${i}`} className="gp-neg-cal-cell is-pad"/> ))} {Array.from({ length: calDaysCount }).map((_, i) => { const d = addDays(calStart, i); const dow = d.getDay(); const iso = format(d,"yyyy-MM-dd");
                   const isToday = iso === today;
                   const ov = overrideForDate(d);
                   const baseOpen = isOpenWeekday(dow);
-                  let state: "open" | "closed" | "special" | "special-closed" = baseOpen ? "open" : "closed";
-                  if (ov) state = ov.is_closed ? "special-closed" : "special";
-                  const cellClass = `gp-neg-cal-cell state-${state}${isToday ? " is-today" : ""}`;
+                  let state: "open"|"closed"|"special"|"special-closed"= baseOpen ?"open":"closed";
+                  if (ov) state = ov.is_closed ? "special-closed":"special";
+                  const cellClass = `gp-neg-cal-cell state-${state}${isToday ? " is-today":""}`;
                   return (
                     <button
                       key={iso}
@@ -737,8 +617,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                           setShowForm(true);
                         }
                       }}
-                      type="button"
-                      title={ov?.label || (state === "closed" ? "Cerrado" : "Abierto")}
+                      type="button"title={ov?.label || (state ==="closed"?"Cerrado":"Abierto")}
                     >
                       <span>{i + 1}</span>
                       {ov && <span className="gp-neg-cal-dot" />}
@@ -765,14 +644,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                 </div>
               </div>
               <div className="gp-neg-overrides">
-                {[...active.map((it) => ({ ...it, status: "active" as const })), ...upcoming.map((it) => ({ ...it, status: "upcoming" as const }))].map(
-                  (it) => {
-                    const days = differenceInCalendarDays(parseISO(it.date_to), parseISO(it.date_from)) + 1;
-                    const sameDay = it.date_from === it.date_to;
-                    return (
-                      <div
-                        key={it.id}
-                        className={`gp-neg-override${it.status === "active" ? " is-active" : ""}${it.is_closed ? " is-closed" : ""}`}
+                {[...active.map((it) => ({ ...it, status: "active"as const })), ...upcoming.map((it) => ({ ...it, status:"upcoming"as const }))].map( (it) => { const days = differenceInCalendarDays(parseISO(it.date_to), parseISO(it.date_from)) + 1; const sameDay = it.date_from === it.date_to; return ( <div key={it.id} className={`gp-neg-override${it.status ==="active"?" is-active":""}${it.is_closed ? " is-closed":""}`}
                       >
                         <div className="gp-neg-override-h">
                           <div className="gp-neg-override-icon">
@@ -788,20 +660,15 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                             <strong>
                               {it.label ||
                                 (it.is_closed
-                                  ? "Cerrado"
-                                  : `${formatHM(it.open_time)}–${formatHM(it.close_time)}`)}
-                            </strong>
-                            <span>
-                              {sameDay
-                                ? format(parseISO(it.date_from), "EEE d MMM", { locale: es })
+                                  ? "Cerrado": `${formatHM(it.open_time)}–${formatHM(it.close_time)}`)} </strong> <span> {sameDay ? format(parseISO(it.date_from),"EEE d MMM", { locale: es })
                                 : `${format(parseISO(it.date_from), "d MMM", { locale: es })} → ${format(parseISO(it.date_to), "d MMM", { locale: es })}`}
-                              {" · "}
-                              {days} día{days === 1 ? "" : "s"}
+                              {"·"}
+                              {days} día{days === 1 ? "":"s"}
                             </span>
                           </div>
                           {it.status === "active" && (
                             <span className="gp-badge ok">
-                              <span className="pip" style={{ background: "currentColor" }} /> Activo
+                              <span className="pip"style={{ background:"currentColor" }} /> Activo
                             </span>
                           )}
                         </div>
@@ -850,14 +717,12 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                         {it.is_closed ? <CalendarOff /> : <Calendar />}
                       </div>
                       <div className="gp-neg-override-info">
-                        <strong>{it.label || (it.is_closed ? "Cerrado" : `${formatHM(it.open_time)}–${formatHM(it.close_time)}`)}</strong>
-                        <span>{format(parseISO(it.date_from), "d MMM yyyy", { locale: es })}</span>
+                        <strong>{it.label || (it.is_closed ? "Cerrado": `${formatHM(it.open_time)}–${formatHM(it.close_time)}`)}</strong> <span>{format(parseISO(it.date_from),"d MMM yyyy", { locale: es })}</span>
                       </div>
                       <button
                         className="gp-icon-btn"
                         onClick={() => deleteOverride(it.id)}
-                        type="button"
-                        style={{ color: "var(--gp-danger)" }}
+                        type="button"style={{ color:"var(--gp-danger)" }}
                       >
                         <Trash2 style={{ width: 13, height: 13 }} />
                       </button>
@@ -875,7 +740,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
         <div className="gp-neg-create-backdrop" onClick={() => !saving && setShowForm(false)}>
           <div className="gp-neg-form-card" onClick={(e) => e.stopPropagation()}>
             <div className="gp-neg-form-h">
-              <h3>{editingId ? "Editar horario especial" : "Nuevo horario especial"}</h3>
+              <h3>{editingId ? "Editar horario especial":"Nuevo horario especial"}</h3>
               <button className="gp-icon-btn" onClick={() => setShowForm(false)} type="button">
                 <X style={{ width: 16, height: 16 }} />
               </button>
@@ -883,27 +748,17 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
 
             <div className="gp-mkt-chip-row">
               <button
-                className={`gp-mkt-chip${formMode === "day" ? " on" : ""}`}
+                className={`gp-mkt-chip${formMode === "day"?" on":""}`}
                 onClick={() => {
                   setFormMode("day");
                   setForm({ ...form, date_to: form.date_from });
                 }}
-                type="button"
-              >
-                Día
-              </button>
-              <button
-                className={`gp-mkt-chip${formMode === "week" ? " on" : ""}`}
+                type="button"> Día </button> <button className={`gp-mkt-chip${formMode ==="week"?" on":""}`}
                 onClick={() => {
                   setFormMode("week");
                   setForm({ ...form, date_to: format(addDays(parseISO(form.date_from), 6), "yyyy-MM-dd") });
                 }}
-                type="button"
-              >
-                Semana
-              </button>
-              <button
-                className={`gp-mkt-chip${formMode === "range" ? " on" : ""}`}
+                type="button"> Semana </button> <button className={`gp-mkt-chip${formMode ==="range"?" on":""}`}
                 onClick={() => setFormMode("range")}
                 type="button"
               >
@@ -925,18 +780,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
               <div className="gp-neg-form-row">
                 <label>Desde</label>
                 <input
-                  type="date"
-                  value={form.date_from}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setForm({
-                      ...form,
-                      date_from: v,
-                      date_to:
-                        formMode === "day"
-                          ? v
-                          : formMode === "week"
-                            ? format(addDays(parseISO(v), 6), "yyyy-MM-dd")
+                  type="date"value={form.date_from} onChange={(e) => { const v = e.target.value; setForm({ ...form, date_from: v, date_to: formMode ==="day"? v : formMode ==="week"? format(addDays(parseISO(v), 6),"yyyy-MM-dd")
                             : form.date_to < v
                               ? v
                               : form.date_to,
@@ -947,10 +791,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
               <div className="gp-neg-form-row">
                 <label>Hasta</label>
                 <input
-                  type="date"
-                  value={form.date_to}
-                  onChange={(e) => setForm({ ...form, date_to: e.target.value })}
-                  disabled={formMode === "day"}
+                  type="date"value={form.date_to} onChange={(e) => setForm({ ...form, date_to: e.target.value })} disabled={formMode ==="day"}
                 />
               </div>
             </div>
@@ -1032,8 +873,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                 Cancelar
               </button>
               <button className="gp-btn primary" onClick={saveForm} disabled={saving}>
-                {saving && <Loader2 className="gp-spinner-sm" />}
-                {editingId ? "Guardar" : "Crear"}
+                {saving && <Loader2 className="gp-spinner-sm"/>} {editingId ?"Guardar":"Crear"}
               </button>
             </div>
           </div>

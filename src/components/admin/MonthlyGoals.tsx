@@ -141,14 +141,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
           .eq("id", (existing as any).id);
       } else {
         await supabase
-          .from("monthly_goals" as any)
-          .insert(goalsData);
-      }
-
-      toast({ title: "Objetivos guardados" });
-      setIsEditing(false);
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+          .from("monthly_goals"as any) .insert(goalsData); } toast({ title:"Objetivos guardados"}); setIsEditing(false); } catch (error: any) { toast({ title:"Error", description: error.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -193,8 +186,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <Target className="h-5 w-5 text-primary" />
-            Objetivos {format(new Date(), "MMMM yyyy", { locale: es })}
+            <Target className="h-5 w-5 text-primary"/> Objetivos {format(new Date(),"MMMM yyyy", { locale: es })}
           </h2>
           <p className="text-sm text-muted-foreground">Define y sigue tus metas mensuales</p>
         </div>
@@ -349,7 +341,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
 
       {/* Alerts */}
       {!isEditing && goals.revenue_goal > 0 && !revenuePrediction.onTrack && (
-        <Card className="border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20">
+        <Card className="border-[var(--gp-warn)] bg-[var(--gp-warn-soft)] ">
           <CardContent className="py-3">
             <div className="flex items-center gap-2 text-[var(--gp-warn-ink)] ">
               <AlertTriangle className="h-4 w-4" />

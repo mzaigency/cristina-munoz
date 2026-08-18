@@ -53,7 +53,7 @@ interface TeamMember {
   color: string;
 }
 
-type ActivityKind = "booking" | "payment" | "review" | "client";
+type ActivityKind = "booking"|"payment"|"review"|"client";
 
 interface ActivityItem {
   id: string;
@@ -66,12 +66,7 @@ interface ActivityItem {
 const TEAM_COLORS = ["#d6489b", "#7b5bf5", "#06b6d4", "#f59e0b", "#22c55e", "#ef4444"];
 
 const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
-
-const firstServiceName = (services: unknown): string | null => {
-  if (!Array.isArray(services) || services.length === 0) return null;
-  const s = services[0] as { name?: string } | string;
-  if (typeof s === "string") return s;
+  new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR"}).format(amount); const firstServiceName = (services: unknown): string | null => { if (!Array.isArray(services) || services.length === 0) return null; const s = services[0] as { name?: string } | string; if (typeof s ==="string") return s;
   return s?.name ?? null;
 };
 
@@ -269,7 +264,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
 
       (recentCreatedBookings || []).forEach((b: any) => {
         const svc = firstServiceName(b.services);
-        const channel = b.canal === "crm" ? "manual" : "web";
+        const channel = b.canal === "crm"?"manual":"web";
         activityItems.push({
           id: `booking-${b.id}`,
           kind: "booking",
@@ -350,14 +345,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
   if (loading) {
     return (
       <div className="gp-loader">
-        <Loader2 className="gp-spinner" />
-      </div>
-    );
-  }
-
-  const quickActions = [
-    {
-      label: "Cobrar",
+        <Loader2 className="gp-spinner"/> </div> ); } const quickActions = [ { label:"Cobrar",
       icon: <Wallet style={{ width: 18, height: 18 }} />,
       color: "#7b5bf5",
       onClick: () => onQuickAction("new-payment"),
@@ -385,7 +373,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
 
 
   return (
-    <div className="gp-fade" data-tour-target="inicio-stats" style={{ display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
+    <div className="gp-fade" data-tour-target="inicio-stats"style={{ display:"flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
       <OnboardingChecklist tenantId={tenantId} onNavigate={onNavigate} />
 
       {/* ── Dashboard rediseñado (import Stitch tal cual, datos reales) ── */}
@@ -411,11 +399,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
             <div className="flex items-center justify-between mb-4">
               <span className="inline-flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-primary min-w-0">
                 <span
-                  className="w-2 h-2 rounded-full flex-none bg-[#16A249]"
-                  style={{ boxShadow: "0 0 0 3px rgba(22,162,73,.18)" }}
-                />
-                {(() => {
-                  if (!stats.nextBookingTime) return "Próxima cita";
+                  className="w-2 h-2 rounded-full flex-none bg-[#16A249]"style={{ boxShadow:"0 0 0 3px rgba(22,162,73,.18)"}} /> {(() => { if (!stats.nextBookingTime) return"Próxima cita";
                   const [h, m] = stats.nextBookingTime.split(":").map(Number);
                   const mins = h * 60 + m - (new Date().getHours() * 60 + new Date().getMinutes());
                   if (mins <= 0) return "Próxima cita · ahora";
@@ -478,8 +462,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
               </span>
               {stats.revenueGrowth !== 0 && (
                 <span className="bg-[#E7F6EC] text-[#16A249] text-xs font-bold px-2 py-1 rounded-full inline-flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" style={{ transform: stats.revenueGrowth >= 0 ? undefined : "scaleY(-1)" }} />
-                  {stats.revenueGrowth >= 0 ? "+" : ""}{stats.revenueGrowth}%
+                  <TrendingUp className="w-3 h-3"style={{ transform: stats.revenueGrowth >= 0 ? undefined :"scaleY(-1)"}} /> {stats.revenueGrowth >= 0 ?"+":""}{stats.revenueGrowth}%
                 </span>
               )}
             </div>
@@ -515,8 +498,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
               </span>
               {stats.newClientsGrowth !== 0 && (
                 <span className="bg-[#E7F6EC] text-[#16A249] text-xs font-bold px-2 py-1 rounded-full inline-flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" style={{ transform: stats.newClientsGrowth >= 0 ? undefined : "scaleY(-1)" }} />
-                  {stats.newClientsGrowth >= 0 ? "+" : ""}{stats.newClientsGrowth}%
+                  <TrendingUp className="w-3 h-3"style={{ transform: stats.newClientsGrowth >= 0 ? undefined :"scaleY(-1)"}} /> {stats.newClientsGrowth >= 0 ?"+":""}{stats.newClientsGrowth}%
                 </span>
               )}
             </div>
@@ -529,12 +511,8 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
           <div className="bg-surface-container-lowest rounded-[1rem] p-4 shadow-ambient flex flex-col justify-between">
             <div className="flex justify-between items-start mb-3">
               <span className="w-10 h-10 rounded-full bg-[#FEF3E0] flex items-center justify-center text-[#F59E0B]">
-                <TrendingUp className="w-[18px] h-[18px]" />
-              </span>
-              {stats.occupancyDelta !== 0 && (
-                <span className={`text-xs font-bold px-2 py-1 rounded-full inline-flex items-center gap-1 ${stats.occupancyDelta >= 0 ? "bg-[#E7F6EC] text-[#16A249]" : "bg-[#FDEAEA] text-[#EF4343]"}`}>
-                  <TrendingUp className="w-3 h-3" style={{ transform: stats.occupancyDelta >= 0 ? undefined : "scaleY(-1)" }} />
-                  {stats.occupancyDelta >= 0 ? "+" : ""}{stats.occupancyDelta}pp
+                <TrendingUp className="w-[18px] h-[18px]"/> </span> {stats.occupancyDelta !== 0 && ( <span className={`text-xs font-bold px-2 py-1 rounded-full inline-flex items-center gap-1 ${stats.occupancyDelta >= 0 ?"bg-[#E7F6EC] text-[#16A249]":"bg-[#FDEAEA] text-[#EF4343]"}`}>
+                  <TrendingUp className="w-3 h-3"style={{ transform: stats.occupancyDelta >= 0 ? undefined :"scaleY(-1)"}} /> {stats.occupancyDelta >= 0 ?"+":""}{stats.occupancyDelta}pp
                 </span>
               )}
             </div>
@@ -655,26 +633,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
                 fontFamily: "inherit",
               }}
             >
-              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--gp-ink)" }}>📚 Formación</span>
-              {trainingOpen ? (
-                <ChevronUp style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />
-              ) : (
-                <ChevronDown style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />
-              )}
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <TrainingChecklist tenantId={tenantId} onNavigate={handleTrainingNavigate} />
-          </CollapsibleContent>
-        </Collapsible>
-      )}
-
-      {/* ROI — collapsible, always available */}
-      <Collapsible open={roiOpen} onOpenChange={setRoiOpen}>
-        <CollapsibleTrigger asChild>
-          <button
-            style={{
-              width: "100%",
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--gp-ink)"}}>📚 Formación</span> {trainingOpen ? ( <ChevronUp style={{ width: 16, height: 16, color:"var(--gp-muted-c)"}} /> ) : ( <ChevronDown style={{ width: 16, height: 16, color:"var(--gp-muted-c)"}} /> )} </button> </CollapsibleTrigger> <CollapsibleContent> <TrainingChecklist tenantId={tenantId} onNavigate={handleTrainingNavigate} /> </CollapsibleContent> </Collapsible> )} {/* ROI — collapsible, always available */} <Collapsible open={roiOpen} onOpenChange={setRoiOpen}> <CollapsibleTrigger asChild> <button style={{ width:"100%",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -685,11 +644,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
               fontFamily: "inherit",
             }}
           >
-            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--gp-ink)" }}>📈 Retorno de inversión</span>
-            {roiOpen ? (
-              <ChevronUp style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />
-            ) : (
-              <ChevronDown style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />
+            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--gp-ink)"}}>📈 Retorno de inversión</span> {roiOpen ? ( <ChevronUp style={{ width: 16, height: 16, color:"var(--gp-muted-c)"}} /> ) : ( <ChevronDown style={{ width: 16, height: 16, color:"var(--gp-muted-c)" }} />
             )}
           </button>
         </CollapsibleTrigger>

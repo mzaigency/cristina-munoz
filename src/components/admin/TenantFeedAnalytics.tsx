@@ -50,13 +50,8 @@ const SECTION_COLOR: Record<string, string> = {
 };
 
 const RANGES = [
-  { value: 7, label: "7d" },
-  { value: 30, label: "30d" },
-  { value: 90, label: "90d" },
-];
-
-const pct = (n: number, d: number) =>
-  d > 0 ? `${((n / d) * 100).toFixed(1)}%` : "—";
+  { value: 7, label: "7d"}, { value: 30, label:"30d"}, { value: 90, label:"90d"},
+]; const pct = (n: number, d: number) => d > 0 ? `${((n / d) * 100).toFixed(1)}%` :"—";
 
 interface Props {
   tenantId: string;
@@ -180,8 +175,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
           {RANGES.map((r) => (
             <Button
               key={r.value}
-              size="sm"
-              variant={days === r.value ? "default" : "ghost"}
+              size="sm"variant={days === r.value ?"default":"ghost"}
               onClick={() => setDays(r.value)}
               className="h-7 px-3 text-xs rounded-lg"
             >
@@ -193,29 +187,24 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         <KPI
-          title="Impresiones"
-          value={loading ? "—" : totals.impressions.toLocaleString()}
+          title="Impresiones"value={loading ?"—" : totals.impressions.toLocaleString()}
           icon={Eye}
           gradient="bg-gradient-to-br from-[var(--gp-info)] to-[var(--gp-info-ink)]"
         />
         <KPI
-          title="Clics"
-          value={loading ? "—" : totals.clicks.toLocaleString()}
+          title="Clics"value={loading ?"—" : totals.clicks.toLocaleString()}
           sub={`CTR ${pct(totals.clicks, totals.impressions)}`}
           icon={MousePointerClick}
           gradient="bg-gradient-to-br from-[var(--gp-warn)] to-[var(--gp-warn-ink)]"
         />
         <KPI
-          title="Reservas"
-          value={loading ? "—" : totals.conversions.toLocaleString()}
+          title="Reservas"value={loading ?"—" : totals.conversions.toLocaleString()}
           sub={`CVR ${pct(totals.conversions, totals.clicks)}`}
           icon={Sparkles}
           gradient="bg-gradient-to-br from-[var(--gp-ok)] to-[var(--gp-ok-ink)]"
         />
         <KPI
-          title="Conv. global"
-          value={
-            loading ? "—" : pct(totals.conversions, totals.impressions)
+          title="Conv. global"value={ loading ?"—" : pct(totals.conversions, totals.impressions)
           }
           sub="reservas / impresiones"
           icon={Trophy}
@@ -248,13 +237,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
                       tick={{ fontSize: 10 }}
                       interval={0}
                       angle={-15}
-                      textAnchor="end"
-                      height={50}
-                    />
-                    <YAxis tick={{ fontSize: 10 }} width={36} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
+                      textAnchor="end"height={50} /> <YAxis tick={{ fontSize: 10 }} width={36} /> <Tooltip contentStyle={{ backgroundColor:"hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
                         borderRadius: 8,
                         fontSize: 12,
@@ -262,13 +245,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
                     />
                     <Bar
                       dataKey="impressions"
-                      name="Impresiones"
-                      radius={[6, 6, 0, 0]}
-                    >
-                      {chartData.map((d) => (
-                        <Cell
-                          key={d.rawId}
-                          fill={SECTION_COLOR[d.rawId] || "#22408b"}
+                      name="Impresiones"radius={[6, 6, 0, 0]} > {chartData.map((d) => ( <Cell key={d.rawId} fill={SECTION_COLOR[d.rawId] ||"#22408b"}
                         />
                       ))}
                     </Bar>
@@ -297,10 +274,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
                         <td className="p-2.5">
                           <div className="flex items-center gap-2">
                             <span
-                              className="h-2 w-2 rounded-full"
-                              style={{
-                                background:
-                                  SECTION_COLOR[r.rawId] || "#22408b",
+                              className="h-2 w-2 rounded-full"style={{ background: SECTION_COLOR[r.rawId] ||"#22408b",
                               }}
                             />
                             <span className="font-medium">{r.section}</span>
@@ -350,11 +324,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
                     strokeDasharray="3 3"
                     className="stroke-muted"
                   />
-                  <XAxis dataKey="day" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} width={36} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
+                  <XAxis dataKey="day"tick={{ fontSize: 10 }} /> <YAxis tick={{ fontSize: 10 }} width={36} /> <Tooltip contentStyle={{ backgroundColor:"hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
                       borderRadius: 8,
                       fontSize: 12,

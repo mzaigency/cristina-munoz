@@ -62,8 +62,7 @@ export const PlanUsageBar = ({
       <div className="h-2 bg-muted rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
-          animate={{ width: isUnlimited ? "30%" : `${percentage}%` }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          animate={{ width: isUnlimited ? "30%": `${percentage}%` }} transition={{ duration: 0.5, ease:"easeOut" }}
           className={cn("h-full rounded-full", getBarColor())}
         />
       </div>
