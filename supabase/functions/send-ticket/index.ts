@@ -225,8 +225,33 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Enqueue through Lovable Emails queue (uses verified notify.glowapp.app).
     const messageId = crypto.randomUUID();
-    const idempotencyKey = `ticket-${ticketData.transactionId || messageId}`;
+    // Unique per attempt: the email API rejects reusing a key from a failed run.
+    const idempotencyKey = `ticket-${ticketData.transactionId || messageId}-${Date.now()}`;
     const subject = `${documentTitle} de ${tenant.name} - ${ticketData.date}`;
+
+    // Transactional sends require an unsubscribe token (one per address).
+    const normalizedEmail = ticketData.customerEmail.trim().toLowerCase();
+    let unsubscribeToken: string | null = null;
+    const { data: existingToken } = await supabase
+      .from("email_unsubscribe_tokens")
+      .select("token")
+      .eq("email", normalizedEmail)
+      .maybeSingle();
+
+    if (existingToken?.token) {
+      unsubscribeToken = existingToken.token;
+    } else {
+      const newToken = crypto.randomUUID().replace(/-/g, "");
+      await supabase
+        .from("email_unsubscribe_tokens")
+        .upsert({ token: newToken, email: normalizedEmail }, { onConflict: "email" });
+      const { data: storedToken } = await supabase
+        .from("email_unsubscribe_tokens")
+        .select("token")
+        .eq("email", normalizedEmail)
+        .maybeSingle();
+      unsubscribeToken = storedToken?.token || newToken;
+    }
 
     await supabase.from("email_send_log").insert({
       message_id: messageId,
@@ -247,6 +272,7 @@ const handler = async (req: Request): Promise<Response> => {
         text: subject,
         purpose: "transactional",
         label: "ticket",
+        unsubscribe_token: unsubscribeToken,
         idempotency_key: idempotencyKey,
         queued_at: new Date().toISOString(),
       },
