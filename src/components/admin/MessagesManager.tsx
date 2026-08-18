@@ -309,6 +309,8 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
           selectedId={selectedConversation?.id || null}
           onSelect={setSelectedConversation}
           role="salon"
+          onToggleUnread={handleToggleUnread}
+
         />
         <div className="msg-sidebar-hint">
           <span>
