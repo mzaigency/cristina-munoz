@@ -80,146 +80,205 @@ const handler = async (req: Request): Promise<Response> => {
     const documentTitle = isInvoice ? "Factura" : "Ticket";
     const documentNumber = ticketData.invoiceNumber || "";
 
-    // Generate items HTML
-    const itemsHtml = ticketData.items.map(item => `
+    // ---------- Ticket email (table-based, email-client safe) ----------
+    const esc = (v: unknown) =>
+      String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    const brandGradient = "linear-gradient(100deg, #22408C, #98329A)";
+    const rowLabel = "font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8A8FA3;font-weight:600;";
+    const rowValue = "font-size:15px;color:#131520;font-weight:600;margin:4px 0 0;";
+
+    const itemsHtml = ticketData.items
+      .map(
+        (item, i) => `
       <tr>
-        <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
-          <span style="font-weight: 500;">${item.name}</span>
-          ${item.quantity > 1 ? `<span style="color: #666;"> x${item.quantity}</span>` : ""}
+        <td style="padding:12px 0;border-top:${i === 0 ? "0" : "1px solid #F0F1F5"};font-size:14px;color:#131520;">
+          <span style="font-weight:600;">${esc(item.name)}</span>
+          ${item.quantity > 1 ? `<span style="color:#8A8FA3;font-weight:500;"> &times;${item.quantity}</span>` : ""}
+          ${isInvoice ? `<br><span style="font-size:12px;color:#8A8FA3;">${formatCurrency(item.price)} / ud.</span>` : ""}
         </td>
-        ${isInvoice ? `
-          <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: center;">${item.quantity}</td>
-          <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right;">${formatCurrency(item.price)}</td>
-        ` : ""}
-        <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: 500;">
+        <td align="right" style="padding:12px 0;border-top:${i === 0 ? "0" : "1px solid #F0F1F5"};font-size:14px;color:#131520;font-weight:600;white-space:nowrap;">
           ${formatCurrency(item.total)}
         </td>
-      </tr>
-    `).join("");
+      </tr>`
+      )
+      .join("");
 
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${documentTitle} de ${tenant.name}</title>
-      </head>
-      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5;">
-        <div style="max-width: 500px; margin: 20px auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
-          
-          <!-- Header -->
-          <div style="background: ${primaryColor}; padding: 24px; text-align: center;">
-            ${tenant.logo_url 
-              ? `<img src="${tenant.logo_url}" alt="${tenant.name}" style="height: 60px; margin-bottom: 12px; border-radius: 50%;">`
-              : ""
-            }
-            <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 600;">${tenant.name}</h1>
-            ${tenant.address ? `<p style="color: rgba(255,255,255,0.8); margin: 8px 0 0; font-size: 14px;">${tenant.address}${tenant.city ? `, ${tenant.city}` : ""}</p>` : ""}
-          </div>
+    const totalsRow = (label: string, value: string, color = "#676B7E", strong = false) => `
+      <tr>
+        <td style="padding:5px 0;font-size:14px;color:${color};${strong ? "font-weight:600;" : ""}">${label}</td>
+        <td align="right" style="padding:5px 0;font-size:14px;color:${color};font-weight:600;white-space:nowrap;">${value}</td>
+      </tr>`;
 
-          <!-- Document Type Badge -->
-          <div style="text-align: center; padding: 16px;">
-            <span style="background: ${isInvoice ? "#10b981" : primaryColor}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase;">
-              ${documentTitle}${documentNumber ? ` Nº ${documentNumber}` : ""}
-            </span>
-          </div>
+    const paymentLabel =
+      ticketData.paymentMethod === "cash"
+        ? "Efectivo"
+        : ticketData.paymentMethod === "card"
+        ? "Tarjeta"
+        : "Mixto";
 
-          <!-- Content -->
-          <div style="padding: 24px;">
-            
-            <!-- Date and Stylist -->
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px dashed #e0e0e0;">
-              <div>
-                <p style="margin: 0; color: #666; font-size: 12px; text-transform: uppercase;">Fecha</p>
-                <p style="margin: 4px 0 0; font-weight: 600;">${ticketData.date}</p>
-              </div>
-              <div style="text-align: right;">
-                <p style="margin: 0; color: #666; font-size: 12px; text-transform: uppercase;">Atendido por</p>
-                <p style="margin: 4px 0 0; font-weight: 600;">${ticketData.stylistName}</p>
-              </div>
-            </div>
+    const emailHtml = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light only">
+  <title>${esc(documentTitle)} de ${esc(tenant.name)}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(documentTitle)} de ${esc(tenant.name)} · ${formatCurrency(ticketData.total)}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F7FB;padding:28px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;background:#ffffff;border-radius:22px;overflow:hidden;border:1px solid #ECEDF3;">
 
-            <!-- Customer -->
-            <div style="margin-bottom: 20px;">
-              <p style="margin: 0; color: #666; font-size: 12px; text-transform: uppercase;">Cliente</p>
-              <p style="margin: 4px 0 0; font-weight: 600;">${ticketData.customerName}</p>
-            </div>
+          <!-- Barra de marca -->
+          <tr><td style="height:5px;background:${primaryColor};background-image:${brandGradient};line-height:5px;font-size:0;">&nbsp;</td></tr>
 
-            <!-- Items -->
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-              ${isInvoice ? `
-                <thead>
-                  <tr style="background: #f8f8f8;">
-                    <th style="padding: 10px; text-align: left; font-size: 12px; color: #666;">Concepto</th>
-                    <th style="padding: 10px; text-align: center; font-size: 12px; color: #666;">Cant.</th>
-                    <th style="padding: 10px; text-align: right; font-size: 12px; color: #666;">Precio</th>
-                    <th style="padding: 10px; text-align: right; font-size: 12px; color: #666;">Total</th>
-                  </tr>
-                </thead>
-              ` : ""}
-              <tbody>
+          <!-- Cabecera del salón -->
+          <tr>
+            <td style="padding:26px 28px 20px;text-align:center;">
+              ${
+                tenant.logo_url
+                  ? `<img src="${esc(tenant.logo_url)}" alt="${esc(tenant.name)}" width="56" height="56" style="width:56px;height:56px;border-radius:16px;object-fit:cover;display:block;margin:0 auto 12px;border:1px solid #ECEDF3;">`
+                  : ""
+              }
+              <h1 style="margin:0;font-size:20px;line-height:1.3;font-weight:700;color:#131520;">${esc(tenant.name)}</h1>
+              ${
+                tenant.address
+                  ? `<p style="margin:6px 0 0;font-size:13px;color:#8A8FA3;">${esc(tenant.address)}${tenant.city ? `, ${esc(tenant.city)}` : ""}</p>`
+                  : ""
+              }
+              <p style="margin:14px 0 0;">
+                <span style="display:inline-block;padding:5px 14px;border-radius:999px;background:${isInvoice ? "#E8F7EF" : "#EEF1FA"};color:${isInvoice ? "#0F7A47" : "#22408C"};font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">
+                  ${esc(documentTitle)}${documentNumber ? ` Nº ${esc(documentNumber)}` : ""}
+                </span>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Total destacado -->
+          <tr>
+            <td style="padding:0 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F6F7FB;border-radius:16px;">
+                <tr>
+                  <td style="padding:18px 20px;text-align:center;">
+                    <p style="margin:0;${rowLabel}">Total pagado</p>
+                    <p style="margin:6px 0 0;font-size:34px;line-height:1.1;font-weight:800;color:#131520;letter-spacing:-0.02em;">${formatCurrency(ticketData.total)}</p>
+                    <p style="margin:8px 0 0;font-size:12px;color:#8A8FA3;">${esc(paymentLabel)} · ${esc(ticketData.date)}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Datos -->
+          <tr>
+            <td style="padding:22px 28px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="50%" style="padding-bottom:14px;vertical-align:top;">
+                    <p style="margin:0;${rowLabel}">Cliente</p>
+                    <p style="${rowValue}">${esc(ticketData.customerName)}</p>
+                  </td>
+                  <td width="50%" align="right" style="padding-bottom:14px;vertical-align:top;">
+                    <p style="margin:0;${rowLabel}">Atendido por</p>
+                    <p style="${rowValue}">${esc(ticketData.stylistName)}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Separador perforado -->
+          <tr>
+            <td style="padding:4px 28px 0;">
+              <div style="border-top:2px dashed #E4E6EF;line-height:0;font-size:0;">&nbsp;</div>
+            </td>
+          </tr>
+
+          <!-- Detalle -->
+          <tr>
+            <td style="padding:16px 28px 0;">
+              <p style="margin:0 0 8px;${rowLabel}">Detalle</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 ${itemsHtml}
-              </tbody>
-            </table>
+              </table>
+            </td>
+          </tr>
 
-            <!-- Totals -->
-            <div style="background: #f8f8f8; padding: 16px; border-radius: 12px;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #666;">Subtotal</span>
-                <span>${formatCurrency(ticketData.subtotal)}</span>
-              </div>
-              ${ticketData.discount > 0 ? `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #f97316;">
-                  <span>Descuento${ticketData.discountReason ? ` (${ticketData.discountReason})` : ""}</span>
-                  <span>-${formatCurrency(ticketData.discount)}</span>
-                </div>
-              ` : ""}
-              ${ticketData.tip > 0 ? `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #ec4899;">
-                  <span>Propina</span>
-                  <span>+${formatCurrency(ticketData.tip)}</span>
-                </div>
-              ` : ""}
-              <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid #e0e0e0; font-size: 20px; font-weight: 700;">
-                <span>TOTAL</span>
-                <span style="color: ${primaryColor};">${formatCurrency(ticketData.total)}</span>
-              </div>
-            </div>
-
-            <!-- Payment Method -->
-            <div style="text-align: center; margin-top: 20px; padding: 12px; background: #f0f0f0; border-radius: 8px;">
-              <span style="color: #666; font-size: 14px;">Pagado con: </span>
-              <span style="font-weight: 600; text-transform: capitalize;">
-                ${ticketData.paymentMethod === "cash" ? "Efectivo" : ticketData.paymentMethod === "card" ? "Tarjeta" : "Mixto"}
-              </span>
-            </div>
-
-          </div>
+          <!-- Totales -->
+          <tr>
+            <td style="padding:14px 28px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #ECEDF3;">
+                <tr><td colspan="2" style="height:10px;line-height:10px;font-size:0;">&nbsp;</td></tr>
+                ${totalsRow("Subtotal", formatCurrency(ticketData.subtotal))}
+                ${
+                  ticketData.discount > 0
+                    ? totalsRow(
+                        `Descuento${ticketData.discountReason ? ` (${esc(ticketData.discountReason)})` : ""}`,
+                        `−${formatCurrency(ticketData.discount)}`,
+                        "#E07A21"
+                      )
+                    : ""
+                }
+                ${ticketData.tip > 0 ? totalsRow("Propina", `+${formatCurrency(ticketData.tip)}`, "#98329A") : ""}
+                <tr>
+                  <td style="padding:12px 0 0;border-top:1px solid #ECEDF3;font-size:15px;font-weight:700;color:#131520;">Total</td>
+                  <td align="right" style="padding:12px 0 0;border-top:1px solid #ECEDF3;font-size:18px;font-weight:800;color:#22408C;white-space:nowrap;">${formatCurrency(ticketData.total)}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
           ${
             ticketData.reviewUrl && !isInvoice
               ? `
           <!-- Valoración -->
-          <div style="padding: 24px 20px; text-align: center; border-top: 1px solid #eee;">
-            <p style="margin: 0 0 4px; font-size: 16px; font-weight: 600; color: #131520;">¿Qué tal fue?</p>
-            <p style="margin: 0 0 14px; font-size: 13px; color: #676B7E;">Tu opinión ayuda a ${tenant.name} · te lleva 10 segundos</p>
-            <a href="${ticketData.reviewUrl}" style="display: inline-block; padding: 12px 26px; border-radius: 999px; background: linear-gradient(100deg, #22408C, #98329A); color: #fff; font-size: 15px; font-weight: 600; text-decoration: none;">Dejar mi valoración</a>
-          </div>`
+          <tr>
+            <td style="padding:24px 28px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F6F7FB;border-radius:16px;">
+                <tr>
+                  <td style="padding:20px;text-align:center;">
+                    <p style="margin:0;font-size:16px;font-weight:700;color:#131520;">¿Qué tal fue tu visita?</p>
+                    <p style="margin:6px 0 14px;font-size:13px;color:#676B7E;line-height:1.5;">Tu opinión ayuda mucho a ${esc(tenant.name)} · te lleva 10 segundos</p>
+                    <a href="${esc(ticketData.reviewUrl)}" style="display:inline-block;padding:13px 28px;border-radius:999px;background:#22408C;background-image:${brandGradient};color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;">Dejar mi valoración</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>`
               : ""
           }
 
-          <!-- Footer -->
-          <div style="background: #f8f8f8; padding: 20px; text-align: center;">
-            <p style="margin: 0; color: #666; font-size: 14px;">¡Gracias por tu visita!</p>
-            ${tenant.phone ? `<p style="margin: 8px 0 0; color: #888; font-size: 12px;">📞 ${tenant.phone}</p>` : ""}
-            ${tenant.email ? `<p style="margin: 4px 0 0; color: #888; font-size: 12px;">✉️ ${tenant.email}</p>` : ""}
-          </div>
+          <!-- Contacto -->
+          <tr>
+            <td style="padding:24px 28px 26px;text-align:center;">
+              <p style="margin:0;font-size:14px;color:#131520;font-weight:600;">¡Gracias por tu visita!</p>
+              ${
+                tenant.phone || tenant.email
+                  ? `<p style="margin:8px 0 0;font-size:12px;color:#8A8FA3;line-height:1.7;">
+                      ${tenant.phone ? esc(tenant.phone) : ""}${tenant.phone && tenant.email ? " · " : ""}${tenant.email ? esc(tenant.email) : ""}
+                     </p>`
+                  : ""
+              }
+            </td>
+          </tr>
 
-        </div>
-      </body>
-      </html>
-    `;
+          <!-- Footer Glowapp -->
+          <tr>
+            <td style="padding:16px 28px 22px;background:#FBFBFD;border-top:1px solid #ECEDF3;text-align:center;">
+              <p style="margin:0;font-size:11px;color:#A2A6B6;letter-spacing:.02em;">Enviado con <span style="color:#22408C;font-weight:700;">Glowapp</span> · reservas y gestión para tu salón</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
 
     console.log("Enqueueing email to:", ticketData.customerEmail);
 
