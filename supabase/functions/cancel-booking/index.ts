@@ -236,6 +236,60 @@ serve(async (req) => {
       }
     }
 
+    // Email de cancelación a la clienta
+    try {
+      const booking = bookings[0];
+      const { data: tenantData } = await supabase
+        .from("tenants")
+        .select("name, slug, logo_url, phone")
+        .eq("id", tenantId)
+        .maybeSingle();
+
+      let email: string | null = null;
+      if (booking.user_id) {
+        const { data: authUser } = await supabase.auth.admin.getUserById(booking.user_id);
+        email = authUser?.user?.email ?? null;
+      }
+      if (!email && booking.Telefono) {
+        const { data: clientRow } = await supabase
+          .from("clients")
+          .select("email")
+          .eq("tenant_id", tenantId)
+          .eq("phone", booking.Telefono)
+          .maybeSingle();
+        email = clientRow?.email ?? null;
+      }
+
+      if (email) {
+        const [y, m, d] = booking.Fecha.toString().split("-");
+        const services = Array.isArray(booking.services)
+          ? booking.services.map((s: any) => s.name).filter(Boolean).join(", ")
+          : "";
+
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "booking-cancelled",
+            recipientEmail: email,
+            idempotencyKey: `booking-cancelled-${booking.id}`,
+            templateData: {
+              customerName: booking.customer_name || "Hola",
+              tenantName: tenantData?.name || "el salón",
+              tenantLogoUrl: tenantData?.logo_url ?? null,
+              tenantPhone: tenantData?.phone ?? null,
+              date: `${d}/${m}/${y}`,
+              time: booking.Hora?.slice(0, 5) ?? "",
+              services,
+              cancelledBy: isCancelledByClient ? "cliente" : "salon",
+              rebookUrl: tenantData?.slug ? `https://glowapp.app/${tenantData.slug}` : "https://glowapp.app",
+            },
+          },
+        });
+        console.log("Cancellation email sent");
+      }
+    } catch (mailErr) {
+      console.error("Error sending cancellation email:", mailErr);
+    }
+
     return new Response(JSON.stringify({ success: true, message: "Booking cancelled successfully" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
