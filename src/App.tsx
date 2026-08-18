@@ -51,6 +51,8 @@ const MyBookings = lazyWithReload(() => import("./pages/MyBookings"));
 const Profile = lazyWithReload(() => import("./pages/Profile"));
 const Review = lazyWithReload(() => import("./pages/Review"));
 const ReviewToken = lazyWithReload(() => import("./pages/ReviewToken"));
+const WaitlistConfirm = lazyWithReload(() => import("./pages/WaitlistConfirm"));
+
 const TenantLanding = lazyWithReload(() => import("./pages/TenantLanding"));
 const Messages = lazyWithReload(() => import("./pages/Messages"));
 const PrivacyPolicy = lazyWithReload(() => import("./pages/PrivacyPolicy"));
