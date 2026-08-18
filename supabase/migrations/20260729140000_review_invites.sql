@@ -20,6 +20,9 @@ CREATE TABLE IF NOT EXISTS public.review_invites (
 CREATE INDEX IF NOT EXISTS idx_review_invites_token ON public.review_invites(token);
 CREATE INDEX IF NOT EXISTS idx_review_invites_tenant ON public.review_invites(tenant_id);
 
+GRANT SELECT, INSERT ON public.review_invites TO authenticated;
+GRANT ALL ON public.review_invites TO service_role;
+
 ALTER TABLE public.review_invites ENABLE ROW LEVEL SECURITY;
 
 -- Nadie lee ni escribe esta tabla de forma anónima: el flujo público pasa por
