@@ -1516,13 +1516,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                         cy={SIZE / 2}
                         r={R}
                         fill="none"
-                        style={{ stroke: "var(--gp-accent)" }}
                         strokeWidth={SW}
                         strokeLinecap="round"
                         strokeDasharray={circ}
                         strokeDashoffset={offset}
                         transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
-                        style={{ transition: "stroke-dashoffset .6s cubic-bezier(.3,.9,.3,1)" }}
+                        style={{ stroke: "var(--gp-accent)", transition: "stroke-dashoffset .6s cubic-bezier(.3,.9,.3,1)" }}
+
                       />
                     </svg>
                     <div
