@@ -540,7 +540,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                     </div>
 
                     {entry.status === "proposed" && entry.proposed_date && (
-                      <div style={{ marginTop: 8, padding: "8px 12px", background: "color-mix(in oklab, var(--gp-info), white 82%)", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--gp-info-soft)" }}>
+                      <div style={{ marginTop: 8, padding: "8px 12px", background: "color-mix(in oklab, var(--gp-info), white 82%)", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--gp-ink)" }}>
                         🎯 Propuesto: {format(new Date(entry.proposed_date), "d MMM", { locale: es })} · {String(entry.proposed_time).slice(0, 5)}
                         {proposedStylistName && ` · ${proposedStylistName}`}
                         {expiry && (
