@@ -133,7 +133,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
           .eq("tenant_id", tenantId)
           .in("status", ["waiting", "notified", "proposed", "booked", "expired", "cancelled"])
           .order("priority", { ascending: false })
-          .order("created_at", { ascending: false }),
+          .order("created_at", { ascending: true }),
         supabase
           .from("tenant_stylists")
           .select("id, name, slug")
