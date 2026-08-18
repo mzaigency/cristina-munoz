@@ -203,12 +203,15 @@ export function useConversations(role: "user" | "salon", tenantId?: string) {
         const tenant = conv?.tenant?.name ? conv.tenant : publicTenantById?.get(conv.tenant_id);
         const user = role === "salon" ? userProfilesMap.get(conv.user_id) : undefined;
         const last_message = lastMessagesMap.get(conv.id) || null;
+        const last_human_message = lastHumanMessagesMap.get(conv.id) || null;
 
         return {
           ...conv,
           tenant,
           user,
           last_message,
+          last_human_message,
+          has_human_message: !!last_human_message,
         };
       });
 
