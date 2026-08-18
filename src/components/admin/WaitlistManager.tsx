@@ -586,6 +586,26 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                     </button>
                   </div>
                 )}
+
+                {entry.status === "proposed" && (
+                  <div style={{ display: "flex", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--gp-line2)", flexWrap: "wrap" }}>
+                    {entry.client_phone && (
+                      <button className="gp-btn primary sm" style={{ flex: 1, minWidth: 130 }} onClick={() => handleRemindWhatsApp(entry)}>
+                        <MessageCircle style={{ width: 13, height: 13 }} />
+                        Recordar
+                      </button>
+                    )}
+                    <button className="gp-btn sm" style={{ flex: 1, minWidth: 110 }} onClick={() => handleCopyLink(entry)}>
+                      <LinkIcon style={{ width: 13, height: 13 }} />
+                      Copiar enlace
+                    </button>
+                    <button className="gp-btn sm" style={{ flex: 1, minWidth: 110 }} onClick={() => handleReleaseSlot(entry.id)}>
+                      <RotateCcw style={{ width: 13, height: 13 }} />
+                      Liberar hueco
+                    </button>
+                  </div>
+                )}
+
               </div>
             );
           })}
