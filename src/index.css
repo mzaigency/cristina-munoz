@@ -5880,3 +5880,63 @@ details[open] .gp-neg-past-summary::before { transform: rotate(90deg); }
   .ag-root .gh { display: none; }
   .ag-root .ag-search { margin-bottom: 10px; }
 }
+
+/* ── Mensajes: filtro conversaciones vs automáticos ─────────── */
+.msg-filter-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+}
+.msg-filter-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--muted) / 0.5);
+  transition: all 0.2s ease;
+}
+.msg-filter-tab:hover { color: hsl(var(--foreground)); }
+.msg-filter-tab-active {
+  color: hsl(var(--primary-foreground));
+  background: linear-gradient(100deg, hsl(var(--primary)), hsl(var(--accent)));
+}
+.msg-filter-count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: hsl(var(--foreground) / 0.08);
+}
+.msg-filter-tab-active .msg-filter-count {
+  background: hsl(0 0% 100% / 0.22);
+}
+
+.msg-auto-toggle-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 10px;
+}
+.msg-auto-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--muted) / 0.7);
+  border: 1px solid hsl(var(--border) / 0.6);
+  transition: all 0.2s ease;
+}
+.msg-auto-toggle:hover {
+  color: hsl(var(--foreground));
+  background: hsl(var(--muted));
+}
