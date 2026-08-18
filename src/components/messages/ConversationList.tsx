@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, KeyboardEvent } from 'react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Building2, MessageCircle, Search } from 'lucide-react';
+import { Building2, MailOpen, Mail, MessageCircle, Search } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Conversation } from '@/hooks/useConversations';
@@ -14,7 +14,9 @@ interface ConversationListProps {
   onSelect: (conversation: Conversation) => void;
   role: 'user' | 'salon';
   showSearch?: boolean;
+  onToggleUnread?: (conversation: Conversation, markUnread: boolean) => void;
 }
+
 
 export function ConversationList({
   conversations,
@@ -23,6 +25,8 @@ export function ConversationList({
   onSelect,
   role,
   showSearch = true,
+  onToggleUnread,
+
 }: ConversationListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [focusedIndex, setFocusedIndex] = useState(-1);
@@ -153,8 +157,8 @@ export function ConversationList({
               conv.last_message?.sender_type === (role === 'user' ? 'user' : 'salon');
 
             return (
+              <div key={conv.id} className="relative group">
               <button
-                key={conv.id}
                 ref={(el) => (itemRefs.current[index] = el)}
                 id={`msg-item-${conv.id}`}
                 role="option"
@@ -168,7 +172,7 @@ export function ConversationList({
                 }}
                 onFocus={() => setFocusedIndex(index)}
                 className={cn(
-                  'msg-item',
+                  'msg-item w-full',
                   isSelected && 'msg-item-active',
                   !isSelected && hasUnread && 'msg-item-unread'
                 )}
@@ -223,7 +227,24 @@ export function ConversationList({
                   </span>
                 </span>
               </button>
+
+              {onToggleUnread && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleUnread(conv, !hasUnread);
+                  }}
+                  aria-label={hasUnread ? 'Marcar como leído' : 'Marcar como no leído'}
+                  title={hasUnread ? 'Marcar como leído' : 'Marcar como no leído'}
+                  className="absolute right-2 top-2 rounded-full p-1.5 text-muted-foreground opacity-0 transition-opacity hover:bg-foreground/10 hover:text-foreground focus:opacity-100 group-hover:opacity-100"
+                >
+                  {hasUnread ? <MailOpen className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
+                </button>
+              )}
+              </div>
             );
+
           })
         )}
       </div>

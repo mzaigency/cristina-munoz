@@ -64,6 +64,41 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
     if (user) sendMessage(content, 'salon', user.id);
   };
 
+  // Marcar una conversación como no leída (o leída) desde la lista
+  const handleToggleUnread = async (conv: Conversation, markUnread: boolean) => {
+    try {
+      if (markUnread && selectedConversation?.id === conv.id) {
+        setSelectedConversation(null);
+      }
+      const { error } = await supabase
+        .from('conversations')
+        .update({ unread_count_salon: markUnread ? Math.max(1, conv.unread_count_salon) : 0 })
+        .eq('id', conv.id);
+      if (error) throw error;
+
+      if (!markUnread) {
+        await supabase
+          .from('direct_messages')
+          .update({ is_read: true })
+          .eq('conversation_id', conv.id)
+          .eq('sender_type', 'user');
+      }
+
+      await refetch();
+      toast({
+        title: markUnread ? 'Marcado como no leído' : 'Marcado como leído',
+      });
+    } catch (err) {
+      console.error('Error toggling unread:', err);
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar el estado',
+        variant: 'destructive',
+      });
+    }
+  };
+
+
   // Live search
   useEffect(() => {
     const run = async () => {
@@ -234,6 +269,8 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
               onSelect={setSelectedConversation}
               role="salon"
               showSearch={false}
+              onToggleUnread={handleToggleUnread}
+
             />
           </div>
         </div>
@@ -272,6 +309,8 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
           selectedId={selectedConversation?.id || null}
           onSelect={setSelectedConversation}
           role="salon"
+          onToggleUnread={handleToggleUnread}
+
         />
         <div className="msg-sidebar-hint">
           <span>
