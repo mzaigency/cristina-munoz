@@ -63,6 +63,7 @@ export const ADMIN_SUB_NAV: Record<AdminSection, AdminSubTabDef[]> = {
   ],
   caja: [
     { value: "cobros", label: "Cobros", icon: Wallet, requiredFeature: "cash_register" },
+    { value: "historial", label: "Historial", icon: History, requiredFeature: "cash_register" },
     { value: "pedidos", label: "Pedidos", icon: ShoppingCart, badgeKey: "orders" },
     { value: "cierre", label: "Cierre", icon: Receipt, requiredFeature: "cash_register" },
   ],
