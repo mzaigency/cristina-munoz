@@ -29,9 +29,10 @@ export type FilterOption = "all" | "VIP" | "Frecuente" | "Nuevo" | "inactive" | 
 
 export const TAG_OPTIONS = ["VIP", "Frecuente", "Nuevo", "Preferente", "Corporativo"];
 export const TAG_COLORS: Record<string, string> = {
-  "VIP": "bg-amber-500/20 text-amber-700 border-amber-500/30",
-  "Frecuente": "bg-blue-500/20 text-blue-700 border-blue-500/30",
-  "Nuevo": "bg-green-500/20 text-green-700 border-green-500/30",
-  "Preferente": "bg-purple-500/20 text-purple-700 border-purple-500/30",
-  "Corporativo": "bg-slate-500/20 text-slate-700 border-slate-500/30",
+  "VIP": "bg-[var(--gp-warn-soft)] text-[var(--gp-warn-ink)] border-[var(--gp-warn-soft)]",
+  "Frecuente": "bg-[var(--gp-info-soft)] text-[var(--gp-info-ink)] border-[var(--gp-info-soft)]",
+  "Nuevo": "bg-[var(--gp-ok-soft)] text-[var(--gp-ok-ink)] border-[var(--gp-ok-soft)]",
+  "Preferente": "bg-[var(--gp-purple-soft)] text-[var(--gp-purple-ink)] border-[var(--gp-purple-soft)]",
+  "Corporativo": "bg-[var(--gp-chip)] text-[var(--gp-ink2)] border-[var(--gp-line)]",
 };
+
