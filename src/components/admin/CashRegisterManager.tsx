@@ -197,7 +197,7 @@ export const CashRegisterManager = ({ tenantId, view = "cobrar" }: CashRegisterM
     new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n);
 
   return (
-    <div className="glow-fade font-body" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div className="glow-fade" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {view === "cobrar" && (
         <>
           {/* Resumen compacto: lo de hoy de un vistazo, sin comerse la pantalla */}

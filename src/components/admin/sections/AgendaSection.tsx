@@ -46,6 +46,16 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab }: AgendaSectionProps)
   }, [subTab]);
 
   useEffect(() => {
+    const asked =
+      sessionStorage.getItem("openNewBooking") === "1" ||
+      new URLSearchParams(window.location.search).get("action") === "new-booking";
+    if (asked) {
+      sessionStorage.removeItem("openNewBooking");
+      setFabOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchStylists = async () => {
       const { data } = await supabase
         .from("tenant_stylists")
@@ -112,8 +122,8 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab }: AgendaSectionProps)
             bottom: "calc(5rem + env(safe-area-inset-bottom))",
             width: 56,
             height: 56,
-            background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))",
-            boxShadow: "0 8px 24px -6px hsl(var(--primary) / 0.45)",
+            background: "var(--glow-gradient)",
+            boxShadow: "0 8px 24px -6px rgb(var(--glow-brand-rgb) / .45)",
           }}
         >
           <Plus className="h-6 w-6" strokeWidth={2.5} />

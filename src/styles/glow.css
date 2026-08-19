@@ -110,6 +110,12 @@
   --glow-notif-bg: color-mix(in oklab, var(--glow-brand), transparent 88%);
   --glow-notif-fg: var(--glow-brand);
 
+  /* Tipografía del panel. Poppins, la misma del sistema de marca en /negocios.
+     Se aplica desde <body data-glow-panel> y no desde el shell a propósito: los
+     diálogos y hojas de Radix se montan en un portal colgando de body, y desde
+     el shell se quedarían con la fuente anterior. */
+  --glow-font: "Poppins", "Plus Jakarta Sans", system-ui, sans-serif;
+
   --glow-focus: 0 0 0 4px var(--glow-brand-softer);
   }
 

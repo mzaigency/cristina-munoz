@@ -1115,7 +1115,7 @@
   --ag-shadow: var(--glow-e2);
   --ag-shadow-lg: var(--glow-e3);
   color: var(--ag-ink);
-  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  font-family: inherit;
 }
 
 /* ── IA button ── */
@@ -1149,40 +1149,134 @@
 .ag-btn-tx { display: inline; }
 
 /* ── Hero day card ── */
-.gh {
-  position: relative; overflow: hidden; display: flex; align-items: center;
-  gap: 18px; flex-wrap: wrap; background: var(--ag-card);
-  border: 1px solid var(--ag-line); border-radius: 16px;
-  padding: 14px 18px; box-shadow: var(--ag-shadow); margin-bottom: 12px;
-}
-.gh-glow { position: absolute; inset: 0; pointer-events: none; }
 .gh > * { position: relative; z-index: 1; }
-.gh-date { display: flex; flex-direction: column; gap: 0; padding-right: 18px; border-right: 1px solid var(--ag-line); }
-.gh-weekday { font-size: 10.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--ag-accent); }
-.gh-num { font-size: 38px; font-weight: 800; letter-spacing: -.04em; line-height: .95; }
-.gh-month { font-size: 11.5px; font-weight: 600; color: var(--ag-muted); text-transform: capitalize; }
-.gh-ringwrap { display: flex; align-items: center; gap: 10px; }
-.gh-ring-num { font-size: 18px; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
-.gh-ring-lbl { font-size: 9.5px; font-weight: 700; color: var(--ag-muted); text-transform: uppercase; letter-spacing: .08em; }
-.gh-occ { display: flex; flex-direction: column; }
-.gh-occ-pct { font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
-.gh-occ-lbl { font-size: 10.5px; font-weight: 600; color: var(--ag-muted); }
-.gh-stats { display: flex; flex-direction: column; gap: 6px; padding-left: 2px; }
-.gh-stat { display: flex; align-items: baseline; gap: 7px; }
-.gh-stat-num { font-size: 16px; font-weight: 800; letter-spacing: -.02em; min-width: 18px; }
-.gh-stat-lbl { font-size: 11.5px; font-weight: 600; color: var(--ag-ink2); display: inline-flex; align-items: center; gap: 6px; }
-.gh-stat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.gh-dot-done { background: oklch(0.72 0.16 150); }
-.gh-next {
-  margin-left: auto; display: flex; flex-direction: column; gap: 1px; align-items: flex-start;
-  background: var(--ag-chip); border: 1px solid var(--ag-line); border-radius: 12px;
-  padding: 9px 13px; min-width: 158px;
+
+/* El panel entero, y sus portales, en la tipografía del sistema */
+body[data-glow-panel],
+body[data-glow-panel] [data-radix-popper-content-wrapper],
+body[data-glow-panel] [role="dialog"] {
+  font-family: var(--glow-font);
 }
-.gh-next-lbl { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .09em; color: var(--ag-muted); white-space: nowrap; margin-bottom: 1px; }
-.gh-next-time { font-size: 19px; font-weight: 800; letter-spacing: -.02em; line-height: 1.05; }
-.gh-next-client { font-size: 12.5px; font-weight: 700; }
-.gh-next-svc { font-size: 11px; font-weight: 600; color: var(--ag-muted); }
-.gh-closed { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--ag-muted); }
+
+/* ── Cabecera de agenda ────────────────────────────────────────────────────
+   Barra fija a sangre, no una tarjeta flotando: se apoya en el mismo blanco
+   que el grid y lo remata con un filo, así se lee como una pieza con la
+   agenda en vez de un bloque pegado encima. Al hacer scroll del día se queda:
+   nunca pierdes de vista la fecha ni el filtro de profesional.
+   ───────────────────────────────────────────────────────────────────────── */
+.ag-dayhead {
+  position: sticky; top: 0; z-index: 12;
+  margin: -26px -26px 0;            /* a sangre dentro del padding del contenido */
+  padding: 12px 26px;
+  display: flex; flex-direction: column; gap: 10px;
+  background: color-mix(in oklab, var(--glow-surface), transparent 8%);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--glow-line);
+}
+.ag-dayhead-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.ag-dayhead-row + .ag-dayhead-row { padding-top: 10px; border-top: 1px solid var(--glow-line-soft); }
+
+.ag-date { display: flex; flex-direction: column; line-height: 1.1; flex: none; }
+.ag-date-d {
+  font-size: var(--glow-t-xl); font-weight: 800; letter-spacing: -.02em;
+  color: var(--glow-ink); text-transform: capitalize;
+}
+.ag-date-m {
+  font-size: var(--glow-t-xs); font-weight: 600; color: var(--glow-ink-3);
+  margin-top: 1px; text-transform: capitalize;
+}
+
+/* Las cifras se pegan a las acciones, no flotan en medio de la fila */
+.ag-metrics { display: flex; align-items: center; gap: 18px; flex: none; margin-left: auto; }
+.ag-metric { display: flex; flex-direction: column; }
+.ag-metric-v {
+  font-size: var(--glow-t-lg); font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums; color: var(--glow-ink);
+}
+.ag-metric-l {
+  font-size: var(--glow-t-2xs); font-weight: 700; color: var(--glow-ink-3);
+  margin-top: 2px; text-transform: uppercase; letter-spacing: .04em;
+}
+
+.ag-dayhead-acts {
+  display: flex; align-items: center; gap: 6px; flex: none;
+  padding-left: 16px; margin-left: 16px;
+  border-left: 1px solid var(--glow-line);
+}
+
+/* Flechas: navegan semanas, así que flanquean la tira de días */
+.ag-wk-arrow {
+  width: 30px; height: 34px; flex: none; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: none; color: var(--glow-ink-3); border-radius: var(--glow-r-sm);
+  transition: background var(--glow-fast) var(--glow-ease), color var(--glow-fast) var(--glow-ease);
+}
+.ag-wk-arrow:hover { background: var(--glow-sunk); color: var(--glow-ink); }
+.ag-wk-arrow:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Tira de días: plana, para que no compita con la fecha */
+.ag-week { display: flex; gap: 3px; flex: 1; min-width: 0; }
+.ag-wd {
+  flex: 1; min-width: 0; position: relative; cursor: pointer; font-family: inherit;
+  border: 1px solid transparent; background: none;
+  border-radius: var(--glow-r-sm); padding: 4px 3px; text-align: center;
+  color: var(--glow-ink-2); line-height: 1.25;
+  transition: background var(--glow-fast) var(--glow-ease), color var(--glow-fast) var(--glow-ease);
+}
+.ag-wd:hover { background: var(--glow-sunk); }
+.ag-wd.on { background: var(--glow-brand-soft); color: var(--glow-brand-ink); }
+.ag-wd.closed { color: var(--glow-ink-3); }
+.ag-wd.closed:hover { background: none; cursor: default; }
+.ag-wd-n {
+  display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--glow-ink-3);
+}
+.ag-wd.on .ag-wd-n { color: inherit; }
+.ag-wd-d { display: block; font-size: var(--glow-t-sm); font-weight: 800; }
+.ag-wd-c {
+  display: block; font-size: 9.5px; font-weight: 700; color: var(--glow-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.ag-wd.on .ag-wd-c { color: inherit; }
+.ag-wd-today {
+  position: absolute; top: 3px; right: 3px; width: 4px; height: 4px;
+  border-radius: var(--glow-r-full); background: var(--glow-brand);
+}
+
+.ag-profs {
+  display: flex; gap: 5px; flex: none;
+  padding-left: 16px; margin-left: 16px;
+  border-left: 1px solid var(--glow-line);
+}
+.ag-prof-dot { width: 7px; height: 7px; border-radius: var(--glow-r-full); flex: none; }
+.ag-prof-n { font-weight: 800; opacity: .6; }
+
+/* El buscador se despliega dentro de la propia barra */
+.ag-dayhead .ag-search { margin: 0; }
+
+@media (max-width: 920px) {
+  .ag-dayhead { margin: -14px -12px 0; padding: 10px 12px; gap: 8px; }
+  .ag-dayhead-row { gap: 9px; flex-wrap: wrap; }
+  .ag-date { flex-direction: row; align-items: baseline; gap: 5px; }
+  .ag-date-d { font-size: var(--glow-t-lg); }
+  .ag-date-m { margin-top: 0; font-size: var(--glow-t-2xs); }
+  .ag-metrics { gap: 12px; }
+  .ag-metric-v { font-size: var(--glow-t-base); }
+  .ag-dayhead-acts { order: 3; padding-left: 0; margin-left: auto; border-left: none; }
+  .glow-badge { order: 3; }
+  .ag-profs {
+    order: 5; width: 100%; padding-left: 0; margin-left: 0; border-left: none;
+    overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap;
+  }
+  .ag-profs::-webkit-scrollbar { display: none; }
+}
+
+/* Móviles estrechos (≤380 px): "huecos" se deduce de las otras dos y es lo
+   primero que puede sacrificarse antes de que la fila desborde. */
+@media (max-width: 380px) {
+  .ag-metrics .ag-metric:nth-child(3) { display: none; }
+  .ag-metrics { gap: 10px; }
+}
 
 /* ── Week selector ── */
 .wk { margin-bottom: 12px; }
@@ -1226,18 +1320,6 @@
 .wk-closed-tag { color: var(--ag-muted); margin-top: 4px; display: flex; }
 
 /* ── Professional tabs ── */
-.ag-proftabs {
-  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; scrollbar-width: none;
-}
-.ag-proftabs::-webkit-scrollbar { display: none; }
-.ag-proftab {
-  display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
-  border: 1.5px solid var(--ag-line); background: var(--ag-card); color: var(--ag-ink2);
-  border-radius: 999px; padding: 9px 15px; font-weight: 700; font-size: 13.5px;
-  cursor: pointer; transition: .15s; font-family: inherit;
-}
-.ag-proftab-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.ag-proftab-count { font-size: 12px; font-weight: 700; color: var(--ag-muted); background: var(--ag-chip); border-radius: 999px; padding: 1px 7px; }
 
 /* ── Search ── */
 .ag-search { position: relative; margin-bottom: 14px; }
@@ -1379,6 +1461,126 @@
   margin: 10px auto 2px;
 }
 
+/* Resumen de lo que se va a bloquear, antes de confirmar */
+.ag-block-sum {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; border-radius: var(--glow-r-md);
+  background: var(--glow-danger-soft); color: var(--glow-danger-ink);
+  font-size: var(--glow-t-xs); font-weight: 700;
+}
+
+/* ── Selector de días de una excepción de horario ──────────────────────── */
+.ag-daypick { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+.ag-daypick-b {
+  min-width: 42px; padding: 6px 9px; border-radius: var(--glow-r-sm);
+  border: 1px solid var(--glow-line); background: var(--glow-surface);
+  color: var(--glow-ink-2); font-family: inherit;
+  font-size: var(--glow-t-2xs); font-weight: 800; cursor: pointer;
+  transition: background var(--glow-fast) var(--glow-ease), color var(--glow-fast) var(--glow-ease);
+}
+.ag-daypick-b:hover { background: var(--glow-sunk); }
+.ag-daypick-b.on {
+  background: var(--glow-brand); border-color: transparent; color: #fff;
+}
+.ag-daypick-b:focus-visible { outline: none; box-shadow: var(--glow-focus); }
+.ag-daypick-clear {
+  padding: 6px 10px; border-radius: var(--glow-r-full); border: none; background: none;
+  color: var(--glow-brand-ink); font-family: inherit;
+  font-size: var(--glow-t-2xs); font-weight: 800; cursor: pointer;
+}
+.ag-daypick-clear:hover { text-decoration: underline; }
+
+/* ── Bloqueos: insignia y menú ──────────────────────────────────────────────
+   La insignia iba en gris sobre gris y no se veía. Es una alerta: hay horas
+   que no se pueden reservar. Va en el rojo del sistema.
+   ───────────────────────────────────────────────────────────────────────── */
+.ag-blockchip {
+  display: inline-flex; align-items: center; gap: 3px; flex: none;
+  padding: 2px 7px; border-radius: var(--glow-r-full);
+  background: var(--glow-danger-soft); color: var(--glow-danger-ink);
+  border: 1px solid color-mix(in oklab, var(--glow-danger), white 62%);
+  font-size: var(--glow-t-2xs); font-weight: 800; font-family: inherit;
+  cursor: pointer; line-height: 1;
+  transition: background var(--glow-fast) var(--glow-ease);
+}
+.ag-blockchip:hover { background: color-mix(in oklab, var(--glow-danger), white 78%); }
+.ag-blockchip:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklab, var(--glow-danger), transparent 78%); }
+
+.ag-blocks-h {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; border-bottom: 1px solid var(--glow-line-soft);
+  background: var(--glow-danger-soft);
+}
+.ag-blocks-ic {
+  width: 30px; height: 30px; flex: none; border-radius: var(--glow-r-sm);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--glow-surface); color: var(--glow-danger-ink);
+}
+.ag-blocks-t { font-size: var(--glow-t-sm); font-weight: 800; color: var(--glow-danger-ink); line-height: 1.2; }
+.ag-blocks-s { font-size: var(--glow-t-2xs); font-weight: 600; color: var(--glow-danger-ink); opacity: .75; }
+
+.ag-blocks-list { display: flex; flex-direction: column; max-height: 260px; overflow-y: auto; }
+.ag-blocks-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 1px solid var(--glow-line-soft);
+}
+.ag-blocks-row:last-child { border-bottom: none; }
+.ag-blocks-dot {
+  width: 8px; height: 8px; flex: none; border-radius: 3px;
+  background: var(--glow-ink-4);
+}
+/* El de día entero pesa más que el de unas horas: se distingue de un vistazo */
+.ag-blocks-dot.full { background: var(--glow-danger); border-radius: var(--glow-r-full); }
+.ag-blocks-when {
+  font-size: var(--glow-t-sm); font-weight: 700; color: var(--glow-ink);
+  font-variant-numeric: tabular-nums;
+}
+.ag-blocks-why {
+  font-size: var(--glow-t-2xs); font-weight: 600; color: var(--glow-ink-3);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;
+}
+.ag-blocks-del {
+  display: inline-flex; align-items: center; gap: 4px; flex: none; cursor: pointer;
+  padding: 5px 10px; border-radius: var(--glow-r-full); font-family: inherit;
+  font-size: var(--glow-t-2xs); font-weight: 800;
+  border: 1px solid var(--glow-line); background: var(--glow-surface); color: var(--glow-ink-2);
+  transition: background var(--glow-fast) var(--glow-ease), color var(--glow-fast) var(--glow-ease);
+}
+.ag-blocks-del:hover {
+  background: var(--glow-danger-soft); color: var(--glow-danger-ink);
+  border-color: color-mix(in oklab, var(--glow-danger), white 62%);
+}
+
+/* ── Columna de profesional ────────────────────────────────────────────────
+   El hueco de 24 px entre profesionales ya existía, pero era invisible: el
+   raíl no tenía superficie y las columnas se leían como una sola masa. Cada
+   profesional pasa a ser una tarjeta con su cabecera pegada y una franja de
+   su color arriba, así el aire entre columnas se ve.
+   ───────────────────────────────────────────────────────────────────────── */
+.ag-lane {
+  background: var(--glow-surface);
+  border: 1px solid var(--glow-line);
+  border-radius: var(--glow-r-lg);
+  box-shadow: var(--glow-e1);
+  overflow: hidden;
+  transition: box-shadow var(--glow-base) var(--glow-ease);
+}
+.ag-lane:hover { box-shadow: var(--glow-e2); }
+
+.ag-lane-h {
+  position: relative;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--glow-line-soft);
+  background: var(--glow-surface);
+}
+/* Acento del color del profesional, cosido al borde superior */
+.ag-lane-h::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--lane, var(--glow-brand));
+}
+
+.ag-lane-rail { background: var(--glow-surface); }
+
 /* ── Columns ── */
 .ag-col { border-right: 1px solid var(--ag-line2); }
 .ag-col-last { border-right: none; }
@@ -1516,7 +1718,7 @@
   height: 100vh;
   display: flex;
   background: var(--glow-bg);
-  font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  font-family: var(--glow-font);
   position: relative;
   overflow: hidden;
 }
@@ -1853,7 +2055,6 @@
 .glow-more-item.on .glow-more-ic { background: var(--glow-brand); color: #fff; }
 
 /* ── Sub-nav pill tabs (AdminSubNav, shown mobile below topbar) ── */
-
 
 /* ── Card ── */
 

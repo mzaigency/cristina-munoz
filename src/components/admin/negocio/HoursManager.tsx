@@ -61,6 +61,8 @@ interface Override {
 
 interface FormState {
   label: string;
+  /** Días de la semana a los que aplica. Vacío = todos los del rango. */
+  days_of_week: number[];
   date_from: string;
   date_to: string;
   is_closed: boolean;
@@ -165,6 +167,7 @@ const initialForm = (mode: "day" | "week" | "range", base?: Partial<FormState>):
   if (mode === "range") end = format(addDays(parseISO(start), 14), "yyyy-MM-dd");
   return {
     label: base?.label || "",
+    days_of_week: (base as { days_of_week?: number[] | null } | undefined)?.days_of_week ?? [],
     date_from: start,
     date_to: base?.date_to || end,
     is_closed: base?.is_closed ?? false,
@@ -319,6 +322,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
     setFormMode(isSingle ? "day" : "range");
     setEditingId(it.id);
     setForm({
+      days_of_week: (it as { days_of_week?: number[] | null }).days_of_week ?? [],
       label: it.label ?? "",
       date_from: it.date_from,
       date_to: it.date_to,
@@ -376,9 +380,14 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
     }
 
     // Conflict check (skip self when editing)
-    const conflicts = overrides.filter(
-      (o) => o.id !== editingId && o.date_from <= form.date_to && o.date_to >= form.date_from
-    );
+    const conflicts = overrides.filter((o) => {
+      if (o.id === editingId) return false;
+      if (o.date_from > form.date_to || o.date_to < form.date_from) return false;
+      // Dos excepciones sobre el mismo rango no chocan si van a días distintos
+      const suyos = (o as { days_of_week?: number[] | null }).days_of_week;
+      if (!suyos?.length || !form.days_of_week.length) return true;
+      return form.days_of_week.some((d) => suyos.includes(d));
+    });
     if (conflicts.length > 0) {
       const first = conflicts[0];
       toast({
@@ -395,6 +404,8 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
       date_from: form.date_from,
       date_to: form.date_to,
       is_closed: form.is_closed,
+      // vacío = todos los días del rango; así se guarda NULL y no cambia nada
+      days_of_week: form.days_of_week.length ? form.days_of_week : null,
       label: form.label || null,
       open_time: form.is_closed ? null : form.open_time,
       close_time: form.is_closed ? null : form.close_time,
@@ -910,6 +921,54 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                 Rango
               </button>
             </div>
+
+            {form.date_from !== form.date_to && (
+              /* Solo tiene sentido en un rango: en un día suelto el día ya está
+                 decidido. Vacío = todos, que es como se comportaba siempre. */
+              <div className="glow-neg-form-row">
+                <label>Días a los que aplica</label>
+                <div className="ag-daypick">
+                  {DAYS_OF_WEEK.map((d) => {
+                    const on = form.days_of_week.includes(d.value);
+                    return (
+                      <button
+                        key={d.value}
+                        type="button"
+                        aria-pressed={on}
+                        className={`ag-daypick-b${on ? " on" : ""}`}
+                        onClick={() =>
+                          /* Updater funcional: con el objeto del closure, dos clics
+                             seguidos leían el mismo estado y el segundo pisaba al
+                             primero. Marcar cinco días dejaba solo uno. */
+                          setForm((f) => ({
+                            ...f,
+                            days_of_week: f.days_of_week.includes(d.value)
+                              ? f.days_of_week.filter((x) => x !== d.value)
+                              : [...f.days_of_week, d.value].sort((a, b) => a - b),
+                          }))
+                        }
+                      >
+                        {d.label}
+                      </button>
+                    );
+                  })}
+                  {form.days_of_week.length > 0 && (
+                    <button
+                      type="button"
+                      className="ag-daypick-clear"
+                      onClick={() => setForm((f) => ({ ...f, days_of_week: [] }))}
+                    >
+                      Todos
+                    </button>
+                  )}
+                </div>
+                <span className="glow-field-hint">
+                  {form.days_of_week.length === 0
+                    ? "Se aplica a todos los días del rango, también a los que el salón cierra."
+                    : `Solo ${DAYS_OF_WEEK.filter((d) => form.days_of_week.includes(d.value)).map((d) => d.label).join(", ")}.`}
+                </span>
+              </div>
+            )}
 
             <div className="glow-neg-form-row">
               <label>Etiqueta</label>

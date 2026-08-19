@@ -59,8 +59,15 @@ const HEAD_PX = 52;
 /** A partir de aquí la tarjeta enseña también la hora */
 const H_TIME = 34;
 /** Ancho de una calle en móvil (una por día, o una por profesional si se parte) */
-const LANE_W = 118;
-const LANE_W_SPLIT = 96;
+const LANE_W = 148;
+/* Al separar por profesional, cada día se parte en tantos carriles como
+   profesionales. Con 96 px y tres citas solapadas quedaban 25 px por tarjeta:
+   "CARMEN" cortado a la mitad. Se ensancha y se acepta scroll horizontal. */
+const LANE_W_SPLIT = 148;
+
+/* En la semana no se reparten más de dos citas a lo ancho: a partir de ahí
+   nada es legible. La tercera y siguientes se marcan con un contador. */
+const WEEK_MAX_COLS = 2;
 
 const toMinutes = (hhmm: string): number => {
   const [h, m] = (hhmm || "0:0").split(":").map(Number);
@@ -282,36 +289,10 @@ export function AgendaWeekBoard({
     });
   }, [bookings, days, isBlocked, isFullDayBlocked, laneStylists]);
 
-  const summary = useMemo(() => {
-    const open = sections.filter((s) => !s.day.closed);
-    const total = open.reduce((n, s) => n + s.count, 0);
-    const busy = open.reduce(
-      (n, s) =>
-        n +
-        s.lanes.reduce(
-          (m, l) =>
-            m +
-            l.items
-              .filter((it) => !isBlocked(it.b))
-              .reduce((k, it) => k + (it.end - it.start), 0),
-          0,
-        ),
-      0,
-    );
-    const capacity = Math.max(
-      1,
-      open.reduce((n, s) => n + Math.max(0, s.day.endMin - s.day.startMin) * laneCount, 0),
-    );
-    return { total, occ: Math.min(100, Math.round((busy / capacity) * 100)) };
-  }, [sections, isBlocked, laneCount]);
-
   if (days.length === 0) return null;
 
   return (
-    <div className="font-body">
-      <p className="text-xs font-medium text-outline tracking-wide text-center">
-        {summary.total} {summary.total === 1 ? "CITA" : "CITAS"} · {summary.occ}% OCUPACIÓN
-      </p>
+    <div>
 
       <div ref={scrollerRef} className="overflow-x-auto no-scrollbar pt-4">
         {/* select-none: mantener pulsado levanta la cita, nunca selecciona texto */}
@@ -515,8 +496,13 @@ export function AgendaWeekBoard({
                                 })}
 
                               {/* Bloqueo de DÍA COMPLETO: fondo de la calle entera */}
-                              {lane.fullBlocks.map(({ b }) => {
+                              {/* Uno solo aunque haya varios: apilados, sus fondos y sus
+                                  botones caían en la misma posición y solo el de encima
+                                  recibía el clic. El contador avisa de los demás y se
+                                  quitan uno a uno; la lista completa está en la vista Día. */}
+                              {lane.fullBlocks.slice(0, 1).map(({ b }) => {
                                 const label = b.title || "Bloqueado";
+                                const extra = lane.fullBlocks.length - 1;
                                 return (
                                   <div
                                     key={b.id}
@@ -525,7 +511,7 @@ export function AgendaWeekBoard({
                                    >
                                      <span className="pointer-events-auto absolute top-0.5 left-1 inline-flex items-center gap-0.5 rounded-full bg-surface-container-high pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline max-w-[calc(100%-8px)]">
                                       <Lock className="w-2 h-2 flex-none" />
-                                      <span className="truncate">{label}</span>
+                                      <span className="truncate">{label}{extra > 0 ? ` +${extra}` : ""}</span>
                                       {onUnblock && (
                                         <button
                                           type="button"
@@ -559,8 +545,12 @@ export function AgendaWeekBoard({
                                 const bottom = Math.min(railHeight, (end - dayStart) * PPM);
                                 if (bottom <= 0) return null;
                                 const height = Math.max(18, bottom - top);
-                                const left = `calc(2px + (100% - 4px) * ${col / cols})`;
-                                const width = `calc((100% - 4px) / ${cols} - ${cols > 1 ? 2 : 0}px)`;
+                                const shown = Math.min(cols, WEEK_MAX_COLS);
+                                const slot = Math.min(col, shown - 1);
+                                const left = `calc(2px + (100% - 4px) * ${slot / shown})`;
+                                const width = `calc((100% - 4px) / ${shown} - ${shown > 1 ? 2 : 0}px)`;
+                                // 3ª y siguientes quedan bajo la 2ª: se avisa con un contador
+                                const hidden = col >= WEEK_MAX_COLS;
 
                                 // Al mover, en su sitio original queda el hueco marcado
                                 if (dragged && drag!.mode === "move") {
@@ -712,6 +702,10 @@ export function AgendaWeekBoard({
                                     style={{
                                       left,
                                       width,
+                                      // Las que caen fuera del reparto se apilan detrás con un
+                                      // pequeño desfase, para que se vea que hay más de una.
+                                      zIndex: hidden ? 9 : 10,
+                                      transform: hidden ? `translateY(${(col - WEEK_MAX_COLS + 1) * 3}px)` : undefined,
                                       top,
                                       height,
                                       background: done ? COMPLETED_BG : "#fff",

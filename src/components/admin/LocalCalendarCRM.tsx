@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { busyMinutes, toMinutesOfDay } from "@/lib/agendaOccupancy";
 import { STYLIST_FALLBACK } from "@/lib/chartColors";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,6 +23,7 @@ import {
   UserCircle,
   Sparkles,
   ChevronLeft,
+  MoreHorizontal,
   ChevronRight,
   Lock,
   Phone,
@@ -107,6 +109,13 @@ interface LocalCalendarCRMProps {
 // Constante para escala visual - 2px por minuto = 120px por hora
 const PIXELS_PER_MINUTE = 2;
 
+const BLOCK_PERIODS = [
+  { value: "hours", label: "Horas" },
+  { value: "day", label: "Día" },
+  { value: "week", label: "Semana" },
+  { value: "month", label: "Mes" },
+] as const;
+
 export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelectClient, topLeftSlot, view = "dia" }: LocalCalendarCRMProps) => {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [bookings, setBookings] = useState<LocalBooking[]>([]);
@@ -118,6 +127,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<string>("");
+  /** El buscador se pliega tras el icono: se usa a ratos, no cada día. */
+  const [searchOpen, setSearchOpen] = useState(false);
   const [highlightedBookingId, setHighlightedBookingId] = useState<string | null>(null);
   const [stylistAbsences, setStylistAbsences] = useState<
     Array<{ stylist_slug: string; date_from: string; date_to: string; is_closed: boolean; label: string | null; open_time: string | null; close_time: string | null }>
@@ -1393,6 +1404,12 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     };
   }, [resizingBooking, resizeStartY, resizeOriginalDuration, bookings]);
 
+  const handleBackToToday = () => {
+    const today = new Date();
+    setWeekStart(startOfWeek(today, { weekStartsOn: 1 }));
+    setActiveTab(format(today, "yyyy-MM-dd"));
+  };
+
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const groupedBookings = groupBookingsByDate(bookings);
 
@@ -1418,352 +1435,218 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
   return (
     <div className="ag-root">
-      {/* ── TOP BAR ─────────────────────────────────────────── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-        {topLeftSlot && <div style={{ marginRight: "auto", minWidth: 0 }}>{topLeftSlot}</div>}
-        <button className="ag-btn ag-btn-ghost" onClick={() => setIsBlockDialogOpen(true)}>
-          <Ban style={{ width: 14, height: 14 }} />
-          <span className="ag-btn-tx">Bloquear</span>
-        </button>
-        <button
-          className="ag-btn ag-btn-primary"
-          onClick={() => setIsCreateDialogOpen(true)}
-          data-tour-step="new-appointment"
-        >
-          <Plus style={{ width: 15, height: 15 }} />
-          <span className="ag-btn-tx">Nueva cita</span>
-        </button>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button className="ag-btn ag-btn-ghost ag-btn-icon" aria-label="Saltar a fecha">
-              <CalendarIcon style={{ width: 14, height: 14 }} />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <Calendar mode="single" selected={weekStart} onSelect={handleJumpToDate} initialFocus weekStartsOn={1} />
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      {/* ── HERO DAY ─────────────────────────────────────────── */}
+      {/* ── CABECERA ─────────────────────────────────────────────────────────
+          Dos filas. Antes eran ocho bloques y la agenda no se veía sin scroll.
+          Las tres cifras salen de un único cálculo (horario real del día y sin
+          contar bloqueos); el grid ya no pinta su propia línea de resumen, así
+          no puede volver a haber dos ocupaciones distintas en pantalla.
+          ──────────────────────────────────────────────────────────────────── */}
       {view === "dia" && (() => {
-
         const activeKey =
           activeTab || format(weekDays.find((d) => isSameDay(d, new Date())) || weekDays[0], "yyyy-MM-dd");
-        const heroDay = weekDays.find((d) => format(d, "yyyy-MM-dd") === activeKey) || weekDays[0];
-        const heroDayBookings = groupedBookings[activeKey] || [];
-        const heroSchedule = getScheduleForDay(heroDay);
-        const heroCompleted = heroDayBookings.filter((b) => b.notes?.includes("[✓ COMPLETADA]")).length;
-        const heroPending = heroDayBookings.filter(
-          (b) =>
-            !b.notes?.includes("[✓ COMPLETADA]") &&
-            b.title !== "Bloqueado" &&
-            b.customer_name !== "Bloqueado" &&
-            b.customer_name !== "BLOQUEADO" &&
-            !b.title?.includes("BLOQUEADO") &&
-            !b.title?.includes("VACACIONES"),
-        ).length;
-        const heroTotal = heroCompleted + heroPending;
-        const workMin = Math.max(1, stylists.length) * 660;
-        const bookedMin = heroDayBookings.reduce((s, b) => s + (b.total_duration || 30), 0);
-        const occPct = Math.min(1, bookedMin / workMin);
-        const heroNext = heroDayBookings.find((b) => {
-          const [h, m] = b.Hora.split(":").map(Number);
-          return (h > nowHour || (h === nowHour && m > nowMinutes)) && !b.notes?.includes("[✓ COMPLETADA]");
-        });
-        const R = 28,
-          SW = 7,
-          SIZE = 68;
-        const circ = 2 * Math.PI * R;
-        const offset = circ * (1 - occPct);
+        const day = weekDays.find((d) => format(d, "yyyy-MM-dd") === activeKey) || weekDays[0];
+        const sched = getScheduleForDay(day);
+        const dayBookings = groupedBookings[activeKey] || [];
+        const appts = dayBookings.filter((b) => !isBlockedBooking(b));
+        const workMin = sched.isClosed ? 0 : Math.max(0, (sched.endHour - sched.startHour) * 60);
+        const capacity = workMin * Math.max(1, stylists.length);
+        // Por profesional y luego se suma: dentro de un carril los solapes
+        // se cuentan una vez, pero dos profesionales a la vez sí son dos huecos.
+        const busy = stylists.reduce((total, st) => {
+          const suyas = appts.filter((b) => b.stylist === st.slug);
+          return (
+            total +
+            busyMinutes(
+              suyas.map((b) => {
+                const start = toMinutesOfDay(b.Hora);
+                const end = b.end_time ? toMinutesOfDay(b.end_time) : start + (b.total_duration || 30);
+                return { start, end: Math.max(end, start + 15) };
+              }),
+            )
+          );
+        }, 0);
+        const occ = capacity > 0 ? Math.min(100, Math.round((busy / capacity) * 100)) : 0;
+        const libres = capacity > 0 ? Math.max(0, Math.round((capacity - busy) / 30)) : 0;
+        const isToday = isSameDay(day, new Date());
+
         return (
-          <div className="gh">
-            <div
-              className="gh-glow"
-              style={{
-                background:
-                  "radial-gradient(120% 140% at 88% -10%, color-mix(in oklab, var(--glow-brand), transparent 78%), transparent 60%)",
-              }}
-            />
-            <div className="gh-date">
-              <span className="gh-weekday">{format(heroDay, "EEEE", { locale: es }).toUpperCase()}</span>
-              <span className="gh-num">{format(heroDay, "d")}</span>
-              <span className="gh-month">{format(heroDay, "MMMM yyyy", { locale: es })}</span>
-            </div>
-            {heroSchedule.isClosed ? (
-              <div className="gh-closed">
-                <Lock style={{ width: 20, height: 20 }} /> Salón cerrado
+          <div className="ag-dayhead">
+            {/* fila 1: día, métricas y acciones */}
+            <div className="ag-dayhead-row">
+              <div className="ag-date">
+                <span className="ag-date-d glow-hide-sm">{format(day, "EEEE d", { locale: es })}</span>
+                <span className="ag-date-d glow-show-sm">{format(day, "EEE d", { locale: es })}</span>
+                <span className="ag-date-m glow-hide-sm">{format(day, "MMMM yyyy", { locale: es })}</span>
+                <span className="ag-date-m glow-show-sm">{format(day, "MMM", { locale: es })}</span>
               </div>
-            ) : (
-              <>
-                <div className="gh-ringwrap">
-                  <div style={{ position: "relative", width: SIZE, height: SIZE, flexShrink: 0 }}>
-                    <svg width={SIZE} height={SIZE}>
-                      <circle
-                        cx={SIZE / 2}
-                        cy={SIZE / 2}
-                        r={R}
-                        fill="none"
-                        stroke="oklch(0.93 0.01 265)"
-                        strokeWidth={SW}
-                      />
-                      <circle
-                        cx={SIZE / 2}
-                        cy={SIZE / 2}
-                        r={R}
-                        fill="none"
-                        stroke="var(--glow-brand)"
-                        strokeWidth={SW}
-                        strokeLinecap="round"
-                        strokeDasharray={circ}
-                        strokeDashoffset={offset}
-                        transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
-                        style={{ transition: "stroke-dashoffset .6s cubic-bezier(.3,.9,.3,1)" }}
-                      />
-                    </svg>
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <span className="gh-ring-num">{heroTotal}</span>
-                      <span className="gh-ring-lbl">citas</span>
+
+              {sched.isClosed ? (
+                <span className="glow-badge glow-badge--danger">
+                  <Lock style={{ width: 11, height: 11 }} /> Salón cerrado
+                </span>
+              ) : (
+                sched.isSpecial && (
+                  <span className="glow-badge glow-badge--warn">
+                    <Sparkles style={{ width: 11, height: 11 }} /> Horario especial · {sched.startHour}:00–{sched.endHour}:00
+                  </span>
+                )
+              )}
+
+              {!sched.isClosed && (
+                <div className="ag-metrics" role="group" aria-label="Resumen del día">
+                  <div className="ag-metric">
+                    <span className="ag-metric-v">{appts.length}</span>
+                    <span className="ag-metric-l">{appts.length === 1 ? "cita" : "citas"}</span>
+                  </div>
+                  <div className="ag-metric">
+                    <span className="ag-metric-v">{occ}%</span>
+                    <span className="ag-metric-l">ocupación</span>
+                  </div>
+                  <div className="ag-metric">
+                    <span className="ag-metric-v">{libres}</span>
+                    <span className="ag-metric-l">{libres === 1 ? "hueco" : "huecos"}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="ag-dayhead-acts">
+                <button
+                  className={`glow-icon-btn${searchOpen ? "" : " glow-icon-btn--ghost"}`}
+                  aria-label="Buscar cita"
+                  aria-expanded={searchOpen}
+                  onClick={() => setSearchOpen((v) => !v)}
+                >
+                  <Search style={{ width: 15, height: 15 }} />
+                </button>
+                {!isToday && (
+                  <button className="glow-btn glow-btn--sm" onClick={handleBackToToday}>
+                    Hoy
+                  </button>
+                )}
+                <button className="glow-btn glow-btn--sm" onClick={() => setIsBlockDialogOpen(true)}>
+                  <Ban style={{ width: 13, height: 13 }} />
+                  <span className="glow-hide-sm">Bloquear</span>
+                </button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="glow-icon-btn glow-icon-btn--ghost" aria-label="Más acciones">
+                      <MoreHorizontal style={{ width: 15, height: 15 }} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-auto p-2">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 210 }}>
+                      {topLeftSlot}
+                      <div style={{ borderTop: "1px solid var(--glow-line-soft)", paddingTop: 8 }}>
+                        <Calendar
+                          mode="single"
+                          selected={weekStart}
+                          onSelect={handleJumpToDate}
+                          initialFocus
+                          weekStartsOn={1}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="gh-occ">
-                    <span className="gh-occ-pct" style={{ color: "var(--glow-brand)" }}>
-                      {Math.round(occPct * 100)}%
-                    </span>
-                    <span className="gh-occ-lbl">ocupación</span>
-                  </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* fila 2: semana y profesionales */}
+            <div className="ag-dayhead-row">
+              <button
+                className="ag-wk-arrow"
+                aria-label="Semana anterior"
+                onClick={() => setWeekStart(addDays(weekStart, -7))}
+                disabled={loading}
+              >
+                <ChevronLeft style={{ width: 15, height: 15 }} />
+              </button>
+
+              <div className="ag-week">
+                {weekDays.map((d) => {
+                  const key = format(d, "yyyy-MM-dd");
+                  const isOn = key === activeKey;
+                  const dSched = getScheduleForDay(d);
+                  const n = (groupedBookings[key] || []).filter((b) => !isBlockedBooking(b)).length;
+                  return (
+                    <button
+                      key={key}
+                      className={`ag-wd${isOn ? " on" : ""}${dSched.isClosed ? " closed" : ""}`}
+                      onClick={() => setActiveTab(key)}
+                      aria-current={isOn ? "date" : undefined}
+                    >
+                      <span className="ag-wd-n">{format(d, "EEE", { locale: es })}</span>
+                      <span className="ag-wd-d">{format(d, "d")}</span>
+                      <span className="ag-wd-c">{dSched.isClosed ? "—" : n || "—"}</span>
+                      {isSameDay(d, new Date()) && !isOn && <span className="ag-wd-today" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                className="ag-wk-arrow"
+                aria-label="Semana siguiente"
+                onClick={() => setWeekStart(addDays(weekStart, 7))}
+                disabled={loading}
+              >
+                <ChevronRight style={{ width: 15, height: 15 }} />
+              </button>
+
+              {stylists.length > 1 && (
+                <div className="ag-profs">
+                  <button
+                    className={`glow-chip${selectedStylistFilter === "all" ? " glow-chip--on" : ""}`}
+                    onClick={() => setSelectedStylistFilter("all")}
+                  >
+                    Todas <b className="ag-prof-n">{appts.length}</b>
+                  </button>
+                  {stylists.map((s) => {
+                    const n = appts.filter((b) => b.stylist === s.slug).length;
+                    const on = selectedStylistFilter === s.slug;
+                    return (
+                      <button
+                        key={s.slug}
+                        className={`glow-chip${on ? " glow-chip--on" : ""}`}
+                        onClick={() => setSelectedStylistFilter(on ? "all" : s.slug)}
+                      >
+                        <span className="ag-prof-dot" style={{ background: s.color }} />
+                        {s.name} <b className="ag-prof-n">{n}</b>
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="gh-stats">
-                  <div className="gh-stat">
-                    <span className="gh-stat-num">{heroCompleted}</span>
-                    <span className="gh-stat-lbl">
-                      <span className="gh-stat-dot gh-dot-done" />
-                      completadas
-                    </span>
-                  </div>
-                  <div className="gh-stat">
-                    <span className="gh-stat-num">{heroPending}</span>
-                    <span className="gh-stat-lbl">
-                      <span className="gh-stat-dot" style={{ background: "var(--glow-brand)" }} />
-                      pendientes
-                    </span>
-                  </div>
-                </div>
-                <div className="gh-next">
-                  <span className="gh-next-lbl">Próxima cita</span>
-                  {heroNext ? (
-                    <>
-                      <span className="gh-next-time" style={{ color: "var(--glow-brand)" }}>
-                        {heroNext.Hora.slice(0, 5)}
-                      </span>
-                      <span className="gh-next-client">{heroNext.customer_name}</span>
-                      <span className="gh-next-svc">
-                        {Array.isArray(heroNext.services)
-                          ? heroNext.services.map((s: any) => s.name || s).filter(Boolean)[0] || "Cita"
-                          : "Cita"}
-                      </span>
-                    </>
-                  ) : (
-                    <span style={{ color: "oklch(0.62 0.015 265)", fontWeight: 600 }}>Sin más citas hoy</span>
-                  )}
-                </div>
-              </>
+              )}
+            </div>
+
+            {/* buscador: plegado tras el icono */}
+            {searchOpen && (
+              <div className="ag-search">
+                <span className="ag-search-ic">
+                  <Search style={{ width: 15, height: 15 }} />
+                </span>
+                <input
+                  className="ag-search-in"
+                  autoFocus
+                  placeholder="Buscar por nombre o teléfono…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSearch();
+                    if (e.key === "Escape") { clearSearch(); setSearchOpen(false); }
+                  }}
+                />
+                {isSearching && <Loader2 className="glow-spinner-sm" style={{ marginRight: 10 }} />}
+                {searchQuery && !isSearching && (
+                  <button className="ag-search-clear" onClick={clearSearch} aria-label="Limpiar búsqueda">
+                    <X style={{ width: 14, height: 14 }} />
+                  </button>
+                )}
+              </div>
             )}
           </div>
         );
       })()}
-
-      {/* ── WEEK SELECTOR ─────────────────────────────────────── */}
-      {view === "dia" && (
-      <div className="wk">
-        <div className="wk-top">
-          <span className="wk-month">{format(weekStart, "MMMM yyyy", { locale: es })}</span>
-          <button
-            className="wk-today"
-            style={{ color: "var(--glow-brand)" }}
-            onClick={() => {
-              setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
-              setActiveTab(format(new Date(), "yyyy-MM-dd"));
-            }}
-          >
-            <span className="wk-today-dot" style={{ background: "var(--glow-brand)" }} />
-            Volver a hoy
-          </button>
-        </div>
-        <div className="wk-row">
-          <button className="wk-arrow" onClick={() => setWeekStart(addDays(weekStart, -7))} disabled={loading}>
-            <ChevronLeft style={{ width: 20, height: 20 }} />
-          </button>
-          <div className="wk-days">
-            {weekDays.map((day) => {
-              const dateKey = format(day, "yyyy-MM-dd");
-              const dayBkgs = groupedBookings[dateKey] || [];
-              const resolvedActiveKey =
-                activeTab || format(weekDays.find((d) => isSameDay(d, new Date())) || weekDays[0], "yyyy-MM-dd");
-              const isOn = resolvedActiveKey === dateKey;
-              const isToday = isSameDay(day, new Date());
-              const schedule = getScheduleForDay(day);
-              const isClosed = schedule.isClosed;
-              const maxCount = Math.max(
-                ...weekDays.map((d) => (groupedBookings[format(d, "yyyy-MM-dd")] || []).length),
-                1,
-              );
-              const realBkgs = dayBkgs.filter((b) => !isFullDayBlocked(b));
-              const pct = realBkgs.length / maxCount;
-              const hasFullDayBlock = dayBkgs.some((b) => isFullDayBlocked(b));
-              return (
-                <button
-                  key={dateKey}
-                  className={`wk-day${isOn ? " wk-on" : ""}${isClosed ? " wk-closed" : ""}`}
-                  onClick={() => !isClosed && setActiveTab(dateKey)}
-                  disabled={isClosed || loading}
-                  style={
-                    isOn
-                      ? {
-                          background: "var(--glow-gradient)",
-                          color: "#fff",
-                          borderColor: "transparent",
-                          boxShadow: "0 12px 28px -10px rgba(34,64,140,.45)",
-                          transform: "translateY(-2px)",
-                        }
-                      : undefined
-                  }
-                >
-                  <span className="wk-name">{format(day, "EEE", { locale: es }).toUpperCase()}</span>
-                  <span className="wk-num">{format(day, "d")}</span>
-                  {isToday && !isOn && <span className="wk-today-pip" style={{ background: "var(--glow-brand)" }} />}
-                  {isClosed ? (
-                    <span className="wk-closed-tag">
-                      <Ban style={{ width: 11, height: 11 }} />
-                    </span>
-                  ) : (
-                    <span className="wk-foot">
-                      <span className="wk-bar">
-                        <span
-                          className="wk-bar-fill"
-                          style={{ width: `${20 + pct * 80}%`, background: isOn ? "rgba(255,255,255,.9)" : "var(--glow-brand)" }}
-                        />
-                      </span>
-                      <span className="wk-count" style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                        {hasFullDayBlock && (
-                          <Lock style={{ width: 9, height: 9, flexShrink: 0, color: isOn ? "var(--glow-danger-soft)" : "var(--glow-danger-ink)" }} />
-                        )}
-                        {realBkgs.length}
-                      </span>
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          <button className="wk-arrow" onClick={() => setWeekStart(addDays(weekStart, 7))} disabled={loading}>
-            <ChevronRight style={{ width: 20, height: 20 }} />
-          </button>
-        </div>
-      </div>
-      )}
-
-      {/* ── PROFESSIONAL TABS ─────────────────────────────────── */}
-      {stylists.length > 1 && (
-        <div className="ag-proftabs">
-          {(() => {
-            const activeKey =
-              activeTab || format(weekDays.find((d) => isSameDay(d, new Date())) || weekDays[0], "yyyy-MM-dd");
-            const allCount = (groupedBookings[activeKey] || []).length;
-            const isAllOn = selectedStylistFilter === "all";
-            return (
-              <button
-                className={`ag-proftab${isAllOn ? " ag-proftab-on" : ""}`}
-                onClick={() => setSelectedStylistFilter("all")}
-                style={
-                  isAllOn
-                    ? {
-                        borderColor: "transparent",
-                        background: "var(--glow-gradient)",
-                        color: "#fff",
-                        boxShadow: "0 6px 14px -6px rgba(34,64,140,.5)",
-                      }
-                    : undefined
-                }
-              >
-                {!isAllOn && <span className="ag-proftab-dot" style={{ background: "var(--glow-brand)" }} />}
-                Todas
-                <span
-                  className="ag-proftab-count"
-                  style={isAllOn ? { color: "#fff", background: "rgba(255,255,255,.25)" } : undefined}
-                >
-                  {allCount}
-                </span>
-              </button>
-            );
-          })()}
-          {stylists.map((stylist) => {
-            const activeKey =
-              activeTab || format(weekDays.find((d) => isSameDay(d, new Date())) || weekDays[0], "yyyy-MM-dd");
-            const count = (groupedBookings[activeKey] || []).filter((b) => b.stylist === stylist.slug).length;
-            const isOn = selectedStylistFilter === stylist.slug;
-            return (
-              <button
-                key={stylist.slug}
-                className={`ag-proftab${isOn ? " ag-proftab-on" : ""}`}
-                onClick={() => setSelectedStylistFilter(stylist.slug)}
-                style={
-                  isOn
-                    ? { borderColor: stylist.color, background: `${stylist.color}15`, color: stylist.color }
-                    : undefined
-                }
-              >
-                <span className="ag-proftab-dot" style={{ background: stylist.color }} />
-                {stylist.name}
-                <span className="ag-proftab-count" style={isOn ? { color: stylist.color } : undefined}>
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ── SEARCH ───────────────────────────────────────────── */}
-      <div className="ag-search">
-        <span className="ag-search-ic">
-          <Search style={{ width: 17, height: 17 }} />
-        </span>
-        <input
-          className="ag-search-in"
-          placeholder="Buscar por nombre o teléfono…"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-        />
-        {isSearching && (
-          <Loader2
-            style={{
-              position: "absolute",
-              right: 14,
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: 16,
-              height: 16,
-            }}
-            className="animate-spin"
-          />
-        )}
-        {searchQuery && !isSearching && (
-          <button className="ag-search-clear" onClick={clearSearch}>
-            <X style={{ width: 14, height: 14 }} />
-          </button>
-        )}
-      </div>
 
       {showSearchResults && searchResults.length > 0 && (
         <div
@@ -1816,31 +1699,110 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       )}
 
       {/* ── WEEK NAV (vista semana) ───────────────────────────── */}
-      {view === "semana" && (
-        <div className="wk">
-          <div className="wk-row">
-            <button className="wk-arrow" onClick={() => setWeekStart(addDays(weekStart, -7))} disabled={loading}>
-              <ChevronLeft style={{ width: 20, height: 20 }} />
-            </button>
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-              <span className="wk-month">
-                {format(weekStart, "d MMM", { locale: es })} – {format(addDays(weekStart, 6), "d MMM", { locale: es })}
-              </span>
-              <button
-                className="wk-today"
-                style={{ color: "var(--glow-brand)" }}
-                onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
-              >
-                <span className="wk-today-dot" style={{ background: "var(--glow-brand)" }} />
-                Hoy
-              </button>
+      {view === "semana" && (() => {
+        // Métricas de la semana con la misma fórmula que el día: horario real
+        // de cada jornada, sin bloqueos y fusionando los solapes.
+        let citas = 0, ocupado = 0, capacidad = 0;
+        weekDays.forEach((d) => {
+          const key = format(d, "yyyy-MM-dd");
+          const sch = getScheduleForDay(d);
+          if (sch.isClosed) return;
+          const min = Math.max(0, (sch.endHour - sch.startHour) * 60);
+          capacidad += min * Math.max(1, stylists.length);
+          const dayAppts = (groupedBookings[key] || []).filter((b) => !isBlockedBooking(b));
+          citas += dayAppts.length;
+          stylists.forEach((st) => {
+            ocupado += busyMinutes(
+              dayAppts
+                .filter((b) => b.stylist === st.slug)
+                .map((b) => {
+                  const st0 = toMinutesOfDay(b.Hora);
+                  const en = b.end_time ? toMinutesOfDay(b.end_time) : st0 + (b.total_duration || 30);
+                  return { start: st0, end: Math.max(en, st0 + 15) };
+                }),
+            );
+          });
+        });
+        const occ = capacidad > 0 ? Math.min(100, Math.round((ocupado / capacidad) * 100)) : 0;
+        const estaSemana = isSameDay(weekStart, startOfWeek(new Date(), { weekStartsOn: 1 }));
+
+        return (
+          <div className="ag-dayhead">
+            <div className="ag-dayhead-row">
+              <div className="ag-date">
+                <span className="ag-date-d">
+                  {format(weekStart, "d MMM", { locale: es })} – {format(addDays(weekStart, 6), "d MMM", { locale: es })}
+                </span>
+                <span className="ag-date-m">{format(weekStart, "yyyy", { locale: es })}</span>
+              </div>
+
+              <div className="ag-metrics" role="group" aria-label="Resumen de la semana">
+                <div className="ag-metric">
+                  <span className="ag-metric-v">{citas}</span>
+                  <span className="ag-metric-l">{citas === 1 ? "cita" : "citas"}</span>
+                </div>
+                <div className="ag-metric">
+                  <span className="ag-metric-v">{occ}%</span>
+                  <span className="ag-metric-l">ocupación</span>
+                </div>
+              </div>
+
+              <div className="ag-dayhead-acts">
+                <button
+                  className="ag-wk-arrow"
+                  aria-label="Semana anterior"
+                  onClick={() => setWeekStart(addDays(weekStart, -7))}
+                  disabled={loading}
+                >
+                  <ChevronLeft style={{ width: 15, height: 15 }} />
+                </button>
+                {!estaSemana && (
+                  <button
+                    className="glow-btn glow-btn--sm"
+                    onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+                  >
+                    Esta semana
+                  </button>
+                )}
+                <button
+                  className="ag-wk-arrow"
+                  aria-label="Semana siguiente"
+                  onClick={() => setWeekStart(addDays(weekStart, 7))}
+                  disabled={loading}
+                >
+                  <ChevronRight style={{ width: 15, height: 15 }} />
+                </button>
+              </div>
             </div>
-            <button className="wk-arrow" onClick={() => setWeekStart(addDays(weekStart, 7))} disabled={loading}>
-              <ChevronRight style={{ width: 20, height: 20 }} />
-            </button>
+
+            {stylists.length > 1 && (
+              <div className="ag-dayhead-row">
+                <div className="ag-profs" style={{ paddingLeft: 0, marginLeft: 0, borderLeft: "none" }}>
+                  <button
+                    className={`glow-chip${selectedStylistFilter === "all" ? " glow-chip--on" : ""}`}
+                    onClick={() => setSelectedStylistFilter("all")}
+                  >
+                    Todas
+                  </button>
+                  {stylists.map((st) => {
+                    const on = selectedStylistFilter === st.slug;
+                    return (
+                      <button
+                        key={st.slug}
+                        className={`glow-chip${on ? " glow-chip--on" : ""}`}
+                        onClick={() => setSelectedStylistFilter(on ? "all" : st.slug)}
+                      >
+                        <span className="ag-prof-dot" style={{ background: st.color }} />
+                        {st.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── WEEK BOARD ────────────────────────────────────────── */}
       {view === "semana" && !loading && (() => {
@@ -1988,34 +1950,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
             fullDayBlocksByStylist[s.slug] = all.filter((b) => isFullDayBlocked(b));
           });
 
-          if (schedule.isSpecial) {
-            // Show special hours banner inline
-          }
-
           return (
             <>
-              {schedule.isSpecial && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    borderRadius: 14,
-                    border: "1px solid rgba(245,158,11,.35)",
-                    background: "linear-gradient(to right, var(--glow-warn-soft), var(--glow-warn-soft))",
-                    padding: "10px 14px",
-                    marginBottom: 12,
-                  }}
-                >
-                  <Sparkles style={{ width: 16, height: 16, color: "var(--glow-warn-ink)", flexShrink: 0 }} />
-                  <div>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: "var(--glow-warn-ink)" }}>Horario especial</p>
-                    <p style={{ fontSize: 11, color: "var(--glow-warn-ink)" }}>
-                      {schedule.isClosed ? "Cerrado por horario especial" : schedule.specialLabel}
-                    </p>
-                  </div>
-                </div>
-              )}
 
               {/* Agenda (móvil y desktop): raíles por profesional, suelta sobre el fondo.
                   `isolate` crea stacking context: lo sticky de dentro no puede taparse con el chrome. */}
@@ -2972,101 +2908,140 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
       {/* Block Period Dialog */}
       <Dialog open={isBlockDialogOpen} onOpenChange={setIsBlockDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Bloquear Periodo</DialogTitle>
-            <DialogDescription>Bloquea un periodo para vacaciones o horas específicas</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
+        <DialogContent className="p-0 overflow-hidden gap-0 max-w-md">
+          <div className="ag-blocks-h">
+            <span className="ag-blocks-ic"><Ban style={{ width: 14, height: 14 }} /></span>
             <div>
-              <label>Tipo de bloqueo</label>
-              <RadioGroup value={blockPeriod} onValueChange={(v) => setBlockPeriod(v as any)} className="mt-2">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="hours" id="hours" />
-                  <label htmlFor="hours">Horas específicas</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="day" id="day" />
-                  <label htmlFor="day">Día completo</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="week" id="week" />
-                  <label htmlFor="week">Semana</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="month" id="month" />
-                  <label htmlFor="month">Mes</label>
-                </div>
-              </RadioGroup>
+              <div className="ag-blocks-t">Bloquear agenda</div>
+              <div className="ag-blocks-s">Nadie podrá reservar en ese hueco</div>
             </div>
+          </div>
 
-            <div>
-              <label>Estilista</label>
-              <RadioGroup value={blockStylist} onValueChange={setBlockStylist} className="mt-2">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="all" id="all-stylists" />
-                  <label htmlFor="all-stylists">Todos</label>
-                </div>
-                {stylists.map((s) => (
-                  <div key={s.slug} className="flex items-center space-x-2">
-                    <RadioGroupItem value={s.slug} id={s.slug} />
-                    <label htmlFor={s.slug}>{s.name}</label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </div>
-
-            <div>
-              <label>Fecha inicio</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="glow-btn glow-btn--block justify-start mt-1">
-                    <CalendarIcon className="h-4 w-4 mr-2" />
-                    {blockStartDate ? format(blockStartDate, "PPP", { locale: es }) : "Seleccionar fecha"}
+          <div className="glow-form" style={{ padding: 16 }}>
+            <div className="glow-field">
+              <label>Cuánto</label>
+              <div className="glow-toolbar" style={{ marginBottom: 0 }}>
+                {BLOCK_PERIODS.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    className={`glow-chip${blockPeriod === p.value ? " glow-chip--on" : ""}`}
+                    onClick={() => setBlockPeriod(p.value as typeof blockPeriod)}
+                  >
+                    {p.label}
                   </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={blockStartDate} onSelect={setBlockStartDate} weekStartsOn={1} />
-                </PopoverContent>
-              </Popover>
+                ))}
+              </div>
             </div>
 
-            {blockPeriod === "hours" && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label>Hora inicio</label>
-                  <input className="glow-input" type="time" value={blockStartTime} onChange={(e) => setBlockStartTime(e.target.value)} />
-                </div>
-                <div>
-                  <label>Hora fin</label>
-                  <input className="glow-input" type="time" value={blockEndTime} onChange={(e) => setBlockEndTime(e.target.value)} />
-                </div>
+            <div className="glow-field">
+              <label>Quién</label>
+              <div className="glow-toolbar" style={{ marginBottom: 0 }}>
+                <button
+                  type="button"
+                  className={`glow-chip${blockStylist === "all" ? " glow-chip--on" : ""}`}
+                  onClick={() => setBlockStylist("all")}
+                >
+                  Todo el equipo
+                </button>
+                {stylists.map((st) => (
+                  <button
+                    key={st.slug}
+                    type="button"
+                    className={`glow-chip${blockStylist === st.slug ? " glow-chip--on" : ""}`}
+                    onClick={() => setBlockStylist(st.slug)}
+                  >
+                    <span className="ag-prof-dot" style={{ background: st.color }} />
+                    {st.name}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
 
-            {(blockPeriod === "week" || blockPeriod === "month") && (
-              <div>
-                <label>Fecha fin (opcional)</label>
+            <div className={blockPeriod === "hours" ? "glow-form-grid" : undefined}>
+              <div className="glow-field">
+                <label>{blockPeriod === "hours" ? "Día" : "Desde"}</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="glow-btn glow-btn--block justify-start mt-1">
-                      <CalendarIcon className="h-4 w-4 mr-2" />
-                      {blockEndDate ? format(blockEndDate, "PPP", { locale: es }) : "Fecha automática"}
+                    <button className="glow-input" style={{ textAlign: "left", cursor: "pointer" }}>
+                      {blockStartDate
+                        ? format(blockStartDate, "d 'de' MMMM", { locale: es })
+                        : "Elegir fecha"}
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={blockStartDate} onSelect={setBlockStartDate} weekStartsOn={1} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {blockPeriod === "hours" && (
+                <div className="glow-form-grid" style={{ gridColumn: "1 / -1" }}>
+                  <div className="glow-field">
+                    <label>Desde las</label>
+                    <input
+                      className="glow-input"
+                      type="time"
+                      value={blockStartTime}
+                      onChange={(e) => setBlockStartTime(e.target.value)}
+                    />
+                  </div>
+                  <div className="glow-field">
+                    <label>Hasta las</label>
+                    <input
+                      className="glow-input"
+                      type="time"
+                      value={blockEndTime}
+                      onChange={(e) => setBlockEndTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {(blockPeriod === "week" || blockPeriod === "month") && (
+              <div className="glow-field">
+                <label>Hasta</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="glow-input" style={{ textAlign: "left", cursor: "pointer" }}>
+                      {blockEndDate
+                        ? format(blockEndDate, "d 'de' MMMM", { locale: es })
+                        : `Automático (${blockPeriod === "week" ? "7 días" : "1 mes"})`}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
                     <Calendar mode="single" selected={blockEndDate} onSelect={setBlockEndDate} weekStartsOn={1} />
                   </PopoverContent>
                 </Popover>
               </div>
             )}
+
+            {/* Qué va a pasar, en una frase, antes de confirmar */}
+            <div className="ag-block-sum">
+              <Ban style={{ width: 13, height: 13, flexShrink: 0 }} />
+              <span>
+                {blockStylist === "all"
+                  ? "Todo el equipo"
+                  : stylists.find((st) => st.slug === blockStylist)?.name ?? "El equipo"}
+                {blockPeriod === "hours"
+                  ? ` · ${blockStartTime}–${blockEndTime}`
+                  : blockPeriod === "day"
+                    ? " · el día entero"
+                    : blockPeriod === "week"
+                      ? " · toda la semana"
+                      : " · todo el mes"}
+                {blockStartDate ? ` · desde el ${format(blockStartDate, "d MMM", { locale: es })}` : ""}
+              </span>
+            </div>
           </div>
-          <DialogFooter>
+
+          <DialogFooter style={{ padding: "0 16px 16px" }}>
             <button className="glow-btn" onClick={() => setIsBlockDialogOpen(false)}>
               Cancelar
             </button>
             <button className="glow-btn glow-btn--primary" onClick={handleBlockPeriod} disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {loading ? <Loader2 className="glow-spinner-sm" /> : <Ban style={{ width: 14, height: 14 }} />}
               Bloquear
             </button>
           </DialogFooter>

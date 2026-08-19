@@ -1,4 +1,6 @@
 import { useMemo, useRef } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { busyMinutes } from "@/lib/agendaOccupancy";
 import { Lock, LockOpen, Check, Plus, X } from "lucide-react";
 import { NO_SELECT, useTimelineDrag } from "@/hooks/useTimelineDrag";
 
@@ -235,6 +237,7 @@ export function AgendaDayTimeline({
   const dayStart = startHour * 60;
   const dayEnd = endHour * 60;
   const workMinutes = Math.max(1, dayEnd - dayStart);
+
   const railHeight = workMinutes * PPM;
 
   const railRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -272,20 +275,11 @@ export function AgendaDayTimeline({
       const fullBlocks = raw.filter((it) => isFull(it.b));
       const items = layout(raw.filter((it) => !isFull(it.b)));
       const appts = items.filter((it) => !isBlocked(it.b));
-      const busy = appts.reduce((sum, it) => sum + (it.end - it.start), 0);
+      const busy = busyMinutes(appts.map((it) => ({ start: it.start, end: it.end })));
       const occupancy = Math.min(100, Math.round((busy / workMinutes) * 100));
       return { stylist: s, fullBlocks, items, realCount: appts.length, occupancy, busy };
     });
   }, [bookings, stylists, workMinutes, isBlocked, isFullDayBlocked]);
-
-  const summary = useMemo(() => {
-    const totalCitas = sections.reduce((n, s) => n + s.realCount, 0);
-    const totalBusy = sections.reduce((n, s) => n + s.busy, 0);
-    const capacity = workMinutes * Math.max(1, sections.length);
-    const libres = Math.max(0, Math.round((capacity - totalBusy) / 30));
-    const occ = Math.min(100, Math.round((totalBusy / capacity) * 100));
-    return { totalCitas, libres, occ };
-  }, [sections, workMinutes]);
 
   if (stylists.length === 0) return null;
 
@@ -299,15 +293,8 @@ export function AgendaDayTimeline({
   const breakH = hasBreak ? Math.min(railHeight, (breakEnd! - dayStart) * PPM) - breakTop : 0;
 
   return (
-    <div className="font-body">
-      <div className="flex items-center justify-center">
-        <p className="text-xs font-medium text-outline tracking-wide">
-          {summary.totalCitas} {summary.totalCitas === 1 ? "CITA" : "CITAS"} · {summary.libres} LIBRES ·{" "}
-          {summary.occ}% OCUPACIÓN
-        </p>
-      </div>
-
-      <div className="overflow-x-auto no-scrollbar pt-6">
+    <div>
+      <div className="overflow-x-auto no-scrollbar">
         {/* select-none en todo el lienzo: mantener pulsado nunca selecciona texto
             ni abre el menú contextual de iOS, solo levanta la cita */}
         <div
@@ -335,9 +322,13 @@ export function AgendaDayTimeline({
             const isDropTarget = !!ghost && drag!.mode === "move" && drag!.originColId !== stylist.slug;
 
             return (
-            <div key={stylist.slug} className="w-64 flex-shrink-0 min-[920px]:flex-1 min-[920px]:w-auto min-[920px]:min-w-[210px]">
-              {/* Cabecera */}
-              <div className="mb-4 flex items-center gap-3" style={{ height: HEAD_PX - 16 }}>
+            <div
+              key={stylist.slug}
+              className="ag-lane w-64 flex-shrink-0 min-[920px]:flex-1 min-[920px]:w-auto min-[920px]:min-w-[210px]"
+              style={{ ["--lane" as string]: stylist.color }}
+            >
+              {/* Cabecera pegada a la columna */}
+              <div className="ag-lane-h flex items-center gap-3">
                 <div
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-none"
                   style={{
@@ -348,37 +339,79 @@ export function AgendaDayTimeline({
                   {stylist.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-[15px] text-ink-2 truncate flex items-center gap-1.5">
+                  <h4 className="glow-row-nm truncate flex items-center gap-1.5" style={{ fontSize: "var(--glow-t-base)" }}>
                     <span className="truncate">{stylist.name}</span>
                     {blockCount > 0 && (
-                      <span
-                        title={`${blockCount} bloqueo${blockCount > 1 ? "s" : ""}`}
-                        className="inline-flex items-center gap-0.5 flex-none rounded-full bg-chip px-1.5 py-0.5 text-[10px] font-bold text-outline"
-                      >
-                        <Lock className="w-2.5 h-2.5" />
-                        {blockCount > 1 ? blockCount : ""}
-                      </span>
+                      /* La gestión de bloqueos vive aquí y no en el raíl: cuando hay
+                         varios se apilaban en la misma posición y solo el de encima
+                         recibía el clic, así que a los de debajo no había manera de
+                         llegar. Desde la lista siempre se alcanzan todos. */
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label={`${blockCount} ${blockCount > 1 ? "bloqueos" : "bloqueo"} de ${stylist.name}`}
+                            className="ag-blockchip"
+                          >
+                            <Lock style={{ width: 11, height: 11 }} />
+                            {blockCount}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="w-auto p-0 overflow-hidden" style={{ minWidth: 268 }}>
+                          <div className="ag-blocks-h">
+                            <span className="ag-blocks-ic"><Lock style={{ width: 14, height: 14 }} /></span>
+                            <div>
+                              <div className="ag-blocks-t">
+                                {blockCount} {blockCount > 1 ? "bloqueos" : "bloqueo"}
+                              </div>
+                              <div className="ag-blocks-s">{stylist.name} · hoy</div>
+                            </div>
+                          </div>
+                          <div className="ag-blocks-list">
+                            {[...fullBlocks.map((f) => ({ b: f.b, full: true, start: 0, end: 0 })),
+                              ...items.filter((it) => isBlocked(it.b)).map((it) => ({ ...it, full: false }))]
+                              .map(({ b, full, start, end }) => (
+                                <div key={b.id} className="ag-blocks-row">
+                                  <span className={`ag-blocks-dot${full ? " full" : ""}`} />
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div className="ag-blocks-when">
+                                      {full ? "Todo el día" : `${fromMinutes(start)} – ${fromMinutes(end)}`}
+                                    </div>
+                                    {b.title && b.title !== "Bloqueado" && (
+                                      <div className="ag-blocks-why">{b.title}</div>
+                                    )}
+                                  </div>
+                                  {onUnblock && (
+                                    <button
+                                      type="button"
+                                      className="ag-blocks-del"
+                                      aria-label={`Quitar el bloqueo de ${full ? "todo el día" : `${fromMinutes(start)} a ${fromMinutes(end)}`}`}
+                                      onClick={() => onUnblock(b)}
+                                    >
+                                      <LockOpen style={{ width: 12, height: 12 }} />
+                                      Quitar
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                     )}
                   </h4>
-                  <div className="flex gap-1 mt-0.5 items-center flex-wrap">
-                    <span
-                      className="text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
-                      style={{ background: `${stylist.color}1a`, color: stylist.color }}
-                    >
-                      {realCount} {realCount === 1 ? "CITA" : "CITAS"}
-                    </span>
-                    <span className="text-[10px] font-bold bg-chip text-outline px-1.5 py-0.5 rounded whitespace-nowrap">
-                      {occupancy}%
+                  <div className="glow-row-mt" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                    <span>
+                      {realCount} {realCount === 1 ? "cita" : "citas"} · {occupancy}%
                     </span>
                     {onUnblock && fullBlocks.length > 0 && (
                       <button
                         type="button"
                         onClick={() => onUnblock(fullBlocks[0].b)}
-                        title="Quitar bloqueo del día"
-                        className="inline-flex items-center gap-1 rounded-full border border-line bg-white px-2 py-0.5 text-[10px] font-bold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
+                        className="glow-btn glow-btn--sm glow-btn--ghost"
+                        style={{ padding: "2px 8px", minHeight: 0 }}
                       >
-                        <LockOpen className="w-2.5 h-2.5" />
-                        DESBLOQUEAR
+                        <LockOpen style={{ width: 12, height: 12 }} />
+                        Desbloquear
                       </button>
                     )}
                   </div>
@@ -391,7 +424,7 @@ export function AgendaDayTimeline({
                 ref={(el) => {
                   railRefs.current[stylist.slug] = el;
                 }}
-                className="relative border-x border-line bg-white/30 rounded-xl overflow-hidden transition-colors"
+                className="ag-lane-rail relative overflow-hidden transition-colors"
                 style={{
                   height: railHeight,
                   boxShadow: isDropTarget ? `inset 0 0 0 2px ${stylist.color}66` : undefined,
@@ -457,38 +490,58 @@ export function AgendaDayTimeline({
                   </p>
                 )}
 
-                {/* Bloqueo de DÍA COMPLETO: fondo que cubre el raíl entero */}
-                {fullBlocks.map(({ b }) => {
-                  const label = b.title || "Bloqueado";
+                {/* Bloqueo de DÍA COMPLETO. Se dibuja UNA vez aunque haya varios:
+                    antes cada bloqueo pintaba su propio panel centrado y con dos
+                    encima quedaban las etiquetas y los botones superpuestos. La
+                    gestión está en la lista del candado, en la cabecera. */}
+                {fullBlocks.length > 0 && (() => {
+                  const primero = fullBlocks[0].b;
+                  const label = primero.title || "Bloqueado";
+                  const extra = fullBlocks.length - 1;
+                  const conCitas = items.some((it) => !isBlocked(it.b));
                   return (
-                    <div key={b.id}>
+                    <>
                       <div
                         className="absolute z-[1] bg-striped-gray border border-line rounded-xl opacity-90 overflow-hidden pointer-events-none"
                         style={{ left: 0, width: "100%", top: 0, height: railHeight }}
                       />
-                      {/* Aviso + acción por encima de los huecos de cita rápida */}
-                      <div
-                        className="absolute z-[8] left-0 w-full flex flex-col items-center justify-center gap-2 px-3 text-center pointer-events-none"
-                        style={{ top: 0, height: railHeight }}
-                      >
-                        <Lock className="w-5 h-5 text-outline" />
-                        <span className="text-[13px] font-semibold text-outline">{label}</span>
-                        <span className="text-[11px] text-outline/70">No hay citas este día</span>
-                        {onUnblock && (
-                          <button
-                            type="button"
-                            onClick={() => onUnblock(b)}
-                            className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-full bg-white border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
-                          >
-                            <LockOpen className="w-3.5 h-3.5" />
-                            Quitar bloqueo
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
+                      {conCitas ? (
+                        <div
+                          className="absolute z-[8] left-1/2 -translate-x-1/2 top-1 flex items-center gap-1.5 rounded-full bg-white border border-line px-2.5 py-1 shadow-sm pointer-events-none"
+                          style={{ maxWidth: "94%" }}
+                        >
+                          <Lock className="w-3 h-3 text-outline shrink-0" />
+                          <span className="text-[11px] font-semibold text-outline truncate">
+                            {label}{extra > 0 ? ` +${extra}` : ""}
+                          </span>
+                        </div>
+                      ) : (
+                        <div
+                          className="absolute z-[8] left-0 w-full flex flex-col items-center justify-center gap-2 px-3 text-center pointer-events-none"
+                          style={{ top: 0, height: railHeight }}
+                        >
+                          <Lock className="w-5 h-5 text-outline" />
+                          <span className="text-[13px] font-semibold text-outline">{label}</span>
+                          <span className="text-[11px] text-outline/70">
+                            {extra > 0
+                              ? `y ${extra} bloqueo${extra > 1 ? "s" : ""} más · sin citas este día`
+                              : "No hay citas este día"}
+                          </span>
+                          {onUnblock && (
+                            <button
+                              type="button"
+                              onClick={() => onUnblock(primero)}
+                              className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-full bg-white border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-2 shadow-sm"
+                            >
+                              <LockOpen className="w-3.5 h-3.5" />
+                              {extra > 0 ? "Ver bloqueos" : "Quitar bloqueo"}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </>
                   );
-                })}
+                })()}
 
                 {/* Capa 2 — citas y bloqueos de horas, repartiéndose el hueco */}
                 {items.map(({ b, start, end, col, cols }) => {
@@ -669,7 +722,14 @@ export function AgendaDayTimeline({
                         width,
                         top,
                         height,
-                        background: done ? COMPLETED_BG : "#fff",
+                        background: done
+                          ? COMPLETED_BG
+                          : `color-mix(in oklab, ${stylist.color} 7%, #fff)`,
+                        border: done
+                          ? "1px solid color-mix(in oklab, var(--glow-ok) 30%, #fff)"
+                          : b.status === "pending"
+                            ? "1.5px dashed color-mix(in oklab, var(--glow-warn) 55%, #fff)"
+                            : `1px solid color-mix(in oklab, ${stylist.color} 22%, #fff)`,
                         boxShadow: size === "sm" ? SHADOW_SM : IOS_SHADOW,
                         opacity: done ? 0.9 : 1,
                         ...NO_SELECT,

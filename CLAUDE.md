@@ -48,8 +48,8 @@ GSAP ya no se usa en el proyecto (el hero cinemático `CinematicHero` se elimin�
 
 | Familia | Clase Tailwind | Uso |
 |---|---|---|
-| **Plus Jakarta Sans** | `font-sans` | UI del producto, cuerpo, botones, panel |
-| **Poppins** | `font-poppins` | **Landing `/negocios`**: toda la página (scope en el root de `ForBusiness`). Titulares bold geométricos |
+| **Plus Jakarta Sans** | `font-sans` | UI del producto: app de clientes, cuerpo, botones |
+| **Poppins** | `font-poppins` | **Landing `/negocios`** (scope en el root de `ForBusiness`) y **todo el panel de admin** (token `--glow-font`, ago 2026) |
 | **Playfair Display** | `font-serif` | Titulares editoriales de la web pública del tenant (NO en `/negocios`) |
 | **Ashing** *(solo logo)* | `font-ashing` | Wordmark "Glowapp" en el producto/tenant. NO se usa en `/negocios` (allí "Glowapp" va en Poppins) |
 
@@ -193,6 +193,13 @@ no está en `glow.css`, no existe.
 - Las primitivas van en `@layer components`, así una utility de Tailwind gana a una
   primitiva. `src/styles/*.css` está en el `content` de tailwind.config para que la capa
   no se purgue.
+
+### Tipografía
+El panel va en **Poppins** (`--glow-font`), la misma del sistema de marca en
+`/negocios`. Se aplica desde `body[data-glow-panel]`, que pone `TenantAdmin` al
+montarse, **no desde `.glow-shell`**: los diálogos y hojas de Radix se montan en
+un portal colgando de `body` y desde el shell se quedarían con la fuente
+anterior. No usar `font-body` dentro del panel — fuerza Plus Jakarta.
 
 ### Escalas
 | | pasos | tokens |

@@ -863,7 +863,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   };
 
   return (
-    <div className="font-body">
+    <div>
       {/* ── CATÁLOGO ─────────────────────────────────────────── */}
 
       {/* Citas de hoy sin cobrar */}

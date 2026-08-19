@@ -168,20 +168,58 @@ export function useTenantBusinessHours(tenantId: string) {
 
   const effectiveHours = businessHours || DEFAULT_HOURS;
 
-  // Find override that applies to a given date (if any)
-  const getOverrideForDate = (date: Date): TenantBusinessHours | null => {
+  /**
+   * Excepción que aplica a una fecha.
+   *
+   * Gana la MÁS ESPECÍFICA, no la primera de la lista: un festivo de un solo
+   * día tiene que poder tapar a una jornada intensiva de un mes entero. Antes
+   * se cogía la primera que devolviera la consulta, así que cuál ganaba
+   * dependía del orden de las filas.
+   */
+  const getOverrideRowForDate = (date: Date) => {
     const iso = formatDateToISO(date);
-    const match = overrides.find((o) => o.date_from <= iso && o.date_to >= iso);
-    return match ? parseOverride(match) : null;
+    const dow = date.getDay();
+    const matches = overrides.filter((o) => {
+      if (o.date_from > iso || o.date_to < iso) return false;
+      // days_of_week vacío o ausente = todos los días del rango (como antes)
+      const dias = (o as { days_of_week?: number[] | null }).days_of_week;
+      return !dias || dias.length === 0 || dias.includes(dow);
+    });
+    if (matches.length === 0) return null;
+    const span = (o: (typeof matches)[number]) =>
+      Date.parse(o.date_to) - Date.parse(o.date_from);
+    return [...matches].sort((a, b) => span(a) - span(b))[0];
   };
 
-  // Date-aware: if a date is given, apply seasonal override first
+  const getOverrideForDate = (date: Date): TenantBusinessHours | null => {
+    const row = getOverrideRowForDate(date);
+    return row ? parseOverride(row) : null;
+  };
+
+  /**
+   * Horario de un día concreto.
+   *
+   * Una excepción de RANGO (una jornada intensiva de verano, por ejemplo)
+   * cambia las horas de los días que el salón ya abre; no convierte en
+   * laborable un día que está cerrado en el horario semanal. Antes sustituía
+   * al horario entero, así que la intensiva de agosto abría también los lunes
+   * y los domingos que el salón tiene cerrados, y se podía reservar en ellos.
+   *
+   * Una excepción de UN SOLO DÍA sí manda del todo: es una decisión
+   * deliberada sobre esa fecha, tanto para cerrar como para abrir.
+   */
   const getBusinessHoursForDay = (dayOfWeek: number, date?: Date): TenantBusinessHours => {
-    if (date) {
-      const override = getOverrideForDate(date);
-      if (override) return override;
-    }
-    return effectiveHours[dayOfWeek] || DEFAULT_HOURS[dayOfWeek];
+    const base = effectiveHours[dayOfWeek] || DEFAULT_HOURS[dayOfWeek];
+    if (!date) return base;
+
+    const row = getOverrideRowForDate(date);
+    if (!row) return base;
+
+    const override = parseOverride(row);
+    const unSoloDia = row.date_from === row.date_to;
+    if (unSoloDia || override.isClosed) return override;
+    if (base.isClosed) return base;
+    return override;
   };
 
   const generateBaseSlots = (dayOfWeek: number, date?: Date): Set<number> => {

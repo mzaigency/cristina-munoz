@@ -389,7 +389,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
       <OnboardingChecklist tenantId={tenantId} onNavigate={onNavigate} />
 
       {/* ── Dashboard rediseñado (import Stitch tal cual, datos reales) ── */}
-      <div className="flex flex-col gap-6 font-body text-on-background">
+      <div className="flex flex-col gap-6 text-on-background">
 
         {/* Título */}
         <div className="flex flex-col gap-1 pt-1">

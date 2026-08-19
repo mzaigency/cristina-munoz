@@ -247,6 +247,13 @@ export default function TenantAdmin() {
 
   const activeSubTab = subTabParam || getDefaultSubTab(activeSection as AdminSection);
 
+  /* La tipografía del panel se aplica desde body para que la hereden también
+     los diálogos y hojas de Radix, que se montan en un portal fuera del shell. */
+  useEffect(() => {
+    document.body.setAttribute("data-glow-panel", "");
+    return () => document.body.removeAttribute("data-glow-panel");
+  }, []);
+
   const subNavCounts = useMemo(
     () => ({
       waitlist: waitlistCount,
@@ -710,7 +717,12 @@ export default function TenantAdmin() {
             </button>
             <button
               className="glow-new-cita-btn"
-              onClick={() => goToSection("agenda", "dia")}
+              onClick={() => {
+                // Antes solo navegaba a la agenda: el botón decía "Nueva cita"
+                // y no abría nada. La bandeja la recoge AgendaSection.
+                sessionStorage.setItem("openNewBooking", "1");
+                goToSection("agenda", "dia");
+              }}
               title="Nueva cita"
             >
               <Sparkles className="h-4 w-4" />
