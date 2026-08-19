@@ -28,28 +28,31 @@ export function useRecentBooking(tenantId: string | undefined) {
         const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
         const { data, error } = await supabase
           .from("bookings")
-          .select("id, booking_date, booking_time, status, services, created_at")
+          .select("id, Fecha, Hora, status, services, created_at")
           .eq("tenant_id", tenantId)
           .eq("user_id", user.id)
           .in("status", ["completed", "confirmed"])
-          .order("booking_date", { ascending: false })
+          .order("Fecha", { ascending: false })
           .limit(1);
 
         if (error || cancelled || !data?.[0]) return;
 
         const b = data[0] as any;
-        const bookingDateTime = new Date(`${b.booking_date}T${b.booking_time || "00:00"}`);
+        const bookingDateTime = new Date(`${b.Fecha}T${b.Hora || "00:00"}`);
         const now = new Date();
         // Debe haber pasado ya y como máximo hace 6h
         if (bookingDateTime > now) return;
         if (bookingDateTime < sixHoursAgo) return;
 
-        // ¿Ya dejó reseña?
+        // ¿Ya dejó reseña reciente en este salón?
         const { data: reviewData } = await (supabase as any)
           .from("reviews")
           .select("id")
-          .eq("booking_id", b.id)
+          .eq("user_id", user.id)
+          .eq("tenant_id", tenantId)
+          .gte("created_at", bookingDateTime.toISOString())
           .maybeSingle();
+
 
         if (cancelled) return;
 
