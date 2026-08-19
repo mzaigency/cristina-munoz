@@ -21,7 +21,6 @@
    purgue: así las primitivas existen siempre, se usen o no.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-@layer base {
   :root {
     /* ── Marca: los únicos colores literales del sistema.
      Van en canales sueltos para que Tailwind pueda darles opacidad
@@ -126,9 +125,7 @@
 @media (prefers-reduced-motion: reduce) {
     :root { --glow-fast: .01ms; --glow-base: .01ms; }
   }
-}
 
-@layer components {
   /* ═══ Primitivas ═══════════════════════════════════════════════════════════ */
 
   /* ── Botón ─────────────────────────────────────────────────────────────────
@@ -503,7 +500,6 @@
 
   .glow-btn--grow { flex: 1; }
 
-}
 
 @keyframes glowSpin   { to { transform: rotate(360deg); } }
 @keyframes glowFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
