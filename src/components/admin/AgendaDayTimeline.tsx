@@ -360,7 +360,7 @@ export function AgendaDayTimeline({
                       </span>
                     )}
                   </h4>
-                  <div className="flex gap-1 mt-0.5">
+                  <div className="flex gap-1 mt-0.5 items-center flex-wrap">
                     <span
                       className="text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap"
                       style={{ background: `${stylist.color}1a`, color: stylist.color }}
@@ -370,8 +370,20 @@ export function AgendaDayTimeline({
                     <span className="text-[10px] font-bold bg-slate-100 text-outline px-1.5 py-0.5 rounded whitespace-nowrap">
                       {occupancy}%
                     </span>
+                    {onUnblock && fullBlocks.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => onUnblock(fullBlocks[0].b)}
+                        title="Quitar bloqueo del día"
+                        className="inline-flex items-center gap-1 rounded-full border border-line bg-white px-2 py-0.5 text-[10px] font-bold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
+                      >
+                        <LockOpen className="w-2.5 h-2.5" />
+                        DESBLOQUEAR
+                      </button>
+                    )}
                   </div>
                 </div>
+
               </div>
 
               {/* Raíl */}
