@@ -62,8 +62,9 @@ export function useRecentBooking(tenantId: string | undefined) {
 
         setBooking({
           id: b.id,
-          date: b.booking_date,
-          time: b.booking_time,
+          date: b.Fecha,
+          time: b.Hora,
+
           status: b.status,
           services,
           hasReview: !!reviewData,
