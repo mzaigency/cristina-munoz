@@ -1,5 +1,6 @@
 // Extracts bookings or services from uploaded photos using Lovable AI vision.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { checkRateLimit, rateLimited } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -200,6 +201,11 @@ Deno.serve(async (req) => {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Anti-abuso: la extracción con IA cuesta créditos → 20 por usuario/hora
+    if (!(await checkRateLimit("extract-from-photos", userId, 20, 3600))) {
+      return rateLimited(corsHeaders, "Has hecho muchas importaciones seguidas. Prueba en un rato.");
     }
 
     const payload = await req.json();

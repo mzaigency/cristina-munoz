@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { z } from "https://esm.sh/zod@3.22.4";
+import { checkRateLimit, clientIp, rateLimited } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -139,6 +140,11 @@ serve(async (req) => {
 
   try {
     const rawData = await req.json();
+
+    // Anti-abuso: máximo 8 reservas por IP cada 10 minutos
+    if (!(await checkRateLimit("create-booking", clientIp(req), 8, 600))) {
+      return rateLimited(corsHeaders, "Demasiadas reservas seguidas. Espera unos minutos.");
+    }
 
     // Validate input
     const validationResult = bookingRequestSchema.safeParse(rawData);

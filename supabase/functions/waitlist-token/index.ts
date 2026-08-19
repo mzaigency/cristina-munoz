@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
+import { checkRateLimit, clientIp, rateLimited } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,6 +47,10 @@ serve(async (req) => {
 
   try {
     const parsed = baseSchema.safeParse(await req.json());
+
+    if (!(await checkRateLimit("waitlist-token", clientIp(req), 20, 600))) {
+      return json({ error: "Demasiados intentos. Espera unos minutos." }, 429);
+    }
     if (!parsed.success) return json({ error: "Enlace no válido" }, 400);
     const { action, token } = parsed.data;
 
