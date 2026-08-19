@@ -461,25 +461,32 @@ export function AgendaDayTimeline({
                 {fullBlocks.map(({ b }) => {
                   const label = b.title || "Bloqueado";
                   return (
-                    <div
-                      key={b.id}
-                      className="absolute z-[1] bg-striped-gray border border-line rounded-xl opacity-90 flex flex-col items-center justify-center gap-2 px-3 text-center overflow-hidden pointer-events-none"
-                      style={{ left: 0, width: "100%", top: 0, height: railHeight }}
-                    >
-                      <Lock className="w-5 h-5 text-outline" />
-                      <span className="text-[13px] font-semibold text-outline">{label}</span>
-                      <span className="text-[11px] text-outline/70">No hay citas este día</span>
-                      {onUnblock && (
-                        <button
-                          type="button"
-                          onClick={() => onUnblock(b)}
-                          className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-full bg-white border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
-                        >
-                          <LockOpen className="w-3.5 h-3.5" />
-                          Quitar bloqueo
-                        </button>
-                      )}
+                    <div key={b.id}>
+                      <div
+                        className="absolute z-[1] bg-striped-gray border border-line rounded-xl opacity-90 overflow-hidden pointer-events-none"
+                        style={{ left: 0, width: "100%", top: 0, height: railHeight }}
+                      />
+                      {/* Aviso + acción por encima de los huecos de cita rápida */}
+                      <div
+                        className="absolute z-[8] left-0 w-full flex flex-col items-center justify-center gap-2 px-3 text-center pointer-events-none"
+                        style={{ top: 0, height: railHeight }}
+                      >
+                        <Lock className="w-5 h-5 text-outline" />
+                        <span className="text-[13px] font-semibold text-outline">{label}</span>
+                        <span className="text-[11px] text-outline/70">No hay citas este día</span>
+                        {onUnblock && (
+                          <button
+                            type="button"
+                            onClick={() => onUnblock(b)}
+                            className="pointer-events-auto mt-1 inline-flex items-center gap-1.5 rounded-full bg-white border border-line px-3 py-1.5 text-[12px] font-semibold text-ink-2 shadow-sm active:scale-95 transition-transform min-[920px]:hover:border-primary/40 min-[920px]:hover:text-primary"
+                          >
+                            <LockOpen className="w-3.5 h-3.5" />
+                            Quitar bloqueo
+                          </button>
+                        )}
+                      </div>
                     </div>
+
                   );
                 })}
 
