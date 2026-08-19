@@ -2196,6 +2196,7 @@ export type Database = {
           created_at: string
           date_from: string
           date_to: string
+          days_of_week: number[] | null
           id: string
           is_closed: boolean
           label: string | null
@@ -2210,6 +2211,7 @@ export type Database = {
           created_at?: string
           date_from: string
           date_to: string
+          days_of_week?: number[] | null
           id?: string
           is_closed?: boolean
           label?: string | null
@@ -2224,6 +2226,7 @@ export type Database = {
           created_at?: string
           date_from?: string
           date_to?: string
+          days_of_week?: number[] | null
           id?: string
           is_closed?: boolean
           label?: string | null
