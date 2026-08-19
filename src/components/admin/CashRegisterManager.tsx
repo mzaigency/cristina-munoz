@@ -187,8 +187,8 @@ export const CashRegisterManager = ({ tenantId, view = "cobrar" }: CashRegisterM
 
   if (loading) {
     return (
-      <div className="gp-loader">
-        <Loader2 className="gp-spinner" />
+      <div className="glow-loader">
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
@@ -197,7 +197,7 @@ export const CashRegisterManager = ({ tenantId, view = "cobrar" }: CashRegisterM
     new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n);
 
   return (
-    <div className="gp-fade font-body" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div className="glow-fade font-body" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {view === "cobrar" && (
         <>
           {/* Resumen compacto: lo de hoy de un vistazo, sin comerse la pantalla */}

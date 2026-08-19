@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Pencil, Trash2, Upload, Image, X, GripVertical, Crown } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Upload, Image, X, GripVertical, Crown , Search} from "lucide-react";
 import { ImageCropper } from "./ImageCropper";
 import { PlanUsageBar } from "./PlanUsageBar";
 import { UpgradePrompt } from "./UpgradePrompt";
@@ -77,6 +75,8 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
   const [categoryImages, setCategoryImages] = useState<CategoryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [catFilter, setCatFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCategoryImageDialogOpen, setIsCategoryImageDialogOpen] = useState(false);
@@ -437,19 +437,35 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
   };
 
   // Group services by category
-  const groupedServices = services.reduce((acc, service) => {
+  const allCategories = Array.from(
+    new Set(services.map((sv) => sv.category || "Otros")),
+  ).sort();
+
+  const visibleServices = services.filter((sv) => {
+    const cat = sv.category || "Otros";
+    if (catFilter !== "all" && cat !== catFilter) return false;
+    if (!search.trim()) return true;
+    return sv.name.toLowerCase().includes(search.trim().toLowerCase());
+  });
+
+  const groupedServices = visibleServices.reduce((acc, service) => {
     const category = service.category || "Otros";
     if (!acc[category]) acc[category] = [];
     acc[category].push(service);
     return acc;
   }, {} as Record<string, Service[]>);
 
-  const categories = Object.keys(groupedServices);
+  const categories = Object.keys(groupedServices).sort();
+
+  const priced = services.filter((sv) => sv.price !== null);
+  const avgPrice = priced.length
+    ? priced.reduce((a, sv) => a + (sv.price ?? 0), 0) / priced.length
+    : 0;
 
   if (loading) {
     return (
-      <div className="gp-loader">
-        <Loader2 className="gp-spinner" />
+      <div className="glow-loader">
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
@@ -458,162 +474,154 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
 
   return (
     <>
-      <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <div className="gp-page-h">
+      <div className="glow-fade" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div className="glow-page-h">
           <div>
-            <h2>Gestión de Servicios</h2>
-            <p>Añade, edita o elimina los servicios de tu negocio</p>
+            <h2>Servicios</h2>
+            <p>
+              {services.length} {services.length === 1 ? "servicio" : "servicios"}
+              {allCategories.length > 0 && ` · ${allCategories.length} ${allCategories.length === 1 ? "categoría" : "categorías"}`}
+              {avgPrice > 0 && ` · ${avgPrice.toFixed(0)} € de media`}
+            </p>
             <div style={{ marginTop: 8, maxWidth: 260 }}>
               <PlanUsageBar current={currentServices} max={maxServices} label="Servicios" />
             </div>
           </div>
-          <div className="gp-page-actions">
+          <div className="glow-page-actions">
             <button
-              className={`gp-btn${canAddService() ? " primary" : ""}`}
+              className={`glow-btn${canAddService() ? " glow-btn--primary" : ""}`}
               onClick={handleOpenCreate}
             >
               {canAddService() ? (
-                <><Plus style={{ width: 14, height: 14 }} /> Nuevo Servicio</>
+                <><Plus style={{ width: 14, height: 14 }} /> Nuevo servicio</>
               ) : (
-                <><Crown style={{ width: 14, height: 14, color: "var(--gp-warn)" }} /> Mejorar plan</>
+                <><Crown style={{ width: 14, height: 14, color: "var(--glow-warn-ink)" }} /> Mejorar plan</>
               )}
             </button>
           </div>
         </div>
 
-      {categories.length === 0 ? (
-        <div className="gp-card">
-          <div className="gp-empty">
-            <div className="gp-empty-ic"><Image style={{ width: 24, height: 24 }} /></div>
-            <h4>Sin servicios</h4>
-            <p>No hay servicios todavía</p>
-            <button className="gp-btn primary" style={{ marginTop: 12 }} onClick={handleOpenCreate}>
-              <Plus style={{ width: 14, height: 14 }} /> Añadir primer servicio
+        {services.length > 0 && (
+          <div className="glow-toolbar">
+            <input
+              className="glow-input"
+              placeholder="Buscar servicio…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <button
+              className={`glow-chip${catFilter === "all" ? " glow-chip--on" : ""}`}
+              onClick={() => setCatFilter("all")}
+            >
+              Todas
             </button>
+            {allCategories.map((c) => (
+              <button
+                key={c}
+                className={`glow-chip${catFilter === c ? " glow-chip--on" : ""}`}
+                onClick={() => setCatFilter(c)}
+              >
+                {c}
+              </button>
+            ))}
           </div>
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {categories.map((category) => (
-            <div key={category} className="gp-card">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid var(--gp-line2)", flexWrap: "wrap", gap: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        )}
+
+        {services.length === 0 ? (
+          <div className="glow-card">
+            <div className="glow-empty">
+              <div className="glow-empty-ic"><Image style={{ width: 24, height: 24 }} /></div>
+              <h4>Sin servicios</h4>
+              <p>Aún no has añadido ninguno. Empieza por el que más haces.</p>
+              <button className="glow-btn glow-btn--primary" onClick={handleOpenCreate}>
+                <Plus style={{ width: 14, height: 14 }} /> Añadir primer servicio
+              </button>
+            </div>
+          </div>
+        ) : categories.length === 0 ? (
+          <div className="glow-card">
+            <div className="glow-empty">
+              <div className="glow-empty-ic"><Search style={{ width: 24, height: 24 }} /></div>
+              <h4>Sin resultados</h4>
+              <p>Ningún servicio coincide con la búsqueda.</p>
+              <button className="glow-btn" onClick={() => { setSearch(""); setCatFilter("all"); }}>
+                Limpiar filtros
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Un solo contenedor: las categorías son cabecera de grupo, no una
+             tarjeta cada una. Misma pieza en móvil y en escritorio. */
+          <div className="glow-card glow-card--clip">
+            {categories.map((category) => (
+              <div key={category}>
+                <div className="glow-group">
                   {getCategoryImage(category) ? (
                     <img
                       src={getCategoryImage(category)}
-                      alt={category}
-                      style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", flexShrink: 0 }}
+                      alt=""
+                      style={{ width: 20, height: 20, borderRadius: 6, objectFit: "cover", flex: "none" }}
                     />
                   ) : (
-                    <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--gp-chip)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <Image style={{ width: 20, height: 20, color: "var(--gp-muted-c)" }} />
-                    </div>
+                    <span className="glow-group-dot" style={{ background: "var(--glow-line)" }} />
                   )}
-                  <div>
-                    <p style={{ fontWeight: 700, fontSize: 15, margin: 0 }}>{category}</p>
-                    <p style={{ fontSize: 12.5, color: "var(--gp-muted-c)", margin: 0 }}>{groupedServices[category].length} servicios</p>
-                  </div>
+                  <span>{category}</span>
+                  <span className="glow-group-n">
+                    {groupedServices[category].length}{" "}
+                    {groupedServices[category].length === 1 ? "servicio" : "servicios"}
+                  </span>
+                  <button
+                    className="glow-btn glow-btn--sm glow-btn--ghost"
+                    style={{ marginLeft: 8, textTransform: "none", letterSpacing: 0 }}
+                    onClick={() => {
+                      setSelectedCategory(category);
+                      setIsCategoryImageDialogOpen(true);
+                    }}
+                  >
+                    <Upload style={{ width: 12, height: 12 }} /> Imagen
+                  </button>
                 </div>
-                <button
-                  className="gp-btn sm"
-                  onClick={() => {
-                    setSelectedCategory(category);
-                    setIsCategoryImageDialogOpen(true);
-                  }}
-                >
-                  <Upload style={{ width: 13, height: 13 }} /> Imagen
-                </button>
-              </div>
 
-              <div style={{ padding: "12px 18px" }}>
-                {/* Mobile card list */}
-                <div className="flex flex-col gap-2 md:hidden">
-                  {groupedServices[category].map((service) => (
-                    <div key={service.id} style={{ padding: "12px 14px", borderRadius: 10, border: "1px solid var(--gp-line2)", background: "var(--gp-surface-2)" }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <p style={{ fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{service.name}</p>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-                            <span className="gp-badge neutral">{service.type}</span>
-                            <span style={{ fontSize: 12.5, color: "var(--gp-muted-c)" }}>{formatDuration(service)}</span>
-                          </div>
-                        </div>
-                        {service.price !== null ? (
-                          <span className="gp-mono" style={{ fontWeight: 700, color: "var(--gp-accent)", flexShrink: 0, marginLeft: 8 }}>{service.price.toFixed(2)} €</span>
-                        ) : (
-                          <span style={{ color: "var(--gp-muted-c)", flexShrink: 0, marginLeft: 8 }}>-</span>
-                        )}
+                {groupedServices[category].map((service) => (
+                  <div key={service.id} className="glow-row">
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div className="glow-row-nm" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {service.name}
                       </div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <button className="gp-btn sm" style={{ flex: 1 }} onClick={() => handleOpenEdit(service)}>
-                          <Pencil style={{ width: 13, height: 13 }} /> Editar
-                        </button>
-                        <button
-                          className="gp-btn sm danger"
-                          onClick={() => {
-                            setSelectedService(service);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 style={{ width: 13, height: 13 }} />
-                        </button>
+                      <div className="glow-row-mt">
+                        {formatDuration(service)} · {service.type}
                       </div>
                     </div>
-                  ))}
-                </div>
-
-                {/* Desktop list */}
-                <div className="hidden md:block">
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr style={{ borderBottom: "1px solid var(--gp-line2)" }}>
-                        {["Nombre", "Tipo", "Duración", "Precio", "Acciones"].map(h => (
-                          <th key={h} style={{ textAlign: "left", padding: "8px 12px", fontSize: 12.5, fontWeight: 700, color: "var(--gp-muted-c)", letterSpacing: "0.02em" }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {groupedServices[category].map((service) => (
-                        <tr key={service.id} style={{ borderBottom: "1px solid var(--gp-line2)" }}>
-                          <td style={{ padding: "10px 12px", fontWeight: 600, fontSize: 14 }}>{service.name}</td>
-                          <td style={{ padding: "10px 12px" }}>
-                            <span className="gp-badge neutral">{service.type}</span>
-                          </td>
-                          <td style={{ padding: "10px 12px", fontSize: 13.5, color: "var(--gp-ink2)" }}>{formatDuration(service)}</td>
-                          <td style={{ padding: "10px 12px" }}>
-                            {service.price !== null ? (
-                              <span className="gp-mono" style={{ fontWeight: 700, color: "var(--gp-accent)" }}>{service.price.toFixed(2)} €</span>
-                            ) : (
-                              <span style={{ color: "var(--gp-muted-c)" }}>-</span>
-                            )}
-                          </td>
-                          <td style={{ padding: "10px 12px" }}>
-                            <div style={{ display: "flex", gap: 4 }}>
-                              <button className="gp-icon-btn" onClick={() => handleOpenEdit(service)}>
-                                <Pencil style={{ width: 14, height: 14 }} />
-                              </button>
-                              <button
-                                className="gp-icon-btn"
-                                style={{ color: "var(--gp-danger)" }}
-                                onClick={() => {
-                                  setSelectedService(service);
-                                  setIsDeleteDialogOpen(true);
-                                }}
-                              >
-                                <Trash2 style={{ width: 14, height: 14 }} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    <div className="glow-row-amt">
+                      {service.price !== null ? `${service.price.toFixed(2)} €` : "—"}
+                    </div>
+                    <div className="glow-row-actions">
+                      <button
+                        className="glow-icon-btn"
+                        aria-label={`Editar ${service.name}`}
+                        onClick={() => handleOpenEdit(service)}
+                      >
+                        <Pencil style={{ width: 14, height: 14 }} />
+                      </button>
+                      <button
+                        className="glow-icon-btn"
+                        aria-label={`Eliminar ${service.name}`}
+                        style={{ color: "var(--glow-danger-ink)" }}
+                        onClick={() => {
+                          setSelectedService(service);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 style={{ width: 14, height: 14 }} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Service Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -627,10 +635,10 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
+          <div className="glow-form">
             <div>
-              <Label htmlFor="service-name">Nombre del servicio</Label>
-              <Input
+              <label htmlFor="service-name">Nombre del servicio</label>
+              <input className="glow-input"
                 id="service-name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -638,11 +646,11 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="glow-form-grid">
               <div>
-                <Label htmlFor="service-category">Categoría</Label>
+                <label htmlFor="service-category">Categoría</label>
                 <div className="relative">
-                  <Input
+                  <input className="glow-input"
                     id="service-category"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -666,9 +674,9 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                           fontSize: 12,
                           padding: "2px 10px",
                           borderRadius: 20,
-                          border: "1px solid " + (formData.category === cat ? "var(--gp-accent)" : "var(--gp-line2)"),
-                          background: formData.category === cat ? "var(--gp-accent-soft)" : "transparent",
-                          color: formData.category === cat ? "var(--gp-accent)" : "var(--gp-muted-c)",
+                          border: "1px solid " + (formData.category === cat ? "var(--glow-brand)" : "var(--glow-line-soft)"),
+                          background: formData.category === cat ? "var(--glow-brand-soft)" : "transparent",
+                          color: formData.category === cat ? "var(--glow-brand)" : "var(--glow-ink-3)",
                           cursor: "pointer",
                           fontWeight: 600,
                         }}
@@ -681,7 +689,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
               </div>
               
               <div>
-                <Label htmlFor="service-type">Tipo</Label>
+                <label htmlFor="service-type">Tipo</label>
                 <Select
                   value={formData.type}
                   onValueChange={(value) => setFormData({ ...formData, type: value })}
@@ -698,10 +706,10 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
             </div>
 
             <div>
-              <Label htmlFor="duration1">
+              <label htmlFor="duration1">
                 {formData.type === "Compuesto" ? "Duración Parte 1 (min)" : "Duración (min)"}
-              </Label>
-              <Input
+              </label>
+              <input className="glow-input"
                 id="duration1"
                 type="number"
                 min="5"
@@ -714,8 +722,8 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
             {formData.type === "Compuesto" && (
               <>
                 <div>
-                  <Label htmlFor="duration-pause">Tiempo de exposición/pausa (min)</Label>
-                  <Input
+                  <label htmlFor="duration-pause">Tiempo de exposición/pausa (min)</label>
+                  <input className="glow-input"
                     id="duration-pause"
                     type="number"
                     min="0"
@@ -725,8 +733,8 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="duration2">Duración Parte 2 (min)</Label>
-                  <Input
+                  <label htmlFor="duration2">Duración Parte 2 (min)</label>
+                  <input className="glow-input"
                     id="duration2"
                     type="number"
                     min="0"
@@ -739,8 +747,8 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
             )}
 
             <div>
-              <Label htmlFor="service-price">Precio (€) - Opcional</Label>
-              <Input
+              <label htmlFor="service-price">Precio (€) - Opcional</label>
+              <input className="glow-input"
                 id="service-price"
                 type="number"
                 min="0"
@@ -749,16 +757,16 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-outline mt-1">
                 Deja vacío si no quieres mostrar precio
               </p>
             </div>
           </div>
 
           <DialogFooter>
-            <button className="gp-btn" onClick={() => setIsDialogOpen(false)}>Cancelar</button>
-            <button className="gp-btn primary" onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="gp-spinner-sm" />}
+            <button className="glow-btn" onClick={() => setIsDialogOpen(false)}>Cancelar</button>
+            <button className="glow-btn glow-btn--primary" onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="glow-spinner-sm" />}
               {selectedService ? "Guardar Cambios" : "Crear Servicio"}
             </button>
           </DialogFooter>
@@ -798,7 +806,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
+          <div className="glow-form">
             {selectedCategory && getCategoryImage(selectedCategory) && (
               <div className="relative">
                 <div className="aspect-square w-48 mx-auto overflow-hidden rounded-lg bg-muted">
@@ -810,18 +818,18 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                 </div>
                 {/* Delete button */}
                 <button
-                  className="gp-btn sm danger"
+                  className="glow-btn glow-btn--sm glow-btn--danger"
                   style={{ position: "absolute", top: 8, right: 8 }}
                   onClick={handleDeleteCategoryImage}
                   disabled={uploading}
                 >
-                  {uploading ? <Loader2 className="gp-spinner-sm" /> : <X style={{ width: 14, height: 14 }} />}
+                  {uploading ? <Loader2 className="glow-spinner-sm" /> : <X style={{ width: 14, height: 14 }} />}
                 </button>
               </div>
             )}
             
             <div>
-              <Label htmlFor="category-image-upload" className="cursor-pointer">
+              <label htmlFor="category-image-upload" className="cursor-pointer">
                 <div className="flex items-center justify-center gap-2 p-6 border-2 border-dashed rounded-lg hover:border-primary transition-colors">
                   {uploading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -830,7 +838,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                   )}
                   <span>{uploading ? "Subiendo..." : "Subir nueva imagen"}</span>
                 </div>
-              </Label>
+              </label>
               <input
                 ref={fileInputRef}
                 id="category-image-upload"
@@ -849,7 +857,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
           </div>
 
           <DialogFooter>
-            <button className="gp-btn" onClick={() => setIsCategoryImageDialogOpen(false)}>Cerrar</button>
+            <button className="glow-btn" onClick={() => setIsCategoryImageDialogOpen(false)}>Cerrar</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -866,7 +874,6 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
         outputSize={512}
         onCropComplete={handleCroppedImage}
       />
-      </div>
 
       <UpgradePrompt
         open={showUpgradePrompt}

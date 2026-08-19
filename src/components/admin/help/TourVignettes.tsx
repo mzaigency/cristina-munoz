@@ -38,7 +38,7 @@ export function VignettePanel() {
             />
           )}
           {icons.map((Icon, i) => (
-            <div key={i} className="relative z-10 flex h-8 w-8 items-center justify-center text-muted-foreground">
+            <div key={i} className="relative z-10 flex h-8 w-8 items-center justify-center text-outline">
               <Icon className="h-4 w-4" />
             </div>
           ))}
@@ -72,7 +72,7 @@ export function VignetteAgenda() {
       <div className="absolute inset-4 flex flex-col justify-between">
         {["10:00", "11:00", "12:00"].map((h) => (
           <div key={h} className="flex items-center gap-2">
-            <span className="w-9 text-[10px] font-medium tabular-nums text-muted-foreground">{h}</span>
+            <span className="w-9 text-[10px] font-medium tabular-nums text-outline">{h}</span>
             <div className="h-px flex-1 bg-border" />
           </div>
         ))}
@@ -98,7 +98,7 @@ export function VignetteAgenda() {
       {/* Check al soltar */}
       {!reduced && (
         <motion.div
-          className="absolute right-7 top-[56%] flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow"
+          className="absolute right-7 top-[56%] flex h-6 w-6 items-center justify-center rounded-full bg-glow-ok text-white shadow"
           animate={{ scale: [0, 0, 1, 1, 0], opacity: [0, 0, 1, 1, 0] }}
           transition={{ duration: 5, times: [0, 0.62, 0.7, 0.9, 1], repeat: Infinity }}
         >
@@ -121,7 +121,7 @@ export function VignetteCaja() {
           ["Color raíz", "16,50 €"],
         ].map(([name, price], i) => (
           <div key={i} className="flex items-center justify-between py-0.5">
-            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1.5 text-[11px] text-outline">
               <Scissors className="h-3 w-3" /> {name}
             </span>
             <span className="text-[11px] font-medium tabular-nums">{price}</span>
@@ -131,7 +131,7 @@ export function VignetteCaja() {
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-semibold">Total</span>
           <motion.span
-            className="text-sm font-bold tabular-nums gp-text-brand"
+            className="text-sm font-bold tabular-nums glow-text-brand"
             initial={false}
             animate={reduced ? { scale: 1 } : { scale: [1, 1, 1.18, 1] }}
             transition={{ duration: 3.6, times: [0, 0.55, 0.65, 0.75], repeat: Infinity }}
@@ -140,7 +140,7 @@ export function VignetteCaja() {
           </motion.span>
         </div>
         <div className="mt-2 flex gap-1.5">
-          <div className="flex-1 rounded-md bg-muted py-1 text-center text-[10px] font-medium text-muted-foreground">
+          <div className="flex-1 rounded-md bg-muted py-1 text-center text-[10px] font-medium text-outline">
             Efectivo
           </div>
           <motion.div
@@ -163,7 +163,7 @@ export function VignetteCaja() {
       </div>
       {/* Check de cobro completado */}
       <motion.div
-        className="absolute right-[12%] top-[14%] flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg"
+        className="absolute right-[12%] top-[14%] flex h-8 w-8 items-center justify-center rounded-full bg-glow-ok text-white shadow-lg"
         initial={false}
         animate={reduced ? { scale: 1, opacity: 1 } : { scale: [0, 0, 1, 1, 0], opacity: [0, 0, 1, 1, 0] }}
         transition={{ duration: 3.6, times: [0, 0.68, 0.78, 0.94, 1], repeat: Infinity }}
@@ -191,7 +191,7 @@ export function VignetteClientes() {
           </div>
           {/* Badge VIP */}
           <motion.div
-            className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+            className="flex items-center gap-1 rounded-full bg-glow-warn/10 px-2 py-0.5 text-[10px] font-bold text-glow-warn-ink"
             initial={false}
             animate={
               reduced
@@ -208,7 +208,7 @@ export function VignetteClientes() {
           {["Corte · hace 2 sem", "Color · hace 1 mes", "Tratamiento · hace 2 meses"].map((row, i) => (
             <motion.div
               key={i}
-              className="flex items-center gap-1.5 text-[10px] text-muted-foreground"
+              className="flex items-center gap-1.5 text-[10px] text-outline"
               initial={false}
               animate={reduced ? { opacity: 1, x: 0 } : { opacity: [0, 1, 1], x: [-8, 0, 0] }}
               transition={{
@@ -218,7 +218,7 @@ export function VignetteClientes() {
                 repeatDelay: 0.6,
               }}
             >
-              <Check className="h-2.5 w-2.5 text-emerald-500" strokeWidth={3} />
+              <Check className="h-2.5 w-2.5 text-glow-ok-ink" strokeWidth={3} />
               {row}
             </motion.div>
           ))}
@@ -236,7 +236,7 @@ export function VignetteWeb() {
     <Scene>
       {/* Mini móvil con tu landing */}
       <div className="absolute left-[14%] top-1/2 h-[82%] w-[88px] -translate-y-1/2 rounded-2xl border-2 border-foreground/15 bg-card p-1.5 shadow-lg">
-        <div className="h-1/2 rounded-lg gp-grad-brand opacity-80" />
+        <div className="h-1/2 rounded-lg glow-grad-brand opacity-80" />
         <div className="mx-auto mt-1.5 h-1.5 w-3/4 rounded-full bg-muted-foreground/25" />
         <div className="mx-auto mt-1 h-1.5 w-1/2 rounded-full bg-muted-foreground/15" />
         <motion.div
@@ -259,11 +259,11 @@ export function VignetteWeb() {
         }
         transition={{ duration: 4.2, times: [0.42, 0.52, 0.9, 1], repeat: Infinity, ease: "easeOut" }}
       >
-        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-foreground">
-          <Sparkles className="h-3 w-3 gp-text-brand" />
+        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-on-surface">
+          <Sparkles className="h-3 w-3 glow-text-brand" />
           Nueva cita
         </div>
-        <div className="mt-1 text-[10px] text-muted-foreground">María · mañana 10:00</div>
+        <div className="mt-1 text-[10px] text-outline">María · mañana 10:00</div>
       </motion.div>
       {/* Línea de conexión */}
       {!reduced && (

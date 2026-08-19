@@ -1,9 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ServiceSelection } from "@/components/booking/ServiceSelection";
@@ -339,13 +335,13 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
       <div className="flex flex-col">
         {/* Header */}
         <div className="mb-4 pr-8">
-          <h2 className="text-lg sm:text-xl font-bold text-foreground">{STEP_TITLES[step - 1]}</h2>
-          <p className="text-sm text-muted-foreground mt-1">{STEP_DESCRIPTIONS[step - 1]}</p>
+          <h2 className="text-lg sm:text-xl font-bold text-on-surface">{STEP_TITLES[step - 1]}</h2>
+          <p className="text-sm text-outline mt-1">{STEP_DESCRIPTIONS[step - 1]}</p>
         </div>
 
         {/* Progress bar (mirror public booking) */}
         <div ref={progressRef} className="mb-6 space-y-3 max-w-3xl mx-auto w-full scroll-mt-4">
-          <div className="flex justify-between items-center text-sm text-muted-foreground px-1">
+          <div className="flex justify-between items-center text-sm text-outline px-1">
             <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>Servicios</span>
             <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>Fecha y hora</span>
             <span className={cn("transition-colors duration-300", step >= 3 && "text-primary font-medium")}>Confirmar</span>
@@ -357,7 +353,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
             />
           </div>
           <div className="text-center">
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-outline">
               Paso {step} de 3 ({Math.round((step / 3) * 100)}% completado)
             </span>
           </div>
@@ -394,8 +390,8 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
               {/* Customer Name with Client Autocomplete */}
               <div className="space-y-2 relative">
-                <Label htmlFor="customerName">Nombre completo</Label>
-                <Input
+                <label htmlFor="customerName">Nombre completo</label>
+                <input className="glow-input"
                   id="customerName"
                   value={bookingData.customerName}
                   onChange={(e) => {
@@ -405,7 +401,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                   placeholder="Escribe para buscar clientes..."
                 />
                 {clientSearching && (
-                  <p className="text-xs text-muted-foreground">Buscando clientes...</p>
+                  <p className="text-xs text-outline">Buscando clientes...</p>
                 )}
 
                 {/* Selected client badge */}
@@ -414,7 +410,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                     <UserCircle className="h-4 w-4 text-primary shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{bookingData.selectedClient.name}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 text-xs text-outline">
                         <span>{bookingData.selectedClient.total_visits || 0} visitas</span>
                         <span>·</span>
                         <span>{(bookingData.selectedClient.total_spent || 0).toFixed(0)}€</span>
@@ -423,9 +419,9 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                         ))}
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={handleClearClient}>
+                    <button className="glow-btn glow-btn--ghost glow-btn--sm" onClick={handleClearClient}>
                       <span className="sr-only">Desvincular cliente</span>×
-                    </Button>
+                    </button>
                   </div>
                 )}
 
@@ -444,7 +440,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">{client.name}</p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-2 text-xs text-outline">
                             {client.phone && <span>{client.phone}</span>}
                             <span>{client.total_visits || 0} visitas</span>
                             <span>{(client.total_spent || 0).toFixed(0)}€</span>
@@ -465,11 +461,11 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
               {/* User @ search */}
               <div className="space-y-2 relative">
-                <Label htmlFor="customerUsername">
+                <label htmlFor="customerUsername">
                   <AtSign className="inline h-3.5 w-3.5 mr-1" />
                   Vincular cuenta (opcional)
-                </Label>
-                <Input
+                </label>
+                <input className="glow-input"
                   id="customerUsername"
                   type="text"
                   value={searchUsername}
@@ -482,8 +478,8 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                   onFocus={() => searchResults.length > 0 && setShowResults(true)}
                   placeholder="Buscar por nombre o @username"
                 />
-                {searching && <p className="text-xs text-muted-foreground">Buscando...</p>}
-                <p className="text-xs text-muted-foreground">
+                {searching && <p className="text-xs text-outline">Buscando...</p>}
+                <p className="text-xs text-outline">
                   {bookingData.selectedUser ? (
                     <span className="text-primary flex items-center gap-1">
                       <Check className="h-3 w-3" />
@@ -514,7 +510,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{profile.full_name || profile.username || "Usuario"}</p>
                           {profile.username && (
-                            <p className="text-xs text-muted-foreground truncate">@{profile.username}</p>
+                            <p className="text-xs text-outline truncate">@{profile.username}</p>
                           )}
                         </div>
                       </button>
@@ -531,20 +527,20 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
 
               <div className="pt-4 border-t space-y-2">
                 <h4 className="font-medium">Resumen de la cita:</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-outline">
                   <strong>Servicios:</strong> {bookingData.services.map((s) => s.name).join(", ")}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-outline">
                   <strong>Profesional:</strong>{" "}
                   {bookingData.stylist === "any"
                     ? "Siguiente disponible"
                     : tenantStylists.find((s) => s.slug === bookingData.stylist)?.name || bookingData.stylist}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-outline">
                   <strong>Fecha y hora:</strong> {bookingData.date?.toLocaleDateString("es-ES")} a las{" "}
                   {bookingData.time}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-outline">
                   <strong>Duración total:</strong> {totalDuration} minutos
                 </p>
                 {bookingData.recurrence.enabled && (
@@ -562,10 +558,10 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
             </div>
 
             <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={handleBack} disabled={loading}>
+              <button className="glow-btn" onClick={handleBack} disabled={loading}>
                 Volver
-              </Button>
-              <Button onClick={handleConfirmBooking} disabled={loading} data-guided-cta="true">
+              </button>
+              <button className="glow-btn glow-btn--primary" onClick={handleConfirmBooking} disabled={loading} data-guided-cta="true">
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -576,7 +572,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
                 ) : (
                   "Crear Cita"
                 )}
-              </Button>
+              </button>
             </div>
           </div>
           </GuidedStep>
@@ -592,7 +588,7 @@ export const AdminBookingFlow = ({ onComplete, onCancel, tenantId }: AdminBookin
         aria-live="polite"
       >
         <span className="text-base shrink-0" aria-hidden>👉</span>
-        <p className="text-xs sm:text-sm text-foreground/90 leading-snug">
+        <p className="text-xs sm:text-sm text-on-surface/90 leading-snug">
           {step === 1 && <>Elige uno o varios servicios y pulsa <span className="font-semibold text-primary">Continuar</span>.</>}
           {step === 2 && <>Selecciona un día y luego una hora libre. Si hay varias profesionales disponibles, elige una. Después pulsa <span className="font-semibold text-primary">Continuar</span>.</>}
           {step === 3 && <>Revisa los datos y pulsa <span className="font-semibold text-primary">Crear Cita</span> abajo.</>}

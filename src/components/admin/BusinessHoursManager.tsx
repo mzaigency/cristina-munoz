@@ -1,9 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Clock, Save, Sun, Moon, Copy } from "lucide-react";
@@ -243,29 +239,29 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <div className="glow-card">
+      <div className="glow-card-h"><div>
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <h3>
               <Clock className="h-5 w-5" />
               Horario de Apertura
-            </CardTitle>
-            <CardDescription>
+            </h3>
+            <div className="glow-card-h-sub">
               Configura los turnos de mañana y tarde de tu salón
-            </CardDescription>
+            </div>
           </div>
-          <Button onClick={handleSave} disabled={saving} className="w-full md:w-auto h-11 md:h-10">
+          <button className="glow-btn glow-btn--primary glow-btn--block md:w-auto md:h-10" onClick={handleSave} disabled={saving}>
             {saving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Save className="mr-2 h-4 w-4" />
             )}
             Guardar Cambios
-          </Button>
+          </button>
         </div>
-      </CardHeader>
-      <CardContent>
+      </div></div>
+      <div className="glow-card-b">
         <div className="space-y-4">
           {DAYS_OF_WEEK.map((day, index) => {
             const hour = hours.find(h => h.day_of_week === day.value)!;
@@ -281,62 +277,55 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
                       checked={hour.is_open}
                       onCheckedChange={(checked) => updateHour(day.value, "is_open", checked)}
                     />
-                    <span className={`font-semibold text-lg ${!hour.is_open ? "text-muted-foreground" : ""}`}>
+                    <span className={`font-semibold text-lg ${!hour.is_open ? "text-outline" : ""}`}>
                       {day.label}
                     </span>
                     {!hour.is_open && (
-                      <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">Cerrado</span>
+                      <span className="text-sm text-outline bg-muted px-2 py-1 rounded">Cerrado</span>
                     )}
                   </div>
                   {index === 0 && hour.is_open && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyToAllDays(day.value)}
-                      className="gap-2"
-                    >
+                    <button className="glow-btn glow-btn--sm gap-2" onClick={() => copyToAllDays(day.value)}>
                       <Copy className="h-4 w-4" />
                       Copiar a todos
-                    </Button>
+                    </button>
                   )}
                 </div>
 
                 {hour.is_open && (
                   <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                     {/* Morning section */}
-                    <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 p-4 space-y-3">
-                      <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                    <div className="rounded-lg bg-glow-warn/5 p-4 space-y-3">
+                      <div className="flex items-center gap-2 text-glow-warn-ink">
                         <Sun className="h-4 w-4" />
-                        <Label className="font-medium">Turno de Mañana</Label>
+                        <label className="font-medium">Turno de Mañana</label>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="flex-1">
-                          <Label className="text-xs text-muted-foreground">Desde</Label>
-                          <Input
+                          <label className="text-xs text-outline">Desde</label>
+                          <input className="glow-input mt-1 h-11 md:h-10"
                             type="time"
                             value={hour.morning_start}
                             onChange={(e) => updateHour(day.value, "morning_start", e.target.value)}
-                            className="mt-1 h-11 md:h-10"
                           />
                         </div>
                         <div className="flex-1">
-                          <Label className="text-xs text-muted-foreground">Hasta</Label>
-                          <Input
+                          <label className="text-xs text-outline">Hasta</label>
+                          <input className="glow-input mt-1 h-11 md:h-10"
                             type="time"
                             value={hour.morning_end}
                             onChange={(e) => updateHour(day.value, "morning_end", e.target.value)}
-                            className="mt-1 h-11 md:h-10"
                           />
                         </div>
                       </div>
                     </div>
 
                     {/* Afternoon section */}
-                    <div className={`rounded-lg p-4 space-y-3 ${hour.has_afternoon ? 'bg-indigo-50 dark:bg-indigo-950/20' : 'bg-muted/50'}`}>
+                    <div className={`rounded-lg p-4 space-y-3 ${hour.has_afternoon ? 'bg-glow-brand/5 ' : 'bg-muted/50'}`}>
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
+                        <div className="flex items-center gap-2 text-glow-brand-ink">
                           <Moon className="h-4 w-4" />
-                          <Label className="font-medium">Turno de Tarde</Label>
+                          <label className="font-medium">Turno de Tarde</label>
                         </div>
                         <Switch
                           checked={hour.has_afternoon}
@@ -346,26 +335,24 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
                       {hour.has_afternoon ? (
                         <div className="flex items-center gap-3">
                           <div className="flex-1">
-                            <Label className="text-xs text-muted-foreground">Desde</Label>
-                            <Input
+                            <label className="text-xs text-outline">Desde</label>
+                            <input className="glow-input mt-1"
                               type="time"
                               value={hour.afternoon_start}
                               onChange={(e) => updateHour(day.value, "afternoon_start", e.target.value)}
-                              className="mt-1"
                             />
                           </div>
                           <div className="flex-1">
-                            <Label className="text-xs text-muted-foreground">Hasta</Label>
-                            <Input
+                            <label className="text-xs text-outline">Hasta</label>
+                            <input className="glow-input mt-1"
                               type="time"
                               value={hour.afternoon_end}
                               onChange={(e) => updateHour(day.value, "afternoon_end", e.target.value)}
-                              className="mt-1"
                             />
                           </div>
                         </div>
                       ) : (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-outline">
                           Sin turno de tarde
                         </p>
                       )}
@@ -376,7 +363,7 @@ export function BusinessHoursManager({ tenantId }: BusinessHoursManagerProps) {
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

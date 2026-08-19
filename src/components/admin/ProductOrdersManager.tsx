@@ -102,42 +102,42 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 className="gp-spinner" />
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
 
   return (
-    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div className="glow-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
-      <div className="gp-page-h">
+      <div className="glow-page-h">
         <div>
           <h2>Pedidos de tienda</h2>
           <p>
             Pedidos de productos en tiempo real
-            {pendingCount > 0 && <> · <span style={{ color: "var(--gp-warn)", fontWeight: 800 }}>{pendingCount} nuevos</span></>}
+            {pendingCount > 0 && <> · <span style={{ color: "var(--glow-warn-ink)", fontWeight: 800 }}>{pendingCount} nuevos</span></>}
           </p>
         </div>
       </div>
 
       {/* Filter tabs */}
-      <div className="gp-subtabs">
+      <div className="glow-subtabs">
         {[
           { id: "active", label: "Activos" },
           { id: "delivered", label: "Entregados" },
           { id: "cancelled", label: "Cancelados" },
           { id: "all", label: "Todos" },
         ].map((t) => (
-          <button key={t.id} className={`gp-subtab${filter === t.id ? " on" : ""}`} onClick={() => setFilter(t.id)}>
+          <button key={t.id} className={`glow-subtab${filter === t.id ? " glow-subtab--on" : ""}`} onClick={() => setFilter(t.id)}>
             {t.label}
           </button>
         ))}
       </div>
 
       {filtered.length === 0 ? (
-        <div className="gp-card">
-          <div className="gp-empty">
-            <div className="gp-empty-ic"><ShoppingBag style={{ width: 24, height: 24 }} /></div>
+        <div className="glow-card">
+          <div className="glow-empty">
+            <div className="glow-empty-ic"><ShoppingBag style={{ width: 24, height: 24 }} /></div>
             <h4>Sin pedidos</h4>
             <p>No hay pedidos en esta categoría</p>
           </div>
@@ -147,41 +147,41 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
           {filtered.map((o) => {
             const statusInfo = STATUS_LABELS[o.status] || STATUS_LABELS.pending;
             return (
-              <div key={o.id} className="gp-card pad" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div key={o.id} className="glow-card glow-card--pad" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 {/* Top row */}
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                      <span style={{ fontSize: 15, fontWeight: 800, color: "var(--gp-ink)", display: "flex", alignItems: "center", gap: 6 }}>
-                        <User style={{ width: 14, height: 14, color: "var(--gp-muted-c)" }} />
+                      <span style={{ fontSize: 15, fontWeight: 800, color: "var(--glow-ink)", display: "flex", alignItems: "center", gap: 6 }}>
+                        <User style={{ width: 14, height: 14, color: "var(--glow-ink-3)" }} />
                         {o.customer_name}
                       </span>
-                      <span className={`gp-badge ${statusInfo.tone}`}><span className="pip" style={{ background: "currentColor" }} />{statusInfo.label}</span>
-                      {o.booking_id && <span className="gp-badge neutral"><Calendar style={{ width: 10, height: 10 }} />Con cita</span>}
+                      <span className={`glow-badge ${statusInfo.tone}`}><span className="pip" style={{ background: "currentColor" }} />{statusInfo.label}</span>
+                      {o.booking_id && <span className="glow-badge"><Calendar style={{ width: 10, height: 10 }} />Con cita</span>}
                     </div>
-                    <div style={{ fontSize: 12.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>
+                    <div style={{ fontSize: 12.5, color: "var(--glow-ink-3)", fontWeight: 600 }}>
                       {format(new Date(o.created_at), "d MMM yyyy 'a las' HH:mm", { locale: es })}
                     </div>
                     {o.customer_phone && (
-                      <a href={`tel:${o.customer_phone}`} style={{ fontSize: 12.5, color: "var(--gp-accent)", fontWeight: 600, display: "flex", alignItems: "center", gap: 5, marginTop: 4, textDecoration: "none" }}>
+                      <a href={`tel:${o.customer_phone}`} style={{ fontSize: 12.5, color: "var(--glow-brand)", fontWeight: 600, display: "flex", alignItems: "center", gap: 5, marginTop: 4, textDecoration: "none" }}>
                         <Phone style={{ width: 12, height: 12 }} /> {o.customer_phone}
                       </a>
                     )}
                   </div>
-                  <span className="gp-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--gp-accent)", flex: "none" }}>
+                  <span className="glow-mono" style={{ fontSize: 20, fontWeight: 800, color: "var(--glow-brand)", flex: "none" }}>
                     {o.total.toFixed(2)} €
                   </span>
                 </div>
 
                 {/* Items */}
-                <div style={{ paddingLeft: 12, borderLeft: `2px solid var(--gp-accent-soft)`, display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ paddingLeft: 12, borderLeft: `2px solid var(--glow-brand-soft)`, display: "flex", flexDirection: "column", gap: 6 }}>
                   {o.items?.map((item, idx) => (
                     <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13.5, fontWeight: 600 }}>
-                      <span style={{ color: "var(--gp-ink2)", display: "flex", alignItems: "center", gap: 6 }}>
-                        <PackageIcon style={{ width: 13, height: 13, color: "var(--gp-muted-c)" }} />
+                      <span style={{ color: "var(--glow-ink-2)", display: "flex", alignItems: "center", gap: 6 }}>
+                        <PackageIcon style={{ width: 13, height: 13, color: "var(--glow-ink-3)" }} />
                         {item.quantity}× {item.name}
                       </span>
-                      <span className="gp-mono" style={{ color: "var(--gp-muted-c)", fontSize: 13 }}>
+                      <span className="glow-mono" style={{ color: "var(--glow-ink-3)", fontSize: 13 }}>
                         {(item.quantity * item.price).toFixed(2)} €
                       </span>
                     </div>
@@ -189,24 +189,24 @@ export const ProductOrdersManager = ({ tenantId }: Props) => {
                 </div>
 
                 {o.notes && (
-                  <div style={{ fontSize: 13, background: "var(--gp-chip)", borderRadius: 10, padding: "10px 14px", color: "var(--gp-ink2)" }}>
+                  <div style={{ fontSize: 13, background: "var(--glow-sunk)", borderRadius: 10, padding: "10px 14px", color: "var(--glow-ink-2)" }}>
                     <span style={{ fontWeight: 700 }}>Notas:</span> {o.notes}
                   </div>
                 )}
 
                 {o.status !== "delivered" && o.status !== "cancelled" && (
-                  <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px solid var(--gp-line2)" }}>
+                  <div style={{ display: "flex", gap: 8, paddingTop: 4, borderTop: "1px solid var(--glow-line-soft)" }}>
                     {o.status === "pending" && (
-                      <button className="gp-btn primary sm" style={{ flex: 1 }} onClick={() => updateStatus(o.id, "ready")}>
+                      <button className="glow-btn glow-btn--primary glow-btn--sm" style={{ flex: 1 }} onClick={() => updateStatus(o.id, "ready")}>
                         <Check style={{ width: 14, height: 14 }} /> Reservar pedido
                       </button>
                     )}
                     {o.status === "ready" && (
-                      <button className="gp-btn sm" style={{ flex: 1, background: "var(--gp-ok)", color: "#fff", borderColor: "transparent" }} onClick={() => updateStatus(o.id, "delivered")}>
+                      <button className="glow-btn glow-btn--sm" style={{ flex: 1, background: "var(--glow-ok-ink)", color: "#fff", borderColor: "transparent" }} onClick={() => updateStatus(o.id, "delivered")}>
                         <PackageIcon style={{ width: 14, height: 14 }} /> Marcar entregado
                       </button>
                     )}
-                    <button className="gp-btn sm danger" onClick={() => updateStatus(o.id, "cancelled")}>
+                    <button className="glow-btn glow-btn--sm glow-btn--danger" onClick={() => updateStatus(o.id, "cancelled")}>
                       <X style={{ width: 14, height: 14 }} />
                     </button>
                   </div>

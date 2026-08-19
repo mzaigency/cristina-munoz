@@ -175,7 +175,7 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
   };
 
   const renderStars = (rating: number) => (
-    <span style={{ display: "inline-flex", gap: 2, color: "var(--gp-warn)" }}>
+    <span style={{ display: "inline-flex", gap: 2, color: "var(--glow-warn-ink)" }}>
       {[...Array(5)].map((_, i) => (
         <Star
           key={i}
@@ -208,8 +208,8 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
   const maxMonthlyCount = Math.max(1, ...monthlyEvolution.map((m) => m.count));
 
   return (
-    <div className="gp-fade gp-mkt-reviews-page">
-      <div className="gp-page-h">
+    <div className="glow-fade glow-mkt-reviews-page">
+      <div className="glow-page-h">
         <div>
           <h2>Reseñas</h2>
           <p>
@@ -220,57 +220,57 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
       </div>
 
       {/* Stats grid: avg + distribution + evolution */}
-      <div className="gp-mkt-reviews-stats">
-        <div className="gp-card pad gp-mkt-card gp-mkt-rating-card">
-          <span className="gp-mkt-rating-big">{stats.avg ? stats.avg.toFixed(1) : "—"}</span>
-          <span className="gp-mkt-rating-stars">{renderStars(Math.round(stats.avg))}</span>
-          <span className="gp-mkt-rating-meta">
+      <div className="glow-mkt-reviews-stats">
+        <div className="glow-card glow-card--pad glow-mkt-card glow-mkt-rating-card">
+          <span className="glow-mkt-rating-big">{stats.avg ? stats.avg.toFixed(1) : "—"}</span>
+          <span className="glow-mkt-rating-stars">{renderStars(Math.round(stats.avg))}</span>
+          <span className="glow-mkt-rating-meta">
             Sobre {stats.total} reseña{stats.total === 1 ? "" : "s"}
           </span>
         </div>
 
-        <div className="gp-card pad gp-mkt-card">
-          <div className="gp-mkt-card-h">
+        <div className="glow-card glow-card--pad glow-mkt-card">
+          <div className="glow-mkt-card-h">
             <div>
               <h3>Distribución</h3>
             </div>
           </div>
-          <div className="gp-mkt-bars">
+          <div className="glow-mkt-bars">
             {[5, 4, 3, 2, 1].map((n) => {
               const count = stats.dist[n] ?? 0;
               const pct = Math.round((count / maxDist) * 100);
               return (
-                <div key={n} className="gp-mkt-bar-row">
-                  <div className="gp-mkt-bar-label">
+                <div key={n} className="glow-mkt-bar-row">
+                  <div className="glow-mkt-bar-label">
                     <span>{n}</span>
                     <Star style={{ width: 12, height: 12, fill: "currentColor" }} />
                   </div>
-                  <div className="gp-mkt-bar-track">
-                    <div className="gp-mkt-bar-fill" style={{ width: `${pct}%` }} />
+                  <div className="glow-mkt-bar-track">
+                    <div className="glow-mkt-bar-fill" style={{ width: `${pct}%` }} />
                   </div>
-                  <div className="gp-mkt-bar-count">{count}</div>
+                  <div className="glow-mkt-bar-count">{count}</div>
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="gp-card pad gp-mkt-card">
-          <div className="gp-mkt-card-h">
+        <div className="glow-card glow-card--pad glow-mkt-card">
+          <div className="glow-mkt-card-h">
             <div>
               <h3>Últimos 6 meses</h3>
               <p>Cantidad y media</p>
             </div>
-            <TrendingUp style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />
+            <TrendingUp style={{ width: 16, height: 16, color: "var(--glow-ink-3)" }} />
           </div>
-          <div className="gp-mkt-spark">
+          <div className="glow-mkt-spark">
             {monthlyEvolution.map((m) => {
               const h = Math.max(4, Math.round((m.count / maxMonthlyCount) * 100));
               return (
-                <div key={m.key} className="gp-mkt-spark-col" title={`${m.count} reseñas · ${m.avg.toFixed(1)}★`}>
-                  <div className="gp-mkt-spark-bar" style={{ height: `${h}%` }} />
-                  <span className="gp-mkt-spark-label">{m.label}</span>
-                  <span className="gp-mkt-spark-val">{m.avg ? m.avg.toFixed(1) : "—"}</span>
+                <div key={m.key} className="glow-mkt-spark-col" title={`${m.count} reseñas · ${m.avg.toFixed(1)}★`}>
+                  <div className="glow-mkt-spark-bar" style={{ height: `${h}%` }} />
+                  <span className="glow-mkt-spark-label">{m.label}</span>
+                  <span className="glow-mkt-spark-val">{m.avg ? m.avg.toFixed(1) : "—"}</span>
                 </div>
               );
             })}
@@ -280,11 +280,11 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
 
       {/* Filters */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        <div className="gp-subtabs" style={{ margin: 0 }}>
+        <div className="glow-subtabs" style={{ margin: 0 }}>
           {(["all", "pending", "month", "stars"] as FilterType[]).map((f) => (
             <button
               key={f}
-              className={`gp-subtab${filterType === f ? " on" : ""}`}
+              className={`glow-subtab${filterType === f ? " glow-subtab--on" : ""}`}
               onClick={() => setFilterType(f)}
             >
               {f === "all"
@@ -298,11 +298,11 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
           ))}
         </div>
         {filterType === "month" && (
-          <div className="gp-subtabs" style={{ margin: 0 }}>
+          <div className="glow-subtabs" style={{ margin: 0 }}>
             {getAvailableMonths().map((month) => (
               <button
                 key={month}
-                className={`gp-subtab${selectedMonth === month ? " on" : ""}`}
+                className={`glow-subtab${selectedMonth === month ? " glow-subtab--on" : ""}`}
                 onClick={() => setSelectedMonth(month)}
               >
                 {getMonthLabel(month)}
@@ -311,16 +311,16 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
           </div>
         )}
         {filterType === "stars" && (
-          <div className="gp-subtabs" style={{ margin: 0 }}>
+          <div className="glow-subtabs" style={{ margin: 0 }}>
             {[5, 4, 3, 2, 1].map((s) => (
               <button
                 key={s}
-                className={`gp-subtab${selectedStars === s ? " on" : ""}`}
+                className={`glow-subtab${selectedStars === s ? " glow-subtab--on" : ""}`}
                 onClick={() => setSelectedStars(s)}
               >
                 {s}{" "}
                 <Star
-                  style={{ width: 11, height: 11, fill: "currentColor", color: "var(--gp-warn)" }}
+                  style={{ width: 11, height: 11, fill: "currentColor", color: "var(--glow-warn-ink)" }}
                 />
               </button>
             ))}
@@ -330,13 +330,13 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
 
       {/* Reviews list */}
       {loading ? (
-        <div style={{ textAlign: "center", padding: 48, color: "var(--gp-muted-c)" }}>
+        <div style={{ textAlign: "center", padding: 48, color: "var(--glow-ink-3)" }}>
           Cargando...
         </div>
       ) : filteredReviews.length === 0 ? (
-        <div className="gp-card">
-          <div className="gp-empty">
-            <div className="gp-empty-ic">
+        <div className="glow-card">
+          <div className="glow-empty">
+            <div className="glow-empty-ic">
               <Star style={{ width: 24, height: 24 }} />
             </div>
             <h4>Sin reseñas</h4>
@@ -344,31 +344,31 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
           </div>
         </div>
       ) : (
-        <div className="gp-mkt-reviews-list">
+        <div className="glow-mkt-reviews-list">
           {filteredReviews.map((review) => (
             <div
               key={review.id}
-              className={`gp-card pad gp-mkt-review${!review.approved ? " is-pending" : ""}`}
+              className={`glow-card pad glow-mkt-review${!review.approved ? " is-pending" : ""}`}
             >
-              <div className="gp-mkt-review-h">
-                <div className="gp-mkt-review-stars-wrap">
+              <div className="glow-mkt-review-h">
+                <div className="glow-mkt-review-stars-wrap">
                   {renderStars(review.rating)}
-                  <span className="gp-mkt-review-date">
+                  <span className="glow-mkt-review-date">
                     {format(new Date(review.created_at), "d MMM yyyy", { locale: es })}
                   </span>
                 </div>
-                <span className={`gp-badge ${review.approved ? "ok" : "warn"}`}>
+                <span className={`glow-badge ${review.approved ? "ok" : "warn"}`}>
                   <span className="pip" style={{ background: "currentColor" }} />
                   {review.approved ? "Publicada" : "Pendiente"}
                 </span>
               </div>
-              <p className="gp-mkt-review-comment">
+              <p className="glow-mkt-review-comment">
                 {review.comment || <em>Sin comentario</em>}
               </p>
-              <div className="gp-mkt-review-actions">
+              <div className="glow-mkt-review-actions">
                 {!review.approved && (
                   <button
-                    className="gp-btn sm primary"
+                    className="glow-btn glow-btn--sm glow-btn--primary"
                     type="button"
                     onClick={() => handleApprove(review.id)}
                   >
@@ -378,14 +378,14 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
                 {review.approved && review.rating >= 4 && (
                   <>
                     <button
-                      className="gp-btn sm"
+                      className="glow-btn glow-btn--sm"
                       type="button"
                       onClick={() => shareReview(review)}
                     >
                       <Share2 style={{ width: 13, height: 13 }} /> Compartir
                     </button>
                     <button
-                      className="gp-btn sm"
+                      className="glow-btn glow-btn--sm"
                       type="button"
                       onClick={() => copyReview(review)}
                     >
@@ -394,7 +394,7 @@ export function ReviewsManager({ tenantId }: ReviewsManagerProps) {
                   </>
                 )}
                 <button
-                  className="gp-btn sm danger"
+                  className="glow-btn glow-btn--sm glow-btn--danger"
                   type="button"
                   onClick={() => setReviewToDelete(review.id)}
                 >

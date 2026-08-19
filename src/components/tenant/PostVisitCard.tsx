@@ -59,7 +59,7 @@ export const PostVisitCard = ({ tenantId, tenantSlug }: PostVisitCardProps) => {
           <div className="mx-auto max-w-md rounded-2xl bg-white/95 backdrop-blur-xl shadow-2xl border border-neutral-200/60 overflow-hidden">
             <div
               className="px-4 py-2.5 flex items-center justify-between text-white text-xs font-semibold"
-              style={{ background: "linear-gradient(100deg, #22408c, #98329a)" }}
+              style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
             >
               <span>✨ ¡Gracias por tu visita!</span>
               <button
@@ -83,7 +83,7 @@ export const PostVisitCard = ({ tenantId, tenantSlug }: PostVisitCardProps) => {
                   <button
                     onClick={openReview}
                     className="col-span-2 h-11 rounded-xl text-[13.5px] font-semibold text-white flex items-center justify-center gap-2 active:scale-[0.98] transition"
-                    style={{ background: "linear-gradient(100deg, #22408c, #98329a)" }}
+                    style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
                   >
                     <Star className="h-4 w-4" />
                     Deja tu reseña

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -101,18 +100,18 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-lg truncate">{client.name}</h3>
             {client.phone && (
-              <a href={`tel:${client.phone}`} className="text-sm text-muted-foreground flex items-center gap-1">
+              <a href={`tel:${client.phone}`} className="text-sm text-outline flex items-center gap-1">
                 <Phone className="h-3 w-3" /> {client.phone}
               </a>
             )}
             {client.email && (
-              <a href={`mailto:${client.email}`} className="text-sm text-muted-foreground flex items-center gap-1">
+              <a href={`mailto:${client.email}`} className="text-sm text-outline flex items-center gap-1">
                 <Mail className="h-3 w-3" /> {client.email}
               </a>
             )}
             {client.birthday && (
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Gift className="h-3 w-3 text-pink-500" />
+              <p className="text-sm text-outline flex items-center gap-1">
+                <Gift className="h-3 w-3 text-glow-accent-ink" />
                 {format(new Date(client.birthday + "T00:00:00"), "d MMMM", { locale: es })}
               </p>
             )}
@@ -122,25 +121,25 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
         {/* Linked profile badge */}
         <div className="mt-3">
           {linkedProfile ? (
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/10 border border-green-500/20">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-glow-ok/10 border border-glow-ok/20">
               <Avatar className="h-6 w-6">
                 {linkedProfile.avatar_url && <AvatarImage src={linkedProfile.avatar_url} />}
-                <AvatarFallback className="text-[10px] bg-green-500/20 text-green-700">
+                <AvatarFallback className="text-[10px] bg-glow-ok/20 text-glow-ok-ink">
                   {(linkedProfile.full_name || linkedProfile.email)?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <span className="text-xs font-medium text-green-700">
+                <span className="text-xs font-medium text-glow-ok-ink">
                   {linkedProfile.username ? `@${linkedProfile.username}` : linkedProfile.full_name || linkedProfile.email}
                 </span>
               </div>
-              <UserCheck className="h-3.5 w-3.5 text-green-600 shrink-0" />
-              <span className="text-[10px] text-green-600 font-medium">Vinculado</span>
+              <UserCheck className="h-3.5 w-3.5 text-glow-ok-ink shrink-0" />
+              <span className="text-[10px] text-glow-ok-ink font-medium">Vinculado</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border">
-              <UserX className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-[10px] text-muted-foreground">Sin cuenta vinculada</span>
+              <UserX className="h-3.5 w-3.5 text-outline" />
+              <span className="text-[10px] text-outline">Sin cuenta vinculada</span>
             </div>
           )}
         </div>
@@ -156,35 +155,31 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
         <div className="grid grid-cols-3 gap-2 mt-4">
           <div className="text-center p-2 rounded-lg bg-background/60">
             <p className="text-lg font-bold text-primary">{client.total_visits}</p>
-            <p className="text-[10px] text-muted-foreground">Visitas</p>
+            <p className="text-[10px] text-outline">Visitas</p>
           </div>
           <div className="text-center p-2 rounded-lg bg-background/60">
-            <p className="text-lg font-bold text-green-600">{(client.total_spent || 0).toFixed(0)}€</p>
-            <p className="text-[10px] text-muted-foreground">Total</p>
+            <p className="text-lg font-bold text-glow-ok-ink">{(client.total_spent || 0).toFixed(0)}€</p>
+            <p className="text-[10px] text-outline">Total</p>
           </div>
           <div className="text-center p-2 rounded-lg bg-background/60">
-            <p className="text-lg font-bold text-muted-foreground">
+            <p className="text-lg font-bold text-outline">
               {client.last_visit_at
                 ? format(new Date(client.last_visit_at), "dd/MM", { locale: es })
                 : "-"}
             </p>
-            <p className="text-[10px] text-muted-foreground">Última</p>
+            <p className="text-[10px] text-outline">Última</p>
           </div>
         </div>
 
         {/* Quick actions */}
         <div className="flex gap-2 mt-3">
           {client.phone && (
-            <Button variant="outline" size="sm" className="flex-1 text-xs" asChild>
-              <a href={`tel:${client.phone}`}><Phone className="h-3.5 w-3.5 mr-1" />Llamar</a>
-            </Button>
+            <a className="glow-btn glow-btn--sm glow-btn--grow text-xs" href={`tel:${client.phone}`}><Phone className="h-3.5 w-3.5 mr-1" />Llamar</a>
           )}
           {whatsappUrl && (
-            <Button variant="outline" size="sm" className="flex-1 text-xs" asChild>
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+            <a className="glow-btn glow-btn--sm glow-btn--grow text-xs" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                 <MessageSquare className="h-3.5 w-3.5 mr-1" />WhatsApp
               </a>
-            </Button>
           )}
         </div>
       </div>
@@ -192,7 +187,7 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
       {/* Top services */}
       {topServices.length > 0 && (
         <div className="p-4 border-b">
-          <p className="text-xs font-medium text-muted-foreground mb-1.5">Servicios frecuentes</p>
+          <p className="text-xs font-medium text-outline mb-1.5">Servicios frecuentes</p>
           <div className="flex flex-wrap gap-1.5">
             {topServices.map(s => (
               <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
@@ -205,10 +200,10 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
       {client.notes && (
         <div className="p-4 border-b">
           <div className="flex items-center gap-2 mb-2">
-            <StickyNote className="h-4 w-4 text-amber-500" />
+            <StickyNote className="h-4 w-4 text-glow-warn-ink" />
             <span className="text-sm font-medium">Notas</span>
           </div>
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{client.notes}</p>
+          <p className="text-sm text-outline whitespace-pre-wrap">{client.notes}</p>
         </div>
       )}
 
@@ -226,7 +221,7 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
               {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
             </div>
           ) : history.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-outline">
               <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">Sin historial de citas</p>
             </div>
@@ -249,8 +244,8 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
                         {booking.status === "confirmed" ? "Confirmada" : booking.status}
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">{booking.Hora} - {booking.stylist}</p>
-                    {services && <p className="text-xs text-muted-foreground truncate mt-0.5">{services}</p>}
+                    <p className="text-xs text-outline mt-1">{booking.Hora} - {booking.stylist}</p>
+                    {services && <p className="text-xs text-outline truncate mt-0.5">{services}</p>}
                   </div>
                 );
               })}
@@ -261,17 +256,13 @@ export function ClientDetail({ client, tenantId, onEdit, onDelete }: ClientDetai
 
       {/* Footer actions */}
       <div className="p-4 border-t flex gap-2">
-        <Button variant="outline" size="sm" className="flex-1" onClick={onEdit}>
+        <button className="glow-btn glow-btn--sm glow-btn--grow" onClick={onEdit}>
           <Edit className="h-4 w-4 mr-1" /> Editar
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-          onClick={onDelete}
-        >
+        </button>
+        <button className="glow-btn glow-btn--sm text-destructive hover:bg-destructive hover:text-destructive-foreground"
+          onClick={onDelete}>
           <Trash2 className="h-4 w-4" />
-        </Button>
+        </button>
       </div>
     </div>
   );

@@ -63,7 +63,7 @@ interface ActivityItem {
   createdAt: string;
 }
 
-const TEAM_COLORS = ["#d6489b", "#7b5bf5", "#06b6d4", "#f59e0b", "#22c55e", "#ef4444"];
+const TEAM_COLORS = ["var(--glow-accent)", "var(--glow-accent)", "var(--glow-brand)", "var(--glow-warn)", "var(--glow-ok)", "var(--glow-danger)"];
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
@@ -89,10 +89,10 @@ const initialsOf = (name?: string | null): string => {
 };
 
 const ACTIVITY_TONE: Record<ActivityKind, { color: string; icon: JSX.Element }> = {
-  booking: { color: "var(--gp-info)", icon: <Calendar style={{ width: 16, height: 16 }} /> },
-  payment: { color: "var(--gp-accent)", icon: <Wallet style={{ width: 16, height: 16 }} /> },
-  review: { color: "var(--gp-warn)", icon: <Star style={{ width: 16, height: 16 }} /> },
-  client: { color: "var(--gp-ok)", icon: <UserPlus style={{ width: 16, height: 16 }} /> },
+  booking: { color: "var(--glow-brand-ink)", icon: <Calendar style={{ width: 16, height: 16 }} /> },
+  payment: { color: "var(--glow-brand)", icon: <Wallet style={{ width: 16, height: 16 }} /> },
+  review: { color: "var(--glow-warn-ink)", icon: <Star style={{ width: 16, height: 16 }} /> },
+  client: { color: "var(--glow-ok-ink)", icon: <UserPlus style={{ width: 16, height: 16 }} /> },
 };
 
 export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDashboardProps) {
@@ -349,8 +349,8 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
 
   if (loading) {
     return (
-      <div className="gp-loader">
-        <Loader2 className="gp-spinner" />
+      <div className="glow-loader">
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
@@ -359,25 +359,25 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
     {
       label: "Cobrar",
       icon: <Wallet style={{ width: 18, height: 18 }} />,
-      color: "#7b5bf5",
+      color: "var(--glow-accent)",
       onClick: () => onQuickAction("new-payment"),
     },
     {
       label: "Pedidos",
       icon: <ShoppingCart style={{ width: 18, height: 18 }} />,
-      color: "#06b6d4",
+      color: "var(--glow-brand)",
       onClick: navOrders,
     },
     {
       label: "Lista de espera",
       icon: <Clock style={{ width: 18, height: 18 }} />,
-      color: "#f59e0b",
+      color: "var(--glow-warn)",
       onClick: navWaitlist,
     },
     {
       label: "Mensajes",
       icon: <MessageCircle style={{ width: 18, height: 18 }} />,
-      color: "#22c55e",
+      color: "var(--glow-ok)",
       onClick: navMessages,
     },
   ];
@@ -385,7 +385,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
 
 
   return (
-    <div className="gp-fade" data-tour-target="inicio-stats" style={{ display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
+    <div className="glow-fade" data-tour-target="inicio-stats" style={{ display: "flex", flexDirection: "column", gap: 20, paddingBottom: 24 }}>
       <OnboardingChecklist tenantId={tenantId} onNavigate={onNavigate} />
 
       {/* ── Dashboard rediseñado (import Stitch tal cual, datos reales) ── */}
@@ -411,7 +411,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
             <div className="flex items-center justify-between mb-4">
               <span className="inline-flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-primary min-w-0">
                 <span
-                  className="w-2 h-2 rounded-full flex-none bg-[#16A249]"
+                  className="w-2 h-2 rounded-full flex-none bg-[var(--glow-ok)]"
                   style={{ boxShadow: "0 0 0 3px rgba(22,162,73,.18)" }}
                 />
                 {(() => {
@@ -477,7 +477,7 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
                 <Wallet className="w-[18px] h-[18px]" />
               </span>
               {stats.revenueGrowth !== 0 && (
-                <span className="bg-[#E7F6EC] text-[#16A249] text-xs font-bold px-2 py-1 rounded-full inline-flex items-center gap-1">
+                <span className="bg-[var(--glow-ok-soft)] text-[var(--glow-ok)] text-xs font-bold px-2 py-1 rounded-full inline-flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" style={{ transform: stats.revenueGrowth >= 0 ? undefined : "scaleY(-1)" }} />
                   {stats.revenueGrowth >= 0 ? "+" : ""}{stats.revenueGrowth}%
                 </span>
@@ -510,11 +510,11 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
           {/* Clientes nuevos */}
           <div className="bg-surface-container-lowest rounded-[1rem] p-4 shadow-ambient flex flex-col justify-between">
             <div className="flex justify-between items-start mb-3">
-              <span className="w-10 h-10 rounded-full bg-[#E7F6EC] flex items-center justify-center text-[#16A249]">
+              <span className="w-10 h-10 rounded-full bg-[var(--glow-ok-soft)] flex items-center justify-center text-[var(--glow-ok)]">
                 <UserPlus className="w-[18px] h-[18px]" />
               </span>
               {stats.newClientsGrowth !== 0 && (
-                <span className="bg-[#E7F6EC] text-[#16A249] text-xs font-bold px-2 py-1 rounded-full inline-flex items-center gap-1">
+                <span className="bg-[var(--glow-ok-soft)] text-[var(--glow-ok)] text-xs font-bold px-2 py-1 rounded-full inline-flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" style={{ transform: stats.newClientsGrowth >= 0 ? undefined : "scaleY(-1)" }} />
                   {stats.newClientsGrowth >= 0 ? "+" : ""}{stats.newClientsGrowth}%
                 </span>
@@ -528,11 +528,11 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
           {/* Ocupación */}
           <div className="bg-surface-container-lowest rounded-[1rem] p-4 shadow-ambient flex flex-col justify-between">
             <div className="flex justify-between items-start mb-3">
-              <span className="w-10 h-10 rounded-full bg-[#FEF3E0] flex items-center justify-center text-[#F59E0B]">
+              <span className="w-10 h-10 rounded-full bg-[var(--glow-warn-soft)] flex items-center justify-center text-[var(--glow-warn)]">
                 <TrendingUp className="w-[18px] h-[18px]" />
               </span>
               {stats.occupancyDelta !== 0 && (
-                <span className={`text-xs font-bold px-2 py-1 rounded-full inline-flex items-center gap-1 ${stats.occupancyDelta >= 0 ? "bg-[#E7F6EC] text-[#16A249]" : "bg-[#FDEAEA] text-[#EF4343]"}`}>
+                <span className={`text-xs font-bold px-2 py-1 rounded-full inline-flex items-center gap-1 ${stats.occupancyDelta >= 0 ? "bg-[var(--glow-ok-soft)] text-[var(--glow-ok)]" : "bg-[var(--glow-danger-soft)] text-[var(--glow-danger)]"}`}>
                   <TrendingUp className="w-3 h-3" style={{ transform: stats.occupancyDelta >= 0 ? undefined : "scaleY(-1)" }} />
                   {stats.occupancyDelta >= 0 ? "+" : ""}{stats.occupancyDelta}pp
                 </span>
@@ -655,11 +655,11 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
                 fontFamily: "inherit",
               }}
             >
-              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--gp-ink)" }}>📚 Formación</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: "var(--glow-ink)" }}>📚 Formación</span>
               {trainingOpen ? (
-                <ChevronUp style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />
+                <ChevronUp style={{ width: 16, height: 16, color: "var(--glow-ink-3)" }} />
               ) : (
-                <ChevronDown style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />
+                <ChevronDown style={{ width: 16, height: 16, color: "var(--glow-ink-3)" }} />
               )}
             </button>
           </CollapsibleTrigger>
@@ -685,11 +685,11 @@ export function AdminDashboard({ tenantId, onNavigate, onQuickAction }: AdminDas
               fontFamily: "inherit",
             }}
           >
-            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--gp-ink)" }}>📈 Retorno de inversión</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--glow-ink)" }}>📈 Retorno de inversión</span>
             {roiOpen ? (
-              <ChevronUp style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />
+              <ChevronUp style={{ width: 16, height: 16, color: "var(--glow-ink-3)" }} />
             ) : (
-              <ChevronDown style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />
+              <ChevronDown style={{ width: 16, height: 16, color: "var(--glow-ink-3)" }} />
             )}
           </button>
         </CollapsibleTrigger>

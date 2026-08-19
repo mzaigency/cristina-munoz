@@ -10,10 +10,6 @@ import {
   Check,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 interface WhatsAppKitProps {
@@ -228,10 +224,10 @@ export function WhatsAppKit({ tenantSlug, tenantName }: WhatsAppKitProps) {
             <MessageCircle className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-semibold text-foreground">
+            <h3 className="text-sm font-semibold text-on-surface">
               Kit de Transición a WhatsApp
             </h3>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-0.5 text-xs text-outline">
               Plantillas listas para anunciar a tus clientas que ahora reservan online. Personaliza, copia y pega.
             </p>
           </div>
@@ -241,33 +237,31 @@ export function WhatsAppKit({ tenantSlug, tenantName }: WhatsAppKitProps) {
       {/* Variables */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label htmlFor="salon-name" className="text-xs text-muted-foreground">
+          <label htmlFor="salon-name" className="text-xs text-outline">
             Nombre de tu salón
-          </Label>
-          <Input
+          </label>
+          <input className="glow-input h-10 rounded-xl"
             id="salon-name"
             value={salonName}
             onChange={(e) => setSalonName(e.target.value)}
             placeholder="Mi Salón"
-            className="h-10 rounded-xl"
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="client-name" className="text-xs text-muted-foreground">
+          <label htmlFor="client-name" className="text-xs text-outline">
             Nombre de la clienta (opcional)
-          </Label>
-          <Input
+          </label>
+          <input className="glow-input h-10 rounded-xl"
             id="client-name"
             value={clientName}
             onChange={(e) => setClientName(e.target.value)}
             placeholder="Para mensajes personalizados"
-            className="h-10 rounded-xl"
           />
         </div>
       </div>
 
-      <div className="rounded-xl border border-border/50 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-        Tu enlace: <span className="font-mono text-foreground">{link}</span>
+      <div className="rounded-xl border border-border/50 bg-muted/40 px-3 py-2 text-xs text-outline">
+        Tu enlace: <span className="font-mono text-on-surface">{link}</span>
       </div>
 
       {/* Categorías */}
@@ -284,7 +278,7 @@ export function WhatsAppKit({ tenantSlug, tenantName }: WhatsAppKitProps) {
                 "flex flex-shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                 isActive
                   ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-background text-muted-foreground hover:text-foreground"
+                  : "border-border bg-background text-outline hover:text-on-surface"
               )}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -294,7 +288,7 @@ export function WhatsAppKit({ tenantSlug, tenantName }: WhatsAppKitProps) {
         })}
       </div>
 
-      <p className="text-xs text-muted-foreground">{current.description}</p>
+      <p className="text-xs text-outline">{current.description}</p>
 
       {/* Plantillas */}
       <div className="space-y-3">
@@ -308,22 +302,16 @@ export function WhatsAppKit({ tenantSlug, tenantName }: WhatsAppKitProps) {
             >
               <div className="mb-2 flex items-start justify-between gap-2">
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{tpl.title}</p>
-                  <p className="text-[11px] text-muted-foreground">{tpl.description}</p>
+                  <p className="text-sm font-semibold text-on-surface">{tpl.title}</p>
+                  <p className="text-[11px] text-outline">{tpl.description}</p>
                 </div>
               </div>
-              <Textarea
+              <textarea className="glow-input min-h-[88px] resize-none rounded-xl border-border/60 bg-background/60 text-sm leading-relaxed"
                 value={text}
                 readOnly
-                className="min-h-[88px] resize-none rounded-xl border-border/60 bg-background/60 text-sm leading-relaxed"
               />
               <div className="mt-2 flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant={copied ? "secondary" : "default"}
-                  onClick={() => handleCopy(tpl)}
-                  className="h-9 gap-1.5 rounded-lg"
-                >
+                <button className="glow-btn glow-btn--primary glow-btn--sm h-9 gap-1.5 rounded-lg" onClick={() => handleCopy(tpl)}>
                   {copied ? (
                     <>
                       <Check className="h-3.5 w-3.5" />
@@ -335,16 +323,11 @@ export function WhatsAppKit({ tenantSlug, tenantName }: WhatsAppKitProps) {
                       Copiar
                     </>
                   )}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleShare(tpl)}
-                  className="h-9 gap-1.5 rounded-lg"
-                >
+                </button>
+                <button className="glow-btn glow-btn--sm h-9 gap-1.5 rounded-lg" onClick={() => handleShare(tpl)}>
                   <Share2 className="h-3.5 w-3.5" />
                   Compartir por WhatsApp
-                </Button>
+                </button>
               </div>
             </div>
           );

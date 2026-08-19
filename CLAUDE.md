@@ -176,6 +176,98 @@ Rediseñada jul 2026 hacia un registro **bold/plantilla** (inspirada en zentroes
 
 ---
 
+## Sistema de diseño del panel de admin — `glow-*`
+
+Fuente única: **`src/styles/glow.css`** (importado al principio de `index.css`).
+Regla dura: **ningún componente del panel escribe un color a mano**. Si un color
+no está en `glow.css`, no existe.
+
+### Cómo está construido
+- Todo se apoya en **6 colores literales** (`brand`, `accent`, `ok`, `warn`, `danger` + la
+  escala de tinta). Los `-soft` y los `-ink` se derivan con `color-mix`, así que cambiar
+  la marca es cambiar una línea.
+- Los tokens se declaran en **canales RGB** (`--glow-brand-rgb: 34 64 140`) para que
+  Tailwind pueda darles opacidad (`bg-glow-brand/20`) sin duplicar el valor.
+- Viven en `:root`, no scopeados: los sheets y diálogos de Radix se montan en un portal
+  fuera del panel y con los tokens scopeados perderían el tema.
+- Las primitivas van en `@layer components`, así una utility de Tailwind gana a una
+  primitiva. `src/styles/*.css` está en el `content` de tailwind.config para que la capa
+  no se purgue.
+
+### Escalas
+| | pasos | tokens |
+|---|---|---|
+| Radio | 5 | `--glow-r-sm/md/lg/xl/full` (10/14/18/24/999) |
+| Tipografía | 7 | `--glow-t-2xs…2xl` (11/12.5/13.5/15/17/22/28) con su peso |
+| Sombra | 3 | `--glow-e1/e2/e3` |
+| Espaciado | múltiplos de 4 | `--glow-s1…s10` |
+| Motion | — | `--glow-ease` (easing de marca), `--glow-fast`, `--glow-base` |
+
+### Primitivas
+`glow-btn` (`--primary/--brand/--ghost/--danger/--sm/--block/--icon`), `glow-icon-btn`,
+`glow-card` (`--pad/--clip`), `glow-card-h`, `glow-page-h`, `glow-badge`, `glow-chip`,
+`glow-input`, `glow-kpi`, `glow-row`, `glow-avatar`, `glow-empty`, `glow-subnav`,
+`glow-subtab`, `glow-filter-row`, `glow-search`, `glow-spinner`, `glow-fade`,
+`glow-group` (+`-dot`/`-n`), `glow-row-actions`, `glow-field` (+`-hint`/`-error`),
+`glow-form`, `glow-form-grid`, `glow-swatch`, `glow-progress`, `glow-toolbar`,
+`glow-save-bar`.
+
+**Modificadores siempre en BEM** (`glow-btn--sm`, nunca `glow-btn sm`): dentro de
+`@layer components` Tailwind genera variantes responsive de cualquier clase que se
+llame igual que una utility suya, y `.glow-btn.block` compilaba como `.sm\:block.glow-btn`.
+
+### Reglas de color
+- **No hay token «info»**: lo informativo es el azul de marca. Así no reaparece un azul ajeno.
+- `--glow-ink-4` es **solo decorativo, nunca texto** (2.6:1 sobre blanco).
+- Los iconos sobre fondo `-soft` usan siempre la variante `-ink`.
+- Para gráficas y color de profesional: `src/lib/chartColors.ts` (`CHART_COLORS`,
+  `chartColor(i)`, `STYLIST_FALLBACK`). No inventar arrays de colores.
+- **Texto sobre un color elegido por quien usa el panel** (avatar de cliente o de
+  profesional, círculo de ranking): `readableInk(color)`, nunca `text-white` a secas.
+  El verde de marca sobre blanco se queda en 3.3:1; el helper devuelve blanco o tinta
+  oscura, lo que contraste más (peor caso medido: 4.6:1).
+- El degradado de marca (`--glow-gradient`) es firma: **un solo botón por pantalla**
+  (`glow-btn--brand`). El resto de acciones, `glow-btn--primary` (azul plano).
+
+### Navegación
+**Una sola fila de pestañas**, la del shell (`AdminSubNav` + `ADMIN_SUB_NAV`). Las
+secciones NO pintan su propia fila: solo despachan por `subTab`. Si añades un subtab,
+va en `ADMIN_SUB_NAV` y en el `switch` de la sección, no en una fila nueva.
+
+Las pestañas son **texto**, no píldoras: el activo se marca con color de marca, peso
+y un subrayado de 2 px. Nada de tarjetas (decisión Hugo, ago 2026 — "con cambio de
+color queda más clean").
+
+**Cuidado con el modificador `on`**: `.glow-navitem`, `.glow-subitem`, `.glow-bottom-item`,
+`.glow-mkt-chip`, `.ag-pay-method` y compañía usan su propia clase `.on`, NO
+`glow-subtab--on`. Confundirlas pinta la píldora de marca donde no toca.
+
+### KPIs y filtros
+Toda cifra destacada usa `glow-kpis` + `glow-kpi`; los filtros de contenido, `glow-toolbar`
++ `glow-chip`. Nada de mini-cajas ni píldoras propias por pantalla.
+
+### Listados de una sección
+**Una sola matriz, no una tarjeta por grupo**: un `glow-card` con `glow-group` como
+cabecera de cada categoría y `glow-row` por elemento. La misma pieza sirve en móvil y
+escritorio — nada de una lista para móvil y una `<table>` distinta detrás de
+`hidden md:block`. Las acciones van en `glow-row-actions` (visibles al pasar el ratón
+en escritorio, siempre visibles en táctil). Cabecera con métricas reales y
+`glow-toolbar` con buscador + chips de filtro.
+
+### Formularios
+`glow-field` (label arriba, `glow-input`, `glow-field-hint` debajo) dentro de
+`glow-form` / `glow-form-grid`. **No usar `Card`, `Label` ni `Input` de shadcn en el
+panel** — son otro lenguaje visual (otro radio, otra sombra). Sí se conservan los
+componentes de Radix por comportamiento (`Select`, `Switch`, `Dialog`, `Sheet`).
+Formularios largos: `glow-save-bar` fija abajo.
+
+### Modo oscuro
+El panel es **solo claro**. `darkMode: "class"` está fijado a propósito: sin esa línea
+Tailwind usa `"media"` y las variantes `dark:` se activan solas con el SO en oscuro,
+invirtiendo media interfaz. No reintroducir `dark:` en el panel.
+
+---
+
 ## Archivos clave
 
 | Archivo | Qué es |
@@ -188,7 +280,10 @@ Rediseñada jul 2026 hacia un registro **bold/plantilla** (inspirada en zentroes
 | `src/components/business-landing/_landingShared.tsx` | `EASE`, `AnimatedNumber`, `gradientText`, `Eyebrow` (opcional), `washBg` |
 | `src/components/business-landing/PanelShowcase.tsx` | Tabs con screenshots reales del panel (panel-*.png) |
 | `src/components/business-landing/RoiCalculator.tsx` | Calculadora de ahorro vs competencia |
-| `src/index.css` | Design tokens: colores HSL, font-ashing (letter-spacing: 0.05em), fuentes |
+| `src/styles/glow.css` | **Design system del panel**: tokens + primitivas `glow-*` |
+| `src/lib/chartColors.ts` | Paleta de gráficas y color por defecto de profesional |
+| `src/components/admin/layout/AdminSubNav.tsx` | Fila única de pestañas de sección |
+| `src/index.css` | Tokens shadcn, font-ashing, CSS de secciones (`glow-mkt-*`, `glow-neg-*`, `ag-*`) |
 | `src/content/competitors.ts` | Copy completo de páginas alternativa-a-* |
 | `src/hooks/usePlanLimits.ts` | Qué funciones van en cada plan (Starter/Pro/Business) |
 | `/Users/hugomunxz/GLOWAPP/` | Docs de marca: Marketing, Funciones, Bienvenida, Guion VO |
@@ -204,3 +299,4 @@ Rediseñada jul 2026 hacia un registro **bold/plantilla** (inspirada en zentroes
 - **`ProblemAgitation`, `FeatureSpotlights`, `PricingCompare`**: no usar en `/negocios` (los dos primeros conservados sin renderizar; `PricingCompare` eliminado)
 - **Diseño de UI: maquetar antes de construir** — Hugo quiere ver maqueta (`mcp__visualize__show_widget`) y validar antes de tocar código
 - Assets de screenshots reales: `src/assets/panel-*.png` (desktop) y `mobile-*.png`
+- **Panel de admin: usar `glow-*`** (ver sección del sistema de diseño). `gp-*` ya no existe.

@@ -201,7 +201,7 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 className="gp-spinner" />
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
@@ -209,9 +209,9 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
   const maxDist = Math.max(1, ...Object.values(stats.ratingDistribution));
 
   return (
-    <div className="gp-fade gp-mkt-overview">
+    <div className="glow-fade glow-mkt-overview">
       {/* Hero KPIs */}
-      <div className="gp-mkt-kpis">
+      <div className="glow-mkt-kpis">
         <KpiTile
           label="Posts publicados"
           value={stats.postsCount}
@@ -245,58 +245,58 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
       </div>
 
       {/* Two-col: rating dist + top posts */}
-      <div className="gp-mkt-grid-2">
-        <section className="gp-card pad gp-mkt-card">
-          <div className="gp-mkt-card-h">
+      <div className="glow-mkt-grid-2">
+        <section className="glow-card glow-card--pad glow-mkt-card">
+          <div className="glow-mkt-card-h">
             <div>
               <h3>Distribución de valoraciones</h3>
               <p>{stats.reviewsCount} reseñas aprobadas</p>
             </div>
-            <button className="gp-btn sm" onClick={() => onNavigate("resenas")}>
+            <button className="glow-btn glow-btn--sm" onClick={() => onNavigate("resenas")}>
               Ver todas <ArrowRight style={{ width: 13, height: 13 }} />
             </button>
           </div>
-          <div className="gp-mkt-bars">
+          <div className="glow-mkt-bars">
             {([5, 4, 3, 2, 1] as const).map((n) => {
               const count = stats.ratingDistribution[n];
               const pct = Math.round((count / maxDist) * 100);
               return (
-                <div key={n} className="gp-mkt-bar-row">
-                  <div className="gp-mkt-bar-label">
+                <div key={n} className="glow-mkt-bar-row">
+                  <div className="glow-mkt-bar-label">
                     <span>{n}</span>
                     <Star style={{ width: 12, height: 12, fill: "currentColor" }} />
                   </div>
-                  <div className="gp-mkt-bar-track">
-                    <div className="gp-mkt-bar-fill" style={{ width: `${pct}%` }} />
+                  <div className="glow-mkt-bar-track">
+                    <div className="glow-mkt-bar-fill" style={{ width: `${pct}%` }} />
                   </div>
-                  <div className="gp-mkt-bar-count">{count}</div>
+                  <div className="glow-mkt-bar-count">{count}</div>
                 </div>
               );
             })}
           </div>
         </section>
 
-        <section className="gp-card pad gp-mkt-card">
-          <div className="gp-mkt-card-h">
+        <section className="glow-card glow-card--pad glow-mkt-card">
+          <div className="glow-mkt-card-h">
             <div>
               <h3>Posts más populares</h3>
               <p>Por likes</p>
             </div>
-            <button className="gp-btn sm" onClick={() => onNavigate("posts")}>
+            <button className="glow-btn glow-btn--sm" onClick={() => onNavigate("posts")}>
               Ver todos <ArrowRight style={{ width: 13, height: 13 }} />
             </button>
           </div>
           {topPosts.length === 0 ? (
-            <div className="gp-mkt-empty">
+            <div className="glow-mkt-empty">
               <ImagePlus />
               <p>Aún no hay posts con likes</p>
             </div>
           ) : (
-            <div className="gp-mkt-top-grid">
+            <div className="glow-mkt-top-grid">
               {topPosts.map((p) => (
-                <div key={p.id} className="gp-mkt-top-tile">
+                <div key={p.id} className="glow-mkt-top-tile">
                   <img src={p.image_url} alt={p.caption ?? ""} loading="lazy" />
-                  <div className="gp-mkt-top-overlay">
+                  <div className="glow-mkt-top-overlay">
                     <Heart style={{ width: 12, height: 12, fill: "currentColor" }} />
                     <span>{p.likes_count}</span>
                   </div>
@@ -309,20 +309,20 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
 
       {/* Top reviews highlight */}
       {topReviews.length > 0 && (
-        <section className="gp-card pad gp-mkt-card">
-          <div className="gp-mkt-card-h">
+        <section className="glow-card glow-card--pad glow-mkt-card">
+          <div className="glow-mkt-card-h">
             <div>
               <h3>Reseñas destacadas</h3>
               <p>Lo último que han dicho de ti</p>
             </div>
-            <button className="gp-btn sm" onClick={() => onNavigate("resenas")}>
+            <button className="glow-btn glow-btn--sm" onClick={() => onNavigate("resenas")}>
               Ver todas <ArrowRight style={{ width: 13, height: 13 }} />
             </button>
           </div>
-          <div className="gp-mkt-reviews">
+          <div className="glow-mkt-reviews">
             {topReviews.map((r) => (
-              <div key={r.id} className="gp-mkt-review-tile">
-                <div className="gp-mkt-review-stars">
+              <div key={r.id} className="glow-mkt-review-tile">
+                <div className="glow-mkt-review-stars">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
@@ -335,10 +335,10 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
                     />
                   ))}
                 </div>
-                <p className="gp-mkt-review-text">
+                <p className="glow-mkt-review-text">
                   {r.comment || "Sin comentario"}
                 </p>
-                <span className="gp-mkt-review-meta">
+                <span className="glow-mkt-review-meta">
                   {format(new Date(r.created_at), "d MMM yyyy", { locale: es })}
                 </span>
               </div>
@@ -349,17 +349,17 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
 
       {/* Feed analytics 7d */}
       {feed.impressions > 0 && (
-        <section className="gp-card pad gp-mkt-card">
-          <div className="gp-mkt-card-h">
+        <section className="glow-card glow-card--pad glow-mkt-card">
+          <div className="glow-mkt-card-h">
             <div>
               <h3>Tráfico del salón (7 días)</h3>
               <p>Métricas del feed público</p>
             </div>
-            <Sparkles style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />
+            <Sparkles style={{ width: 16, height: 16, color: "var(--glow-ink-3)" }} />
           </div>
-          <div className="gp-mkt-quick">
-            <div className="gp-mkt-quick-btn" style={{ cursor: "default" }}>
-              <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
+          <div className="glow-mkt-quick">
+            <div className="glow-mkt-quick-btn" style={{ cursor: "default" }}>
+              <div className="glow-mkt-quick-ic" style={{ background: "var(--glow-brand-soft)", color: "var(--glow-brand)" }}>
                 <Eye />
               </div>
               <div>
@@ -367,8 +367,8 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
                 <span>Impresiones</span>
               </div>
             </div>
-            <div className="gp-mkt-quick-btn" style={{ cursor: "default" }}>
-              <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
+            <div className="glow-mkt-quick-btn" style={{ cursor: "default" }}>
+              <div className="glow-mkt-quick-ic" style={{ background: "var(--glow-ok-soft)", color: "var(--glow-ok-ink)" }}>
                 <MousePointerClick />
               </div>
               <div>
@@ -376,8 +376,8 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
                 <span>Clicks</span>
               </div>
             </div>
-            <div className="gp-mkt-quick-btn" style={{ cursor: "default" }}>
-              <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
+            <div className="glow-mkt-quick-btn" style={{ cursor: "default" }}>
+              <div className="glow-mkt-quick-ic" style={{ background: "var(--glow-warn-soft)", color: "var(--glow-warn-ink)" }}>
                 <TrendingUp />
               </div>
               <div>
@@ -385,8 +385,8 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
                 <span>CTR</span>
               </div>
             </div>
-            <div className="gp-mkt-quick-btn" style={{ cursor: "default" }}>
-              <div className="gp-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--gp-mkt-rose), white 80%)", color: "var(--gp-mkt-rose)" }}>
+            <div className="glow-mkt-quick-btn" style={{ cursor: "default" }}>
+              <div className="glow-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--glow-accent), white 80%)", color: "var(--glow-accent)" }}>
                 <Heart />
               </div>
               <div>
@@ -399,16 +399,16 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
       )}
 
       {/* Quick actions */}
-      <section className="gp-card pad gp-mkt-card">
-        <div className="gp-mkt-card-h">
+      <section className="glow-card glow-card--pad glow-mkt-card">
+        <div className="glow-mkt-card-h">
           <div>
             <h3>Acciones rápidas</h3>
             <p>Empieza por aquí</p>
           </div>
         </div>
-        <div className="gp-mkt-quick">
-          <button className="gp-mkt-quick-btn" onClick={() => onNavigate("posts")}>
-            <div className="gp-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--gp-brand), white 80%)", color: "var(--gp-brand)" }}>
+        <div className="glow-mkt-quick">
+          <button className="glow-mkt-quick-btn" onClick={() => onNavigate("posts")}>
+            <div className="glow-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--glow-brand), white 80%)", color: "var(--glow-brand)" }}>
               <ImagePlus />
             </div>
             <div>
@@ -416,8 +416,8 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
               <span>Comparte tu trabajo</span>
             </div>
           </button>
-          <button className="gp-mkt-quick-btn" onClick={() => onNavigate("promos")}>
-            <div className="gp-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--gp-accent), white 80%)", color: "var(--gp-accent)" }}>
+          <button className="glow-mkt-quick-btn" onClick={() => onNavigate("promos")}>
+            <div className="glow-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--glow-brand), white 80%)", color: "var(--glow-brand)" }}>
               <Ticket />
             </div>
             <div>
@@ -425,8 +425,8 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
               <span>Atrae más reservas</span>
             </div>
           </button>
-          <button className="gp-mkt-quick-btn" onClick={() => onNavigate("difusion")}>
-            <div className="gp-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--gp-ok), white 80%)", color: "var(--gp-ok)" }}>
+          <button className="glow-mkt-quick-btn" onClick={() => onNavigate("difusion")}>
+            <div className="glow-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--glow-ok-ink), white 80%)", color: "var(--glow-ok-ink)" }}>
               <Users />
             </div>
             <div>
@@ -434,8 +434,8 @@ export function MarketingOverview({ tenantId, onNavigate }: MarketingOverviewPro
               <span>Mensaje a tus clientes</span>
             </div>
           </button>
-          <button className="gp-mkt-quick-btn" onClick={() => onNavigate("qr")}>
-            <div className="gp-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--gp-warn), white 80%)", color: "var(--gp-warn)" }}>
+          <button className="glow-mkt-quick-btn" onClick={() => onNavigate("qr")}>
+            <div className="glow-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--glow-warn-ink), white 80%)", color: "var(--glow-warn-ink)" }}>
               <TrendingUp />
             </div>
             <div>
@@ -462,11 +462,11 @@ interface KpiTileProps {
 
 function KpiTile({ label, value, sub, icon, tone, onClick }: KpiTileProps) {
   return (
-    <button className={`gp-mkt-kpi tone-${tone}`} onClick={onClick} type="button">
-      <span className="gp-mkt-kpi-ic">{icon}</span>
-      <span className="gp-mkt-kpi-value">{value}</span>
-      <span className="gp-mkt-kpi-label">{label}</span>
-      {sub && <span className="gp-mkt-kpi-sub">{sub}</span>}
+    <button className={`glow-mkt-kpi tone-${tone}`} onClick={onClick} type="button">
+      <span className="glow-mkt-kpi-ic">{icon}</span>
+      <span className="glow-mkt-kpi-value">{value}</span>
+      <span className="glow-mkt-kpi-label">{label}</span>
+      {sub && <span className="glow-mkt-kpi-sub">{sub}</span>}
     </button>
   );
 }

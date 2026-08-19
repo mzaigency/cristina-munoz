@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, FileUp, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import type { Client } from "./types";
@@ -135,7 +134,7 @@ export function ClientsImporter({ tenantId, existingClients, open, onOpenChange,
           <DialogTitle>Importar clientes desde CSV</DialogTitle>
         </DialogHeader>
 
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-outline">
           Trae tus clientes de Booksy, Fresha, Treatwell o cualquier CSV. En Booksy:
           Clientes → Exportar lista de clientes. Detectamos las columnas solos y
           omitimos los que ya tienes.
@@ -150,30 +149,30 @@ export function ClientsImporter({ tenantId, existingClients, open, onOpenChange,
         />
 
         {done !== null ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 text-center">
-            <CheckCircle2 className="h-10 w-10 text-emerald-500" />
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-glow-ok/30 bg-glow-ok/5 p-6 text-center">
+            <CheckCircle2 className="h-10 w-10 text-glow-ok-ink" />
             <p className="font-semibold">{done} clientes importados</p>
-            <p className="text-sm text-muted-foreground">Los encontrarás con la etiqueta "Importado"</p>
-            <Button variant="outline" onClick={() => { reset(); onOpenChange(false); }}>Cerrar</Button>
+            <p className="text-sm text-outline">Los encontrarás con la etiqueta "Importado"</p>
+            <button className="glow-btn" onClick={() => { reset(); onOpenChange(false); }}>Cerrar</button>
           </div>
         ) : rows.length === 0 && !fileName ? (
           <button
             onClick={() => inputRef.current?.click()}
             className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border p-10 text-center transition-colors hover:border-primary/50 hover:bg-muted/40"
           >
-            <FileUp className="h-8 w-8 text-muted-foreground" />
+            <FileUp className="h-8 w-8 text-outline" />
             <span className="text-sm font-medium">Selecciona el archivo CSV</span>
-            <span className="text-xs text-muted-foreground">o arrástralo aquí desde tu ordenador</span>
+            <span className="text-xs text-outline">o arrástralo aquí desde tu ordenador</span>
           </button>
         ) : (
           <div className="space-y-4">
             <div className="rounded-2xl border border-border p-4">
               <p className="text-sm font-semibold">{fileName}</p>
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                <span className="font-medium text-emerald-600">{rows.length} nuevos para importar</span>
-                {duplicates > 0 && <span className="text-muted-foreground">{duplicates} ya existentes (se omiten)</span>}
+                <span className="font-medium text-glow-ok-ink">{rows.length} nuevos para importar</span>
+                {duplicates > 0 && <span className="text-outline">{duplicates} ya existentes (se omiten)</span>}
                 {skipped > 0 && (
-                  <span className="inline-flex items-center gap-1 text-amber-600">
+                  <span className="inline-flex items-center gap-1 text-glow-warn-ink">
                     <AlertTriangle className="h-3.5 w-3.5" /> {skipped} sin nombre (se omiten)
                   </span>
                 )}
@@ -194,14 +193,14 @@ export function ClientsImporter({ tenantId, existingClients, open, onOpenChange,
                     {rows.slice(0, 30).map((r, i) => (
                       <tr key={i} className="border-t border-border/60">
                         <td className="px-3 py-1.5">{r.name}</td>
-                        <td className="px-3 py-1.5 text-muted-foreground">{r.phone || "—"}</td>
-                        <td className="px-3 py-1.5 text-muted-foreground">{r.email || "—"}</td>
+                        <td className="px-3 py-1.5 text-outline">{r.phone || "—"}</td>
+                        <td className="px-3 py-1.5 text-outline">{r.email || "—"}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 {rows.length > 30 && (
-                  <p className="border-t border-border/60 px-3 py-1.5 text-center text-xs text-muted-foreground">
+                  <p className="border-t border-border/60 px-3 py-1.5 text-center text-xs text-outline">
                     … y {rows.length - 30} más
                   </p>
                 )}
@@ -209,11 +208,11 @@ export function ClientsImporter({ tenantId, existingClients, open, onOpenChange,
             )}
 
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={reset} disabled={importing}>Cambiar archivo</Button>
-              <Button onClick={handleImport} disabled={rows.length === 0 || importing}>
+              <button className="glow-btn" onClick={reset} disabled={importing}>Cambiar archivo</button>
+              <button className="glow-btn glow-btn--primary" onClick={handleImport} disabled={rows.length === 0 || importing}>
                 {importing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                 Importar {rows.length} clientes
-              </Button>
+              </button>
             </div>
           </div>
         )}

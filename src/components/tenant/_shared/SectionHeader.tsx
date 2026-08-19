@@ -41,7 +41,7 @@ export function SectionHeader({
       </h2>
 
       {divider && (
-        <div className={`mt-5 h-[3px] w-9 rounded-full ${align === "center" ? "self-center" : ""}`} style={{ background: "linear-gradient(100deg, #22408c, #98329a)" }} />
+        <div className={`mt-5 h-[3px] w-9 rounded-full ${align === "center" ? "self-center" : ""}`} style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }} />
       )}
 
       {description && (

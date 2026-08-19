@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ZoomIn, ZoomOut, RotateCw, Check, X } from "lucide-react";
 
@@ -67,7 +66,7 @@ export const ImageCropper = ({
     canvas.height = containerSize / aspectRatio;
 
     // Clear canvas
-    ctx.fillStyle = "#f3f4f6";
+    ctx.fillStyle = "#F2F3F8"  /* = --glow-sunk (canvas necesita literal) */;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Calculate scale to fit image
@@ -228,13 +227,13 @@ export const ImageCropper = ({
             </div>
           </div>
 
-          <p className="text-xs text-center text-muted-foreground">
+          <p className="text-xs text-center text-outline">
             Arrastra para mover la imagen
           </p>
 
           {/* Zoom control */}
           <div className="flex items-center gap-3">
-            <ZoomOut className="h-4 w-4 text-muted-foreground" />
+            <ZoomOut className="h-4 w-4 text-outline" />
             <Slider
               value={[zoom]}
               min={0.5}
@@ -243,31 +242,29 @@ export const ImageCropper = ({
               onValueChange={([v]) => setZoom(v)}
               className="flex-1"
             />
-            <ZoomIn className="h-4 w-4 text-muted-foreground" />
+            <ZoomIn className="h-4 w-4 text-outline" />
           </div>
 
           {/* Rotation */}
           <div className="flex justify-center">
-            <Button
-              variant="outline"
-              size="sm"
+            <button className="glow-btn glow-btn--sm"
               onClick={() => setRotation((r) => (r + 90) % 360)}
             >
               <RotateCw className="h-4 w-4 mr-2" />
               Rotar 90°
-            </Button>
+            </button>
           </div>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={onClose}>
+          <button className="glow-btn" onClick={onClose}>
             <X className="h-4 w-4 mr-2" />
             Cancelar
-          </Button>
-          <Button onClick={handleCrop}>
+          </button>
+          <button className="glow-btn glow-btn--primary" onClick={handleCrop}>
             <Check className="h-4 w-4 mr-2" />
             Aplicar
-          </Button>
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

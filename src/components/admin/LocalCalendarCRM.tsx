@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from "react";
+import { STYLIST_FALLBACK } from "@/lib/chartColors";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AgendaDayTimeline } from "./AgendaDayTimeline";
 import { AgendaWeekBoard, type WeekBooking, type WeekDay } from "./AgendaWeekBoard";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import {
@@ -51,9 +50,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -917,7 +913,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
   const getStylistColor = (stylistSlug: string) => {
     const stylist = stylists.find((s) => s.slug === stylistSlug);
-    return stylist?.color || "#8B5CF6";
+    return stylist?.color || STYLIST_FALLBACK;
   };
 
   const getScheduleForDay = (dayDate: Date) => {
@@ -1486,7 +1482,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
               className="gh-glow"
               style={{
                 background:
-                  "radial-gradient(120% 140% at 88% -10%, color-mix(in oklab, #4361ee, transparent 78%), transparent 60%)",
+                  "radial-gradient(120% 140% at 88% -10%, color-mix(in oklab, var(--glow-brand), transparent 78%), transparent 60%)",
               }}
             />
             <div className="gh-date">
@@ -1516,7 +1512,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                         cy={SIZE / 2}
                         r={R}
                         fill="none"
-                        stroke="#4361ee"
+                        stroke="var(--glow-brand)"
                         strokeWidth={SW}
                         strokeLinecap="round"
                         strokeDasharray={circ}
@@ -1540,7 +1536,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                     </div>
                   </div>
                   <div className="gh-occ">
-                    <span className="gh-occ-pct" style={{ color: "#4361ee" }}>
+                    <span className="gh-occ-pct" style={{ color: "var(--glow-brand)" }}>
                       {Math.round(occPct * 100)}%
                     </span>
                     <span className="gh-occ-lbl">ocupación</span>
@@ -1557,7 +1553,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   <div className="gh-stat">
                     <span className="gh-stat-num">{heroPending}</span>
                     <span className="gh-stat-lbl">
-                      <span className="gh-stat-dot" style={{ background: "#4361ee" }} />
+                      <span className="gh-stat-dot" style={{ background: "var(--glow-brand)" }} />
                       pendientes
                     </span>
                   </div>
@@ -1566,7 +1562,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   <span className="gh-next-lbl">Próxima cita</span>
                   {heroNext ? (
                     <>
-                      <span className="gh-next-time" style={{ color: "#4361ee" }}>
+                      <span className="gh-next-time" style={{ color: "var(--glow-brand)" }}>
                         {heroNext.Hora.slice(0, 5)}
                       </span>
                       <span className="gh-next-client">{heroNext.customer_name}</span>
@@ -1593,13 +1589,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           <span className="wk-month">{format(weekStart, "MMMM yyyy", { locale: es })}</span>
           <button
             className="wk-today"
-            style={{ color: "#4361ee" }}
+            style={{ color: "var(--glow-brand)" }}
             onClick={() => {
               setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
               setActiveTab(format(new Date(), "yyyy-MM-dd"));
             }}
           >
-            <span className="wk-today-dot" style={{ background: "#4361ee" }} />
+            <span className="wk-today-dot" style={{ background: "var(--glow-brand)" }} />
             Volver a hoy
           </button>
         </div>
@@ -1633,7 +1629,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   style={
                     isOn
                       ? {
-                          background: "linear-gradient(100deg, #22408C, #98329A)",
+                          background: "var(--glow-gradient)",
                           color: "#fff",
                           borderColor: "transparent",
                           boxShadow: "0 12px 28px -10px rgba(34,64,140,.45)",
@@ -1644,7 +1640,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                 >
                   <span className="wk-name">{format(day, "EEE", { locale: es }).toUpperCase()}</span>
                   <span className="wk-num">{format(day, "d")}</span>
-                  {isToday && !isOn && <span className="wk-today-pip" style={{ background: "#4361ee" }} />}
+                  {isToday && !isOn && <span className="wk-today-pip" style={{ background: "var(--glow-brand)" }} />}
                   {isClosed ? (
                     <span className="wk-closed-tag">
                       <Ban style={{ width: 11, height: 11 }} />
@@ -1654,12 +1650,12 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                       <span className="wk-bar">
                         <span
                           className="wk-bar-fill"
-                          style={{ width: `${20 + pct * 80}%`, background: isOn ? "rgba(255,255,255,.9)" : "#4361ee" }}
+                          style={{ width: `${20 + pct * 80}%`, background: isOn ? "rgba(255,255,255,.9)" : "var(--glow-brand)" }}
                         />
                       </span>
                       <span className="wk-count" style={{ display: "flex", alignItems: "center", gap: 3 }}>
                         {hasFullDayBlock && (
-                          <Lock style={{ width: 9, height: 9, flexShrink: 0, color: isOn ? "#fecaca" : "#dc2626" }} />
+                          <Lock style={{ width: 9, height: 9, flexShrink: 0, color: isOn ? "var(--glow-danger-soft)" : "var(--glow-danger-ink)" }} />
                         )}
                         {realBkgs.length}
                       </span>
@@ -1692,14 +1688,14 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   isAllOn
                     ? {
                         borderColor: "transparent",
-                        background: "linear-gradient(100deg, #22408C, #98329A)",
+                        background: "var(--glow-gradient)",
                         color: "#fff",
                         boxShadow: "0 6px 14px -6px rgba(34,64,140,.5)",
                       }
                     : undefined
                 }
               >
-                {!isAllOn && <span className="ag-proftab-dot" style={{ background: "#22408C" }} />}
+                {!isAllOn && <span className="ag-proftab-dot" style={{ background: "var(--glow-brand)" }} />}
                 Todas
                 <span
                   className="ag-proftab-count"
@@ -1799,7 +1795,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   gap: 12,
                   borderBottom: "1px solid oklch(0.955 0.004 265)",
                 }}
-                className="hover:bg-gray-50 transition-colors"
+                className="hover:bg-chip transition-colors"
               >
                 <div style={{ minWidth: 0 }}>
                   <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{result.customer_name}</p>
@@ -1808,7 +1804,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   </p>
                 </div>
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <p style={{ fontSize: 15, fontWeight: 800, color: "#4361ee" }}>{result.Hora.slice(0, 5)}</p>
+                  <p style={{ fontSize: 15, fontWeight: 800, color: "var(--glow-brand)" }}>{result.Hora.slice(0, 5)}</p>
                   <p style={{ fontSize: 12, color: "oklch(0.62 0.015 265)" }}>
                     {format(parseISO(result.Fecha), "d MMM", { locale: es })}
                   </p>
@@ -1832,10 +1828,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
               </span>
               <button
                 className="wk-today"
-                style={{ color: "#22408C" }}
+                style={{ color: "var(--glow-brand)" }}
                 onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
               >
-                <span className="wk-today-dot" style={{ background: "#22408C" }} />
+                <span className="wk-today-dot" style={{ background: "var(--glow-brand)" }} />
                 Hoy
               </button>
             </div>
@@ -2006,15 +2002,15 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                     gap: 10,
                     borderRadius: 14,
                     border: "1px solid rgba(245,158,11,.35)",
-                    background: "linear-gradient(to right, #fffbeb, #fef3c7)",
+                    background: "linear-gradient(to right, var(--glow-warn-soft), var(--glow-warn-soft))",
                     padding: "10px 14px",
                     marginBottom: 12,
                   }}
                 >
-                  <Sparkles style={{ width: 16, height: 16, color: "#d97706", flexShrink: 0 }} />
+                  <Sparkles style={{ width: 16, height: 16, color: "var(--glow-warn-ink)", flexShrink: 0 }} />
                   <div>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: "#92400e" }}>Horario especial</p>
-                    <p style={{ fontSize: 11, color: "#b45309" }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: "var(--glow-warn-ink)" }}>Horario especial</p>
+                    <p style={{ fontSize: 11, color: "var(--glow-warn-ink)" }}>
                       {schedule.isClosed ? "Cerrado por horario especial" : schedule.specialLabel}
                     </p>
                   </div>
@@ -2057,7 +2053,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   overflow: "hidden",
                   border: "1px solid oklch(0.925 0.007 265)",
                   boxShadow: "0 10px 40px -16px rgba(20, 22, 40, 0.08)",
-                  background: "#ffffff",
+                  background: "var(--glow-surface)",
                   position: "relative",
                   display: "none", // grid clásico retirado: la agenda usa el timeline en todos los tamaños
                 }}
@@ -2078,13 +2074,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                         position: "sticky",
                         top: 0,
                         zIndex: 40,
-                        background: "#ffffff",
+                        background: "var(--glow-surface)",
                         borderBottom: "1px solid oklch(0.925 0.007 265)",
                       }}
                     >
                       <div
                         className="ag-corner"
-                        style={{ position: "sticky", left: 0, zIndex: 45, background: "#ffffff" }}
+                        style={{ position: "sticky", left: 0, zIndex: 45, background: "var(--glow-surface)" }}
                       >
                         HORA
                       </div>
@@ -2273,8 +2269,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                         top: Math.max(0, topDrag),
                                         height: hDrag,
                                         borderRadius: 10,
-                                        background: "#4361ee20",
-                                        border: "2px dashed #4361ee80",
+                                        background: "rgb(var(--glow-brand-rgb) / .125)",
+                                        border: "2px dashed rgb(var(--glow-brand-rgb) / .5)",
                                         pointerEvents: "none",
                                         zIndex: 40,
                                         display: "flex",
@@ -2286,7 +2282,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                         style={{
                                           fontSize: 12,
                                           fontWeight: 700,
-                                          color: "#4361ee",
+                                          color: "var(--glow-brand)",
                                           background: "white",
                                           padding: "2px 8px",
                                           borderRadius: 6,
@@ -2337,7 +2333,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                   >
                                     <CalendarOff style={{ width: 20, height: 20, color: "#fff" }} />
                                   </div>
-                                  <div style={{ fontSize: 13, fontWeight: 800, color: "#1f2340", letterSpacing: 0.2 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 800, color: "var(--glow-ink)", letterSpacing: 0.2 }}>
                                     No trabaja hoy
                                   </div>
                                   <div
@@ -2383,8 +2379,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                     gap: 7,
                                   }}
                                 >
-                                  <Lock style={{ width: 11, height: 11, color: "#dc2626", flexShrink: 0 }} />
-                                  <span style={{ fontSize: 12, fontWeight: 700, color: "#991b1b", flex: 1 }}>
+                                  <Lock style={{ width: 11, height: 11, color: "var(--glow-danger-ink)", flexShrink: 0 }} />
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--glow-danger-ink)", flex: 1 }}>
                                     Bloqueado
                                   </span>
                                   <button
@@ -2393,7 +2389,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                       const fb = (fullDayBlocksByStylist[stylist.slug] || [])[0];
                                       if (fb) handleDeleteBooking(fb);
                                     }}
-                                    className="p-1 rounded-md bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 transition-all"
+                                    className="p-1 rounded-md bg-glow-danger/5 text-glow-danger-ink hover:bg-glow-danger/10 hover:text-glow-danger-ink transition-all"
                                     title="Desbloquear"
                                   >
                                     <Trash2 style={{ width: 11, height: 11 }} />
@@ -2450,10 +2446,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                       cursor: isBlocked ? "default" : "grab",
                                       opacity: isDragging ? 0.4 : isCompleted ? 0.72 : 1,
                                       boxShadow: isHighlighted
-                                        ? `0 0 0 2px #4361ee, 0 4px 12px -4px ${bColor}60`
+                                        ? `0 0 0 2px var(--glow-brand), 0 4px 12px -4px ${bColor}60`
                                         : `0 1px 2px rgba(20,22,40,.05)`,
                                       transition: "transform .13s, box-shadow .13s",
-                                      outline: isResizing2 ? `2px solid #4361ee` : undefined,
+                                      outline: isResizing2 ? `2px solid var(--glow-brand)` : undefined,
                                       // Los bloqueos dejan pasar hover/click a los slots de cita rápida
                                       pointerEvents: isBlocked ? "none" : undefined,
                                     }}
@@ -2667,8 +2663,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                           className={cn(
                                             "p-1 rounded-md transition-all",
                                             isCompleted
-                                              ? "bg-green-500 text-white"
-                                              : "bg-foreground/10 text-foreground/60 hover:bg-green-500 hover:text-white",
+                                              ? "bg-glow-ok text-white"
+                                              : "bg-foreground/10 text-on-surface/60 hover:bg-glow-ok hover:text-white",
                                           )}
                                           title={isCompleted ? "Desmarcar" : "Completar"}
                                         >
@@ -2692,7 +2688,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                               if (isMobile) setActiveBookingActions(null);
                                               onNavigateToCash();
                                             }}
-                                            className="p-1 rounded-md bg-foreground/10 text-foreground/60 hover:bg-emerald-500 hover:text-white transition-all"
+                                            className="p-1 rounded-md bg-foreground/10 text-on-surface/60 hover:bg-glow-ok hover:text-white transition-all"
                                             title="Cobrar"
                                           >
                                             <Banknote style={{ width: 12, height: 12 }} />
@@ -2704,7 +2700,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                             if (isMobile) setActiveBookingActions(null);
                                             handleDeleteBooking(booking);
                                           }}
-                                          className="p-1 rounded-md bg-foreground/10 text-foreground/60 hover:bg-red-500 hover:text-white transition-all"
+                                          className="p-1 rounded-md bg-foreground/10 text-on-surface/60 hover:bg-glow-danger hover:text-white transition-all"
                                           title="Eliminar"
                                         >
                                           <Trash2 style={{ width: 12, height: 12 }} />
@@ -2720,7 +2716,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                             e.stopPropagation();
                                             handleDeleteBooking(booking);
                                           }}
-                                          className="p-1 rounded-md bg-gray-200 text-gray-500 hover:bg-red-100 hover:text-red-600 transition-all"
+                                          className="p-1 rounded-md bg-surface-container-high text-outline hover:bg-glow-danger/10 hover:text-glow-danger-ink transition-all"
                                           title="Desbloquear"
                                         >
                                           <Trash2 style={{ width: 12, height: 12 }} />
@@ -2787,7 +2783,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                               left: 0,
                               right: 0,
                               top: nowTopPx,
-                              borderTop: "2px solid #ef4444",
+                              borderTop: "2px solid var(--glow-danger)",
                               zIndex: 5,
                               pointerEvents: "none",
                               boxShadow: "0 0 14px 1px rgba(239,68,68,.45)",
@@ -2801,7 +2797,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                 width: 9,
                                 height: 9,
                                 borderRadius: "50%",
-                                background: "#ef4444",
+                                background: "var(--glow-danger)",
                                 display: "block",
                                 boxShadow: "0 0 0 4px rgba(239,68,68,.25)",
                               }}
@@ -2811,7 +2807,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                                 position: "absolute",
                                 left: 8,
                                 top: -9,
-                                background: "#ef4444",
+                                background: "var(--glow-danger)",
                                 color: "#fff",
                                 fontSize: 9,
                                 fontWeight: 800,
@@ -2882,15 +2878,15 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           {selectedBooking && (
             <div className="space-y-4">
               <div>
-                <Label>Título</Label>
-                <Input
+                <label>Título</label>
+                <input className="glow-input"
                   value={selectedBooking.title || ""}
                   onChange={(e) => setSelectedBooking({ ...selectedBooking, title: e.target.value })}
                 />
               </div>
               <div>
-                <Label>Notas</Label>
-                <Textarea
+                <label>Notas</label>
+                <textarea className="glow-input"
                   value={selectedBooking.notes?.replace("[✓ COMPLETADA] ", "") || ""}
                   onChange={(e) =>
                     setSelectedBooking({
@@ -2904,7 +2900,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                 />
               </div>
               <div>
-                <Label>Servicios</Label>
+                <label>Servicios</label>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {Array.isArray(selectedBooking.services) &&
                     selectedBooking.services.map((s: any, i: number) => (
@@ -2917,11 +2913,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
               {/* Client Info Panel */}
               <div className="rounded-lg border border-border/60 p-3 space-y-2 bg-muted/30">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                <label className="text-xs font-semibold text-outline uppercase tracking-wide">
                   Ficha de cliente
-                </Label>
+                </label>
                 {clientLoading ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-outline">
                     <Loader2 className="h-3 w-3 animate-spin" /> Buscando...
                   </div>
                 ) : matchedClient ? (
@@ -2934,45 +2930,42 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                         </Badge>
                       ))}
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                    <div className="grid grid-cols-2 gap-2 text-xs text-outline">
                       <div>
-                        Visitas: <span className="font-medium text-foreground">{matchedClient.total_visits || 0}</span>
+                        Visitas: <span className="font-medium text-on-surface">{matchedClient.total_visits || 0}</span>
                       </div>
                       <div>
                         Gasto:{" "}
-                        <span className="font-medium text-foreground">
+                        <span className="font-medium text-on-surface">
                           {(matchedClient.total_spent || 0).toFixed(2)}€
                         </span>
                       </div>
                     </div>
                     {matchedClient.notes && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">{matchedClient.notes}</p>
+                      <p className="text-xs text-outline line-clamp-2">{matchedClient.notes}</p>
                     )}
                     {onSelectClient && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full text-xs"
+                      <button className="glow-btn glow-btn--sm glow-btn--block text-xs"
                         onClick={() => {
                           setIsEditDialogOpen(false);
                           onSelectClient(matchedClient.id);
                         }}
                       >
                         <UserCircle className="h-3 w-3 mr-1" /> Ver ficha completa
-                      </Button>
+                      </button>
                     )}
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">No se encontró un cliente registrado con este nombre</p>
+                  <p className="text-xs text-outline">No se encontró un cliente registrado con este nombre</p>
                 )}
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <button className="glow-btn" onClick={() => setIsEditDialogOpen(false)}>
               Cancelar
-            </Button>
-            <Button onClick={handleUpdateBooking}>Guardar</Button>
+            </button>
+            <button className="glow-btn glow-btn--primary" onClick={handleUpdateBooking}>Guardar</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2986,51 +2979,51 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Tipo de bloqueo</Label>
+              <label>Tipo de bloqueo</label>
               <RadioGroup value={blockPeriod} onValueChange={(v) => setBlockPeriod(v as any)} className="mt-2">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="hours" id="hours" />
-                  <Label htmlFor="hours">Horas específicas</Label>
+                  <label htmlFor="hours">Horas específicas</label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="day" id="day" />
-                  <Label htmlFor="day">Día completo</Label>
+                  <label htmlFor="day">Día completo</label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="week" id="week" />
-                  <Label htmlFor="week">Semana</Label>
+                  <label htmlFor="week">Semana</label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="month" id="month" />
-                  <Label htmlFor="month">Mes</Label>
+                  <label htmlFor="month">Mes</label>
                 </div>
               </RadioGroup>
             </div>
 
             <div>
-              <Label>Estilista</Label>
+              <label>Estilista</label>
               <RadioGroup value={blockStylist} onValueChange={setBlockStylist} className="mt-2">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="all" id="all-stylists" />
-                  <Label htmlFor="all-stylists">Todos</Label>
+                  <label htmlFor="all-stylists">Todos</label>
                 </div>
                 {stylists.map((s) => (
                   <div key={s.slug} className="flex items-center space-x-2">
                     <RadioGroupItem value={s.slug} id={s.slug} />
-                    <Label htmlFor={s.slug}>{s.name}</Label>
+                    <label htmlFor={s.slug}>{s.name}</label>
                   </div>
                 ))}
               </RadioGroup>
             </div>
 
             <div>
-              <Label>Fecha inicio</Label>
+              <label>Fecha inicio</label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start mt-1">
+                  <button className="glow-btn glow-btn--block justify-start mt-1">
                     <CalendarIcon className="h-4 w-4 mr-2" />
                     {blockStartDate ? format(blockStartDate, "PPP", { locale: es }) : "Seleccionar fecha"}
-                  </Button>
+                  </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar mode="single" selected={blockStartDate} onSelect={setBlockStartDate} weekStartsOn={1} />
@@ -3041,25 +3034,25 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
             {blockPeriod === "hours" && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Hora inicio</Label>
-                  <Input type="time" value={blockStartTime} onChange={(e) => setBlockStartTime(e.target.value)} />
+                  <label>Hora inicio</label>
+                  <input className="glow-input" type="time" value={blockStartTime} onChange={(e) => setBlockStartTime(e.target.value)} />
                 </div>
                 <div>
-                  <Label>Hora fin</Label>
-                  <Input type="time" value={blockEndTime} onChange={(e) => setBlockEndTime(e.target.value)} />
+                  <label>Hora fin</label>
+                  <input className="glow-input" type="time" value={blockEndTime} onChange={(e) => setBlockEndTime(e.target.value)} />
                 </div>
               </div>
             )}
 
             {(blockPeriod === "week" || blockPeriod === "month") && (
               <div>
-                <Label>Fecha fin (opcional)</Label>
+                <label>Fecha fin (opcional)</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start mt-1">
+                    <button className="glow-btn glow-btn--block justify-start mt-1">
                       <CalendarIcon className="h-4 w-4 mr-2" />
                       {blockEndDate ? format(blockEndDate, "PPP", { locale: es }) : "Fecha automática"}
-                    </Button>
+                    </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <Calendar mode="single" selected={blockEndDate} onSelect={setBlockEndDate} weekStartsOn={1} />
@@ -3069,13 +3062,13 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsBlockDialogOpen(false)}>
+            <button className="glow-btn" onClick={() => setIsBlockDialogOpen(false)}>
               Cancelar
-            </Button>
-            <Button onClick={handleBlockPeriod} disabled={loading}>
+            </button>
+            <button className="glow-btn glow-btn--primary" onClick={handleBlockPeriod} disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Bloquear
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -3098,12 +3091,11 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
             >
               Cancelar
             </AlertDialogCancel>
-            <Button
-              variant="outline"
+            <button className="glow-btn"
               onClick={() => pendingCancelBooking && performBookingDeletion(pendingCancelBooking, false)}
             >
               Solo esta cita
-            </Button>
+            </button>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => pendingCancelBooking && performBookingDeletion(pendingCancelBooking, true)}
@@ -3521,7 +3513,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                         }}
                         style={{
                           border: "none",
-                          background: "var(--ag-chip, var(--gp-chip))",
+                          background: "var(--ag-chip, var(--glow-sunk))",
                           padding: "3px 7px",
                           cursor: "pointer",
                           color: "var(--ag-muted)",
@@ -3564,7 +3556,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                           lineHeight: 1,
                           fontVariantNumeric: "tabular-nums",
                           border: "none",
-                          borderBottom: "2px solid var(--gp-accent)",
+                          borderBottom: "2px solid var(--glow-brand)",
                           outline: "none",
                           background: "transparent",
                           width: "130px",
@@ -3577,7 +3569,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                         onClick={() => setEditingTotal(false)}
                         style={{
                           border: "none",
-                          background: "var(--gp-ok, #22c55e)",
+                          background: "var(--glow-ok-ink, var(--glow-ok))",
                           color: "#fff",
                           borderRadius: 8,
                           padding: "6px 10px",
@@ -3715,7 +3707,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                 >
                   {paying ? (
                     <>
-                      <Loader2 className="gp-spinner-sm" style={{ marginRight: 0 }} />
+                      <Loader2 className="glow-spinner-sm" style={{ marginRight: 0 }} />
                       Procesando...
                     </>
                   ) : (

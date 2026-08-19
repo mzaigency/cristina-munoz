@@ -1,9 +1,8 @@
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { ChevronRight, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { motion } from "framer-motion";
+import { chartColor, readableInk } from "@/lib/chartColors";
 import type { Client } from "./types";
 import { TAG_COLORS } from "./types";
 
@@ -14,67 +13,80 @@ interface ClientCardProps {
 }
 
 function getInitials(name: string) {
-  return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 }
 
-function getAvatarColor(name: string) {
-  const colors = [
-    "bg-rose-500", "bg-violet-500", "bg-blue-500", "bg-emerald-500",
-    "bg-amber-500", "bg-cyan-500", "bg-pink-500", "bg-indigo-500",
-  ];
+/** Color estable por nombre, tomado de la paleta de marca. */
+function avatarColor(name: string) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return colors[Math.abs(hash) % colors.length];
+  return chartColor(Math.abs(hash));
 }
 
+/**
+ * Una fila de la matriz de clientes, no una tarjeta suelta: el listado entero
+ * vive dentro de un único `glow-card`, igual que Servicios o Productos.
+ */
 export function ClientCard({ client, index, onClick }: ClientCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ delay: index * 0.02 }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      transition={{ delay: Math.min(index, 12) * 0.02 }}
+      className="glow-row glow-row--click"
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
     >
-      <Card
-        className="p-3 cursor-pointer hover:bg-muted/50 transition-colors active:scale-[0.99]"
-        onClick={onClick}
-      >
-        <div className="flex items-center gap-3">
-          <div className="relative shrink-0">
-            <div className={`h-10 w-10 rounded-full ${getAvatarColor(client.name)} flex items-center justify-center`}>
-              <span className="text-white text-sm font-bold">{getInitials(client.name)}</span>
-            </div>
-            {client.user_id && (
-              <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-green-500 flex items-center justify-center border-2 border-background">
-                <UserCheck className="h-2.5 w-2.5 text-white" />
-              </div>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h4 className="font-medium truncate">{client.name}</h4>
-              {client.tags?.slice(0, 2).map(tag => (
-                <Badge
-                  key={tag}
-                  variant="outline"
-                  className={`text-[10px] px-1.5 py-0 ${TAG_COLORS[tag] || ""}`}
-                >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-              {client.phone && <span>{client.phone}</span>}
-              <span>{client.total_visits} visitas</span>
-              <span className="font-medium text-green-600">{(client.total_spent || 0).toFixed(0)}€</span>
-              {client.last_visit_at && (
-                <span>Últ: {format(new Date(client.last_visit_at), "d MMM", { locale: es })}</span>
-              )}
-            </div>
-          </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+      <div style={{ position: "relative", flex: "none" }}>
+        <div
+          className="glow-avatar"
+          style={{ background: avatarColor(client.name), color: readableInk(avatarColor(client.name)) }}
+        >
+          {getInitials(client.name)}
         </div>
-      </Card>
+        {client.user_id && (
+          <span
+            title="Tiene cuenta en Glowapp"
+            style={{
+              position: "absolute", bottom: -2, right: -2, width: 15, height: 15,
+              borderRadius: 999, background: "var(--glow-ok)", border: "2px solid var(--glow-surface)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+          >
+            <UserCheck style={{ width: 8, height: 8, color: "#fff" }} />
+          </span>
+        )}
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span className="glow-row-nm" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {client.name}
+          </span>
+          {client.tags?.slice(0, 2).map((tag) => (
+            <span key={tag} className={`glow-badge ${TAG_COLORS[tag] || ""}`} style={{ flex: "none" }}>
+              {tag}
+            </span>
+          ))}
+        </div>
+        <div className="glow-row-mt">
+          {client.total_visits} {client.total_visits === 1 ? "visita" : "visitas"}
+          {client.phone && ` · ${client.phone}`}
+          {client.last_visit_at &&
+            ` · últ. ${format(new Date(client.last_visit_at), "d MMM", { locale: es })}`}
+        </div>
+      </div>
+
+      <div className="glow-row-amt">{(client.total_spent || 0).toFixed(0)} €</div>
+      <ChevronRight style={{ width: 17, height: 17, color: "var(--glow-ink-3)", flex: "none" }} />
     </motion.div>
   );
 }

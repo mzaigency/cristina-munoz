@@ -73,20 +73,20 @@ const ReportsSection = ({ tenantId, subTab, onSubTabChange }: ReportsSectionProp
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-      <div className="gp-subtabs">
+      <div className="glow-subtabs">
         {tabs.map((tab) => {
           const locked = isTabLocked(tab);
           return (
             <button
               key={tab.id}
-              className={`gp-subtab${currentTab === tab.id ? " on" : ""}`}
+              className={`glow-subtab${currentTab === tab.id ? " glow-subtab--on" : ""}`}
               onClick={() => handleTabChange(tab.id)}
               style={locked ? { opacity: 0.5, cursor: "not-allowed" } : {}}
             >
               {locked ? <Lock style={{ width: 11, height: 11 }} /> : <tab.icon style={{ width: 12, height: 12 }} />}
               {tab.label}
               {locked && (
-                <span style={{ fontSize: 9, fontWeight: 800, color: "var(--gp-warn)", background: "var(--gp-warn-soft)", padding: "1px 5px", borderRadius: 99 }}>
+                <span style={{ fontSize: 9, fontWeight: 800, color: "var(--glow-warn-ink)", background: "var(--glow-warn-soft)", padding: "1px 5px", borderRadius: 99 }}>
                   {tab.requiredPlan === "business" ? "Business" : "Pro"}
                 </span>
               )}

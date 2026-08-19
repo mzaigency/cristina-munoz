@@ -27,18 +27,9 @@ interface MarketingSectionProps {
   tenantSlug: string;
   subTab?: string;
   onSubTabChange?: (subTab: string) => void;
-  hideTabs?: boolean;
 }
 
 type MarketingTab = "resumen" | "posts" | "promos" | "resenas" | "difusion" | "qr";
-
-interface TabConfig {
-  id: MarketingTab;
-  label: string;
-  icon: React.ElementType;
-  badge: number;
-  requiredFeature?: PlanFeature;
-}
 
 const POST_CATEGORIES = [
   { id: "all", label: "Todas" },
@@ -56,7 +47,6 @@ const MarketingSection = ({
   tenantSlug,
   subTab,
   onSubTabChange,
-  hideTabs,
 }: MarketingSectionProps) => {
   const validTabs: MarketingTab[] = ["resumen", "posts", "promos", "resenas", "difusion", "qr"];
   const [internalTab, setInternalTab] = useState<MarketingTab>("resumen");
@@ -70,8 +60,6 @@ const MarketingSection = ({
   };
 
   const [postCreatorOpen, setPostCreatorOpen] = useState(false);
-  const [pendingReviews, setPendingReviews] = useState(0);
-  const [activePromos, setActivePromos] = useState(0);
   const [tenantName, setTenantName] = useState<string>("");
   const [postFilter, setPostFilter] = useState<string>("all");
   const [postSort, setPostSort] = useState<"recent" | "popular">("recent");
@@ -91,52 +79,27 @@ const MarketingSection = ({
 
   useEffect(() => {
     let cancelled = false;
-    const fetchCounts = async () => {
-      const [revRes, promoRes, tenantRes] = await Promise.all([
-        supabase
-          .from("reviews")
-          .select("id", { count: "exact", head: true })
-          .eq("tenant_id", tenantId)
-          .eq("approved", false),
-        supabase
-          .from("promotions" as never)
-          .select("id, is_active, valid_until")
-          .eq("tenant_id", tenantId),
-        supabase.from("tenants").select("name").eq("id", tenantId).single(),
-      ]);
-      if (cancelled) return;
-      setPendingReviews(revRes.count ?? 0);
-      const now = new Date();
-      const promos = (promoRes.data ?? []) as Array<{ is_active: boolean | null; valid_until: string | null }>;
-      const active = promos.filter((p) => {
-        if (!p.is_active) return false;
-        if (p.valid_until && new Date(p.valid_until) < now) return false;
-        return true;
-      }).length;
-      setActivePromos(active);
-      setTenantName(tenantRes.data?.name ?? "");
-    };
-    fetchCounts();
+    supabase
+      .from("tenants")
+      .select("name")
+      .eq("id", tenantId)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled) setTenantName(data?.name ?? "");
+      });
     return () => {
       cancelled = true;
     };
   }, [tenantId]);
 
-  const tabs: TabConfig[] = [
-    { id: "resumen", label: "Resumen", icon: LayoutDashboard, badge: 0 },
-    { id: "posts", label: "Posts", icon: ImagePlus, badge: 0 },
-    { id: "promos", label: "Promos", icon: Percent, badge: activePromos, requiredFeature: "promotions" },
-    { id: "resenas", label: "Reseñas", icon: Star, badge: pendingReviews },
-    { id: "difusion", label: "Difusión", icon: Megaphone, badge: 0 },
-    { id: "qr", label: "Tarjetas QR", icon: QrCode, badge: 0 },
-  ];
-
-  const isTabLocked = (tab: TabConfig) =>
-    tab.requiredFeature ? !hasFeature(tab.requiredFeature) : false;
+  /** Qué pestaña exige plan. AdminSubNav ya las bloquea en la fila; esto
+      cubre la navegación que llega desde el Resumen. */
+  const LOCKED: Partial<Record<MarketingTab, PlanFeature>> = { promos: "promotions" };
 
   const handleTabChange = (id: MarketingTab) => {
-    const tab = tabs.find((t) => t.id === id);
-    if (tab && !isTabLocked(tab)) setActiveTab(id);
+    const needs = LOCKED[id];
+    if (needs && !hasFeature(needs)) return;
+    setActiveTab(id);
   };
 
   const sortedPosts = useMemo(() => {
@@ -160,56 +123,32 @@ const MarketingSection = ({
   }, [tenantPosts]);
 
   return (
-    <div className="gp-mkt">
-      {!hideTabs && (
-        <div className="gp-mkt-tabs">
-          {tabs.map((tab) => {
-            const locked = isTabLocked(tab);
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                className={`gp-mkt-tab${activeTab === tab.id ? " on" : ""}${locked ? " locked" : ""}`}
-                onClick={() => handleTabChange(tab.id)}
-                type="button"
-              >
-                {locked ? <Lock /> : <Icon />}
-                <span>{tab.label}</span>
-                {locked && <span className="gp-mkt-tab-pro">Pro</span>}
-                {!locked && tab.badge > 0 && (
-                  <span className="gp-mkt-tab-badge">{tab.badge > 99 ? "99+" : tab.badge}</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      <div className="gp-mkt-body">
+    <div className="glow-mkt">
+      <div className="glow-mkt-body">
         {activeTab === "resumen" && (
           <MarketingOverview tenantId={tenantId} onNavigate={(t) => handleTabChange(t as MarketingTab)} />
         )}
 
         {activeTab === "posts" && (
-          <div className="gp-fade gp-mkt-posts">
-            <div className="gp-page-h">
+          <div className="glow-fade glow-mkt-posts">
+            <div className="glow-page-h">
               <div>
                 <h2>Posts</h2>
                 <p>{postStats.total} publicaciones · {postStats.likes} likes</p>
               </div>
-              <div className="gp-page-actions">
-                <button className="gp-btn primary sm" onClick={() => setPostCreatorOpen(true)}>
+              <div className="glow-page-actions">
+                <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={() => setPostCreatorOpen(true)}>
                   <Plus style={{ width: 13, height: 13 }} /> Nuevo Post
                 </button>
               </div>
             </div>
 
-            <div className="gp-mkt-posts-toolbar">
-              <div className="gp-mkt-chip-row">
+            <div className="glow-mkt-posts-toolbar">
+              <div className="glow-mkt-chip-row">
                 {POST_CATEGORIES.map((c) => (
                   <button
                     key={c.id}
-                    className={`gp-mkt-chip${postFilter === c.id ? " on" : ""}`}
+                    className={`glow-mkt-chip${postFilter === c.id ? " on" : ""}`}
                     onClick={() => setPostFilter(c.id)}
                     type="button"
                   >
@@ -217,17 +156,17 @@ const MarketingSection = ({
                   </button>
                 ))}
               </div>
-              <div className="gp-mkt-chip-row">
-                <Filter style={{ width: 13, height: 13, color: "var(--gp-muted-c)" }} />
+              <div className="glow-mkt-chip-row">
+                <Filter style={{ width: 13, height: 13, color: "var(--glow-ink-3)" }} />
                 <button
-                  className={`gp-mkt-chip${postSort === "recent" ? " on" : ""}`}
+                  className={`glow-mkt-chip${postSort === "recent" ? " on" : ""}`}
                   onClick={() => setPostSort("recent")}
                   type="button"
                 >
                   Recientes
                 </button>
                 <button
-                  className={`gp-mkt-chip${postSort === "popular" ? " on" : ""}`}
+                  className={`glow-mkt-chip${postSort === "popular" ? " on" : ""}`}
                   onClick={() => setPostSort("popular")}
                   type="button"
                 >

@@ -191,19 +191,18 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
               Buscar cliente por nombre o username
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-outline" />
+              <input className="glow-input pl-9"
                 type="text"
                 placeholder="Nombre o @username"
                 value={searchUsername}
                 onChange={(e) => setSearchUsername(e.target.value)}
-                className="pl-9"
               />
             </div>
             {searching && (
-              <p className="text-xs text-muted-foreground mt-2">Buscando…</p>
+              <p className="text-xs text-outline mt-2">Buscando…</p>
             )}
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-outline mt-2">
               El cliente debe tener una cuenta registrada
             </p>
           </div>
@@ -229,7 +228,7 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
                         {p.full_name || p.username || 'Usuario'}
                       </p>
                       {p.username && (
-                        <p className="text-xs text-muted-foreground truncate">
+                        <p className="text-xs text-outline truncate">
                           @{p.username}
                         </p>
                       )}
@@ -270,7 +269,7 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
         <div className="msg-shell-mobile" style={adminMobileShellStyle}>
           <header className="msg-sidebar-header">
             <span className="msg-sidebar-title">
-              <MessageCircle className="h-5 w-5" style={{ color: 'var(--gp-accent)' }} />
+              <MessageCircle className="h-5 w-5" style={{ color: 'var(--glow-brand)' }} />
               Mensajes
               {totalUnread > 0 && (
                 <span className="msg-unread-badge">

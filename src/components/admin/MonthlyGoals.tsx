@@ -1,9 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfMonth, endOfMonth, differenceInDays, addDays } from "date-fns";
@@ -196,39 +192,39 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
             <Target className="h-5 w-5 text-primary" />
             Objetivos {format(new Date(), "MMMM yyyy", { locale: es })}
           </h2>
-          <p className="text-sm text-muted-foreground">Define y sigue tus metas mensuales</p>
+          <p className="text-sm text-outline">Define y sigue tus metas mensuales</p>
         </div>
         {isEditing ? (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+            <button className="glow-btn glow-btn--sm" onClick={() => setIsEditing(false)}>
               Cancelar
-            </Button>
-            <Button size="sm" onClick={saveGoals} disabled={saving}>
+            </button>
+            <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={saveGoals} disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
               Guardar
-            </Button>
+            </button>
           </div>
         ) : (
-          <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+          <button className="glow-btn glow-btn--sm" onClick={() => setIsEditing(true)}>
             Editar objetivos
-          </Button>
+          </button>
         )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         {/* Revenue Goal */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Euro className="h-4 w-4 text-green-600" />
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3>
+              <Euro className="h-4 w-4 text-glow-ok-ink" />
               Facturación
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div></div>
+          <div className="glow-card-b">
             {isEditing ? (
               <div className="space-y-2">
-                <Label className="text-xs">Objetivo (€)</Label>
-                <Input
+                <label className="text-xs">Objetivo (€)</label>
+                <input className="glow-input"
                   type="number"
                   value={goals.revenue_goal}
                   onChange={(e) => setGoals({ ...goals, revenue_goal: parseFloat(e.target.value) || 0 })}
@@ -239,7 +235,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
                 <div className="flex items-end justify-between mb-2">
                   <div>
                     <p className="text-2xl font-bold">{progress.revenue.toFixed(0)}€</p>
-                    <p className="text-xs text-muted-foreground">de {goals.revenue_goal.toFixed(0)}€</p>
+                    <p className="text-xs text-outline">de {goals.revenue_goal.toFixed(0)}€</p>
                   </div>
                   <p className="text-lg font-semibold text-primary">
                     {getProgressPercent(progress.revenue, goals.revenue_goal).toFixed(0)}%
@@ -248,7 +244,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
                 <Progress value={getProgressPercent(progress.revenue, goals.revenue_goal)} className="h-2" />
                 
                 {goals.revenue_goal > 0 && (
-                  <div className={`flex items-center gap-1 mt-2 text-xs ${revenuePrediction.onTrack ? 'text-green-600' : 'text-amber-600'}`}>
+                  <div className={`flex items-center gap-1 mt-2 text-xs ${revenuePrediction.onTrack ? 'text-glow-ok-ink' : 'text-glow-warn-ink'}`}>
                     {revenuePrediction.onTrack ? (
                       <TrendingUp className="h-3 w-3" />
                     ) : (
@@ -262,22 +258,22 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
                 )}
               </>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Bookings Goal */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-blue-600" />
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3>
+              <Calendar className="h-4 w-4 text-glow-brand-ink" />
               Citas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div></div>
+          <div className="glow-card-b">
             {isEditing ? (
               <div className="space-y-2">
-                <Label className="text-xs">Objetivo</Label>
-                <Input
+                <label className="text-xs">Objetivo</label>
+                <input className="glow-input"
                   type="number"
                   value={goals.bookings_goal}
                   onChange={(e) => setGoals({ ...goals, bookings_goal: parseInt(e.target.value) || 0 })}
@@ -288,7 +284,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
                 <div className="flex items-end justify-between mb-2">
                   <div>
                     <p className="text-2xl font-bold">{progress.bookings}</p>
-                    <p className="text-xs text-muted-foreground">de {goals.bookings_goal}</p>
+                    <p className="text-xs text-outline">de {goals.bookings_goal}</p>
                   </div>
                   <p className="text-lg font-semibold text-primary">
                     {getProgressPercent(progress.bookings, goals.bookings_goal).toFixed(0)}%
@@ -297,7 +293,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
                 <Progress value={getProgressPercent(progress.bookings, goals.bookings_goal)} className="h-2" />
                 
                 {goals.bookings_goal > 0 && (
-                  <div className={`flex items-center gap-1 mt-2 text-xs ${bookingsPrediction.onTrack ? 'text-green-600' : 'text-amber-600'}`}>
+                  <div className={`flex items-center gap-1 mt-2 text-xs ${bookingsPrediction.onTrack ? 'text-glow-ok-ink' : 'text-glow-warn-ink'}`}>
                     {bookingsPrediction.onTrack ? (
                       <TrendingUp className="h-3 w-3" />
                     ) : (
@@ -308,22 +304,22 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
                 )}
               </>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* New Clients Goal */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Users className="h-4 w-4 text-purple-600" />
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3>
+              <Users className="h-4 w-4 text-glow-accent-ink" />
               Nuevos Clientes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div></div>
+          <div className="glow-card-b">
             {isEditing ? (
               <div className="space-y-2">
-                <Label className="text-xs">Objetivo</Label>
-                <Input
+                <label className="text-xs">Objetivo</label>
+                <input className="glow-input"
                   type="number"
                   value={goals.new_clients_goal}
                   onChange={(e) => setGoals({ ...goals, new_clients_goal: parseInt(e.target.value) || 0 })}
@@ -334,7 +330,7 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
                 <div className="flex items-end justify-between mb-2">
                   <div>
                     <p className="text-2xl font-bold">{progress.newClients}</p>
-                    <p className="text-xs text-muted-foreground">de {goals.new_clients_goal}</p>
+                    <p className="text-xs text-outline">de {goals.new_clients_goal}</p>
                   </div>
                   <p className="text-lg font-semibold text-primary">
                     {getProgressPercent(progress.newClients, goals.new_clients_goal).toFixed(0)}%
@@ -343,22 +339,22 @@ export function MonthlyGoals({ tenantId }: MonthlyGoalsProps) {
                 <Progress value={getProgressPercent(progress.newClients, goals.new_clients_goal)} className="h-2" />
               </>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Alerts */}
       {!isEditing && goals.revenue_goal > 0 && !revenuePrediction.onTrack && (
-        <Card className="border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20">
-          <CardContent className="py-3">
-            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+        <div className="glow-card border-glow-warn/50 bg-glow-warn/50">
+          <div className="glow-card-b">
+            <div className="flex items-center gap-2 text-glow-warn-ink">
               <AlertTriangle className="h-4 w-4" />
               <p className="text-sm">
                 Vas por debajo del objetivo de facturación. Necesitas facturar <strong>{revenuePrediction.dailyNeeded.toFixed(0)}€/día</strong> para alcanzarlo.
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );

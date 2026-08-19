@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo, useRef, type ComponentType }
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, type PanInfo } from "motion/react";
 import { ArrowRight, ArrowLeft, Lock, Sparkles, X, MousePointerClick } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { PlanFeature } from "@/hooks/usePlanLimits";
@@ -209,7 +208,7 @@ function ConfettiBurst({ trigger }: { trigger: number }) {
         x: (Math.random() - 0.5) * 240,
         y: -110 - Math.random() * 90,
         rot: (Math.random() - 0.5) * 360,
-        color: ["#22408b", "#99329a", "#f59e0b", "#10b981", "#3b82f6"][i % 5],
+        color: ["var(--glow-brand)", "var(--glow-accent)", "var(--glow-warn)", "var(--glow-ok)", "var(--glow-brand-ink)"][i % 5],
         size: 5 + Math.random() * 5,
         delay: i * 0.02,
       })),
@@ -662,7 +661,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
                     initial={false}
                     animate={{ width: i <= stepIdx ? "100%" : "0%" }}
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                    className="absolute inset-y-0 left-0 gp-grad-bar"
+                    className="absolute inset-y-0 left-0 glow-grad-bar"
                   />
                 </button>
               ))}
@@ -691,15 +690,15 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
                     initial={{ scale: 0, rotate: -20 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: "spring", damping: 13, stiffness: 260, delay: 0.05 }}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl gp-grad-brand-soft"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl glow-grad-brand-soft"
                   >
                     <span>{step.emoji}</span>
                   </motion.div>
                   <div className="min-w-0 flex-1 pt-0.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-[15px] font-semibold leading-tight text-foreground">{step.title}</h3>
+                      <h3 className="text-[15px] font-semibold leading-tight text-on-surface">{step.title}</h3>
                       {locked && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-glow-warn/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-glow-warn-ink">
                           <Lock className="h-2.5 w-2.5" />
                           {step.requiredPlan === "business" ? "Business" : "Pro"}
                         </span>
@@ -714,7 +713,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
                           initial={{ opacity: 0, y: 4 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -4 }}
-                          className="mt-1 flex items-center gap-1.5 text-[13px] font-medium gp-text-brand"
+                          className="mt-1 flex items-center gap-1.5 text-[13px] font-medium glow-text-brand"
                         >
                           <MousePointerClick className="h-3.5 w-3.5 shrink-0" />
                           Abrimos <b>{navLabel}</b> desde aquí…
@@ -726,7 +725,7 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -4 }}
                         >
-                          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{step.body}</p>
+                          <p className="mt-1 text-[13px] leading-relaxed text-outline">{step.body}</p>
                           {step.tips && step.tips.length > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-1.5">
                               {step.tips.map((tip) => (
@@ -751,42 +750,34 @@ export function AdminTour({ open, onOpenChange, onNavigate, hasFeature }: AdminT
             {/* Controles */}
             <div className="flex items-center justify-between gap-2 px-4 pb-3 pt-2.5">
               {stepIdx === 0 ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={complete}
-                  className="h-8 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
-                >
+                <button className="glow-btn glow-btn--ghost glow-btn--sm px-2 text-xs font-medium text-outline hover:text-on-surface"
+                  onClick={complete}>
                   Saltar
-                </Button>
+                </button>
               ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={prev}
-                  className="h-8 gap-1 px-2 text-muted-foreground hover:text-foreground"
-                >
+                <button className="glow-btn glow-btn--ghost glow-btn--sm gap-1 px-2 text-outline hover:text-on-surface"
+                  onClick={prev}>
                   <ArrowLeft className="h-3.5 w-3.5" />
                   <span className="text-xs font-medium">Anterior</span>
-                </Button>
+                </button>
               )}
 
-              <span className="text-[11px] tabular-nums text-muted-foreground">
+              <span className="text-[11px] tabular-nums text-outline">
                 {stepIdx + 1} / {STEPS.length}
               </span>
 
               <motion.div whileTap={{ scale: 0.95 }}>
-                <Button size="sm" onClick={next} className="h-8 gap-1 px-4 gp-grad-brand text-white">
+                <button className="glow-btn glow-btn--primary glow-btn--sm gap-1 px-4 glow-grad-brand text-white" onClick={next}>
                   <span className="text-xs font-semibold">{isLast ? "¡A trabajar!" : "Siguiente"}</span>
                   {!isLast && <ArrowRight className="h-3.5 w-3.5" />}
-                </Button>
+                </button>
               </motion.div>
             </div>
 
             <button
               onClick={complete}
               aria-label="Cerrar tour"
-              className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full text-outline transition-colors hover:bg-muted hover:text-on-surface"
             >
               <X className="h-3.5 w-3.5" />
             </button>

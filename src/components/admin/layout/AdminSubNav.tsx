@@ -63,7 +63,7 @@ export const ADMIN_SUB_NAV: Record<AdminSection, AdminSubTabDef[]> = {
     { value: "espera", label: "Espera", icon: Clock, badgeKey: "waitlist" },
   ],
   caja: [
-    { value: "cobros", label: "Cobros", icon: Wallet, requiredFeature: "cash_register" },
+    { value: "cobros", label: "Cobrar", icon: Wallet, requiredFeature: "cash_register" },
     { value: "historial", label: "Historial", icon: History, requiredFeature: "cash_register" },
     { value: "pedidos", label: "Pedidos", icon: ShoppingCart, badgeKey: "orders" },
     { value: "cierre", label: "Cierre", icon: Receipt, requiredFeature: "cash_register" },
@@ -136,12 +136,11 @@ export function AdminSubNav({
       ref={navRef}
       role="tablist"
       aria-label={`Sub-navegación ${section}`}
-      className="border-b"
-      style={{ background: "color-mix(in oklab, var(--gp-bg), white 30%)", backdropFilter: "blur(12px)", borderColor: "var(--gp-line)" }}
+      className="glow-subnav"
     >
       <div className="mx-auto max-w-7xl px-3 min-[920px]:px-[26px]">
         <ScrollArea className="w-full">
-          <div className="flex items-center gap-1 py-2.5">
+          <div className="glow-subnav-row">
             {items.map((item) => {
               const isActive = current === item.value;
               const locked = item.requiredFeature ? !hasFeature(item.requiredFeature) : false;
@@ -158,15 +157,19 @@ export function AdminSubNav({
                     if (locked) return;
                     onSelect(item.value);
                   }}
-                  className={cn("gp-subtab", isActive && "on", locked && "opacity-60 cursor-not-allowed")}
+                  className={cn(
+                    "glow-subtab",
+                    isActive && "glow-subtab--on",
+                    locked && "glow-subtab--locked",
+                  )}
                 >
                   <Icon className="h-3.5 w-3.5 shrink-0" />
                   <span>{item.label}</span>
                   {locked && (
-                    <span className="text-[10px] font-semibold text-amber-600">Pro</span>
+                    <span className="glow-subtab-pro">Pro</span>
                   )}
                   {badge > 0 && !isActive && (
-                    <span className="gp-subtab-count">{badge}</span>
+                    <span className="glow-subtab-count">{badge > 99 ? "99+" : badge}</span>
                   )}
                 </button>
               );

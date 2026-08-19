@@ -159,7 +159,7 @@ export function GuestBookingForm({
           onClick={verifyAndBook}
           disabled={loading || code.length !== 6}
           className="w-full h-12 rounded-xl text-white font-medium"
-          style={{ background: "linear-gradient(100deg, #22408c, #98329a)" }}
+          style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
         >
           {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirmar reserva"}
         </Button>
@@ -203,7 +203,7 @@ export function GuestBookingForm({
         onClick={sendOtp}
         disabled={loading}
         className="w-full h-12 rounded-xl text-white font-medium"
-        style={{ background: "linear-gradient(100deg, #22408c, #98329a)" }}
+        style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
       >
         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Enviar código y reservar"}
       </Button>

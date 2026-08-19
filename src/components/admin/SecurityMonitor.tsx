@@ -195,7 +195,7 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
           <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
             <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent" />
           </div>
-          <p className="text-sm text-muted-foreground">Cargando estadísticas...</p>
+          <p className="text-sm text-outline">Cargando estadísticas...</p>
         </div>
       </div>
     );
@@ -205,9 +205,9 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
-          <BarChart3 className="h-8 w-8 text-muted-foreground/50" />
+          <BarChart3 className="h-8 w-8 text-outline/50" />
         </div>
-        <p className="text-muted-foreground">No se pudieron cargar las estadísticas</p>
+        <p className="text-outline">No se pudieron cargar las estadísticas</p>
       </div>
     );
   }
@@ -240,7 +240,7 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
                 "flex-1 py-2.5 px-3 rounded-xl text-sm font-medium transition-all duration-200",
                 activeTab === tab
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                  : "text-outline hover:text-on-surface hover:bg-muted/50",
               )}
             >
               {tab === "daily" ? "Día" : tab === "weekly" ? "Semana" : "Mes"}
@@ -259,8 +259,8 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
                 <Calendar className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Reservas {periodLabel}</p>
-                <p className="text-3xl font-bold text-foreground">{currentPeriodData.total}</p>
+                <p className="text-xs text-outline uppercase tracking-wide">Reservas {periodLabel}</p>
+                <p className="text-3xl font-bold text-on-surface">{currentPeriodData.total}</p>
               </div>
             </div>
             {bookingsChange !== 0 && (
@@ -268,8 +268,8 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
                 className={cn(
                   "flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-semibold",
                   bookingsChange > 0
-                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                    ? "bg-glow-ok/10 text-glow-ok-ink"
+                    : "bg-glow-danger/10 text-glow-danger-ink",
                 )}
               >
                 {bookingsChange > 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
@@ -283,12 +283,12 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
         {/* Clientes Activos */}
         <div className="ios-card p-4">
           <div className="flex flex-col gap-2">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="w-10 h-10 rounded-xl bg-glow-brand/10 flex items-center justify-center">
+              <Users className="h-5 w-5 text-glow-brand-ink" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Clientes</p>
-              <p className="text-2xl font-bold text-foreground">{totalProfiles}</p>
+              <p className="text-xs text-outline">Clientes</p>
+              <p className="text-2xl font-bold text-on-surface">{totalProfiles}</p>
             </div>
           </div>
         </div>
@@ -296,14 +296,14 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
         {/* Valoración Media */}
         <div className="ios-card p-4">
           <div className="flex flex-col gap-2">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-              <Star className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <div className="w-10 h-10 rounded-xl bg-glow-warn/10 flex items-center justify-center">
+              <Star className="h-5 w-5 text-glow-warn-ink" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Valoración</p>
+              <p className="text-xs text-outline">Valoración</p>
               <div className="flex items-baseline gap-1">
-                <p className="text-2xl font-bold text-foreground">{stats.averageRating.toFixed(1)}</p>
-                <span className="text-xs text-muted-foreground">/5</span>
+                <p className="text-2xl font-bold text-on-surface">{stats.averageRating.toFixed(1)}</p>
+                <span className="text-xs text-outline">/5</span>
               </div>
             </div>
           </div>
@@ -317,28 +317,28 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
         className="ios-card p-4 overflow-hidden relative"
       >
         {/* Background decoration */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-glow-ok/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
 
         <div className="relative">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                <Target className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <div className="w-10 h-10 rounded-xl bg-glow-ok/10 flex items-center justify-center">
+                <Target className="h-5 w-5 text-glow-ok-ink" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Objetivo mensual</p>
-                <p className="text-sm font-semibold text-foreground">
+                <p className="text-xs text-outline">Objetivo mensual</p>
+                <p className="text-sm font-semibold text-on-surface">
                   {format(new Date(), "MMMM yyyy", { locale: es })}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-2xl font-bold text-on-surface">
                 {new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(
                   revenueData.monthlyRevenue,
                 )}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-outline">
                 de{" "}
                 {new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(revenueData.monthlyGoal)}
               </p>
@@ -354,8 +354,8 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
               className={cn(
                 "h-full rounded-full",
                 revenueData.monthlyRevenue >= revenueData.monthlyGoal
-                  ? "bg-gradient-to-r from-emerald-500 to-green-400"
-                  : "bg-gradient-to-r from-primary to-violet-400",
+                  ? "bg-gradient-to-r from-glow-ok to-glow-ok"
+                  : "bg-gradient-to-r from-primary to-glow-accent",
               )}
             />
           </div>
@@ -365,8 +365,8 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
               className={cn(
                 "font-medium",
                 revenueData.monthlyRevenue >= revenueData.monthlyGoal
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-muted-foreground",
+                  ? "text-glow-ok-ink"
+                  : "text-outline",
               )}
             >
               {Math.round((revenueData.monthlyRevenue / revenueData.monthlyGoal) * 100)}% completado
@@ -374,7 +374,7 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
 
             {/* Projection */}
             {revenueData.projectedRevenue > 0 && (
-              <div className="flex items-center gap-1 text-muted-foreground">
+              <div className="flex items-center gap-1 text-outline">
                 <Sparkles className="h-3 w-3" />
                 <span>
                   Proyección:{" "}
@@ -391,9 +391,9 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="mt-3 p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-center"
+              className="mt-3 p-2 rounded-lg bg-glow-ok/10 text-center"
             >
-              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">🎉 ¡Objetivo alcanzado!</p>
+              <p className="text-sm font-medium text-glow-ok-ink">🎉 ¡Objetivo alcanzado!</p>
             </motion.div>
           )}
         </div>
@@ -401,26 +401,26 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
 
       {/* Channel Breakdown */}
       <div className="ios-card p-4">
-        <h3 className="text-sm font-semibold text-foreground mb-4">Origen de reservas</h3>
+        <h3 className="text-sm font-semibold text-on-surface mb-4">Origen de reservas</h3>
 
         <div className="space-y-4">
           {/* CRM Channel */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-cyan-500" />
-                <span className="text-sm font-medium text-foreground">Panel Admin</span>
+                <div className="w-3 h-3 rounded-full bg-glow-brand" />
+                <span className="text-sm font-medium text-on-surface">Panel Admin</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-foreground">{currentPeriodData.byChannel.crm}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-lg font-bold text-on-surface">{currentPeriodData.byChannel.crm}</span>
+                <span className="text-xs text-outline">
                   ({getPercentage(currentPeriodData.byChannel.crm)}%)
                 </span>
               </div>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-cyan-500 rounded-full transition-all duration-500"
+                className="h-full bg-glow-brand rounded-full transition-all duration-500"
                 style={{ width: `${getPercentage(currentPeriodData.byChannel.crm)}%` }}
               />
             </div>
@@ -430,19 +430,19 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-orange-500" />
-                <span className="text-sm font-medium text-foreground">Web / App</span>
+                <div className="w-3 h-3 rounded-full bg-glow-warn" />
+                <span className="text-sm font-medium text-on-surface">Web / App</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-foreground">{currentPeriodData.byChannel.web}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-lg font-bold text-on-surface">{currentPeriodData.byChannel.web}</span>
+                <span className="text-xs text-outline">
                   ({getPercentage(currentPeriodData.byChannel.web)}%)
                 </span>
               </div>
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-orange-500 rounded-full transition-all duration-500"
+                className="h-full bg-glow-warn rounded-full transition-all duration-500"
                 style={{ width: `${getPercentage(currentPeriodData.byChannel.web)}%` }}
               />
             </div>
@@ -453,15 +453,15 @@ export function SecurityMonitor({ tenantId }: SecurityMonitorProps) {
         {totalChannelBookings > 0 && (
           <div className="mt-4 pt-4 border-t border-border/50">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Total reservas por canal</span>
-              <span className="font-semibold text-foreground">{totalChannelBookings}</span>
+              <span className="text-outline">Total reservas por canal</span>
+              <span className="font-semibold text-on-surface">{totalChannelBookings}</span>
             </div>
           </div>
         )}
       </div>
 
       {/* Period comparison hint */}
-      <p className="text-xs text-center text-muted-foreground px-4">
+      <p className="text-xs text-center text-outline px-4">
         Comparado con {activeTab === "daily" ? "ayer" : activeTab === "weekly" ? "la semana pasada" : "el mes pasado"}
       </p>
     </div>

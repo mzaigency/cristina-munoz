@@ -259,14 +259,14 @@ export function MarketingBroadcast({ tenantId, tenantSlug, tenantName }: Marketi
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 className="gp-spinner" />
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
 
   return (
-    <div className="gp-fade gp-mkt-broadcast">
-      <div className="gp-page-h">
+    <div className="glow-fade glow-mkt-broadcast">
+      <div className="glow-page-h">
         <div>
           <h2>Difusión</h2>
           <p>Manda mensajes personalizados a tus clientes por WhatsApp</p>
@@ -274,7 +274,7 @@ export function MarketingBroadcast({ tenantId, tenantSlug, tenantName }: Marketi
       </div>
 
       {/* Segments */}
-      <div className="gp-mkt-segments">
+      <div className="glow-mkt-segments">
         {SEGMENTS.map((s) => {
           const count = segmentCounts[s.id] ?? 0;
           const active = segment === s.id;
@@ -282,36 +282,36 @@ export function MarketingBroadcast({ tenantId, tenantSlug, tenantName }: Marketi
           return (
             <button
               key={s.id}
-              className={`gp-mkt-segment tone-${s.tone}${active ? " on" : ""}`}
+              className={`glow-mkt-segment tone-${s.tone}${active ? " glow-subtab--on" : ""}`}
               onClick={() => setSegment(s.id)}
               type="button"
             >
-              <span className="gp-mkt-segment-ic">
+              <span className="glow-mkt-segment-ic">
                 <Icon />
               </span>
-              <span className="gp-mkt-segment-label">{s.label}</span>
-              <span className="gp-mkt-segment-count">{count}</span>
-              <span className="gp-mkt-segment-desc">{s.description}</span>
+              <span className="glow-mkt-segment-label">{s.label}</span>
+              <span className="glow-mkt-segment-count">{count}</span>
+              <span className="glow-mkt-segment-desc">{s.description}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="gp-mkt-broadcast-grid">
+      <div className="glow-mkt-broadcast-grid">
         {/* Recipients */}
-        <section className="gp-card pad gp-mkt-card">
-          <div className="gp-mkt-card-h">
+        <section className="glow-card glow-card--pad glow-mkt-card">
+          <div className="glow-mkt-card-h">
             <div>
               <h3>Destinatarios</h3>
               <p>{filtered.length} en este segmento · {selected.size} seleccionados</p>
             </div>
-            <button className="gp-btn sm" onClick={toggleAll} type="button">
+            <button className="glow-btn glow-btn--sm" onClick={toggleAll} type="button">
               {allSelected ? "Quitar todos" : "Seleccionar todos"}
             </button>
           </div>
 
-          <div className="gp-mkt-search">
-            <Search style={{ width: 14, height: 14, color: "var(--gp-muted-c)" }} />
+          <div className="glow-mkt-search">
+            <Search style={{ width: 14, height: 14, color: "var(--glow-ink-3)" }} />
             <input
               type="text"
               placeholder="Buscar por nombre o teléfono..."
@@ -321,31 +321,31 @@ export function MarketingBroadcast({ tenantId, tenantSlug, tenantName }: Marketi
           </div>
 
           {filtered.length === 0 ? (
-            <div className="gp-mkt-empty">
+            <div className="glow-mkt-empty">
               <Users />
               <p>No hay clientes en este segmento</p>
             </div>
           ) : (
-            <div className="gp-mkt-recipients">
+            <div className="glow-mkt-recipients">
               {filtered.map((c) => {
                 const isSel = selected.has(c.id);
                 const wasSent = sentIds.has(c.id);
                 return (
                   <button
                     key={c.id}
-                    className={`gp-mkt-recipient${isSel ? " on" : ""}`}
+                    className={`glow-mkt-recipient${isSel ? " on" : ""}`}
                     onClick={() => toggleOne(c.id)}
                     type="button"
                   >
-                    <span className="gp-mkt-recipient-check">
+                    <span className="glow-mkt-recipient-check">
                       {isSel && <Check style={{ width: 12, height: 12 }} />}
                     </span>
-                    <span className="gp-mkt-recipient-info">
+                    <span className="glow-mkt-recipient-info">
                       <strong>{c.name}</strong>
                       <span>{c.phone}</span>
                     </span>
                     {wasSent && (
-                      <span className="gp-badge ok" style={{ fontSize: 10 }}>
+                      <span className="glow-badge glow-badge--ok" style={{ fontSize: 10 }}>
                         Enviado
                       </span>
                     )}
@@ -357,19 +357,19 @@ export function MarketingBroadcast({ tenantId, tenantSlug, tenantName }: Marketi
         </section>
 
         {/* Composer */}
-        <section className="gp-card pad gp-mkt-card">
-          <div className="gp-mkt-card-h">
+        <section className="glow-card glow-card--pad glow-mkt-card">
+          <div className="glow-mkt-card-h">
             <div>
               <h3>Mensaje</h3>
               <p>Usa <code>{"{nombre}"}</code> <code>{"{salon}"}</code> <code>{"{enlace}"}</code></p>
             </div>
           </div>
 
-          <div className="gp-mkt-presets">
+          <div className="glow-mkt-presets">
             {PRESETS.map((p) => (
               <button
                 key={p.id}
-                className="gp-mkt-preset"
+                className="glow-mkt-preset"
                 onClick={() => usePreset(p.id)}
                 type="button"
               >
@@ -379,31 +379,31 @@ export function MarketingBroadcast({ tenantId, tenantSlug, tenantName }: Marketi
           </div>
 
           <textarea
-            className="gp-mkt-textarea"
+            className="glow-mkt-textarea"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={5}
             placeholder="Escribe tu mensaje..."
           />
 
-          <div className="gp-mkt-preview">
-            <div className="gp-mkt-preview-h">
+          <div className="glow-mkt-preview">
+            <div className="glow-mkt-preview-h">
               <MessageCircle style={{ width: 13, height: 13 }} />
               Vista previa
             </div>
             <p>{preview}</p>
           </div>
 
-          <div className="gp-mkt-broadcast-actions">
+          <div className="glow-mkt-broadcast-actions">
             <button
-              className="gp-btn sm"
+              className="glow-btn glow-btn--sm"
               type="button"
               onClick={() => copyToClipboard(preview)}
             >
               <Copy style={{ width: 13, height: 13 }} /> Copiar
             </button>
             <button
-              className="gp-btn sm primary"
+              className="glow-btn glow-btn--sm glow-btn--primary"
               type="button"
               onClick={openChats}
               disabled={selected.size === 0}

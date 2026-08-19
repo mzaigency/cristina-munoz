@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { CHART_COLORS, readableInk } from "@/lib/chartColors";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Users,
@@ -52,7 +53,7 @@ interface TodayHours {
   end: string | null;
 }
 
-const PRESET_COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#3B82F6", "#EF4444", "#06B6D4", "#84CC16"];
+const PRESET_COLORS = CHART_COLORS;  // misma paleta que las gráficas
 
 const hhmm = (t: string | null) => (t ? t.slice(0, 5) : "");
 
@@ -275,7 +276,7 @@ export function TeamHub({ tenantId }: TeamHubProps) {
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 className="gp-spinner" />
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
@@ -292,68 +293,68 @@ export function TeamHub({ tenantId }: TeamHubProps) {
     const t = today.get(s.id);
 
     return (
-      <button key={s.id} className="gp-team-row" onClick={() => setSelectedId(s.id)} type="button">
+      <button key={s.id} className="glow-team-row" onClick={() => setSelectedId(s.id)} type="button">
         <div
-          className="gp-neg-stylist-avatar gp-team-row-avatar"
-          style={{ background: s.color || "var(--gp-accent)" }}
+          className="glow-neg-stylist-avatar glow-team-row-avatar"
+          style={{ background: s.color || "var(--glow-brand)", color: readableInk(s.color || "#22408C") }}
         >
           {s.avatar_url ? <img src={s.avatar_url} alt="" /> : <span>{s.name.charAt(0).toUpperCase()}</span>}
         </div>
 
-        <div className="gp-team-row-main">
+        <div className="glow-team-row-main">
           <strong>{s.name}</strong>
           {s.is_active ? (
             t ? (
               t.working && t.start && t.end ? (
-                <span className="gp-team-today on">
+                <span className="glow-team-today on">
                   Hoy {hhmm(t.start)}–{hhmm(t.end)}
                 </span>
               ) : (
-                <span className="gp-team-today">
+                <span className="glow-team-today">
                   <Moon style={{ width: 11, height: 11 }} /> Hoy descansa
                 </span>
               )
             ) : (
-              <span className="gp-team-today">Sin horario</span>
+              <span className="glow-team-today">Sin horario</span>
             )
           ) : (
-            <span className="gp-team-today">Inactivo</span>
+            <span className="glow-team-today">Inactivo</span>
           )}
         </div>
 
-        <div className="gp-team-row-stats">
-          <span className="gp-team-stat">
+        <div className="glow-team-row-stats">
+          <span className="glow-team-stat">
             <Calendar />
             {m.bookings}
             <small>citas</small>
           </span>
-          <span className="gp-team-stat">
+          <span className="glow-team-stat">
             <Euro />
             {Math.round(m.revenue).toLocaleString("es-ES")}
             <small>factura</small>
           </span>
-          <span className={`gp-team-stat${pay != null ? " pay" : ""}`}>
+          <span className={`glow-team-stat${pay != null ? " pay" : ""}`}>
             <Wallet />
             {pay != null ? `${pay.toLocaleString("es-ES")}€` : "—"}
             <small>a pagar</small>
           </span>
         </div>
 
-        <ChevronRight className="gp-team-row-chev" />
+        <ChevronRight className="glow-team-row-chev" />
       </button>
     );
   };
 
   return (
-    <div className="gp-fade">
+    <div className="glow-fade">
       {/* Cabecera */}
-      <div className="gp-page-h">
+      <div className="glow-page-h">
         <div>
           <h2>Equipo</h2>
           <p>Quién trabaja, cuánto produce y cuánto le pagas este mes.</p>
         </div>
-        <div className="gp-page-actions" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-          <button className="gp-btn primary sm" onClick={openCreate} type="button">
+        <div className="glow-page-actions" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+          <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={openCreate} type="button">
             <Plus style={{ width: 13, height: 13 }} /> Añadir
           </button>
           {maxStylists < 999 && (
@@ -369,7 +370,7 @@ export function TeamHub({ tenantId }: TeamHubProps) {
 
       {/* Pasado del límite (p. ej. tras bajar de plan): aviso fino */}
       {isOverLimit("stylists") && (
-        <div className="gp-team-overlimit">
+        <div className="glow-team-overlimit">
           Tienes {currentStylists} profesionales y tu plan incluye {maxStylists}.{" "}
           <button onClick={() => setUpgradeOpen(true)} type="button">
             Mejorar plan
@@ -378,14 +379,14 @@ export function TeamHub({ tenantId }: TeamHubProps) {
       )}
 
       {stylists.length === 0 ? (
-        <div className="gp-card">
-          <div className="gp-empty">
-            <div className="gp-empty-ic">
+        <div className="glow-card">
+          <div className="glow-empty">
+            <div className="glow-empty-ic">
               <Users style={{ width: 24, height: 24 }} />
             </div>
             <h4>Tu equipo, aquí</h4>
             <p>Añade a cada profesional para asignarle citas, horario y comisión.</p>
-            <button className="gp-btn primary" style={{ marginTop: 12 }} onClick={openCreate}>
+            <button className="glow-btn glow-btn--primary" style={{ marginTop: 12 }} onClick={openCreate}>
               <Plus style={{ width: 14, height: 14 }} /> Añadir profesional
             </button>
           </div>
@@ -393,16 +394,16 @@ export function TeamHub({ tenantId }: TeamHubProps) {
       ) : (
         <>
           {/* Resumen del mes */}
-          <div className="gp-team-kpis">
-            <div className="gp-team-kpi">
+          <div className="glow-team-kpis">
+            <div className="glow-team-kpi">
               <span>{actives.length === 1 ? "Profesional activo" : "Profesionales activos"}</span>
               <strong>{stylists.filter((s) => s.is_active).length}</strong>
             </div>
-            <div className="gp-team-kpi">
+            <div className="glow-team-kpi">
               <span>Citas del equipo · mes</span>
               <strong>{teamTotals.bookings}</strong>
             </div>
-            <div className="gp-team-kpi pay">
+            <div className="glow-team-kpi pay">
               <span>Total a pagar · mes</span>
               <strong>{teamTotals.toPay.toLocaleString("es-ES")}€</strong>
             </div>
@@ -410,8 +411,8 @@ export function TeamHub({ tenantId }: TeamHubProps) {
 
           {/* Buscador solo cuando hay equipo grande */}
           {stylists.length > 8 && (
-            <div className="gp-mkt-search" style={{ maxWidth: 280, marginBottom: 12 }}>
-              <Search style={{ width: 14, height: 14, color: "var(--gp-muted-c)" }} />
+            <div className="glow-mkt-search" style={{ maxWidth: 280, marginBottom: 12 }}>
+              <Search style={{ width: 14, height: 14, color: "var(--glow-ink-3)" }} />
               <input
                 type="text"
                 placeholder="Buscar..."
@@ -422,13 +423,13 @@ export function TeamHub({ tenantId }: TeamHubProps) {
           )}
 
           {/* Activos */}
-          <div className="gp-team-list">{actives.map(renderRow)}</div>
+          <div className="glow-team-list">{actives.map(renderRow)}</div>
 
           {/* Inactivos, discretos al final */}
           {inactives.length > 0 && (
             <>
-              <div className="gp-team-divider">Inactivos ({inactives.length})</div>
-              <div className="gp-team-list is-off">{inactives.map(renderRow)}</div>
+              <div className="glow-team-divider">Inactivos ({inactives.length})</div>
+              <div className="glow-team-list is-off">{inactives.map(renderRow)}</div>
             </>
           )}
         </>
@@ -456,8 +457,8 @@ export function TeamHub({ tenantId }: TeamHubProps) {
 
       {/* Alta */}
       {creating && (
-        <div className="gp-neg-create-backdrop" onClick={() => !saving && setCreating(false)}>
-          <div className="gp-neg-create" onClick={(e) => e.stopPropagation()}>
+        <div className="glow-neg-create-backdrop" onClick={() => !saving && setCreating(false)}>
+          <div className="glow-neg-create" onClick={(e) => e.stopPropagation()}>
             <h3>Nuevo profesional</h3>
             <label>
               <span>Nombre</span>
@@ -474,11 +475,11 @@ export function TeamHub({ tenantId }: TeamHubProps) {
             </label>
             <label>
               <span>Color en la agenda</span>
-              <div className="gp-neg-color-row">
+              <div className="glow-neg-color-row">
                 {PRESET_COLORS.map((c) => (
                   <button
                     key={c}
-                    className={`gp-neg-color-dot${newColor === c ? " on" : ""}`}
+                    className={`glow-neg-color-dot${newColor === c ? " on" : ""}`}
                     style={{ background: c }}
                     onClick={() => setNewColor(c)}
                     type="button"
@@ -487,12 +488,12 @@ export function TeamHub({ tenantId }: TeamHubProps) {
                 ))}
               </div>
             </label>
-            <div className="gp-neg-create-actions">
-              <button className="gp-btn" onClick={() => setCreating(false)} disabled={saving}>
+            <div className="glow-neg-create-actions">
+              <button className="glow-btn" onClick={() => setCreating(false)} disabled={saving}>
                 Cancelar
               </button>
-              <button className="gp-btn primary" onClick={handleCreate} disabled={saving}>
-                {saving && <Loader2 className="gp-spinner-sm" />}
+              <button className="glow-btn glow-btn--primary" onClick={handleCreate} disabled={saving}>
+                {saving && <Loader2 className="glow-spinner-sm" />}
                 Añadir al equipo
               </button>
             </div>

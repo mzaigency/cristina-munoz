@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import QRCode from "qrcode";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Download,
   Share2,
@@ -85,7 +83,7 @@ function getTemplateStyles(tid: TemplateId, pc: string, sc: string): TemplateSty
         qrBg: "#FFFFFF",
       };
     case "glow":
-      return { bg: "#22408b", text: "#FFFFFF", sub: "rgba(255,255,255,0.65)", accent: "#E0C8F0", qrBg: "#FFFFFF" };
+      return { bg: "#22408C", text: "#FFFFFF", sub: "rgba(255,255,255,0.65)", accent: "#E0C8F0", qrBg: "#FFFFFF" };
     case "elegant":
       return { bg: "#FAF7F2", text: "#2C1810", sub: "#8B7355", accent: "#B8860B", qrBg: "#FFFFFF" };
     case "boho":
@@ -225,8 +223,8 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     // Background base
     if (template === "glow") {
       const grad = ctx.createLinearGradient(0, 0, w, h);
-      grad.addColorStop(0, "#22408b");
-      grad.addColorStop(1, "#99329a");
+      grad.addColorStop(0, "#22408C");
+      grad.addColorStop(1, "#98329A");
       ctx.fillStyle = grad;
     } else {
       ctx.fillStyle = s.bg;
@@ -391,8 +389,8 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     // Background base
     if (template === "glow") {
       const grad = ctx.createLinearGradient(0, 0, w, h);
-      grad.addColorStop(0, "#22408b");
-      grad.addColorStop(1, "#99329a");
+      grad.addColorStop(0, "#22408C");
+      grad.addColorStop(1, "#98329A");
       ctx.fillStyle = grad;
     } else {
       ctx.fillStyle = s.bg;
@@ -665,7 +663,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
   // ── Template thumbnail bg colors (for visual selector) ──
   const templatePreviewBgs: Record<TemplateId, string> = {
     salon: pc,
-    glow: "linear-gradient(135deg, #22408b, #99329a)",
+    glow: "linear-gradient(135deg, #22408C, #98329A)",
     elegant: "#FAF7F2",
     boho: "#E8DCC8",
     minimal: "#FFFFFF",
@@ -680,7 +678,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
     dark: "#E5C07B",
   };
   const templateBgForLight: Record<TemplateId, string> = {
-    salon: pc, glow: "#22408b", elegant: "#FAF7F2", boho: "#E8DCC8", minimal: "#FFFFFF", dark: "#0F0F0F",
+    salon: pc, glow: "#22408C", elegant: "#FAF7F2", boho: "#E8DCC8", minimal: "#FFFFFF", dark: "#0F0F0F",
   };
 
   return (
@@ -689,7 +687,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
       <div className="qr-gen-head">
         <div>
           <h2 className="text-lg font-bold">Tarjetas QR</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-outline mt-0.5">
             Genera tarjetas y carteles con tu QR de reserva
           </p>
         </div>
@@ -717,18 +715,18 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
 
             {/* Action buttons under preview */}
             <div className="qr-gen-actions">
-              <Button onClick={handleDownload} className="flex-1 gap-2 h-11 gp-grad-brand">
+              <button className="glow-btn glow-btn--primary glow-btn--grow gap-2 glow-grad-brand" onClick={handleDownload}>
                 <Download className="h-4 w-4" />
                 <span className="text-sm font-semibold">Descargar PNG</span>
-              </Button>
-              <Button onClick={handleShare} variant="outline" className="gap-2 h-11">
+              </button>
+              <button className="glow-btn gap-2" onClick={handleShare}>
                 <Share2 className="h-4 w-4" />
                 <span className="text-sm font-semibold hidden sm:inline">Compartir</span>
-              </Button>
+              </button>
             </div>
 
             {format === "a4" && (
-              <p className="text-[11px] text-muted-foreground text-center mt-2">
+              <p className="text-[11px] text-outline text-center mt-2">
                 <Sparkles className="inline h-3 w-3 mr-0.5 -mt-0.5" />
                 2480×3508 px @ 300 DPI · Listo para imprimir
               </p>
@@ -801,7 +799,7 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
                     </div>
                     <div className="qr-gen-tpl-meta">
                       <div className="text-[13px] font-semibold">{t.label}</div>
-                      <div className="text-[10px] text-muted-foreground">{t.hint}</div>
+                      <div className="text-[10px] text-outline">{t.hint}</div>
                     </div>
                   </button>
                 );
@@ -812,14 +810,13 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
           {/* Tagline */}
           <section>
             <h3 className="qr-gen-label">Eslogan</h3>
-            <Input
+            <input className="glow-input h-10"
               value={tagline}
               onChange={(e) => setTagline(e.target.value)}
               placeholder="Reserva tu cita online"
               maxLength={50}
-              className="h-10"
             />
-            <p className="text-[10px] text-muted-foreground mt-1.5">
+            <p className="text-[10px] text-outline mt-1.5">
               {tagline.length}/50 caracteres
             </p>
           </section>
@@ -830,18 +827,16 @@ export function QRCardGenerator({ tenantId, tenantSlug }: QRCardGeneratorProps) 
               <Smartphone className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-semibold text-foreground">Tu link de reservas</p>
-              <p className="text-[11px] text-muted-foreground truncate">{bookingUrl}</p>
+              <p className="text-[12px] font-semibold text-on-surface">Tu link de reservas</p>
+              <p className="text-[11px] text-outline truncate">{bookingUrl}</p>
             </div>
-            <Button
-              size="sm"
-              variant="ghost"
+            <button
+              className="glow-btn glow-btn--ghost glow-btn--sm"
               onClick={() => { navigator.clipboard.writeText(bookingUrl); toast({ title: "Copiado" }); }}
-              className="h-8 px-2.5"
             >
               <Copy className="h-3.5 w-3.5 mr-1" />
               <span className="text-[11px] font-semibold">Copiar</span>
-            </Button>
+            </button>
           </section>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { STYLIST_FALLBACK } from "@/lib/chartColors";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
@@ -701,10 +702,10 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       .map(
         (item: any) => `
       <tr>
-        <td style="padding: 12px; border-bottom: 1px solid #e5e5e5;">${item.name}</td>
-        <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: center;">${item.quantity}</td>
-        <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: right;">${formatCurrency(item.price)}</td>
-        <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; text-align: right;">${formatCurrency(item.total)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #E4E6EF;">${item.name}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #E4E6EF; text-align: center;">${item.quantity}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #E4E6EF; text-align: right;">${formatCurrency(item.price)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #E4E6EF; text-align: right;">${formatCurrency(item.total)}</td>
       </tr>
     `,
       )
@@ -727,7 +728,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           .invoice-badge h2 { font-size: 24px; margin-bottom: 4px; }
           .invoice-badge p { font-size: 14px; opacity: 0.9; }
           .parties { display: flex; gap: 40px; margin-bottom: 30px; }
-          .party { flex: 1; padding: 20px; background: #f8f8f8; border-radius: 8px; }
+          .party { flex: 1; padding: 20px; background: #F6F7FB; border-radius: 8px; }
           .party-title { font-size: 12px; text-transform: uppercase; color: #888; margin-bottom: 8px; font-weight: 600; }
           .party-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
           .party-details { font-size: 14px; color: #666; line-height: 1.5; }
@@ -736,12 +737,12 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
           th { padding: 14px 12px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; }
           th:nth-child(2), th:nth-child(3), th:nth-child(4) { text-align: right; }
           th:nth-child(2) { text-align: center; }
-          tbody tr:hover { background: #fafafa; }
+          tbody tr:hover { background: #F6F7FB; }
           .totals { margin-top: 20px; display: flex; justify-content: flex-end; }
           .totals-box { width: 280px; }
           .totals-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-          .totals-row.discount { color: #f97316; }
-          .totals-row.tip { color: #ec4899; }
+          .totals-row.discount { color: #98329A; }
+          .totals-row.tip { color: #16A249; }
           .totals-row.final { border-top: 3px solid #333; border-bottom: none; padding-top: 16px; margin-top: 8px; font-size: 20px; font-weight: bold; }
           .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; color: #888; font-size: 12px; }
           @media print {
@@ -1279,7 +1280,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                     >
                       <span
                         className="w-2 h-2 rounded-full flex-none"
-                        style={{ background: on ? "#fff" : stylist.color || "#8B5CF6" }}
+                        style={{ background: on ? "#fff" : stylist.color || STYLIST_FALLBACK }}
                       />
                       <span className="truncate">{stylist.name}</span>
                     </button>

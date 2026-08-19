@@ -52,27 +52,27 @@ const TYPE_META: Record<
   },
   review: {
     icon: Star,
-    bg: "bg-amber-500/10",
-    fg: "text-amber-600",
-    ring: "ring-amber-500/20",
+    bg: "bg-glow-warn/10",
+    fg: "text-glow-warn-ink",
+    ring: "ring-glow-warn/20",
   },
   message: {
     icon: MessageCircle,
-    bg: "bg-blue-500/10",
-    fg: "text-blue-600",
-    ring: "ring-blue-500/20",
+    bg: "bg-glow-brand/10",
+    fg: "text-glow-brand-ink",
+    ring: "ring-glow-brand/20",
   },
   order: {
     icon: ShoppingCart,
-    bg: "bg-emerald-500/10",
-    fg: "text-emerald-600",
-    ring: "ring-emerald-500/20",
+    bg: "bg-glow-ok/10",
+    fg: "text-glow-ok-ink",
+    ring: "ring-glow-ok/20",
   },
   client: {
     icon: UserPlus,
-    bg: "bg-purple-500/10",
-    fg: "text-purple-600",
-    ring: "ring-purple-500/20",
+    bg: "bg-glow-accent/10",
+    fg: "text-glow-accent-ink",
+    ring: "ring-glow-accent/20",
   },
 };
 
@@ -304,7 +304,7 @@ const ActivitySection = ({ tenantId, tenantSlug, onNavigate }: ActivitySectionPr
         </div>
         <div>
           <h2 className="text-base font-semibold leading-tight">Actividad reciente</h2>
-          <p className="text-xs text-muted-foreground">Lo último que ha pasado en tu salón</p>
+          <p className="text-xs text-outline">Lo último que ha pasado en tu salón</p>
         </div>
       </div>
 
@@ -318,7 +318,7 @@ const ActivitySection = ({ tenantId, tenantSlug, onNavigate }: ActivitySectionPr
               "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all border",
               filter === f.value
                 ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                : "bg-background/60 backdrop-blur-md border-border/60 text-muted-foreground hover:text-foreground",
+                : "bg-background/60 backdrop-blur-md border-border/60 text-outline hover:text-on-surface",
             )}
           >
             {f.label}
@@ -329,15 +329,15 @@ const ActivitySection = ({ tenantId, tenantSlug, onNavigate }: ActivitySectionPr
       {/* List */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <Loader2 className="h-6 w-6 animate-spin text-outline" />
         </div>
       ) : visible.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
           <div className="p-4 rounded-full bg-muted/50 mb-4">
-            <ActivityIcon className="h-7 w-7 text-muted-foreground/50" />
+            <ActivityIcon className="h-7 w-7 text-outline/50" />
           </div>
-          <h3 className="font-medium text-foreground mb-1">Sin actividad reciente</h3>
-          <p className="text-sm text-muted-foreground max-w-[220px]">
+          <h3 className="font-medium text-on-surface mb-1">Sin actividad reciente</h3>
+          <p className="text-sm text-outline max-w-[220px]">
             Cuando lleguen reservas, mensajes o reseñas, las verás aquí.
           </p>
         </div>
@@ -368,11 +368,11 @@ const ActivitySection = ({ tenantId, tenantSlug, onNavigate }: ActivitySectionPr
                     <Icon className={cn("h-4.5 w-4.5", meta.fg)} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                    <p className="text-sm font-medium text-on-surface truncate">{item.title}</p>
+                    <p className="text-xs text-outline truncate mt-0.5">
                       {item.subtitle}
                     </p>
-                    <p className="text-[11px] text-muted-foreground/70 mt-1">
+                    <p className="text-[11px] text-outline/70 mt-1">
                       {formatDate(item.createdAt)}
                     </p>
                   </div>

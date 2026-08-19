@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   TrendingUp,
   Calendar,
@@ -104,28 +103,28 @@ export function ROICalculator({ tenantId }: ROICalculatorProps) {
       label: "Ingresos gestionados",
       value: formatCurrency(stats.totalRevenue),
       icon: <DollarSign className="h-5 w-5" />,
-      color: "from-emerald-500 to-green-600",
+      color: "from-glow-ok to-glow-ok",
       subtitle: `${stats.daysActive} días activo`,
     },
     {
       label: "Citas gestionadas",
       value: stats.totalBookings.toString(),
       icon: <Calendar className="h-5 w-5" />,
-      color: "from-violet-500 to-purple-600",
+      color: "from-glow-accent to-glow-accent",
       subtitle: `Media: ${formatCurrency(stats.avgBookingValue)}/cita`,
     },
     {
       label: "No-shows evitados",
       value: `~${stats.noShowsAvoided}`,
       icon: <ShieldCheck className="h-5 w-5" />,
-      color: "from-amber-500 to-orange-600",
+      color: "from-glow-warn to-glow-warn",
       subtitle: `Ahorro: ${formatCurrency(stats.noShowsAvoided * stats.avgBookingValue)}`,
     },
     {
       label: "Tiempo ahorrado",
       value: `${stats.estimatedTimeSaved}h`,
       icon: <Clock className="h-5 w-5" />,
-      color: "from-blue-500 to-cyan-600",
+      color: "from-glow-brand to-glow-brand",
       subtitle: "vs gestión manual (tel/WhatsApp)",
     },
   ];
@@ -143,27 +142,27 @@ export function ROICalculator({ tenantId }: ROICalculatorProps) {
   return (
     <div className="space-y-6">
       {/* Summary banner */}
-      <Card className="bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20">
-        <CardContent className="p-4">
+      <div className="glow-card bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20">
+        <div className="glow-card-b">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-xl bg-primary/10">
               <Sparkles className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-foreground">Retorno de tu inversión</h3>
-              <p className="text-xs text-muted-foreground">
+              <h3 className="text-base font-bold text-on-surface">Retorno de tu inversión</h3>
+              <p className="text-xs text-outline">
                 Desde que empezaste hace {stats.daysActive} días
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 gap-3">
         {roiCards.map((card, index) => (
-          <Card key={index} className="relative overflow-hidden">
-            <CardContent className="p-0">
+          <div className="glow-card relative overflow-hidden" key={index}>
+            <div className="glow-card-b">
               <div className={cn("p-4 bg-gradient-to-br text-white", card.color)}>
                 <div className="flex items-start justify-between mb-2">
                   <div className="p-1.5 rounded-lg bg-white/20">{card.icon}</div>
@@ -172,32 +171,32 @@ export function ROICalculator({ tenantId }: ROICalculatorProps) {
                 <p className="text-xs font-medium opacity-90 mt-0.5">{card.label}</p>
                 <p className="text-[10px] opacity-70 mt-1">{card.subtitle}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
 
       {/* Key insight */}
-      <Card className="bg-muted/30">
-        <CardContent className="p-4">
+      <div className="glow-card bg-muted/30">
+        <div className="glow-card-b">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 shrink-0">
-              <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="p-2 rounded-lg bg-glow-ok/10 shrink-0">
+              <TrendingUp className="h-5 w-5 text-glow-ok-ink" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">Valor recuperado estimado</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-sm font-medium text-on-surface">Valor recuperado estimado</p>
+              <p className="text-xs text-outline mt-1">
                 Con los recordatorios automáticos has evitado ~{stats.noShowsAvoided} citas perdidas,
                 equivalente a{" "}
-                <span className="font-semibold text-foreground">
+                <span className="font-semibold text-on-surface">
                   {formatCurrency(stats.noShowsAvoided * stats.avgBookingValue)}
                 </span>{" "}
                 en ingresos que habrías perdido.
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

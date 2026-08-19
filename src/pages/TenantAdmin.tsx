@@ -435,9 +435,7 @@ export default function TenantAdmin() {
             key={refreshKey}
             tenantId={tenant.id}
             subTab={activeSubTab}
-            onSubTabChange={(t) => goToSection("agenda", t)}
             onSelectClient={() => goToSection("clientes", "directorio")}
-            hideTabs
           />
         );
       case "caja":
@@ -446,8 +444,6 @@ export default function TenantAdmin() {
             key={refreshKey}
             tenantId={tenant.id}
             subTab={activeSubTab}
-            onSubTabChange={(t) => goToSection("caja", t)}
-            hideTabs
           />
         );
       case "clientes":
@@ -456,8 +452,6 @@ export default function TenantAdmin() {
             key={refreshKey}
             tenantId={tenant.id}
             subTab={activeSubTab}
-            onSubTabChange={(t) => goToSection("clientes", t)}
-            hideTabs
           />
         );
       case "catalogo":
@@ -466,8 +460,6 @@ export default function TenantAdmin() {
             key={refreshKey}
             tenantId={tenant.id}
             subTab={activeSubTab}
-            onSubTabChange={(t) => goToSection("catalogo", t)}
-            hideTabs
           />
         );
       case "marketing":
@@ -478,7 +470,6 @@ export default function TenantAdmin() {
             tenantSlug={tenant.slug}
             subTab={activeSubTab}
             onSubTabChange={(t) => goToSection("marketing", t)}
-            hideTabs
           />
         );
       case "negocio":
@@ -489,7 +480,6 @@ export default function TenantAdmin() {
             tenantSlug={tenant.slug}
             subTab={activeSubTab}
             onSubTabChange={(t) => goToSection("negocio", t)}
-            hideTabs
           />
         );
       case "ajustes":
@@ -538,7 +528,7 @@ export default function TenantAdmin() {
   const extraActive = extraNav.some((n) => n.value === activeSection);
 
   return (
-    <div className="gp-shell">
+    <div className="glow-shell">
       <Preloader
         ready
         text={tenant.name}
@@ -554,25 +544,25 @@ export default function TenantAdmin() {
       />
 
       {/* ── Desktop Sidebar ── */}
-      <aside className="gp-side">
-        <div className="gp-brand">
+      <aside className="glow-side">
+        <div className="glow-brand">
           {tenant.logo_url ? (
             <img
               src={tenant.logo_url}
               alt={tenant.name}
-              className="gp-logo"
+              className="glow-logo"
               style={{ objectFit: "cover", padding: 0 }}
             />
           ) : (
-            <span className="gp-logo">G</span>
+            <span className="glow-logo">G</span>
           )}
-          <span className="gp-brand-tx">
-            <span className="gp-brand-name">{tenant.name}</span>
-            <span className="gp-brand-sub">Panel de administración</span>
+          <span className="glow-brand-tx">
+            <span className="glow-brand-name">{tenant.name}</span>
+            <span className="glow-brand-sub">Panel de administración</span>
           </span>
         </div>
 
-        <nav className="gp-nav" data-tour-target="sidebar-nav">
+        <nav className="glow-nav" data-tour-target="sidebar-nav">
           {navItems.map((item) => {
             const isActive = activeSection === item.value;
             const subs = ADMIN_SUB_NAV[item.value as AdminSection] || [];
@@ -580,15 +570,15 @@ export default function TenantAdmin() {
             return (
               <div key={item.value}>
                 <button
-                  className={`gp-navitem${isActive ? " on" : ""}`}
+                  className={`glow-navitem${isActive ? " on" : ""}`}
                   onClick={() => handleTabClick(item.value)}
                   data-tour-step={`nav-${item.value}`}
                   data-tour-nav={item.value}
                 >
-                  <span className="gp-navitem-ic">{item.icon}</span>
+                  <span className="glow-navitem-ic">{item.icon}</span>
                   {item.label}
                   {badgeCount > 0 && !isActive && (
-                    <span className="gp-navitem-badge">{badgeCount}</span>
+                    <span className="glow-navitem-badge">{badgeCount}</span>
                   )}
                   {subs.length > 1 && (
                     <ChevronDown
@@ -601,7 +591,7 @@ export default function TenantAdmin() {
                   )}
                 </button>
                 {isActive && subs.length > 1 && (
-                  <div className="gp-side-subnav">
+                  <div className="glow-side-subnav">
                     {subs.map((sub) => {
                       const subBadge = sub.badgeKey
                         ? subNavCounts[sub.badgeKey as keyof typeof subNavCounts] || 0
@@ -610,16 +600,16 @@ export default function TenantAdmin() {
                       return (
                         <button
                           key={sub.value}
-                          className={`gp-subitem${activeSubTab === sub.value ? " on" : ""}${locked ? " locked" : ""}`}
+                          className={`glow-subitem${activeSubTab === sub.value ? " on" : ""}${locked ? " locked" : ""}`}
                           onClick={() => { if (!locked) goToSection(item.value as SectionValue, sub.value); }}
                         >
-                          {locked ? <Lock style={{ width: 11, height: 11, flexShrink: 0 }} /> : <span className="gp-subdot" />}
+                          {locked ? <Lock style={{ width: 11, height: 11, flexShrink: 0 }} /> : <span className="glow-subdot" />}
                           {sub.label}
                           {locked && (
-                            <span className="gp-subitem-badge" style={{ color: "var(--gp-warn)", marginLeft: "auto" }}>Pro</span>
+                            <span className="glow-subitem-badge" style={{ color: "var(--glow-warn-ink)", marginLeft: "auto" }}>Pro</span>
                           )}
                           {subBadge > 0 && !locked && (
-                            <span className="gp-subitem-badge">{subBadge}</span>
+                            <span className="glow-subitem-badge">{subBadge}</span>
                           )}
                         </button>
                       );
@@ -631,14 +621,14 @@ export default function TenantAdmin() {
           })}
         </nav>
 
-        <div className="gp-side-foot">
-          <div className="gp-user-row">
-            <span className="gp-ava">
+        <div className="glow-side-foot">
+          <div className="glow-user-row">
+            <span className="glow-ava">
               {userEmail ? userEmail.slice(0, 2).toUpperCase() : "AD"}
             </span>
-            <span className="gp-user-tx">
-              <span className="gp-user-name">{userEmail}</span>
-              <span className="gp-user-role">{subscriptionPlan || "Starter"}</span>
+            <span className="glow-user-tx">
+              <span className="glow-user-name">{userEmail}</span>
+              <span className="glow-user-role">{subscriptionPlan || "Starter"}</span>
             </span>
             <AdminAccountMenu
               tenantName={tenant.name}
@@ -655,49 +645,49 @@ export default function TenantAdmin() {
       </aside>
 
       {/* ── Main Column ── */}
-      <div className="gp-main-wrap" ref={mainWrapRef}>
+      <div className="glow-main-wrap" ref={mainWrapRef}>
 
         {/* Chrome sticky (header + tabs se ocultan/muestran juntos al scrollear) */}
-        <div className={`gp-chrome${chromeHidden ? " gp-chrome--hidden" : ""}`}>
+        <div className={`glow-chrome${chromeHidden ? "glow-chrome--hidden" : ""}`}>
 
         {/* Topbar */}
-        <header className="gp-topbar" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+        <header className="glow-topbar" style={{ paddingTop: "env(safe-area-inset-top)" }}>
           {/* Brand — solo móvil (desktop usa sidebar) */}
-          <div className="gp-topbar-brand">
+          <div className="glow-topbar-brand">
             {tenant.logo_url ? (
-              <img src={tenant.logo_url} alt={tenant.name} className="gp-topbar-brand-logo" />
+              <img src={tenant.logo_url} alt={tenant.name} className="glow-topbar-brand-logo" />
             ) : (
-              <span className="gp-topbar-brand-logo">{tenant.name.charAt(0).toUpperCase()}</span>
+              <span className="glow-topbar-brand-logo">{tenant.name.charAt(0).toUpperCase()}</span>
             )}
-            <span className="gp-topbar-brand-name">{tenant.name}</span>
+            <span className="glow-topbar-brand-name">{tenant.name}</span>
           </div>
           {/* Título — solo desktop */}
-          <div className="gp-top-titlewrap">
-            <span className="gp-top-crumb">{activeSectionLabel}</span>
-            <span className="gp-top-title">{activeSubLabel}</span>
+          <div className="glow-top-titlewrap">
+            <span className="glow-top-crumb">{activeSectionLabel}</span>
+            <span className="glow-top-title">{activeSubLabel}</span>
           </div>
-          <div className="gp-top-spacer" />
+          <div className="glow-top-spacer" />
           {/* Iconos móvil: buscar (paleta) + notificaciones */}
           <button
-            className="gp-topbar-icon"
+            className="glow-topbar-icon"
             aria-label="Buscar"
             onClick={() => window.dispatchEvent(new Event("admin:open-command"))}
           >
             <Search className="h-5 w-5" />
           </button>
           <button
-            className="gp-topbar-icon"
+            className="glow-topbar-icon"
             aria-label="Notificaciones"
             onClick={() => goToSection("clientes", "mensajes")}
           >
             <Bell className="h-5 w-5" />
-            {notificationCounts.messages > 0 && <span className="gp-topbar-icon-dot" />}
+            {notificationCounts.messages > 0 && <span className="glow-topbar-icon-dot" />}
           </button>
-          <span className="gp-hide-sm">
+          <span className="glow-hide-sm">
             <AdminHelpMenu tenantId={tenant.id} onTourTabChange={handleNavigate} />
           </span>
           {/* Account menu: visible on mobile where sidebar is hidden */}
-          <span className="gp-topbar-account-mobile">
+          <span className="glow-topbar-account-mobile">
             <AdminAccountMenu
               tenantName={tenant.name}
               tenantSlug={tenant.slug}
@@ -709,9 +699,9 @@ export default function TenantAdmin() {
               onSignOut={handleSignOut}
             />
           </span>
-          <div className="gp-topbar-actions">
+          <div className="glow-topbar-actions">
             <button
-              className="gp-topbar-cobrar"
+              className="glow-topbar-cobrar"
               onClick={() => goToSection("caja", "cobros")}
               title="Cobrar"
             >
@@ -719,7 +709,7 @@ export default function TenantAdmin() {
               <span>Cobrar</span>
             </button>
             <button
-              className="gp-new-cita-btn"
+              className="glow-new-cita-btn"
               onClick={() => goToSection("agenda", "dia")}
               title="Nueva cita"
             >
@@ -730,7 +720,7 @@ export default function TenantAdmin() {
         </header>
 
         {/* Sub-nav: desktop sees sidebar sub-items; mobile sees this row */}
-        <div className="gp-subnav-bar">
+        <div className="glow-subnav-bar">
           <AdminSubNav
             tenantId={tenant.id}
             section={activeSection as AdminSection}
@@ -740,11 +730,11 @@ export default function TenantAdmin() {
           />
         </div>
         </div>
-        {/* /gp-chrome */}
+        {/* /glow-chrome */}
 
         {/* Content */}
         <main
-          className="gp-content"
+          className="glow-content"
           style={isMobile ? { paddingBottom: "calc(env(safe-area-inset-bottom) + 88px)" } : undefined}
           {...swipeHandlers}
         >
@@ -763,18 +753,18 @@ export default function TenantAdmin() {
       </div>
 
       {/* ── Mobile Bottom Nav ── */}
-      <nav className="gp-bottom" data-tour-target="mobile-bottom-nav">
+      <nav className="glow-bottom" data-tour-target="mobile-bottom-nav">
         {primaryNav.map((item) => {
           const badgeCount = typeof item.badge === "number" ? item.badge : 0;
           const showBadge = badgeCount > 0 && activeSection !== item.value;
           return (
             <button
               key={item.value}
-              className={`gp-bottom-item${activeSection === item.value ? " on" : ""}`}
+              className={`glow-bottom-item${activeSection === item.value ? " on" : ""}`}
               onClick={() => handleTabClick(item.value)}
               data-tour-nav={item.value}
             >
-              <span className="gp-bottom-ic" style={{ position: "relative" }}>
+              <span className="glow-bottom-ic" style={{ position: "relative" }}>
                 {item.icon}
                 {showBadge && <NotifBadge count={badgeCount} dot />}
               </span>
@@ -784,11 +774,11 @@ export default function TenantAdmin() {
         })}
         {extraNav.length > 0 && (
           <button
-            className={`gp-bottom-item${extraActive ? " on" : ""}`}
+            className={`glow-bottom-item${extraActive ? " on" : ""}`}
             onClick={() => setMoreOpen(true)}
             data-tour-nav="more"
           >
-            <span className="gp-bottom-ic"><Menu className="h-5 w-5" /></span>
+            <span className="glow-bottom-ic"><Menu className="h-5 w-5" /></span>
             Más
           </button>
         )}
@@ -796,18 +786,18 @@ export default function TenantAdmin() {
 
       {/* More bottom sheet */}
       {moreOpen && (
-        <div className="gp-more-wrap" onClick={() => setMoreOpen(false)}>
-          <div className="gp-more" onClick={(e) => e.stopPropagation()}>
-            <div className="gp-more-grip" />
-            <h4 className="gp-more-title">Más secciones</h4>
-            <div className="gp-more-grid">
+        <div className="glow-more-wrap" onClick={() => setMoreOpen(false)}>
+          <div className="glow-more" onClick={(e) => e.stopPropagation()}>
+            <div className="glow-more-grip" />
+            <h4 className="glow-more-title">Más secciones</h4>
+            <div className="glow-more-grid">
               {extraNav.map((item) => (
                 <button
                   key={item.value}
-                  className={`gp-more-item${activeSection === item.value ? " on" : ""}`}
+                  className={`glow-more-item${activeSection === item.value ? " on" : ""}`}
                   onClick={() => { handleTabClick(item.value); setMoreOpen(false); }}
                 >
-                  <span className="gp-more-ic">{item.icon}</span>
+                  <span className="glow-more-ic">{item.icon}</span>
                   {item.label}
                 </button>
               ))}

@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { chartColor, readableInk } from "@/lib/chartColors";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   format,
@@ -69,7 +68,6 @@ interface BusinessStatsProps {
 
 type Period = "week" | "month" | "quarter";
 
-const COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#6366F1", "#14B8A6"];
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
@@ -233,7 +231,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
           stylistData[stylistId] = {
             id: stylistId,
             name: stylist.name,
-            color: stylist.color || COLORS[0],
+            color: stylist.color || chartColor(0),
             revenue: 0,
             transactions: 0,
             tips: 0,
@@ -288,9 +286,9 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       returningClients: 0,
     });
     setPaymentMethods([
-      { name: "Efectivo", value: paymentData.cash, color: "#10B981", icon: Banknote },
-      { name: "Tarjeta", value: paymentData.card, color: "#8B5CF6", icon: CreditCard },
-      { name: "Mixto", value: paymentData.mixed, color: "#F59E0B", icon: Wallet },
+      { name: "Efectivo", value: paymentData.cash, color: chartColor(2), icon: Banknote },
+      { name: "Tarjeta", value: paymentData.card, color: chartColor(0), icon: CreditCard },
+      { name: "Mixto", value: paymentData.mixed, color: chartColor(3), icon: Wallet },
     ].filter(d => d.value > 0));
     setStylistStats(Object.values(stylistData).sort((a: any, b: any) => b.revenue - a.revenue));
     setTopServices(Object.values(serviceData).sort((a: any, b: any) => b.revenue - a.revenue).slice(0, 8));
@@ -470,17 +468,15 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
   return (
     <div className="space-y-5">
       {/* Period Selector */}
-      <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+      <div className="glow-toolbar">
         {(["week", "month", "quarter"] as Period[]).map((p) => (
-          <Button
+          <button
             key={p}
-            variant={period === p ? "default" : "outline"}
-            size="sm"
+            className={`glow-chip${period === p ? " glow-chip--on" : ""}`}
             onClick={() => setPeriod(p)}
-            className="shrink-0 h-9"
           >
             {p === "week" ? "7 días" : p === "month" ? "Este mes" : "Trimestre"}
-          </Button>
+          </button>
         ))}
       </div>
 
@@ -518,19 +514,19 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
 
       {/* Monthly Goal Progress */}
       {monthlyGoal.goal > 0 && (
-        <Card className="overflow-hidden">
-          <CardContent className="p-4">
+        <div className="glow-card overflow-hidden">
+          <div className="glow-card-b">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                  <Target className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <div className="w-10 h-10 rounded-xl bg-glow-ok/10 flex items-center justify-center">
+                  <Target className="h-5 w-5 text-glow-ok-ink" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Objetivo {format(new Date(), "MMMM", { locale: es })}</p>
-                  <p className="font-semibold">{formatCurrency(monthlyGoal.revenue)} <span className="text-muted-foreground font-normal">/ {formatCurrency(monthlyGoal.goal)}</span></p>
+                  <p className="text-xs text-outline">Objetivo {format(new Date(), "MMMM", { locale: es })}</p>
+                  <p className="font-semibold">{formatCurrency(monthlyGoal.revenue)} <span className="text-outline font-normal">/ {formatCurrency(monthlyGoal.goal)}</span></p>
                 </div>
               </div>
-              <Badge variant={monthlyGoal.revenue >= monthlyGoal.goal ? "default" : "secondary"} className={monthlyGoal.revenue >= monthlyGoal.goal ? "bg-emerald-500" : ""}>
+              <Badge variant={monthlyGoal.revenue >= monthlyGoal.goal ? "default" : "secondary"} className={monthlyGoal.revenue >= monthlyGoal.goal ? "bg-glow-ok" : ""}>
                 {Math.round((monthlyGoal.revenue / monthlyGoal.goal) * 100)}%
               </Badge>
             </div>
@@ -542,38 +538,38 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                 className={cn(
                   "h-full rounded-full",
                   monthlyGoal.revenue >= monthlyGoal.goal
-                    ? "bg-gradient-to-r from-emerald-500 to-green-400"
-                    : "bg-gradient-to-r from-primary to-violet-400"
+                    ? "bg-gradient-to-r from-glow-ok to-glow-ok"
+                    : "bg-gradient-to-r from-primary to-glow-accent"
                 )}
               />
             </div>
             {monthlyGoal.projected > 0 && (
-              <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+              <p className="text-xs text-outline mt-2 flex items-center gap-1">
                 <Sparkles className="h-3 w-3" />
                 Proyección: {formatCurrency(monthlyGoal.projected)}
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Citas nuevas hoy — destacado */}
-      <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-violet-500/5">
-        <CardContent className="p-4">
+      <div className="glow-card overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-glow-accent/5">
+        <div className="glow-card-b">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Sparkles className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Citas nuevas hoy</p>
+                <p className="text-xs text-outline">Citas nuevas hoy</p>
                 <p className="font-bold text-2xl leading-tight">{newToday.total}</p>
               </div>
             </div>
             {newToday.previous > 0 && (
               <Badge variant="outline" className={cn(
                 "text-[10px]",
-                newToday.total >= newToday.previous ? "text-green-600 border-green-200" : "text-red-600 border-red-200"
+                newToday.total >= newToday.previous ? "text-glow-ok-ink border-glow-ok/30" : "text-glow-danger-ink border-glow-danger/30"
               )}>
                 {newToday.total >= newToday.previous ? <ArrowUpRight className="h-3 w-3 mr-0.5" /> : <ArrowDownRight className="h-3 w-3 mr-0.5" />}
                 vs ayer ({newToday.previous})
@@ -583,58 +579,58 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
           {newToday.total > 0 ? (
             <>
               <div className="flex h-2 rounded-full overflow-hidden bg-muted">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${(newToday.crm / newToday.total) * 100}%` }} transition={{ duration: 0.6 }} className="bg-cyan-500" />
-                <motion.div initial={{ width: 0 }} animate={{ width: `${(newToday.web / newToday.total) * 100}%` }} transition={{ duration: 0.6, delay: 0.1 }} className="bg-orange-500" />
+                <motion.div initial={{ width: 0 }} animate={{ width: `${(newToday.crm / newToday.total) * 100}%` }} transition={{ duration: 0.6 }} className="bg-glow-brand" />
+                <motion.div initial={{ width: 0 }} animate={{ width: `${(newToday.web / newToday.total) * 100}%` }} transition={{ duration: 0.6, delay: 0.1 }} className="bg-glow-warn" />
               </div>
               <div className="flex justify-between text-xs mt-2">
-                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-cyan-500" /> Admin (CRM) · <strong>{newToday.crm}</strong></span>
-                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-500" /> Web · <strong>{newToday.web}</strong></span>
+                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-glow-brand" /> Admin (CRM) · <strong>{newToday.crm}</strong></span>
+                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-glow-warn" /> Web · <strong>{newToday.web}</strong></span>
               </div>
             </>
           ) : (
-            <p className="text-xs text-muted-foreground">Aún no se han creado citas hoy.</p>
+            <p className="text-xs text-outline">Aún no se han creado citas hoy.</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Reservas: cancelación + canal */}
       {bookingStats.total > 0 && (
-        <Card>
-          <CardContent className="p-4 space-y-3">
+        <div className="glow-card">
+          <div className="glow-card-b">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Tasa de cancelación</span>
+              <span className="text-outline">Tasa de cancelación</span>
               <span className={cn(
                 "font-semibold",
-                bookingStats.cancelled / bookingStats.total > 0.15 ? "text-red-500" : "text-emerald-600"
+                bookingStats.cancelled / bookingStats.total > 0.15 ? "text-glow-danger-ink" : "text-glow-ok-ink"
               )}>
                 {((bookingStats.cancelled / bookingStats.total) * 100).toFixed(1)}%
-                <span className="text-xs text-muted-foreground font-normal ml-1">({bookingStats.cancelled}/{bookingStats.total})</span>
+                <span className="text-xs text-outline font-normal ml-1">({bookingStats.cancelled}/{bookingStats.total})</span>
               </span>
             </div>
             <div>
-              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+              <div className="flex justify-between text-xs text-outline mb-1">
                 <span>Online vs CRM</span>
                 <span>{bookingStats.channels.web} web · {bookingStats.channels.crm} crm</span>
               </div>
               <div className="flex h-2 rounded-full overflow-hidden bg-muted">
-                <div className="bg-cyan-500" style={{ width: `${(bookingStats.channels.crm / bookingStats.total) * 100}%` }} />
-                <div className="bg-orange-500" style={{ width: `${(bookingStats.channels.web / bookingStats.total) * 100}%` }} />
+                <div className="bg-glow-brand" style={{ width: `${(bookingStats.channels.crm / bookingStats.total) * 100}%` }} />
+                <div className="bg-glow-warn" style={{ width: `${(bookingStats.channels.web / bookingStats.total) * 100}%` }} />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Revenue Chart */}
       {revenueData.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3>
               <TrendingUp className="h-4 w-4 text-primary" />
               Evolución de ingresos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div></div>
+          <div className="glow-card-b">
             <div className="h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueData}>
@@ -649,8 +645,8 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                   <YAxis tickFormatter={(v) => formatCompact(v)} fontSize={10} tickLine={false} axisLine={false} width={50} />
                   <Tooltip content={({ active, payload, label }) =>
                     active && payload?.length ? (
-                      <div className="bg-background/95 backdrop-blur border rounded-lg p-3 shadow-lg">
-                        <p className="text-xs text-muted-foreground mb-1">{format(new Date(label), "d MMMM yyyy", { locale: es })}</p>
+                      <div className="glow-card glow-card--pad" style={{ boxShadow: "var(--glow-e2)" }}>
+                        <p className="text-xs text-outline mb-1">{format(new Date(label), "d MMMM yyyy", { locale: es })}</p>
                         <p className="font-semibold">{formatCurrency(payload[0].value as number)}</p>
                       </div>
                     ) : null
@@ -659,17 +655,17 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Payment Methods & Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2"><CreditCard className="h-4 w-4" /> Métodos de pago</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3><CreditCard className="h-4 w-4" /> Métodos de pago</h3>
+          </div></div>
+          <div className="glow-card-b">
             {paymentMethods.length > 0 ? (
               <div className="space-y-3">
                 {paymentMethods.map((pm) => {
@@ -682,7 +678,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: pm.color }} />
                           <span className="font-medium">{pm.name}</span>
                         </div>
-                        <span className="text-muted-foreground">{formatCurrency(pm.value)} ({percent.toFixed(0)}%)</span>
+                        <span className="text-outline">{formatCurrency(pm.value)} ({percent.toFixed(0)}%)</span>
                       </div>
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
                         <motion.div initial={{ width: 0 }} animate={{ width: `${percent}%` }} transition={{ duration: 0.5 }} className="h-full rounded-full" style={{ backgroundColor: pm.color }} />
@@ -692,45 +688,45 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                 })}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-6">Sin datos</p>
+              <p className="text-sm text-outline text-center py-6">Sin datos</p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Resumen rápido</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3><BarChart3 className="h-4 w-4" /> Resumen rápido</h3>
+          </div></div>
+          <div className="glow-card-b">
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl bg-pink-50 dark:bg-pink-900/20">
-                <div className="flex items-center gap-2 mb-1"><Gift className="h-4 w-4 text-pink-500" /><span className="text-xs text-muted-foreground">Propinas</span></div>
-                <p className="font-bold text-pink-600 dark:text-pink-400">{formatCurrency(totals.tips)}</p>
+              <div className="p-3 rounded-xl bg-glow-accent/5">
+                <div className="flex items-center gap-2 mb-1"><Gift className="h-4 w-4 text-glow-accent-ink" /><span className="text-xs text-outline">Propinas</span></div>
+                <p className="font-bold text-glow-accent-ink">{formatCurrency(totals.tips)}</p>
               </div>
-              <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20">
-                <div className="flex items-center gap-2 mb-1"><TrendingDown className="h-4 w-4 text-orange-500" /><span className="text-xs text-muted-foreground">Descuentos</span></div>
-                <p className="font-bold text-orange-600 dark:text-orange-400">-{formatCurrency(totals.discounts)}</p>
+              <div className="p-3 rounded-xl bg-glow-warn/5">
+                <div className="flex items-center gap-2 mb-1"><TrendingDown className="h-4 w-4 text-glow-warn-ink" /><span className="text-xs text-outline">Descuentos</span></div>
+                <p className="font-bold text-glow-warn-ink">-{formatCurrency(totals.discounts)}</p>
               </div>
-              <div className="p-3 rounded-xl bg-cyan-50 dark:bg-cyan-900/20">
-                <div className="flex items-center gap-2 mb-1"><Repeat className="h-4 w-4 text-cyan-500" /><span className="text-xs text-muted-foreground">Transacciones</span></div>
-                <p className="font-bold text-cyan-600 dark:text-cyan-400">{totals.transactions}</p>
+              <div className="p-3 rounded-xl bg-glow-brand/5">
+                <div className="flex items-center gap-2 mb-1"><Repeat className="h-4 w-4 text-glow-brand-ink" /><span className="text-xs text-outline">Transacciones</span></div>
+                <p className="font-bold text-glow-brand-ink">{totals.transactions}</p>
               </div>
-              <div className="p-3 rounded-xl bg-violet-50 dark:bg-violet-900/20">
-                <div className="flex items-center gap-2 mb-1"><Activity className="h-4 w-4 text-violet-500" /><span className="text-xs text-muted-foreground">Media/día</span></div>
-                <p className="font-bold text-violet-600 dark:text-violet-400">{formatCurrency(revenueData.length > 0 ? totals.revenue / revenueData.length : 0)}</p>
+              <div className="p-3 rounded-xl bg-glow-accent/5">
+                <div className="flex items-center gap-2 mb-1"><Activity className="h-4 w-4 text-glow-accent-ink" /><span className="text-xs text-outline">Media/día</span></div>
+                <p className="font-bold text-glow-accent-ink">{formatCurrency(revenueData.length > 0 ? totals.revenue / revenueData.length : 0)}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Equipo: ingresos por estilista (pie + ranking unificado) */}
       {stylistStats.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2"><Users className="h-4 w-4 text-violet-500" /> Equipo · ingresos por estilista</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3><Users className="h-4 w-4 text-glow-accent-ink" /> Equipo · ingresos por estilista</h3>
+          </div></div>
+          <div className="glow-card-b">
             <div className="flex flex-col md:flex-row items-center gap-4">
               <div className="h-[200px] w-full md:w-1/2">
                 <ResponsiveContainer width="100%" height="100%">
@@ -738,8 +734,8 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                     <defs>
                       {stylistStats.map((s, i) => (
                         <linearGradient key={s.id} id={`gradient-${s.id}`} x1="0" y1="0" x2="1" y2="1">
-                          <stop offset="0%" stopColor={s.color || COLORS[i % COLORS.length]} stopOpacity={1} />
-                          <stop offset="100%" stopColor={s.color || COLORS[i % COLORS.length]} stopOpacity={0.7} />
+                          <stop offset="0%" stopColor={s.color || chartColor(i)} stopOpacity={1} />
+                          <stop offset="100%" stopColor={s.color || chartColor(i)} stopOpacity={0.7} />
                         </linearGradient>
                       ))}
                     </defs>
@@ -753,7 +749,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                         <div className="bg-background/95 backdrop-blur border rounded-xl p-3 shadow-xl">
                           <p className="font-semibold">{payload[0].payload.name}</p>
                           <p className="text-lg font-bold">{formatCurrency(payload[0].value as number)}</p>
-                          <p className="text-xs text-muted-foreground">{payload[0].payload.transactions} transacciones</p>
+                          <p className="text-xs text-outline">{payload[0].payload.transactions} transacciones</p>
                         </div>
                       ) : null
                     } />
@@ -767,34 +763,34 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                   return (
                     <div key={s.id} className="flex items-center justify-between p-2.5 rounded-xl bg-muted/40">
                       <div className="flex items-center gap-2.5">
-                        <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs", i === 0 && "ring-2 ring-amber-400 ring-offset-1")} style={{ backgroundColor: s.color || COLORS[i % COLORS.length] }}>
+                        <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs", i === 0 && "ring-2 ring-glow-warn/30 ring-offset-1")} style={{ backgroundColor: s.color || chartColor(i) }}>
                           {i + 1}
                         </div>
                         <div>
                           <p className="text-sm font-medium leading-tight">{s.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{s.transactions} tx · {s.services} servicios</p>
+                          <p className="text-[10px] text-outline">{s.transactions} tx · {s.services} servicios</p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-bold">{formatCurrency(s.revenue)}</p>
-                        <p className="text-[10px] text-muted-foreground">{percent.toFixed(0)}%{s.tips > 0 && ` · +${formatCurrency(s.tips)} propinas`}</p>
+                        <p className="text-[10px] text-outline">{percent.toFixed(0)}%{s.tips > 0 && ` · +${formatCurrency(s.tips)} propinas`}</p>
                       </div>
                     </div>
                   );
                 })}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Top servicios */}
       {topServices.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2"><Scissors className="h-4 w-4" /> Top servicios</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3><Scissors className="h-4 w-4" /> Top servicios</h3>
+          </div></div>
+          <div className="glow-card-b">
             <div className="space-y-2">
               {topServices.map((svc, i) => {
                 const maxRev = topServices[0].revenue || 1;
@@ -803,51 +799,51 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                   <div key={svc.name} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <div className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[10px] font-bold shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }}>
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0" style={{ backgroundColor: chartColor(i), color: readableInk(chartColor(i)) }}>
                           {i + 1}
                         </div>
                         <span className="font-medium truncate">{svc.name}</span>
                       </div>
                       <div className="text-right shrink-0 ml-2">
                         <span className="font-semibold">{formatCurrency(svc.revenue)}</span>
-                        <span className="text-muted-foreground ml-1">· {svc.count}x</span>
+                        <span className="text-outline ml-1">· {svc.count}x</span>
                       </div>
                     </div>
                     <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${percent}%` }} transition={{ duration: 0.5, delay: i * 0.05 }} className="h-full rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${percent}%` }} transition={{ duration: 0.5, delay: i * 0.05 }} className="h-full rounded-full" style={{ backgroundColor: chartColor(i) }} />
                     </div>
                   </div>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Clientes — KPIs en línea */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2"><UserPlus className="h-4 w-4" /> Clientes</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="glow-card">
+        <div className="glow-card-h"><div>
+          <h3><UserPlus className="h-4 w-4" /> Clientes</h3>
+        </div></div>
+        <div className="glow-card-b">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <MiniKPI icon={Users} label="Totales" value={clientMetrics.total.toString()} color="text-blue-600" bg="bg-blue-50 dark:bg-blue-900/20" />
-            <MiniKPI icon={UserPlus} label="Nuevos este mes" value={clientMetrics.new.toString()} color="text-green-600" bg="bg-green-50 dark:bg-green-900/20" />
-            <MiniKPI icon={Repeat} label="Recurrentes" value={clientMetrics.returning.toString()} color="text-violet-600" bg="bg-violet-50 dark:bg-violet-900/20" />
-            <MiniKPI icon={TrendingUp} label="Retención" value={`${clientMetrics.retentionRate.toFixed(0)}%`} color="text-amber-600" bg="bg-amber-50 dark:bg-amber-900/20" />
+            <MiniKPI icon={Users} label="Totales" value={clientMetrics.total.toString()} color="text-glow-brand-ink" bg="bg-glow-brand/5" />
+            <MiniKPI icon={UserPlus} label="Nuevos este mes" value={clientMetrics.new.toString()} color="text-glow-ok-ink" bg="bg-glow-ok/5" />
+            <MiniKPI icon={Repeat} label="Recurrentes" value={clientMetrics.returning.toString()} color="text-glow-accent-ink" bg="bg-glow-accent/5" />
+            <MiniKPI icon={TrendingUp} label="Retención" value={`${clientMetrics.retentionRate.toFixed(0)}%`} color="text-glow-warn-ink" bg="bg-glow-warn/5" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Horas pico + insight */}
       {peakHours.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2"><Clock className="h-4 w-4" /> Horas pico</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3><Clock className="h-4 w-4" /> Horas pico</h3>
+          </div></div>
+          <div className="glow-card-b">
             {(insights.bestDay || insights.bestHour) && (
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-primary/10 to-violet-500/10 text-xs">
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-primary/10 to-glow-accent/10 text-xs">
                 <Sparkles className="h-4 w-4 text-primary shrink-0" />
                 <span>
                   {insights.bestDay && <>Tu mejor día: <strong className="capitalize">{insights.bestDay}</strong></>}
@@ -865,7 +861,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                     active && payload?.length ? (
                       <div className="bg-background/95 backdrop-blur border rounded-lg p-2 shadow-lg text-xs">
                         <p className="font-semibold">{payload[0].payload.hour}</p>
-                        <p className="text-muted-foreground">{payload[0].value} reservas</p>
+                        <p className="text-outline">{payload[0].value} reservas</p>
                       </div>
                     ) : null
                   } />
@@ -873,8 +869,8 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -898,22 +894,22 @@ function MetricCard({
 }) {
   const colorClasses = {
     primary: "bg-primary/10 text-primary",
-    violet: "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400",
-    blue: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
-    amber: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
-    green: "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
-    pink: "bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400",
+    violet: "bg-glow-accent/10 text-glow-accent-ink",
+    blue: "bg-glow-brand/10 text-glow-brand-ink",
+    amber: "bg-glow-warn/10 text-glow-warn-ink",
+    green: "bg-glow-ok/10 text-glow-ok-ink",
+    pink: "bg-glow-accent/10 text-glow-accent-ink",
   };
 
   return (
-    <Card>
-      <CardContent className="p-3">
+    <div className="glow-card">
+      <div className="glow-card-b">
         <div className="flex items-start justify-between mb-2">
           <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", colorClasses[color])}>
             <Icon className="h-4.5 w-4.5" />
           </div>
           {change !== undefined && change !== 0 && (
-            <Badge variant="outline" className={cn("text-[10px] px-1.5", change > 0 ? "text-green-600 border-green-200" : "text-red-600 border-red-200")}>
+            <Badge variant="outline" className={cn("text-[10px] px-1.5", change > 0 ? "text-glow-ok-ink border-glow-ok/30" : "text-glow-danger-ink border-glow-danger/30")}>
               {change > 0 ? <ArrowUpRight className="h-3 w-3 mr-0.5" /> : <ArrowDownRight className="h-3 w-3 mr-0.5" />}
               {Math.abs(change)}%
             </Badge>
@@ -921,11 +917,11 @@ function MetricCard({
         </div>
         <p className="text-lg font-bold truncate">
           {value}
-          {suffix && <span className="text-sm text-muted-foreground font-normal">{suffix}</span>}
+          {suffix && <span className="text-sm text-outline font-normal">{suffix}</span>}
         </p>
-        <p className="text-xs text-muted-foreground">{title}</p>
-      </CardContent>
-    </Card>
+        <p className="text-xs text-outline">{title}</p>
+      </div>
+    </div>
   );
 }
 
@@ -934,7 +930,7 @@ function MiniKPI({ icon: Icon, label, value, color, bg }: { icon: React.ElementT
     <div className={cn("p-3 rounded-xl text-center", bg)}>
       <Icon className={cn("h-5 w-5 mx-auto mb-1", color)} />
       <p className="text-xl font-bold leading-tight">{value}</p>
-      <p className="text-[10px] text-muted-foreground">{label}</p>
+      <p className="text-[10px] text-outline">{label}</p>
     </div>
   );
 }
@@ -942,8 +938,8 @@ function MiniKPI({ icon: Icon, label, value, color, bg }: { icon: React.ElementT
 // Empty State Component
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="gp-empty">
-      <div className="gp-empty-ic"><BarChart3 style={{ width: 24, height: 24 }} /></div>
+    <div className="glow-empty">
+      <div className="glow-empty-ic"><BarChart3 style={{ width: 24, height: 24 }} /></div>
       <h4>Sin datos</h4>
       <p>{message}</p>
     </div>

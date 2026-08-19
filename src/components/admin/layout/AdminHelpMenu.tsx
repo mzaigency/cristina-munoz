@@ -42,12 +42,12 @@ export function AdminHelpMenu({ tenantId, onTourTabChange }: AdminHelpMenuProps)
             onClick={() => { setMenuOpen(false); setTourOpen(true); }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-muted transition-colors text-left"
           >
-            <div className="h-8 w-8 rounded-lg gp-grad-brand-soft flex items-center justify-center shrink-0">
-              <Sparkles className="h-4 w-4 gp-text-brand" />
+            <div className="h-8 w-8 rounded-lg glow-grad-brand-soft flex items-center justify-center shrink-0">
+              <Sparkles className="h-4 w-4 glow-text-brand" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="font-medium">Tour guiado</div>
-              <div className="text-[11px] text-muted-foreground">1 minuto · 10 pasos</div>
+              <div className="text-[11px] text-outline">1 minuto · 10 pasos</div>
             </div>
           </button>
 
@@ -60,11 +60,11 @@ export function AdminHelpMenu({ tenantId, onTourTabChange }: AdminHelpMenuProps)
             </div>
             <div className="min-w-0 flex-1">
               <div className="font-medium">Centro de ayuda</div>
-              <div className="text-[11px] text-muted-foreground">Buscar funciones</div>
+              <div className="text-[11px] text-outline">Buscar funciones</div>
             </div>
           </button>
 
-          <div className="mt-1 px-3 py-2 border-t flex items-center gap-2 text-[11px] text-muted-foreground">
+          <div className="mt-1 px-3 py-2 border-t flex items-center gap-2 text-[11px] text-outline">
             <Keyboard className="h-3.5 w-3.5" />
             Atajo
             <kbd className="ml-auto px-1.5 py-0.5 rounded bg-muted font-mono text-[10px] font-semibold">⌘K</kbd>

@@ -37,7 +37,7 @@ export default function Unsubscribe() {
   return (
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 20, background: "#f7f8fb", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
       <div style={{ maxWidth: 480, width: "100%", background: "#fff", border: "1px solid #eceef3", borderRadius: 16, padding: 32, boxShadow: "0 4px 20px -8px rgba(34,64,139,0.08)" }}>
-        <div style={{ display: "inline-block", background: "linear-gradient(100deg,#22408B,#98329A)", color: "#fff", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", padding: "6px 14px", borderRadius: 999, marginBottom: 16 }}>Glowapp</div>
+        <div style={{ display: "inline-block", background: "linear-gradient(100deg,#22408C,#98329A)", color: "#fff", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", padding: "6px 14px", borderRadius: 999, marginBottom: 16 }}>Glowapp</div>
 
         {state === "loading" && <p>Comprobando…</p>}
 
@@ -64,7 +64,7 @@ export default function Unsubscribe() {
             <button
               onClick={confirm}
               disabled={submitting}
-              style={{ background: "linear-gradient(100deg,#22408B,#98329A)", color: "#fff", border: 0, borderRadius: 12, padding: "12px 24px", fontWeight: 700, cursor: "pointer", opacity: submitting ? 0.6 : 1 }}
+              style={{ background: "linear-gradient(100deg,#22408C,#98329A)", color: "#fff", border: 0, borderRadius: 12, padding: "12px 24px", fontWeight: 700, cursor: "pointer", opacity: submitting ? 0.6 : 1 }}
             >
               {submitting ? "Procesando…" : "Confirmar baja"}
             </button>

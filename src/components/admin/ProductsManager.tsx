@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -29,7 +27,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Loader2, Plus, Pencil, Trash2, Package, AlertTriangle, PackagePlus, Star, ImagePlus, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 
 interface Product {
   id: string;
@@ -57,6 +54,8 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [catFilter, setCatFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -289,25 +288,50 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
 
   if (loading) {
     return (
-      <div className="gp-loader">
-        <Loader2 className="gp-spinner" />
+      <div className="glow-loader">
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
 
   const lowStockProducts = products.filter(p => p.is_active && p.stock <= p.min_stock);
 
+  const allCategories = Array.from(
+    new Set(products.map((pr) => pr.category || "Sin categoría")),
+  ).sort();
+
+  const visibleProducts = products.filter((pr) => {
+    const cat = pr.category || "Sin categoría";
+    if (catFilter === "low") return pr.is_active && pr.stock <= pr.min_stock;
+    if (catFilter !== "all" && cat !== catFilter) return false;
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    return pr.name.toLowerCase().includes(q) || (pr.barcode || "").toLowerCase().includes(q);
+  });
+
+  const grouped = visibleProducts.reduce((acc, pr) => {
+    const cat = pr.category || "Sin categoría";
+    (acc[cat] ||= []).push(pr);
+    return acc;
+  }, {} as Record<string, typeof products>);
+  const groupNames = Object.keys(grouped).sort();
+  const stockValue = products.reduce((a, pr) => a + pr.price * pr.stock, 0);
+
   return (
-    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div className="gp-page-h">
+    <div className="glow-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div className="glow-page-h">
         <div>
           <h2>Productos</h2>
-          <p>{products.length} productos</p>
+          <p>
+            {products.length} {products.length === 1 ? "producto" : "productos"}
+            {stockValue > 0 && ` · ${formatCurrency(stockValue)} en stock`}
+            {lowStockProducts.length > 0 && ` · ${lowStockProducts.length} bajo mínimo`}
+          </p>
         </div>
-        <div className="gp-page-actions">
+        <div className="glow-page-actions">
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <button className="gp-btn primary sm" onClick={() => openDialog()}>
+              <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={() => openDialog()}>
                 <Plus style={{ width: 14, height: 14 }} /> Nuevo producto
               </button>
             </DialogTrigger>
@@ -315,10 +339,10 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
             <DialogHeader>
               <DialogTitle>{selectedProduct ? "Editar producto" : "Nuevo producto"}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="glow-form">
               {/* Imagen */}
-              <div className="space-y-2">
-                <Label>Foto del producto</Label>
+              <div className="glow-field">
+                <label>Foto del producto</label>
                 {formData.image_url ? (
                   <div className="relative w-full aspect-square max-w-[200px] rounded-lg overflow-hidden border bg-muted">
                     <img src={formData.image_url} alt="" className="w-full h-full object-cover" />
@@ -333,51 +357,51 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                 ) : (
                   <label className="flex flex-col items-center justify-center w-full max-w-[200px] aspect-square border-2 border-dashed border-muted-foreground/30 rounded-lg cursor-pointer hover:bg-muted/50 transition">
                     {uploadingImage ? (
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      <Loader2 className="h-6 w-6 animate-spin text-outline" />
                     ) : (
                       <>
-                        <ImagePlus className="h-6 w-6 text-muted-foreground mb-1" />
-                        <span className="text-xs text-muted-foreground">Subir foto</span>
+                        <ImagePlus className="h-6 w-6 text-outline mb-1" />
+                        <span className="text-xs text-outline">Subir foto</span>
                       </>
                     )}
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
                   </label>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label>Nombre *</Label>
-                <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Nombre del producto" />
+              <div className="glow-field">
+                <label>Nombre *</label>
+                <input className="glow-input" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Nombre del producto" />
               </div>
-              <div className="space-y-2">
-                <Label>Descripción corta (tienda)</Label>
-                <Input value={formData.short_description} onChange={(e) => setFormData({ ...formData, short_description: e.target.value })} placeholder="Una línea para la card de tienda" maxLength={80} />
+              <div className="glow-field">
+                <label>Descripción corta (tienda)</label>
+                <input className="glow-input" value={formData.short_description} onChange={(e) => setFormData({ ...formData, short_description: e.target.value })} placeholder="Una línea para la card de tienda" maxLength={80} />
               </div>
-              <div className="space-y-2">
-                <Label>Descripción completa</Label>
-                <Textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Descripción detallada" rows={3} />
+              <div className="glow-field">
+                <label>Descripción completa</label>
+                <textarea className="glow-input" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Descripción detallada" rows={3} />
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
                 <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-amber-500" />
+                  <Star className="h-4 w-4 text-glow-warn-ink" />
                   <div>
                     <p className="text-sm font-medium">Destacar en tienda</p>
-                    <p className="text-xs text-muted-foreground">Aparecerá primero y en la reserva</p>
+                    <p className="text-xs text-outline">Aparecerá primero y en la reserva</p>
                   </div>
                 </div>
                 <Switch checked={formData.is_featured} onCheckedChange={(v) => setFormData({ ...formData, is_featured: v })} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Precio venta *</Label>
-                  <Input type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} placeholder="0.00" />
+              <div className="glow-form-grid">
+                <div className="glow-field">
+                  <label>Precio venta *</label>
+                  <input className="glow-input" type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} placeholder="0.00" />
                 </div>
-                <div className="space-y-2">
-                  <Label>Coste</Label>
-                  <Input type="number" step="0.01" value={formData.cost} onChange={(e) => setFormData({ ...formData, cost: e.target.value })} placeholder="0.00" />
+                <div className="glow-field">
+                  <label>Coste</label>
+                  <input className="glow-input" type="number" step="0.01" value={formData.cost} onChange={(e) => setFormData({ ...formData, cost: e.target.value })} placeholder="0.00" />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Categoría</Label>
+              <div className="glow-field">
+                <label>Categoría</label>
                 <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecciona categoría" /></SelectTrigger>
                   <SelectContent>
@@ -385,22 +409,22 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Código de barras</Label>
-                <Input value={formData.barcode} onChange={(e) => setFormData({ ...formData, barcode: e.target.value })} placeholder="Código de barras" />
+              <div className="glow-field">
+                <label>Código de barras</label>
+                <input className="glow-input" value={formData.barcode} onChange={(e) => setFormData({ ...formData, barcode: e.target.value })} placeholder="Código de barras" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Stock actual</Label>
-                  <Input type="number" value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: e.target.value })} placeholder="0" />
+              <div className="glow-form-grid">
+                <div className="glow-field">
+                  <label>Stock actual</label>
+                  <input className="glow-input" type="number" value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: e.target.value })} placeholder="0" />
                 </div>
-                <div className="space-y-2">
-                  <Label>Stock mínimo</Label>
-                  <Input type="number" value={formData.min_stock} onChange={(e) => setFormData({ ...formData, min_stock: e.target.value })} placeholder="0" />
+                <div className="glow-field">
+                  <label>Stock mínimo</label>
+                  <input className="glow-input" type="number" value={formData.min_stock} onChange={(e) => setFormData({ ...formData, min_stock: e.target.value })} placeholder="0" />
                 </div>
               </div>
-              <button className="gp-btn primary block" onClick={handleSave} disabled={saving}>
-                {saving ? <><Loader2 className="gp-spinner-sm" />Guardando...</> : "Guardar producto"}
+              <button className="glow-btn glow-btn--primary glow-btn--block" onClick={handleSave} disabled={saving}>
+                {saving ? <><Loader2 className="glow-spinner-sm" />Guardando...</> : "Guardar producto"}
               </button>
             </div>
           </DialogContent>
@@ -408,131 +432,127 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
         </div>
       </div>
 
-      {lowStockProducts.length > 0 && (
-        <div className="gp-card pad" style={{ borderColor: "color-mix(in oklab, var(--gp-warn), white 40%)", background: "var(--gp-warn-soft)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <AlertTriangle style={{ width: 16, height: 16, color: "var(--gp-warn)", flexShrink: 0 }} />
-            <span style={{ fontWeight: 700, fontSize: 14, color: "var(--gp-ink)" }}>Stock bajo en {lowStockProducts.length} producto(s)</span>
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {lowStockProducts.map(p => (
-              <span key={p.id} className="gp-badge warn">{p.name}: {p.stock} uds</span>
-            ))}
-          </div>
+      {products.length > 0 && (
+        <div className="glow-toolbar">
+          <input
+            className="glow-input"
+            placeholder="Buscar producto o código…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button
+            className={`glow-chip${catFilter === "all" ? " glow-chip--on" : ""}`}
+            onClick={() => setCatFilter("all")}
+          >
+            Todos
+          </button>
+          {lowStockProducts.length > 0 && (
+            <button
+              className={`glow-chip${catFilter === "low" ? " glow-chip--on" : ""}`}
+              onClick={() => setCatFilter("low")}
+            >
+              Stock bajo · {lowStockProducts.length}
+            </button>
+          )}
+          {allCategories.map((c) => (
+            <button
+              key={c}
+              className={`glow-chip${catFilter === c ? " glow-chip--on" : ""}`}
+              onClick={() => setCatFilter(c)}
+            >
+              {c}
+            </button>
+          ))}
         </div>
       )}
 
-      {products.length > 0 ? (
-        <>
-          {/* Mobile Card View */}
-          <div className="flex flex-col gap-3 md:hidden">
-            {products.map(product => (
-              <div key={product.id} className="gp-card pad" style={!product.is_active ? { opacity: 0.55 } : {}}>
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <p style={{ fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{product.name}</p>
-                    {product.barcode && <p style={{ fontSize: 12, color: "var(--gp-muted-c)", margin: "2px 0 0" }}>{product.barcode}</p>}
-                    <span className="gp-badge neutral" style={{ marginTop: 6, display: "inline-flex" }}>{product.category || "Sin categoría"}</span>
-                  </div>
-                  <button
-                    className={`gp-badge${product.is_active ? " ok" : " neutral"}`}
-                    style={{ cursor: "pointer", border: "none", fontFamily: "inherit", flexShrink: 0, marginLeft: 8 }}
-                    onClick={() => toggleActive(product)}
-                  >
-                    <span className="pip" style={{ background: "currentColor" }} />
-                    {product.is_active ? "Activo" : "Inactivo"}
-                  </button>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
-                  {[
-                    { label: "Coste", val: formatCurrency(product.cost), warn: false },
-                    { label: "Precio", val: formatCurrency(product.price), warn: false },
-                    { label: "Stock", val: `${product.stock} uds`, warn: product.stock <= product.min_stock },
-                  ].map(({ label, val, warn }) => (
-                    <div key={label}>
-                      <p style={{ fontSize: 11.5, color: "var(--gp-muted-c)", margin: 0 }}>{label}</p>
-                      <p style={{ fontSize: 13.5, fontWeight: 600, margin: 0, color: warn ? "var(--gp-warn)" : "var(--gp-ink)" }}>{val}</p>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button className="gp-btn sm" style={{ flex: 1 }} onClick={() => openStockDialog(product)}>
-                    <PackagePlus style={{ width: 13, height: 13 }} /> Stock
-                  </button>
-                  <button className="gp-icon-btn" onClick={() => openDialog(product)}>
-                    <Pencil style={{ width: 14, height: 14 }} />
-                  </button>
-                  <button className="gp-icon-btn" style={{ color: "var(--gp-danger)" }} onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}>
-                    <Trash2 style={{ width: 14, height: 14 }} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Desktop Table View */}
-          <div className="gp-card hidden md:block" style={{ overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ borderBottom: "1px solid var(--gp-line2)" }}>
-                  {["Producto", "Categoría", "Coste", "Precio", "Stock", "Estado", ""].map(h => (
-                    <th key={h} style={{ textAlign: "left", padding: "10px 14px", fontSize: 12.5, fontWeight: 700, color: "var(--gp-muted-c)" }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {products.map(product => (
-                  <tr key={product.id} style={{ borderBottom: "1px solid var(--gp-line2)", opacity: !product.is_active ? 0.55 : 1 }}>
-                    <td style={{ padding: "10px 14px" }}>
-                      <p style={{ fontWeight: 600, margin: 0 }}>{product.name}</p>
-                      {product.barcode && <p style={{ fontSize: 12, color: "var(--gp-muted-c)", margin: 0 }}>{product.barcode}</p>}
-                    </td>
-                    <td style={{ padding: "10px 14px" }}>
-                      <span className="gp-badge neutral">{product.category || "Sin categoría"}</span>
-                    </td>
-                    <td style={{ padding: "10px 14px", fontSize: 13.5, color: "var(--gp-muted-c)" }}>{formatCurrency(product.cost)}</td>
-                    <td style={{ padding: "10px 14px", fontWeight: 600 }}>{formatCurrency(product.price)}</td>
-                    <td style={{ padding: "10px 14px" }}>
-                      <span style={{ fontWeight: product.stock <= product.min_stock ? 700 : 400, color: product.stock <= product.min_stock ? "var(--gp-warn)" : "var(--gp-ink)" }}>
-                        {product.stock}
-                      </span>
-                    </td>
-                    <td style={{ padding: "10px 14px" }}>
-                      <button
-                        className={`gp-badge${product.is_active ? " ok" : " neutral"}`}
-                        style={{ cursor: "pointer", border: "none", fontFamily: "inherit" }}
-                        onClick={() => toggleActive(product)}
-                      >
-                        <span className="pip" style={{ background: "currentColor" }} />
-                        {product.is_active ? "Activo" : "Inactivo"}
-                      </button>
-                    </td>
-                    <td style={{ padding: "10px 14px" }}>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        <button className="gp-icon-btn" onClick={() => openStockDialog(product)} title="Entrada de stock">
-                          <PackagePlus style={{ width: 14, height: 14 }} />
-                        </button>
-                        <button className="gp-icon-btn" onClick={() => openDialog(product)}>
-                          <Pencil style={{ width: 14, height: 14 }} />
-                        </button>
-                        <button className="gp-icon-btn" style={{ color: "var(--gp-danger)" }} onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}>
-                          <Trash2 style={{ width: 14, height: 14 }} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      ) : (
-        <div className="gp-card">
-          <div className="gp-empty">
-            <div className="gp-empty-ic"><Package style={{ width: 24, height: 24 }} /></div>
+      {products.length === 0 ? (
+        <div className="glow-card">
+          <div className="glow-empty">
+            <div className="glow-empty-ic"><Package style={{ width: 24, height: 24 }} /></div>
             <h4>Sin productos</h4>
-            <p>Añade productos para poder venderlos desde la caja</p>
+            <p>Añade productos para poder venderlos desde la caja.</p>
+            <button className="glow-btn glow-btn--primary" onClick={() => openDialog()}>
+              <Plus style={{ width: 14, height: 14 }} /> Añadir producto
+            </button>
           </div>
+        </div>
+      ) : groupNames.length === 0 ? (
+        <div className="glow-card">
+          <div className="glow-empty">
+            <div className="glow-empty-ic"><Package style={{ width: 24, height: 24 }} /></div>
+            <h4>Sin resultados</h4>
+            <p>Ningún producto coincide con la búsqueda.</p>
+            <button className="glow-btn" onClick={() => { setSearch(""); setCatFilter("all"); }}>
+              Limpiar filtros
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Una sola matriz: las categorías son cabecera de grupo. Antes había una
+           lista de tarjetas para móvil y una tabla distinta para escritorio. */
+        <div className="glow-card glow-card--clip">
+          {groupNames.map((cat) => (
+            <div key={cat}>
+              <div className="glow-group">
+                <span className="glow-group-dot" style={{ background: "var(--glow-line)" }} />
+                <span>{cat}</span>
+                <span className="glow-group-n">
+                  {grouped[cat].length} {grouped[cat].length === 1 ? "producto" : "productos"}
+                </span>
+              </div>
+              {grouped[cat].map((product) => {
+                const low = product.is_active && product.stock <= product.min_stock;
+                return (
+                  <div
+                    key={product.id}
+                    className="glow-row"
+                    style={!product.is_active ? { opacity: 0.55 } : undefined}
+                  >
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div className="glow-row-nm" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {product.name}
+                      </div>
+                      <div className="glow-row-mt">
+                        {low ? (
+                          <span style={{ color: "var(--glow-warn-ink)", fontWeight: 800 }}>
+                            Stock {product.stock} · mínimo {product.min_stock}
+                          </span>
+                        ) : (
+                          <>Stock {product.stock}</>
+                        )}
+                        {product.barcode && ` · ${product.barcode}`}
+                      </div>
+                    </div>
+                    <button
+                      className={`glow-badge${product.is_active ? " glow-badge--ok" : ""}`}
+                      style={{ cursor: "pointer", border: "none", fontFamily: "inherit", flex: "none" }}
+                      onClick={() => toggleActive(product)}
+                    >
+                      {product.is_active ? "Activo" : "Inactivo"}
+                    </button>
+                    <div className="glow-row-amt">{formatCurrency(product.price)}</div>
+                    <div className="glow-row-actions">
+                      <button className="glow-icon-btn" aria-label="Entrada de stock" onClick={() => openStockDialog(product)}>
+                        <PackagePlus style={{ width: 14, height: 14 }} />
+                      </button>
+                      <button className="glow-icon-btn" aria-label={`Editar ${product.name}`} onClick={() => openDialog(product)}>
+                        <Pencil style={{ width: 14, height: 14 }} />
+                      </button>
+                      <button
+                        className="glow-icon-btn"
+                        aria-label={`Eliminar ${product.name}`}
+                        style={{ color: "var(--glow-danger-ink)" }}
+                        onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}
+                      >
+                        <Trash2 style={{ width: 14, height: 14 }} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       )}
 
@@ -546,34 +566,33 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
             </DialogTitle>
           </DialogHeader>
           {selectedProduct && (
-            <div className="space-y-4 py-4">
+            <div className="glow-form">
               <div className="p-3 bg-muted rounded-lg">
                 <p className="font-medium">{selectedProduct.name}</p>
-                <p className="text-sm text-muted-foreground">Stock actual: {selectedProduct.stock} unidades</p>
+                <p className="text-sm text-outline">Stock actual: {selectedProduct.stock} unidades</p>
               </div>
-              <div className="space-y-2">
-                <Label>Cantidad a añadir *</Label>
-                <Input 
+              <div className="glow-field">
+                <label>Cantidad a añadir *</label>
+                <input className="glow-input text-center text-lg" 
                   type="number" 
                   value={stockEntry.quantity} 
                   onChange={(e) => setStockEntry({ ...stockEntry, quantity: e.target.value })} 
                   placeholder="Ej: 10"
-                  className="text-center text-lg"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Precio de compra (opcional)</Label>
-                <Input 
+              <div className="glow-field">
+                <label>Precio de compra (opcional)</label>
+                <input className="glow-input" 
                   type="number" 
                   step="0.01"
                   value={stockEntry.cost} 
                   onChange={(e) => setStockEntry({ ...stockEntry, cost: e.target.value })} 
                   placeholder="0.00"
                 />
-                <p className="text-xs text-muted-foreground">Se actualizará el coste del producto</p>
+                <p className="text-xs text-outline">Se actualizará el coste del producto</p>
               </div>
-              <button className="gp-btn primary block" onClick={handleStockEntry} disabled={saving}>
-                {saving ? <Loader2 className="gp-spinner-sm" /> : <PackagePlus style={{ width: 14, height: 14, display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />}
+              <button className="glow-btn glow-btn--primary glow-btn--block" onClick={handleStockEntry} disabled={saving}>
+                {saving ? <Loader2 className="glow-spinner-sm" /> : <PackagePlus style={{ width: 14, height: 14, display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />}
                 Añadir stock
               </button>
             </div>

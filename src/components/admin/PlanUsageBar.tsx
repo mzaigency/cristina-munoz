@@ -27,21 +27,21 @@ export const PlanUsageBar = ({
   const getBarColor = () => {
     if (isUnlimited) return "bg-primary";
     if (isAtLimit) return "bg-destructive";
-    if (isNearLimit) return "bg-amber-500";
+    if (isNearLimit) return "bg-glow-warn";
     return "bg-primary";
   };
 
   const getTextColor = () => {
     if (isUnlimited) return "text-primary";
     if (isAtLimit) return "text-destructive";
-    if (isNearLimit) return "text-amber-600 dark:text-amber-400";
-    return "text-muted-foreground";
+    if (isNearLimit) return "text-glow-warn-ink";
+    return "text-outline";
   };
 
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-foreground">{label}</span>
+        <span className="text-sm font-medium text-on-surface">{label}</span>
         <div className="flex items-center gap-2">
           <span className={cn("text-sm font-medium", getTextColor())}>
             {current}/{isUnlimited ? "∞" : max}

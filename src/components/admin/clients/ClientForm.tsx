@@ -1,8 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, AlertTriangle, UserCheck, X, Search } from "lucide-react";
@@ -139,19 +136,19 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
     <div className="p-4 space-y-4">
       <div>
         <label className="text-sm font-medium mb-1.5 block">Nombre *</label>
-        <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Nombre del cliente" />
+        <input className="glow-input" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Nombre del cliente" />
       </div>
 
       <div>
         <label className="text-sm font-medium mb-1.5 block">Teléfono</label>
-        <Input
+        <input className="glow-input"
           value={formData.phone}
           onChange={(e) => { setFormData({ ...formData, phone: e.target.value }); checkDuplicate(e.target.value); }}
           placeholder="612 345 678"
           type="tel"
         />
         {duplicateWarning && (
-          <div className="flex items-center gap-1.5 mt-1.5 text-amber-600 text-xs">
+          <div className="flex items-center gap-1.5 mt-1.5 text-glow-warn-ink text-xs">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
             <span>{duplicateWarning}</span>
           </div>
@@ -160,12 +157,12 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
 
       <div>
         <label className="text-sm font-medium mb-1.5 block">Email</label>
-        <Input value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="cliente@email.com" type="email" />
+        <input className="glow-input" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="cliente@email.com" type="email" />
       </div>
 
       <div>
         <label className="text-sm font-medium mb-1.5 block">Cumpleaños</label>
-        <Input value={formData.birthday} onChange={(e) => setFormData({ ...formData, birthday: e.target.value })} type="date" />
+        <input className="glow-input" value={formData.birthday} onChange={(e) => setFormData({ ...formData, birthday: e.target.value })} type="date" />
       </div>
 
       {/* Profile linking */}
@@ -185,24 +182,23 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
                 <p className="text-xs text-primary">@{linkedProfile.username}</p>
               )}
             </div>
-            <UserCheck className="h-4 w-4 text-green-500 shrink-0" />
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={unlinkProfile}>
+            <UserCheck className="h-4 w-4 text-glow-ok-ink shrink-0" />
+            <button className="glow-btn glow-btn--ghost glow-btn--sm" onClick={unlinkProfile}>
               <X className="h-3.5 w-3.5" />
-            </Button>
+            </button>
           </div>
         ) : (
           <div className="relative" ref={dropdownRef}>
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-outline" />
+              <input className="glow-input pl-9"
                 value={profileSearch}
                 onChange={(e) => { setProfileSearch(e.target.value); searchProfiles(e.target.value); }}
                 onFocus={() => profileResults.length > 0 && setShowDropdown(true)}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                 placeholder="Buscar por @usuario, nombre o email..."
-                className="pl-9"
               />
-              {searchingProfiles && <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+              {searchingProfiles && <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-outline" />}
             </div>
             {showDropdown && profileResults.length > 0 && (
               <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
@@ -221,7 +217,7 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
                     </Avatar>
                     <div className="min-w-0">
                       <p className="text-sm truncate">{p.full_name || p.email}</p>
-                      {p.username && <p className="text-xs text-muted-foreground">@{p.username}</p>}
+                      {p.username && <p className="text-xs text-outline">@{p.username}</p>}
                     </div>
                   </button>
                 ))}
@@ -249,13 +245,13 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
 
       <div>
         <label className="text-sm font-medium mb-1.5 block">Notas privadas</label>
-        <Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Preferencias, alergias, observaciones..." rows={3} />
+        <textarea className="glow-input" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Preferencias, alergias, observaciones..." rows={3} />
       </div>
 
-      <Button onClick={handleSave} className="w-full" disabled={saving}>
+      <button className="glow-btn glow-btn--primary glow-btn--block" onClick={handleSave} disabled={saving}>
         {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
         {editingClient ? "Guardar cambios" : "Crear cliente"}
-      </Button>
+      </button>
     </div>
   );
 }

@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
+import { STYLIST_FALLBACK } from "@/lib/chartColors";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -235,24 +232,24 @@ export function CommissionsManager({ tenantId }: CommissionsManagerProps) {
             <Calculator className="h-5 w-5 text-primary" />
             Sistema de Comisiones
           </h2>
-          <p className="text-sm text-muted-foreground">Configura y calcula comisiones por estilista</p>
+          <p className="text-sm text-outline">Configura y calcula comisiones por estilista</p>
         </div>
-        <Button onClick={saveCommissions} disabled={saving}>
+        <button className="glow-btn glow-btn--primary" onClick={saveCommissions} disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
           Guardar
-        </Button>
+        </button>
       </div>
 
       {/* Commission Configuration */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
+      <div className="glow-card">
+        <div className="glow-card-h"><div>
+          <h3>
             <Users className="h-4 w-4" />
             Configuración de Comisiones
-          </CardTitle>
-          <CardDescription>Define el tipo y porcentaje de comisión para cada estilista</CardDescription>
-        </CardHeader>
-        <CardContent>
+          </h3>
+          <div className="glow-card-h-sub">Define el tipo y porcentaje de comisión para cada estilista</div>
+        </div></div>
+        <div className="glow-card-b">
           <div className="space-y-4">
             {stylists.map(stylist => {
               const commission = commissions[stylist.id] || {
@@ -265,7 +262,7 @@ export function CommissionsManager({ tenantId }: CommissionsManagerProps) {
                 <div key={stylist.id} className="flex flex-wrap items-center gap-3 p-3 rounded-lg bg-muted/30">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={stylist.avatar_url || undefined} />
-                    <AvatarFallback style={{ backgroundColor: stylist.color || "#8B5CF6" }}>
+                    <AvatarFallback style={{ backgroundColor: stylist.color || STYLIST_FALLBACK }}>
                       {stylist.name.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -287,64 +284,61 @@ export function CommissionsManager({ tenantId }: CommissionsManagerProps) {
 
                   {(commission.commission_type === "percentage" || commission.commission_type === "mixed") && (
                     <div className="flex items-center gap-1">
-                      <Input
+                      <input className="glow-input w-20"
                         type="number"
-                        className="w-20"
                         value={commission.commission_percentage}
                         onChange={(e) => updateCommission(stylist.id, "commission_percentage", parseFloat(e.target.value) || 0)}
                       />
-                      <Percent className="h-4 w-4 text-muted-foreground" />
+                      <Percent className="h-4 w-4 text-outline" />
                     </div>
                   )}
 
                   {(commission.commission_type === "fixed" || commission.commission_type === "mixed") && (
                     <div className="flex items-center gap-1">
-                      <Input
+                      <input className="glow-input w-20"
                         type="number"
                         step="0.01"
-                        className="w-20"
                         value={commission.commission_fixed}
                         onChange={(e) => updateCommission(stylist.id, "commission_fixed", parseFloat(e.target.value) || 0)}
                       />
-                      <Euro className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">/servicio</span>
+                      <Euro className="h-4 w-4 text-outline" />
+                      <span className="text-xs text-outline">/servicio</span>
                     </div>
                   )}
                 </div>
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Earnings Report */}
-      <Card>
-        <CardHeader>
+      <div className="glow-card">
+        <div className="glow-card-h"><div>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base flex items-center gap-2">
+              <h3>
                 <TrendingUp className="h-4 w-4" />
                 Informe de Comisiones
-              </CardTitle>
-              <CardDescription>Cálculo basado en transacciones del período</CardDescription>
+              </h3>
+              <div className="glow-card-h-sub">Cálculo basado en transacciones del período</div>
             </div>
-            <Input
+            <input className="glow-input w-40"
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="w-40"
             />
           </div>
-        </CardHeader>
-        <CardContent>
+        </div></div>
+        <div className="glow-card-b">
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="text-center p-4 rounded-lg bg-muted/50">
               <p className="text-2xl font-bold">{totalSales.toFixed(2)}€</p>
-              <p className="text-sm text-muted-foreground">Ventas totales</p>
+              <p className="text-sm text-outline">Ventas totales</p>
             </div>
             <div className="text-center p-4 rounded-lg bg-primary/10">
               <p className="text-2xl font-bold text-primary">{totalCommissions.toFixed(2)}€</p>
-              <p className="text-sm text-muted-foreground">Total comisiones</p>
+              <p className="text-sm text-outline">Total comisiones</p>
             </div>
           </div>
 
@@ -356,13 +350,13 @@ export function CommissionsManager({ tenantId }: CommissionsManagerProps) {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={stylist?.avatar_url || undefined} />
-                      <AvatarFallback style={{ backgroundColor: stylist?.color || "#8B5CF6" }}>
+                      <AvatarFallback style={{ backgroundColor: stylist?.color || STYLIST_FALLBACK }}>
                         {e.stylist_name.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <p className="font-medium">{e.stylist_name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-outline">
                         {e.services_count} servicios · {e.total_sales.toFixed(2)}€ ventas
                       </p>
                     </div>
@@ -374,8 +368,8 @@ export function CommissionsManager({ tenantId }: CommissionsManagerProps) {
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

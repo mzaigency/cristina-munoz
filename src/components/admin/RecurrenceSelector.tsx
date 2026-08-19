@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Repeat } from "lucide-react";
 
@@ -64,9 +62,9 @@ export const RecurrenceSelector = ({ value, onChange }: RecurrenceSelectorProps)
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Repeat className="h-4 w-4 text-primary" />
-          <Label htmlFor="recurrence-toggle" className="font-medium">
+          <label htmlFor="recurrence-toggle" className="font-medium">
             Cita recurrente
-          </Label>
+          </label>
         </div>
         <Switch
           id="recurrence-toggle"
@@ -78,14 +76,13 @@ export const RecurrenceSelector = ({ value, onChange }: RecurrenceSelectorProps)
       {value.enabled && (
         <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-muted-foreground">Repetir cada</span>
-            <Input
+            <span className="text-sm text-outline">Repetir cada</span>
+            <input className="glow-input w-16 h-8 text-center"
               type="number"
               min={1}
               max={52}
               value={value.intervalValue}
               onChange={(e) => handleIntervalValueChange(e.target.value)}
-              className="w-16 h-8 text-center"
             />
             <Select value={value.intervalUnit} onValueChange={handleIntervalUnitChange}>
               <SelectTrigger className="w-28 h-8">
@@ -100,26 +97,25 @@ export const RecurrenceSelector = ({ value, onChange }: RecurrenceSelectorProps)
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-muted-foreground">Crear</span>
-            <Input
+            <span className="text-sm text-outline">Crear</span>
+            <input className="glow-input w-16 h-8 text-center"
               type="number"
               min={1}
               max={value.intervalUnit === 'days' ? 365 : value.intervalUnit === 'weeks' ? 52 : 12}
               value={value.occurrences}
               onChange={(e) => handleOccurrencesChange(e.target.value)}
-              className="w-16 h-8 text-center"
             />
-            <span className="text-sm text-muted-foreground">citas en total</span>
+            <span className="text-sm text-outline">citas en total</span>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-background/50 p-2 rounded">
+          <div className="flex items-center gap-2 text-sm text-outline bg-background/50 p-2 rounded">
             <Calendar className="h-4 w-4" />
             <span>
-              Última cita aproximada: <strong className="text-foreground">{calculateEndDate()}</strong>
+              Última cita aproximada: <strong className="text-on-surface">{calculateEndDate()}</strong>
             </span>
           </div>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-outline">
             Se crearán {value.occurrences} citas. Cada una podrá editarse o cancelarse individualmente, 
             o podrás cancelar todas las futuras a la vez.
           </p>

@@ -157,7 +157,7 @@ export default function Messages() {
             <div className="msg-shell-mobile">
               <header className="msg-sidebar-header">
                 <span className="msg-sidebar-title">
-                  <MessageCircle className="h-5 w-5" style={{ color: 'var(--gp-accent)' }} />
+                  <MessageCircle className="h-5 w-5" style={{ color: 'var(--glow-brand)' }} />
                   Chats
                   {totalUnread > 0 && (
                     <span className="msg-unread-badge">
@@ -187,7 +187,7 @@ export default function Messages() {
 
   // ── Desktop ───────────────────────────────────────────────
   return (
-    <div className="min-h-screen" style={{ background: 'var(--gp-bg)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--glow-bg)' }}>
       <div className="sticky top-0 z-10 liquid-glass-solid border-b border-border/30">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
           <Button

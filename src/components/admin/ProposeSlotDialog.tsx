@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -216,32 +213,30 @@ export function ProposeSlotDialog({
 
         <div className="space-y-4 py-2">
           <div>
-            <Label className="text-xs flex items-center gap-1.5">
+            <label className="text-xs flex items-center gap-1.5">
               <CalIcon className="h-3.5 w-3.5" /> Fecha
-            </Label>
-            <Input
+            </label>
+            <input className="glow-input mt-1"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="mt-1"
               min={format(new Date(), "yyyy-MM-dd")}
             />
           </div>
 
           <div>
-            <Label className="text-xs flex items-center gap-1.5">
+            <label className="text-xs flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" /> Hora
-            </Label>
-            <Input
+            </label>
+            <input className="glow-input mt-1"
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="mt-1"
             />
           </div>
 
           <div>
-            <Label className="text-xs">Profesional</Label>
+            <label className="text-xs">Profesional</label>
             <Select
               value={stylistId || "none"}
               onValueChange={(v) => setStylistId(v === "none" ? "" : v)}
@@ -261,34 +256,27 @@ export function ProposeSlotDialog({
           </div>
 
           {conflictWarn && (
-            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <div className="text-xs text-glow-warn-ink bg-glow-warn/5 border border-glow-warn/30 rounded-lg px-3 py-2">
               ⚠️ {conflictWarn}
             </div>
           )}
 
-          <div className="text-[11px] text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
+          <div className="text-[11px] text-outline bg-muted/40 rounded-lg px-3 py-2">
             La clienta tiene 24h para confirmar. Si acepta, la cita se crea
             automáticamente en tu agenda.
           </div>
         </div>
 
         <DialogFooter className="gap-2">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="flex-1 sm:flex-none"
-            disabled={submitting}
-          >
+          <button className="glow-btn" onClick={() => onOpenChange(false)} disabled={submitting}>
             Cancelar
-          </Button>
-          <Button
+          </button>
+          <button className="glow-btn glow-btn--primary"
             onClick={handlePropose}
-            disabled={submitting || !date || !time}
-            className="flex-1 sm:flex-none"
-          >
+            disabled={submitting || !date || !time}>
             {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Proponer
-          </Button>
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

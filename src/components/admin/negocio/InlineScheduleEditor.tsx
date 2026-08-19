@@ -155,25 +155,25 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
   if (rows === null) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
-        <Loader2 className="gp-spinner-sm" />
+        <Loader2 className="glow-spinner-sm" />
       </div>
     );
   }
 
   return (
-    <div className="gp-sched-edit">
-      <div className="gp-neg-sched">
+    <div className="glow-sched-edit">
+      <div className="glow-neg-sched">
         {DAYS.map((d) => {
           const r = rows.find((x) => x.day_of_week === d.value)!;
           const hasBreak = r.break_start != null || r.break_end != null;
           return (
-            <div key={d.value} className={`gp-sched-edit-row${r.is_working ? "" : " off"}`}>
-              <div className="gp-sched-edit-head">
-                <span className="gp-neg-sched-day" style={{ width: "auto" }}>
+            <div key={d.value} className={`glow-sched-edit-row${r.is_working ? "" : " off"}`}>
+              <div className="glow-sched-edit-head">
+                <span className="glow-neg-sched-day" style={{ width: "auto" }}>
                   {d.label}
                 </span>
-                <div className="gp-sched-edit-head-actions">
-                  {!r.is_working && <span className="gp-neg-sched-rest">Descansa</span>}
+                <div className="glow-sched-edit-head-actions">
+                  {!r.is_working && <span className="glow-neg-sched-rest">Descansa</span>}
                   <Switch
                     checked={r.is_working}
                     onCheckedChange={(v) => update(d.value, { is_working: v })}
@@ -184,7 +184,7 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
 
               {r.is_working && (
                 <>
-                  <div className="gp-sched-edit-times">
+                  <div className="glow-sched-edit-times">
                     <input
                       type="time"
                       value={r.start_time}
@@ -198,10 +198,10 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
                       onChange={(e) => update(d.value, { end_time: e.target.value })}
                       aria-label="Hora de salida"
                     />
-                    <div className="gp-sched-edit-row-actions">
+                    <div className="glow-sched-edit-row-actions">
                       {!hasBreak && (
                         <button
-                          className="gp-sched-edit-ic"
+                          className="glow-sched-edit-ic"
                           onClick={() => update(d.value, { break_start: "14:00", break_end: "15:00" })}
                           title="Añadir descanso"
                           aria-label="Añadir descanso"
@@ -211,7 +211,7 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
                         </button>
                       )}
                       <button
-                        className="gp-sched-edit-ic"
+                        className="glow-sched-edit-ic"
                         onClick={() => applyToAll(d.value)}
                         title="Copiar estas horas a todos los días"
                         aria-label="Copiar estas horas a todos los días"
@@ -223,8 +223,8 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
                   </div>
 
                   {hasBreak && (
-                    <div className="gp-sched-edit-times break">
-                      <Coffee className="gp-sched-edit-break-ic" />
+                    <div className="glow-sched-edit-times break">
+                      <Coffee className="glow-sched-edit-break-ic" />
                       <input
                         type="time"
                         value={r.break_start ?? ""}
@@ -238,9 +238,9 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
                         onChange={(e) => update(d.value, { break_end: e.target.value || null })}
                         aria-label="Fin del descanso"
                       />
-                      <div className="gp-sched-edit-row-actions">
+                      <div className="glow-sched-edit-row-actions">
                         <button
-                          className="gp-sched-edit-ic"
+                          className="glow-sched-edit-ic"
                           onClick={() => update(d.value, { break_start: null, break_end: null })}
                           title="Quitar descanso"
                           aria-label="Quitar descanso"
@@ -260,12 +260,12 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
 
       {/* Barra de acciones: visible si hay cambios o si aún no existe horario propio */}
       {(dirty || !hadOwn) && (
-        <div className="gp-sched-edit-bar">
-          <button className="gp-btn sm" onClick={onDiscard} disabled={saving} type="button">
+        <div className="glow-sched-edit-bar">
+          <button className="glow-btn glow-btn--sm" onClick={onDiscard} disabled={saving} type="button">
             {hadOwn ? "Descartar" : "Cancelar"}
           </button>
-          <button className="gp-btn primary sm" onClick={save} disabled={saving || !rows} type="button">
-            {saving && <Loader2 className="gp-spinner-sm" />}
+          <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={save} disabled={saving || !rows} type="button">
+            {saving && <Loader2 className="glow-spinner-sm" />}
             {hadOwn ? "Guardar cambios" : "Crear horario propio"}
           </button>
         </div>

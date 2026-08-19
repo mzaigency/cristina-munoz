@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { STYLIST_FALLBACK } from "@/lib/chartColors";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Sparkles, Plus } from "lucide-react";
 import { LocalCalendarCRM } from "../LocalCalendarCRM";
@@ -11,21 +12,14 @@ interface AgendaSectionProps {
   tenantId: string;
   onSelectClient?: (clientId: string) => void;
   subTab?: string;
-  onSubTabChange?: (subTab: string) => void;
-  hideTabs?: boolean;
 }
 
 type AgendaTab = "dia" | "semana" | "espera";
 
-const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideTabs }: AgendaSectionProps) => {
+const AgendaSection = ({ tenantId, onSelectClient, subTab }: AgendaSectionProps) => {
   const [internalTab, setInternalTab] = useState<AgendaTab>("dia");
   const activeTab: AgendaTab = (subTab as AgendaTab) || internalTab;
-  const setActiveTab = (t: AgendaTab) => {
-    if (onSubTabChange) onSubTabChange(t);
-    else setInternalTab(t);
-  };
   const [stylists, setStylists] = useState<Array<{ slug: string; name: string; color: string }>>([]);
-  const [waitlistCount, setWaitlistCount] = useState(0);
   const [fabOpen, setFabOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -59,49 +53,14 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
         .eq("tenant_id", tenantId)
         .eq("is_active", true);
       if (data) {
-        setStylists(data.map((s) => ({ slug: s.slug, name: s.name, color: s.color || "#6366f1" })));
+        setStylists(data.map((s) => ({ slug: s.slug, name: s.name, color: s.color || STYLIST_FALLBACK })));
       }
     };
     fetchStylists();
   }, [tenantId]);
 
-  useEffect(() => {
-    const fetchWaitlistCount = async () => {
-      const { count } = await supabase
-        .from("waitlist")
-        .select("id", { count: "exact", head: true })
-        .eq("tenant_id", tenantId)
-        .eq("status", "waiting");
-      setWaitlistCount(count || 0);
-    };
-
-    fetchWaitlistCount();
-
-    const channel = supabase
-      .channel(`waitlist-count-${tenantId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "waitlist", filter: `tenant_id=eq.${tenantId}` }, () => fetchWaitlistCount())
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [tenantId]);
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-      {!hideTabs && (
-        <div className="gp-subtabs">
-          <button className={`gp-subtab${activeTab === "dia" ? " on" : ""}`} onClick={() => setActiveTab("dia")}>
-            Día
-          </button>
-          <button className={`gp-subtab${activeTab === "semana" ? " on" : ""}`} onClick={() => setActiveTab("semana")}>
-            Semana
-          </button>
-          <button className={`gp-subtab${activeTab === "espera" ? " on" : ""}`} onClick={() => setActiveTab("espera")}>
-            Lista de espera
-            {waitlistCount > 0 && <span className="gp-subtab-count">{waitlistCount}</span>}
-          </button>
-        </div>
-      )}
-
       {activeTab === "dia" && (
         <div data-tour-target="agenda-calendar">
           <LocalCalendarCRM
@@ -111,10 +70,10 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab, onSubTabChange, hideT
             topLeftSlot={
               <Sheet>
                 <SheetTrigger asChild>
-                  <button className="gp-btn sm">
+                  <button className="glow-btn glow-btn--sm">
                     <Sparkles style={{ width: 13, height: 13 }} />
-                    <span className="gp-hide-sm">Importar citas con IA</span>
-                    <span className="gp-show-sm">Importar</span>
+                    <span className="glow-hide-sm">Importar citas con IA</span>
+                    <span className="glow-show-sm">Importar</span>
                   </button>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="h-[92vh] overflow-y-auto rounded-t-2xl">

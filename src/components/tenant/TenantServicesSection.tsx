@@ -27,7 +27,7 @@ interface TenantServicesSectionProps {
   primaryColor?: string | null;
 }
 
-const BRAND_GRAD = "linear-gradient(100deg, #22408c, #98329a)";
+const BRAND_GRAD = "linear-gradient(100deg, #22408C, #98329A)";
 
 const formatDuration = (minutes: number): string => {
   if (minutes < 60) return `${minutes} min`;
@@ -182,7 +182,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
             </ul>
             <button
               onClick={() => setShowFull(true)}
-              className="mt-7 w-full rounded-2xl border border-neutral-300/80 bg-white py-3.5 text-[14px] font-semibold text-[#22408c] transition-colors hover:bg-neutral-50 active:scale-[0.99]"
+              className="mt-7 w-full rounded-2xl border border-neutral-300/80 bg-white py-3.5 text-[14px] font-semibold text-[#22408C] transition-colors hover:bg-neutral-50 active:scale-[0.99]"
             >
               {t("services.seeFullMenu")}
             </button>
@@ -205,7 +205,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                       />
-                      <div className="absolute top-3.5 left-3.5 px-3.5 py-1.5 bg-white/95 backdrop-blur-sm rounded-full text-[12px] font-semibold" style={{ color: "#22408c" }}>
+                      <div className="absolute top-3.5 left-3.5 px-3.5 py-1.5 bg-white/95 backdrop-blur-sm rounded-full text-[12px] font-semibold" style={{ color: "#22408C" }}>
                         {catServices.length} {t("services.countLabel")}
                       </div>
                     </div>
@@ -215,7 +215,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
                       {category}
                     </h3>
                     {!image && (
-                      <span className="text-[13px] font-semibold font-body whitespace-nowrap" style={{ color: "#22408c" }}>
+                      <span className="text-[13px] font-semibold font-body whitespace-nowrap" style={{ color: "#22408C" }}>
                         {catServices.length} {t("services.countLabel")}
                       </span>
                     )}
@@ -231,7 +231,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
             })}
             <button
               onClick={() => setShowFull(false)}
-              className="w-full rounded-2xl border border-neutral-300/80 bg-white py-3.5 text-[14px] font-semibold text-[#22408c] transition-colors hover:bg-neutral-50 active:scale-[0.99] inline-flex items-center justify-center gap-2"
+              className="w-full rounded-2xl border border-neutral-300/80 bg-white py-3.5 text-[14px] font-semibold text-[#22408C] transition-colors hover:bg-neutral-50 active:scale-[0.99] inline-flex items-center justify-center gap-2"
             >
               <ChevronUp className="h-4 w-4" />
               {t("services.seeLess")}

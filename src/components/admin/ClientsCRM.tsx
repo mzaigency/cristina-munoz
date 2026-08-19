@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
@@ -180,21 +179,21 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
     : { name: "", phone: "", email: "", notes: "", tags: [], birthday: "" };
 
   return (
-    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div className="glow-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
-      <div className="gp-page-h">
+      <div className="glow-page-h">
         <div>
           <h2>Clientes</h2>
           <p>{clients.length} registrados</p>
         </div>
-        <div className="gp-page-actions">
-          <button className="gp-btn sm" onClick={() => setIsImporterOpen(true)} aria-label="Importar clientes desde CSV">
+        <div className="glow-page-actions">
+          <button className="glow-btn glow-btn--sm" onClick={() => setIsImporterOpen(true)} aria-label="Importar clientes desde CSV">
             <Upload style={{ width: 14, height: 14 }} /> Importar
           </button>
-          <button className="gp-btn sm" onClick={() => exportClientsCsv(clients)} aria-label="Exportar clientes a CSV">
+          <button className="glow-btn glow-btn--sm" onClick={() => exportClientsCsv(clients)} aria-label="Exportar clientes a CSV">
             <Download style={{ width: 14, height: 14 }} /> Exportar
           </button>
-          <button className="gp-btn primary sm" onClick={handleNewClient}>
+          <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={handleNewClient}>
             <UserPlus style={{ width: 14, height: 14 }} /> Nuevo
           </button>
         </div>
@@ -204,8 +203,8 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
       {!loading && <ClientStats clients={clients} />}
 
       {/* Search */}
-      <div className="gp-search-top">
-        <Search style={{ width: 15, height: 15, color: "var(--gp-muted-c)", flexShrink: 0 }} />
+      <div className="glow-search">
+        <Search style={{ width: 15, height: 15, color: "var(--glow-ink-3)", flexShrink: 0 }} />
         <input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -223,28 +222,34 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
 
       {/* List */}
       {loading ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="gp-card" style={{ height: 72, background: "var(--gp-chip)" }} />
+        <div className="glow-card glow-card--clip">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="glow-row" style={{ height: 58 }}>
+              <div className="glow-avatar" style={{ background: "var(--glow-sunk)" }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ height: 10, width: "38%", borderRadius: 5, background: "var(--glow-sunk)" }} />
+                <div style={{ height: 8, width: "24%", borderRadius: 4, background: "var(--glow-sunk)", marginTop: 6 }} />
+              </div>
+            </div>
           ))}
         </div>
       ) : filteredAndSorted.length === 0 ? (
-        <div className="gp-card">
-          <div className="gp-empty">
-            <div className="gp-empty-ic"><Users style={{ width: 24, height: 24 }} /></div>
+        <div className="glow-card">
+          <div className="glow-empty">
+            <div className="glow-empty-ic"><Users style={{ width: 24, height: 24 }} /></div>
             <h4>{searchQuery || activeFilter !== "all" ? "Sin resultados" : "Sin clientes"}</h4>
             <p>
               {searchQuery ? "Prueba con otro término" : activeFilter !== "all" ? "No hay clientes con este filtro" : "Añade tu primer cliente para empezar"}
             </p>
             {!searchQuery && activeFilter === "all" && (
-              <button className="gp-btn primary sm" style={{ marginTop: 12 }} onClick={handleNewClient}>
+              <button className="glow-btn glow-btn--primary glow-btn--sm" style={{ marginTop: 12 }} onClick={handleNewClient}>
                 <UserPlus style={{ width: 14, height: 14 }} /> Añadir cliente
               </button>
             )}
           </div>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="glow-card glow-card--clip">
           <AnimatePresence mode="popLayout">
             {filteredAndSorted.map((client, index) => (
               <ClientCard

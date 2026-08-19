@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Crown, Check, X, Sparkles, ArrowRight, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -103,15 +102,15 @@ export const UpgradePrompt = ({
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg"
+          className="w-16 h-16 rounded-full bg-gradient-to-br from-glow-warn to-glow-warn flex items-center justify-center shadow-lg"
         >
           <Crown className="w-8 h-8 text-white" />
         </motion.div>
         <div>
-          <h3 className="text-xl font-semibold text-foreground">
+          <h3 className="text-xl font-semibold text-on-surface">
             {feature ? `Desbloquea ${feature}` : "Mejora tu plan"}
           </h3>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-outline mt-1">
             Accede a más funcionalidades para hacer crecer tu negocio
           </p>
         </div>
@@ -119,10 +118,10 @@ export const UpgradePrompt = ({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl border border-border bg-muted/30 p-4">
-          <p className="text-xs text-muted-foreground mb-1">Plan actual</p>
-          <p className="font-semibold text-foreground">{currentName}</p>
-          <p className="text-lg font-bold text-foreground mt-2">
-            {currentPrice}€<span className="text-xs font-normal text-muted-foreground">/mes</span>
+          <p className="text-xs text-outline mb-1">Plan actual</p>
+          <p className="font-semibold text-on-surface">{currentName}</p>
+          <p className="text-lg font-bold text-on-surface mt-2">
+            {currentPrice}€<span className="text-xs font-normal text-outline">/mes</span>
           </p>
         </div>
         <div className="rounded-xl border-2 border-primary bg-primary/5 p-4 relative overflow-hidden">
@@ -130,16 +129,16 @@ export const UpgradePrompt = ({
             <Sparkles className="w-3 h-3" />
             Recomendado
           </div>
-          <p className="text-xs text-muted-foreground mb-1">Mejora a</p>
+          <p className="text-xs text-outline mb-1">Mejora a</p>
           <p className="font-semibold text-primary">{targetName}</p>
-          <p className="text-lg font-bold text-foreground mt-2">
-            {targetPrice}€<span className="text-xs font-normal text-muted-foreground">/mes</span>
+          <p className="text-lg font-bold text-on-surface mt-2">
+            {targetPrice}€<span className="text-xs font-normal text-outline">/mes</span>
           </p>
         </div>
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium text-foreground">Incluido en {targetName}:</p>
+        <p className="text-sm font-medium text-on-surface">Incluido en {targetName}:</p>
         <div className="grid gap-2">
           {targetFeatures.map((feat, index) => (
             <motion.div
@@ -149,22 +148,22 @@ export const UpgradePrompt = ({
               transition={{ delay: index * 0.05 }}
               className="flex items-center gap-2 text-sm"
             >
-              <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
+              <div className="w-5 h-5 rounded-full bg-glow-ok/10 flex items-center justify-center flex-shrink-0">
+                <Check className="w-3 h-3 text-glow-ok-ink" />
               </div>
-              <span className="text-foreground">{feat}</span>
+              <span className="text-on-surface">{feat}</span>
             </motion.div>
           ))}
         </div>
       </div>
 
       <div className="flex flex-col gap-2 mt-2">
-        <Button onClick={handleUpgrade} disabled={loading} className="w-full h-12 text-base font-semibold gap-2">
+        <button className="glow-btn glow-btn--primary glow-btn--block text-base font-semibold gap-2" onClick={handleUpgrade} disabled={loading}>
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (<>Mejorar a {targetName}<ArrowRight className="w-4 h-4" /></>)}
-        </Button>
-        <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-muted-foreground">
+        </button>
+        <button className="glow-btn glow-btn--ghost text-outline" onClick={() => onOpenChange(false)}>
           Ahora no
-        </Button>
+        </button>
       </div>
     </div>
   );

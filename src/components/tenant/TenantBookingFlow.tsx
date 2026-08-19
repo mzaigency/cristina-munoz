@@ -328,7 +328,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
             >
               <div
                 className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
-                style={{ width: `${(step / 3) * 100}%`, background: "linear-gradient(100deg, #22408c, #98329a)" }}
+                style={{ width: `${(step / 3) * 100}%`, background: "linear-gradient(100deg, #22408C, #98329A)" }}
               />
             </div>
             <div className="text-center" aria-live="polite" aria-atomic="true">

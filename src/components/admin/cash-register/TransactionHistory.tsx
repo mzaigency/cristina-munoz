@@ -58,18 +58,18 @@ const fmt = (n: number) =>
 function PayMethod({ method }: { method: string }) {
   if (method === "cash")
     return (
-      <span className="gp-badge ok" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+      <span className="glow-badge glow-badge--ok" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
         <Banknote style={{ width: 11, height: 11 }} /> Efectivo
       </span>
     );
   if (method === "card")
     return (
-      <span className="gp-badge info" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+      <span className="glow-badge glow-badge--brand" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
         <CreditCard style={{ width: 11, height: 11 }} /> Tarjeta
       </span>
     );
   return (
-    <span className="gp-badge neutral" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+    <span className="glow-badge" style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
       <Banknote style={{ width: 11, height: 11 }} />
       <CreditCard style={{ width: 11, height: 11 }} /> Mixto
     </span>
@@ -105,8 +105,8 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
 
   if (transactions.length === 0) {
     return (
-      <div className="gp-empty">
-        <div className="gp-empty-ic"><UserCircle style={{ width: 24, height: 24 }} /></div>
+      <div className="glow-empty">
+        <div className="glow-empty-ic"><UserCircle style={{ width: 24, height: 24 }} /></div>
         <p>Sin transacciones hoy</p>
       </div>
     );
@@ -114,17 +114,17 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
 
   return (
     <>
-      <div className="gp-list">
+      <div className="glow-list">
         {transactions.map((t) => (
           <div
             key={t.id}
-            className="gp-row"
+            className="glow-row"
             style={t.voided ? { opacity: 0.45, textDecoration: "line-through" } : {}}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
               <span
-                className="gp-mono"
-                style={{ fontSize: 13, fontWeight: 700, color: "var(--gp-muted-c)", flexShrink: 0 }}
+                className="glow-mono"
+                style={{ fontSize: 13, fontWeight: 700, color: "var(--glow-ink-3)", flexShrink: 0 }}
               >
                 {format(new Date(t.created_at), "HH:mm")}
               </span>
@@ -133,30 +133,30 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
                   <span style={{ fontSize: 13.5, fontWeight: 600 }}>{t.stylist}</span>
                   <PayMethod method={t.payment_method} />
                   {t.voided && (
-                    <span className="gp-badge danger">Anulado</span>
+                    <span className="glow-badge glow-badge--danger">Anulado</span>
                   )}
                 </div>
                 {(t.created_by_name || (t.voided && t.voided_by_name)) && (
-                  <div style={{ fontSize: 12, color: "var(--gp-muted-c)", marginTop: 2 }}>
+                  <div style={{ fontSize: 12, color: "var(--glow-ink-3)", marginTop: 2 }}>
                     {t.created_by_name && <span>Cobró: {t.created_by_name}</span>}
                     {t.voided && t.voided_by_name && (
-                      <span style={{ marginLeft: 8, color: "var(--gp-danger)" }}>
+                      <span style={{ marginLeft: 8, color: "var(--glow-danger-ink)" }}>
                         Anuló: {t.voided_by_name}
                       </span>
                     )}
                   </div>
                 )}
                 {t.notes && (
-                  <p style={{ fontSize: 12, color: "var(--gp-muted-c)", marginTop: 2 }}>{t.notes}</p>
+                  <p style={{ fontSize: 12, color: "var(--glow-ink-3)", marginTop: 2 }}>{t.notes}</p>
                 )}
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-              <span className="gp-mono" style={{ fontSize: 15, fontWeight: 800 }}>{fmt(t.total)}</span>
+              <span className="glow-mono" style={{ fontSize: 15, fontWeight: 800 }}>{fmt(t.total)}</span>
               {!t.voided && (
                 <button
-                  className="gp-icon-btn"
-                  style={{ color: "var(--gp-danger, #e53e3e)" }}
+                  className="glow-icon-btn"
+                  style={{ color: "var(--glow-danger-ink)" }}
                   title="Anular"
                   onClick={() => { setSelectedTransaction(t); setShowVoidDialog(true); }}
                 >
@@ -172,15 +172,15 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <AlertTriangle style={{ width: 18, height: 18, color: "var(--gp-danger, #e53e3e)" }} />
+              <AlertTriangle style={{ width: 18, height: 18, color: "var(--glow-danger-ink)" }} />
               ¿Anular esta transacción?
             </AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. La transacción quedará marcada como anulada y no contará en los totales.
               {selectedTransaction && (
-                <div style={{ marginTop: 14, padding: "12px 16px", background: "var(--gp-chip)", borderRadius: 10 }}>
+                <div style={{ marginTop: 14, padding: "12px 16px", background: "var(--glow-sunk)", borderRadius: 10 }}>
                   <p style={{ fontWeight: 700, fontSize: 17, margin: 0 }}>{fmt(selectedTransaction.total)}</p>
-                  <p style={{ fontSize: 13, color: "var(--gp-muted-c)", margin: "2px 0 0" }}>
+                  <p style={{ fontSize: 13, color: "var(--glow-ink-3)", margin: "2px 0 0" }}>
                     {format(new Date(selectedTransaction.created_at), "HH:mm")} ·{" "}
                     {selectedTransaction.payment_method === "cash" ? "Efectivo" : selectedTransaction.payment_method === "card" ? "Tarjeta" : "Mixto"}
                   </p>
@@ -192,7 +192,7 @@ export const TransactionHistory = ({ transactions, onUpdate }: TransactionHistor
             <AlertDialogCancel disabled={!!voidingId}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleVoidTransaction} disabled={!!voidingId}>
               {voidingId
-                ? <Loader2 className="gp-spinner-sm" />
+                ? <Loader2 className="glow-spinner-sm" />
                 : <XCircle style={{ width: 14, height: 14, marginRight: 6 }} />}
               Anular transacción
             </AlertDialogAction>

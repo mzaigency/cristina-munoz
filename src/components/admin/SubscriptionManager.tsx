@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -49,9 +47,9 @@ interface SubscriptionManagerProps {
 type PlanSlug = "starter" | "pro" | "business";
 
 const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
-  starter: { icon: <Zap className="h-5 w-5" />, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-  pro: { icon: <Crown className="h-5 w-5" />, color: "text-amber-500", bgColor: "bg-amber-500/10" },
-  business: { icon: <Sparkles className="h-5 w-5" />, color: "text-purple-500", bgColor: "bg-purple-500/10" },
+  starter: { icon: <Zap className="h-5 w-5" />, color: "text-glow-brand-ink", bgColor: "bg-glow-brand/10" },
+  pro: { icon: <Crown className="h-5 w-5" />, color: "text-glow-warn-ink", bgColor: "bg-glow-warn/10" },
+  business: { icon: <Sparkles className="h-5 w-5" />, color: "text-glow-accent-ink", bgColor: "bg-glow-accent/10" },
 };
 
 const PLAN_ORDER: PlanSlug[] = ["starter", "pro", "business"];
@@ -204,7 +202,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
   const getStatusBadge = () => {
     if (isTrialing) {
       return (
-        <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-[10px]">
+        <Badge className="bg-glow-brand/10 text-glow-brand-ink border-glow-brand/20 text-[10px]">
           <Clock className="h-2.5 w-2.5 mr-0.5" />
           Prueba
         </Badge>
@@ -213,7 +211,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
 
     if (cancelAtPeriodEnd) {
       return (
-        <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-[10px]">
+        <Badge className="bg-glow-warn/10 text-glow-warn-ink border-glow-warn/30 text-[10px]">
           <AlertCircle className="h-2.5 w-2.5 mr-0.5" />
           Se cancelará
         </Badge>
@@ -222,7 +220,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
 
     if (isActive) {
       return (
-        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px]">
+        <Badge className="bg-glow-ok/10 text-glow-ok-ink border-glow-ok/30 text-[10px]">
           <CheckCircle className="h-2.5 w-2.5 mr-0.5" />
           Activo
         </Badge>
@@ -230,7 +228,7 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
     }
 
     return (
-      <Badge className="bg-red-500/10 text-red-600 border-red-500/30 text-[10px]">
+      <Badge className="bg-glow-danger/10 text-glow-danger-ink border-glow-danger/30 text-[10px]">
         <AlertCircle className="h-2.5 w-2.5 mr-0.5" />
         Expirado
       </Badge>
@@ -247,24 +245,23 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
           </div>
           <div>
             <h2 className="text-lg font-bold">Tu Suscripción</h2>
-            <p className="text-xs text-muted-foreground">Gestiona tu plan y límites</p>
+            <p className="text-xs text-outline">Gestiona tu plan y límites</p>
           </div>
         </div>
-        <Button 
-          variant="ghost" 
-          size="icon"
+        <button
+          className="glow-icon-btn glow-icon-btn--ghost"
+          aria-label="Actualizar estado"
           onClick={handleRefresh}
           disabled={refreshing}
-          className="h-8 w-8"
         >
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-        </Button>
+        </button>
       </div>
 
       {/* Current Plan Card */}
-      <Card className="relative overflow-hidden">
-        <div className={`absolute top-0 left-0 w-1 h-full ${isActive ? (cancelAtPeriodEnd ? 'bg-amber-500' : 'bg-emerald-500') : 'bg-red-500'}`} />
-        <CardContent className="p-4">
+      <div className="glow-card relative overflow-hidden">
+        <div className={`absolute top-0 left-0 w-1 h-full ${isActive ? (cancelAtPeriodEnd ? 'bg-glow-warn' : 'bg-glow-ok') : 'bg-glow-danger'}`} />
+        <div className="glow-card-b">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className={`p-2.5 rounded-xl ${planInfo.bgColor} ${planInfo.color}`}>
@@ -283,14 +280,14 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
                 
                 {/* Subscription dates */}
                 {subscriptionEnd && isActive && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                  <div className="flex items-center gap-1 text-xs text-outline mt-1">
                     <Calendar className="h-3 w-3" />
                     <span>
                       {cancelAtPeriodEnd ? "Se cancela el" : "Renovación"}:{" "}
                       {format(new Date(subscriptionEnd), "d MMM yyyy", { locale: es })}
                     </span>
                     {daysRemaining !== null && daysRemaining <= 7 && (
-                      <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 text-amber-600">
+                      <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 text-glow-warn-ink">
                         {daysRemaining} días
                       </Badge>
                     )}
@@ -302,12 +299,12 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
 
           {/* Trial info */}
           {isTrialing && trialEnd && (
-            <div className="mt-3 p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
+            <div className="mt-3 p-3 rounded-lg bg-glow-brand/5 border border-glow-brand/20">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-blue-500" />
+                <Clock className="h-4 w-4 text-glow-brand-ink" />
                 <div>
-                  <p className="text-xs font-medium text-blue-600">Periodo de prueba activo</p>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-xs font-medium text-glow-brand-ink">Periodo de prueba activo</p>
+                  <p className="text-[11px] text-outline">
                     Tu prueba termina el {format(new Date(trialEnd), "d 'de' MMMM, yyyy", { locale: es })}
                   </p>
                 </div>
@@ -317,12 +314,12 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
 
           {/* Cancellation pending warning */}
           {cancelAtPeriodEnd && (
-            <div className="mt-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+            <div className="mt-3 p-3 rounded-lg bg-glow-warn/5 border border-glow-warn/20">
               <div className="flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                <AlertCircle className="h-4 w-4 text-glow-warn-ink mt-0.5" />
                 <div>
-                  <p className="text-xs font-medium text-amber-600">Cancelación programada</p>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-xs font-medium text-glow-warn-ink">Cancelación programada</p>
+                  <p className="text-[11px] text-outline">
                     Tu suscripción se cancelará al final del periodo actual. 
                     Puedes reactivarla desde el portal de gestión.
                   </p>
@@ -330,14 +327,14 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Usage Stats */}
-      <Card>
-        <CardContent className="p-4 space-y-4">
+      <div className="glow-card">
+        <div className="glow-card-b">
           <h4 className="font-semibold text-sm flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-outline" />
             Uso del Plan
           </h4>
           
@@ -352,13 +349,13 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
             max={planLimits.maxServices}
             label="Servicios"
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Upgrade Options */}
       {currentPlanIndex < PLAN_ORDER.length - 1 && (
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-          <CardContent className="p-4">
+        <div className="glow-card border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+          <div className="glow-card-b">
             <h4 className="font-semibold text-sm mb-3">Mejora tu plan</h4>
             <div className="space-y-2">
               {PLAN_ORDER.slice(currentPlanIndex + 1).map((slug) => {
@@ -376,26 +373,25 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
                       </div>
                       <div className="text-left">
                         <p className="font-medium text-sm">{dbPlan?.name || slug}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-outline">
                           Desde {dbPlan?.monthly_price || 0}€/mes
                         </p>
                       </div>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <ArrowRight className="h-4 w-4 text-outline group-hover:text-primary transition-colors" />
                   </button>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Manage Subscription Button - Always visible */}
-      <Button
+      <button
+        className={`glow-btn glow-btn--block${isActive ? "" : " glow-btn--primary"}`}
         onClick={handleManageSubscription}
         disabled={portalLoading}
-        variant={isActive ? "outline" : "default"}
-        className="w-full h-11 gap-2"
       >
         {portalLoading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -404,20 +400,20 @@ export function SubscriptionManager({ tenantId }: SubscriptionManagerProps) {
         )}
         {isActive ? "Gestionar suscripción" : "Reactivar suscripción"}
         <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
-      </Button>
+      </button>
 
       {/* Help text */}
-      <Card className="bg-muted/30 border-dashed">
-        <CardContent className="p-3">
+      <div className="glow-card bg-muted/30 border-dashed">
+        <div className="glow-card-b">
           <div className="flex items-start gap-2">
-            <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-            <p className="text-[11px] text-muted-foreground">
+            <Info className="h-4 w-4 text-outline mt-0.5 shrink-0" />
+            <p className="text-[11px] text-outline">
               Desde el portal de gestión puedes cambiar tu método de pago, descargar facturas, 
               modificar el tipo de renovación o cancelar tu suscripción.
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Ayuda con suscripción */}
       <SupportButton variant="card" context="Suscripción y facturación" />

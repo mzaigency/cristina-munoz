@@ -177,7 +177,7 @@ export function HelpCenter({ open, onOpenChange, onStartTour, hasFeature }: Help
     <>
       <div className="px-4 pt-3 pb-2 space-y-2 border-b bg-background sticky top-0 z-10">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-outline" />
           <Input
             placeholder="Buscar funciones..."
             value={query}
@@ -187,7 +187,7 @@ export function HelpCenter({ open, onOpenChange, onStartTour, hasFeature }: Help
         </div>
         <Button
           onClick={() => { onOpenChange(false); onStartTour(); }}
-          className="w-full h-9 gap-2 gp-grad-brand"
+          className="w-full h-9 gap-2 glow-grad-brand"
         >
           <Sparkles className="h-3.5 w-3.5" />
           <span className="text-xs font-semibold">Hacer el tour guiado</span>
@@ -202,7 +202,7 @@ export function HelpCenter({ open, onOpenChange, onStartTour, hasFeature }: Help
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="text-center py-8 text-muted-foreground text-sm"
+                className="text-center py-8 text-outline text-sm"
               >
                 <Search className="h-7 w-7 mx-auto mb-2 opacity-40" />
                 Sin resultados para "{query}"
@@ -220,12 +220,12 @@ export function HelpCenter({ open, onOpenChange, onStartTour, hasFeature }: Help
                     className="rounded-xl border border-border/60 bg-card hover:border-border transition-colors overflow-hidden"
                   >
                     <div className="flex items-center gap-3 px-3 py-2.5 bg-muted/40">
-                      <div className="h-8 w-8 rounded-lg gp-grad-brand-soft flex items-center justify-center gp-text-brand shrink-0">
+                      <div className="h-8 w-8 rounded-lg glow-grad-brand-soft flex items-center justify-center glow-text-brand shrink-0">
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold leading-tight">{section.label}</div>
-                        <div className="text-[11px] text-muted-foreground truncate">{section.hint}</div>
+                        <div className="text-[11px] text-outline truncate">{section.hint}</div>
                       </div>
                     </div>
                     <ul className="px-3 py-2 space-y-1.5">
@@ -236,18 +236,18 @@ export function HelpCenter({ open, onOpenChange, onStartTour, hasFeature }: Help
                             key={i}
                             className={cn(
                               "flex items-center gap-2 text-[12.5px] leading-snug",
-                              locked ? "text-muted-foreground/70" : "text-foreground/85",
+                              locked ? "text-outline/70" : "text-on-surface/85",
                             )}
                           >
                             <span
                               className={cn(
                                 "w-1 h-1 rounded-full shrink-0",
-                                locked ? "bg-muted-foreground/40" : "bg-[color:var(--gp-accent)]",
+                                locked ? "bg-muted-foreground/40" : "bg-[color:var(--glow-brand)]",
                               )}
                             />
                             <span className="flex-1">{b.text}</span>
                             {locked && (
-                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 uppercase">
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-glow-warn/10 text-glow-warn-ink uppercase">
                                 <Lock className="h-2 w-2" />
                                 {b.requiredPlan === "business" ? "Biz" : "Pro"}
                               </span>

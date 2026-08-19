@@ -1,10 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, Image, Palette, Type, Save, Layout, Building2, Phone, Sparkles, Pencil } from "lucide-react";
 import { landingThemes } from "@/components/onboarding/landing-themes";
@@ -189,54 +184,66 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
   if (!tenant) return null;
 
   return (
-    <div className="space-y-5 pb-28">
-      {/* Tip card - direct user to visual editor for landing visuals */}
-      <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-purple-500/5 to-transparent p-4 flex items-start gap-3">
-        <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-          <Sparkles className="h-4 w-4 text-primary" />
+    <div className="glow-fade" style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 96 }}>
+      <div className="glow-page-h" style={{ marginBottom: 0 }}>
+        <div>
+          <h2>Ajustes</h2>
+          <p>Cómo se ve tu salón en su web pública</p>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground">Editor visual rápido</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Cambia temas, tipografías y colores en directo desde tu landing.
-          </p>
-        </div>
-        <Button asChild variant="outline" size="sm" className="shrink-0 h-9 gap-1.5">
-          <a href={`/${tenantSlug}?edit=1`} target="_blank" rel="noopener noreferrer">
-            <Pencil className="h-3.5 w-3.5" />
-            Abrir
-          </a>
-        </Button>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      {/* Atajo al editor visual */}
+      <div
+        className="glow-card"
+        style={{
+          display: "flex", alignItems: "center", gap: 12, padding: 14,
+          background: "var(--glow-brand-softer)", borderColor: "var(--glow-brand-soft)",
+        }}
+      >
+        <span className="glow-kpi-ic glow-kpi-ic--brand" style={{ marginBottom: 0 }}>
+          <Sparkles style={{ width: 16, height: 16 }} />
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="glow-row-nm">Editor visual rápido</div>
+          <div className="glow-row-mt">Cambia temas, tipografías y colores en directo desde tu web.</div>
+        </div>
+        <a
+          className="glow-btn glow-btn--sm"
+          href={`/${tenantSlug}?edit=1`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Pencil style={{ width: 13, height: 13 }} /> Abrir
+        </a>
+      </div>
+
+      <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
         {/* Identidad */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Building2 className="h-4 w-4 text-primary" />
+        <div className="glow-card" style={{ gridColumn: "1 / -1" }}>
+          <div className="glow-card-h"><div>
+            <h3>
+              <Building2 style={{ width: 15, height: 15, color: "var(--glow-brand)" }} />
               Identidad del negocio
-            </CardTitle>
-            <CardDescription>Nombre, eslogan y descripción que verán tus clientes</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="sm:col-span-2">
-                <Label htmlFor="name">Nombre del negocio</Label>
-                <Input
+            </h3>
+            <div className="glow-card-h-sub">Nombre, eslogan y descripción que verán tus clientes</div>
+          </div></div>
+          <div className="glow-card-b glow-form">
+            <div className="glow-form-grid">
+              <div className="glow-field">
+                <label htmlFor="name">Nombre del negocio</label>
+                <input className="glow-input mt-1"
                   id="name"
                   value={tenant.name}
                   onChange={(e) => setTenant({ ...tenant, name: e.target.value })}
-                  className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="heading_size">Tamaño en hero</Label>
+                <label htmlFor="heading_size">Tamaño en hero</label>
                 <select
                   id="heading_size"
                   value={tenant.heading_size || "xlarge"}
                   onChange={(e) => setTenant({ ...tenant, heading_size: e.target.value })}
-                  className="w-full h-10 px-3 mt-1 border rounded-md bg-background text-foreground text-sm"
+                  className="w-full h-10 px-3 mt-1 border rounded-md bg-background text-on-surface text-sm"
                 >
                   <option value="medium">Mediano</option>
                   <option value="large">Grande</option>
@@ -245,122 +252,116 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
               </div>
             </div>
             <div>
-              <Label htmlFor="tagline">Eslogan</Label>
-              <Input
+              <label htmlFor="tagline">Eslogan</label>
+              <input className="glow-input mt-1"
                 id="tagline"
                 value={tenant.tagline || ""}
                 onChange={(e) => setTenant({ ...tenant, tagline: e.target.value })}
                 placeholder="Tu peluquería de confianza"
-                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="description">Descripción</Label>
-              <Textarea
+              <label htmlFor="description">Descripción</label>
+              <textarea className="glow-input mt-1 resize-none"
                 id="description"
                 value={tenant.description || ""}
                 onChange={(e) => setTenant({ ...tenant, description: e.target.value })}
                 placeholder="Describe tu negocio en pocas líneas..."
                 rows={3}
-                className="mt-1 resize-none"
               />
             </div>
             <div>
-              <Label htmlFor="language">Idioma de tu web pública</Label>
+              <label htmlFor="language">Idioma de tu web pública</label>
               <select
                 id="language"
                 value={tenant.language || "es"}
                 onChange={(e) => setTenant({ ...tenant, language: e.target.value })}
-                className="w-full h-10 px-3 mt-1 border rounded-md bg-background text-foreground text-sm sm:max-w-xs"
+                className="w-full h-10 px-3 mt-1 border rounded-md bg-background text-on-surface text-sm sm:max-w-xs"
               >
                 <option value="es">Español</option>
                 <option value="ca">Català</option>
               </select>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-outline mt-1">
                 Traduce los textos de la web que ven tus clientes (botones, secciones, reserva). Tus servicios y descripciones se muestran tal como los escribas.
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Colores */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Palette className="h-4 w-4 text-primary" />
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3>
+              <Palette style={{ width: 15, height: 15, color: "var(--glow-brand)" }} />
               Colores de marca
-            </CardTitle>
-            <CardDescription>Definen el acento visual de tu landing</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </h3>
+            <div className="glow-card-h-sub">Definen el acento visual de tu landing</div>
+          </div></div>
+          <div className="glow-card-b glow-form">
             <div>
-              <Label htmlFor="primary_color">Color Principal</Label>
+              <label htmlFor="primary_color">Color Principal</label>
               <div className="flex gap-2">
-                <Input
+                <input className="glow-input w-16 h-10 p-1 cursor-pointer"
                   type="color"
                   id="primary_color"
-                  value={tenant.primary_color || "#8B5CF6"}
+                  value={tenant.primary_color || "#22408C"}
                   onChange={(e) => setTenant({ ...tenant, primary_color: e.target.value })}
-                  className="w-16 h-10 p-1 cursor-pointer"
                 />
-                <Input
-                  value={tenant.primary_color || "#8B5CF6"}
+                <input className="glow-input flex-1"
+                  value={tenant.primary_color || "#22408C"}
                   onChange={(e) => setTenant({ ...tenant, primary_color: e.target.value })}
-                  placeholder="#8B5CF6"
-                  className="flex-1"
+                  placeholder="#22408C"
                 />
               </div>
             </div>
             <div>
-              <Label htmlFor="secondary_color">Color Secundario</Label>
+              <label htmlFor="secondary_color">Color Secundario</label>
               <div className="flex gap-2">
-                <Input
+                <input className="glow-input w-16 h-10 p-1 cursor-pointer"
                   type="color"
                   id="secondary_color"
-                  value={tenant.secondary_color || "#D946EF"}
+                  value={tenant.secondary_color || "#98329A"}
                   onChange={(e) => setTenant({ ...tenant, secondary_color: e.target.value })}
-                  className="w-16 h-10 p-1 cursor-pointer"
                 />
-                <Input
-                  value={tenant.secondary_color || "#D946EF"}
+                <input className="glow-input flex-1"
+                  value={tenant.secondary_color || "#98329A"}
                   onChange={(e) => setTenant({ ...tenant, secondary_color: e.target.value })}
-                  placeholder="#D946EF"
-                  className="flex-1"
+                  placeholder="#98329A"
                 />
               </div>
             </div>
             <div className="pt-2">
-              <Label>Vista previa</Label>
+              <label>Vista previa</label>
               <div className="flex gap-2 mt-2">
                 <div
                   className="w-12 h-12 rounded-lg shadow-sm"
-                  style={{ backgroundColor: tenant.primary_color || "#8B5CF6" }}
+                  style={{ backgroundColor: tenant.primary_color || "#22408C" }}
                 />
                 <div
                   className="w-12 h-12 rounded-lg shadow-sm"
-                  style={{ backgroundColor: tenant.secondary_color || "#D946EF" }}
+                  style={{ backgroundColor: tenant.secondary_color || "#98329A" }}
                 />
                 <div
                   className="flex-1 h-12 rounded-lg shadow-sm"
                   style={{
-                    background: `linear-gradient(135deg, ${tenant.primary_color || "#8B5CF6"}, ${tenant.secondary_color || "#D946EF"})`,
+                    background: `linear-gradient(135deg, ${tenant.primary_color || "#22408C"}, ${tenant.secondary_color || "#98329A"})`,
                   }}
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Tema de Landing */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Layout className="h-4 w-4 text-primary" />
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3>
+              <Layout style={{ width: 15, height: 15, color: "var(--glow-brand)" }} />
               Tema de landing
-            </CardTitle>
-            <CardDescription>Layout y estilo visual de toda la página</CardDescription>
-          </CardHeader>
-          <CardContent>
+            </h3>
+            <div className="glow-card-h-sub">Layout y estilo visual de toda la página</div>
+          </div></div>
+          <div className="glow-card-b">
             <div className="grid grid-cols-2 gap-2.5">
               {landingThemes.map((theme) => {
                 const isActive = tenant.theme_id === theme.id;
@@ -381,34 +382,34 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                         background: `linear-gradient(90deg, ${theme.defaultColors.primary}, ${theme.defaultColors.secondary})`,
                       }}
                     />
-                    <p className="font-semibold text-sm text-foreground mt-1">{theme.name}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{theme.description}</p>
+                    <p className="font-semibold text-sm text-on-surface mt-1">{theme.name}</p>
+                    <p className="text-[11px] text-outline mt-0.5 line-clamp-2">{theme.description}</p>
                   </button>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Imágenes (Logo + Hero combined) */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Image className="h-4 w-4 text-primary" />
+        <div className="glow-card" style={{ gridColumn: "1 / -1" }}>
+          <div className="glow-card-h"><div>
+            <h3>
+              <Image style={{ width: 15, height: 15, color: "var(--glow-brand)" }} />
               Imágenes de marca
-            </CardTitle>
-            <CardDescription>Logo y foto principal de tu landing</CardDescription>
-          </CardHeader>
-          <CardContent>
+            </h3>
+            <div className="glow-card-h-sub">Logo y foto principal de tu landing</div>
+          </div></div>
+          <div className="glow-card-b">
             <div className="grid gap-5 md:grid-cols-2">
               {/* Logo */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Logo</Label>
+                  <label className="text-sm font-medium">Logo</label>
                   <div className="flex items-center gap-2">
-                    <Label htmlFor="show_logo_landing" className="text-xs text-muted-foreground cursor-pointer">
+                    <label htmlFor="show_logo_landing" className="text-xs text-outline cursor-pointer">
                       Mostrar en hero
-                    </Label>
+                    </label>
                     <input
                       type="checkbox"
                       id="show_logo_landing"
@@ -423,11 +424,11 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                   {tenant.logo_url ? (
                     <img src={tenant.logo_url} alt="Logo" className="max-h-full max-w-full object-contain p-3" />
                   ) : (
-                    <Image className="h-8 w-8 text-muted-foreground/40" />
+                    <Image className="h-8 w-8 text-outline/40" />
                   )}
                 </div>
 
-                <Label htmlFor="logo-upload" className="cursor-pointer block">
+                <label htmlFor="logo-upload" className="cursor-pointer block">
                   <div className="flex items-center justify-center gap-2 h-10 rounded-lg bg-muted hover:bg-muted/70 transition-colors text-sm">
                     {uploading === "logo" ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -436,7 +437,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                     )}
                     <span>{uploading === "logo" ? "Subiendo..." : "Subir logo"}</span>
                   </div>
-                </Label>
+                </label>
                 <input
                   id="logo-upload"
                   type="file"
@@ -452,17 +453,17 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
 
               {/* Hero image */}
               <div className="space-y-3">
-                <Label className="text-sm font-medium">Imagen principal (hero)</Label>
+                <label className="text-sm font-medium">Imagen principal (hero)</label>
 
                 <div className="aspect-video rounded-xl border-2 border-dashed border-border bg-muted/30 flex items-center justify-center overflow-hidden">
                   {tenant.hero_image_url ? (
                     <img src={tenant.hero_image_url} alt="Hero" className="w-full h-full object-cover" />
                   ) : (
-                    <Image className="h-8 w-8 text-muted-foreground/40" />
+                    <Image className="h-8 w-8 text-outline/40" />
                   )}
                 </div>
 
-                <Label htmlFor="hero-upload" className="cursor-pointer block">
+                <label htmlFor="hero-upload" className="cursor-pointer block">
                   <div className="flex items-center justify-center gap-2 h-10 rounded-lg bg-muted hover:bg-muted/70 transition-colors text-sm">
                     {uploading === "hero" ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -471,7 +472,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                     )}
                     <span>{uploading === "hero" ? "Subiendo..." : "Subir imagen hero"}</span>
                   </div>
-                </Label>
+                </label>
                 <input
                   id="hero-upload"
                   type="file"
@@ -483,98 +484,92 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                   }}
                   disabled={uploading === "hero"}
                 />
-                <p className="text-[11px] text-muted-foreground">Recomendado: 1920×1080 o mayor</p>
+                <p className="text-[11px] text-outline">Recomendado: 1920×1080 o mayor</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Contacto */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Phone className="h-4 w-4 text-primary" />
+        <div className="glow-card" style={{ gridColumn: "1 / -1" }}>
+          <div className="glow-card-h"><div>
+            <h3>
+              <Phone style={{ width: 15, height: 15, color: "var(--glow-brand)" }} />
               Información de contacto
-            </CardTitle>
-            <CardDescription>Aparecerá en el footer y en la sección de contacto</CardDescription>
-          </CardHeader>
-          <CardContent>
+            </h3>
+            <div className="glow-card-h-sub">Aparecerá en el footer y en la sección de contacto</div>
+          </div></div>
+          <div className="glow-card-b">
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
               <div>
-                <Label htmlFor="phone">Teléfono</Label>
-                <Input
+                <label htmlFor="phone">Teléfono</label>
+                <input className="glow-input h-11 md:h-10"
                   id="phone"
                   value={tenant.phone || ""}
                   onChange={(e) => setTenant({ ...tenant, phone: e.target.value })}
                   placeholder="+34 600 000 000"
-                  className="h-11 md:h-10"
                 />
               </div>
               <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
+                <label htmlFor="email">Email</label>
+                <input className="glow-input h-11 md:h-10"
                   id="email"
                   type="email"
                   value={tenant.email || ""}
                   onChange={(e) => setTenant({ ...tenant, email: e.target.value })}
                   placeholder="info@ejemplo.com"
-                  className="h-11 md:h-10"
                 />
               </div>
               <div>
-                <Label htmlFor="city">Ciudad</Label>
-                <Input
+                <label htmlFor="city">Ciudad</label>
+                <input className="glow-input h-11 md:h-10"
                   id="city"
                   value={tenant.city || ""}
                   onChange={(e) => setTenant({ ...tenant, city: e.target.value })}
                   placeholder="Madrid"
-                  className="h-11 md:h-10"
                 />
               </div>
-              <div className="sm:col-span-2">
-                <Label htmlFor="address">Dirección</Label>
-                <Input
+              <div className="glow-field">
+                <label htmlFor="address">Dirección</label>
+                <input className="glow-input h-11 md:h-10"
                   id="address"
                   value={tenant.address || ""}
                   onChange={(e) => setTenant({ ...tenant, address: e.target.value })}
                   placeholder="Calle Principal, 123"
-                  className="h-11 md:h-10"
                 />
               </div>
               <div>
-                <Label htmlFor="postal_code">Código Postal</Label>
-                <Input
+                <label htmlFor="postal_code">Código Postal</label>
+                <input className="glow-input h-11 md:h-10"
                   id="postal_code"
                   value={tenant.postal_code || ""}
                   onChange={(e) => setTenant({ ...tenant, postal_code: e.target.value })}
                   placeholder="28001"
-                  className="h-11 md:h-10"
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Sticky guided save bar */}
       <div
-        className="sticky bottom-0 left-0 right-0 z-30 -mx-4 md:-mx-6 mt-6 px-4 md:px-6 py-3 bg-background/90 backdrop-blur-xl border-t border-border flex items-center gap-3 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.15)]"
-        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        className="glow-save-bar"
         role="status"
         aria-live="polite"
       >
-        <p className="flex-1 text-xs text-muted-foreground hidden sm:block">
+        <p className="glow-hide-sm" style={{ flex: 1, margin: 0, fontSize: "var(--glow-t-xs)", color: "var(--glow-ink-3)", fontWeight: 600 }}>
           Los cambios se aplican al guardar.
         </p>
-        <Button
+        <button
+          className="glow-btn glow-btn--primary guided-halo"
           onClick={handleSave}
           disabled={saving}
-          className="h-11 w-full sm:w-auto guided-halo gap-2"
           data-guided-cta="true"
         >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {saving ? <Loader2 className="glow-spinner-sm" /> : <Save style={{ width: 14, height: 14 }} />}
           Guardar cambios
-        </Button>
+        </button>
       </div>
     </div>
   );

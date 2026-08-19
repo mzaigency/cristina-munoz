@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
+import { chartColor, STYLIST_FALLBACK } from "@/lib/chartColors";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Calendar, TrendingUp, Users, Scissors, Award } from "lucide-react";
 import { format, subDays, startOfMonth, subMonths } from "date-fns";
@@ -49,7 +48,6 @@ interface ServiceStats {
   revenue: number;
 }
 
-const COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#6366F1", "#EF4444"];
 
 export const CashRegisterStats = () => {
   const [loading, setLoading] = useState(true);
@@ -133,7 +131,7 @@ export const CashRegisterStats = () => {
             stylistData[stylistId] = {
               id: stylistId,
               name: stylist.name,
-              color: stylist.color || "#8B5CF6",
+              color: stylist.color || STYLIST_FALLBACK,
               total: 0,
               transactions: 0,
               avgTicket: 0,
@@ -211,7 +209,7 @@ export const CashRegisterStats = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-outline" />
       </div>
     );
   }
@@ -221,44 +219,44 @@ export const CashRegisterStats = () => {
       {/* Period Selector */}
       <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1">
         {(["week", "month", "quarter"] as Period[]).map(p => (
-          <Button key={p} variant={period === p ? "default" : "outline"} size="sm" onClick={() => setPeriod(p)} className="h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-3 shrink-0">
+          <button className="glow-btn glow-btn--primary glow-btn--sm h-8 sm:h-9 text-xs sm:text-sm px-2.5 sm:px-3 shrink-0" key={p} onClick={() => setPeriod(p)}>
             {p === "week" ? "Semana" : p === "month" ? "Mes" : "Trimestre"}
-          </Button>
+          </button>
         ))}
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
-        <Card>
-          <CardContent className="p-2.5 sm:p-4">
-            <p className="text-[10px] sm:text-xs text-muted-foreground">Total</p>
+        <div className="glow-card">
+          <div className="glow-card-b">
+            <p className="text-[10px] sm:text-xs text-outline">Total</p>
             <p className="text-base sm:text-xl font-bold text-primary truncate">{formatCurrency(totals.total)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-2.5 sm:p-4">
-            <p className="text-[10px] sm:text-xs text-muted-foreground">Ticket medio</p>
+          </div>
+        </div>
+        <div className="glow-card">
+          <div className="glow-card-b">
+            <p className="text-[10px] sm:text-xs text-outline">Ticket medio</p>
             <p className="text-base sm:text-xl font-bold truncate">{formatCurrency(totals.avgTicket)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-2.5 sm:p-4">
-            <p className="text-[10px] sm:text-xs text-muted-foreground">Transacciones</p>
+          </div>
+        </div>
+        <div className="glow-card">
+          <div className="glow-card-b">
+            <p className="text-[10px] sm:text-xs text-outline">Transacciones</p>
             <p className="text-base sm:text-xl font-bold">{totals.transactionCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-2.5 sm:p-4">
-            <p className="text-[10px] sm:text-xs text-muted-foreground">Propinas</p>
-            <p className="text-base sm:text-xl font-bold text-pink-600 truncate">{formatCurrency(totals.tips)}</p>
-          </CardContent>
-        </Card>
-        <Card className="col-span-2 sm:col-span-1">
-          <CardContent className="p-2.5 sm:p-4">
-            <p className="text-[10px] sm:text-xs text-muted-foreground">Descuentos</p>
-            <p className="text-base sm:text-xl font-bold text-orange-600 truncate">-{formatCurrency(totals.discounts)}</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+        <div className="glow-card">
+          <div className="glow-card-b">
+            <p className="text-[10px] sm:text-xs text-outline">Propinas</p>
+            <p className="text-base sm:text-xl font-bold text-glow-accent-ink truncate">{formatCurrency(totals.tips)}</p>
+          </div>
+        </div>
+        <div className="glow-card col-span-2 sm:col-span-1">
+          <div className="glow-card-b">
+            <p className="text-[10px] sm:text-xs text-outline">Descuentos</p>
+            <p className="text-base sm:text-xl font-bold text-glow-warn-ink truncate">-{formatCurrency(totals.discounts)}</p>
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
@@ -277,9 +275,9 @@ export const CashRegisterStats = () => {
         <TabsContent value="overview" className="space-y-3 sm:space-y-4 mt-3 sm:mt-4">
           {data.length > 0 ? (
             <>
-              <Card>
-                <CardHeader className="p-3 sm:p-6"><CardTitle className="text-sm sm:text-lg">Ingresos diarios</CardTitle></CardHeader>
-                <CardContent className="p-2 sm:p-6 pt-0">
+              <div className="glow-card">
+                <div className="glow-card-h"><div><h3>Ingresos diarios</h3></div></div>
+                <div className="glow-card-b">
                   <div className="h-[200px] sm:h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={data}>
@@ -292,12 +290,12 @@ export const CashRegisterStats = () => {
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              <Card>
-                <CardHeader className="p-3 sm:p-6"><CardTitle className="text-sm sm:text-lg">Por método de pago</CardTitle></CardHeader>
-                <CardContent className="p-2 sm:p-6 pt-0">
+              <div className="glow-card">
+                <div className="glow-card-h"><div><h3>Por método de pago</h3></div></div>
+                <div className="glow-card-b">
                   <div className="h-[200px] sm:h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={data}>
@@ -312,11 +310,11 @@ export const CashRegisterStats = () => {
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </>
           ) : (
-            <div className="text-center py-8 sm:py-12 text-muted-foreground">
+            <div className="text-center py-8 sm:py-12 text-outline">
               <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 opacity-50" />
               <p className="text-sm">No hay datos para el período seleccionado</p>
             </div>
@@ -327,9 +325,9 @@ export const CashRegisterStats = () => {
           {stylistStats.length > 0 ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Award className="h-5 w-5" />Ranking por ingresos</CardTitle></CardHeader>
-                  <CardContent className="space-y-3">
+                <div className="glow-card">
+                  <div className="glow-card-h"><div><h3><Award className="h-5 w-5" />Ranking por ingresos</h3></div></div>
+                  <div className="glow-card-b">
                     {stylistStats.map((s, i) => (
                       <div key={s.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-3">
@@ -337,41 +335,41 @@ export const CashRegisterStats = () => {
                             style={{ backgroundColor: s.color }}>{i + 1}</div>
                           <div>
                             <p className="font-medium">{s.name}</p>
-                            <p className="text-xs text-muted-foreground">{s.transactions} transacciones</p>
+                            <p className="text-xs text-outline">{s.transactions} transacciones</p>
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="font-bold">{formatCurrency(s.total)}</p>
-                          <p className="text-xs text-muted-foreground">Ticket: {formatCurrency(s.avgTicket)}</p>
+                          <p className="text-xs text-outline">Ticket: {formatCurrency(s.avgTicket)}</p>
                         </div>
                       </div>
                     ))}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
-                <Card>
-                  <CardHeader><CardTitle className="text-lg">Distribución de ingresos</CardTitle></CardHeader>
-                  <CardContent>
+                <div className="glow-card">
+                  <div className="glow-card-h"><div><h3>Distribución de ingresos</h3></div></div>
+                  <div className="glow-card-b">
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie data={stylistStats} dataKey="total" nameKey="name" cx="50%" cy="50%"
                             outerRadius={100} label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}>
                             {stylistStats.map((s, i) => (
-                              <Cell key={s.id} fill={s.color || COLORS[i % COLORS.length]} />
+                              <Cell key={s.id} fill={s.color || chartColor(i)} />
                             ))}
                           </Pie>
                           <Tooltip formatter={(value: number) => formatCurrency(value)} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
 
-              <Card>
-                <CardHeader><CardTitle className="text-lg">Detalle por estilista</CardTitle></CardHeader>
-                <CardContent>
+              <div className="glow-card">
+                <div className="glow-card-h"><div><h3>Detalle por estilista</h3></div></div>
+                <div className="glow-card-b">
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
@@ -397,17 +395,17 @@ export const CashRegisterStats = () => {
                             <td className="text-right">{s.transactions}</td>
                             <td className="text-right">{s.services}</td>
                             <td className="text-right">{formatCurrency(s.avgTicket)}</td>
-                            <td className="text-right text-pink-600">{formatCurrency(s.tips)}</td>
+                            <td className="text-right text-glow-accent-ink">{formatCurrency(s.tips)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-12 text-outline">
               <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No hay datos de estilistas para el período seleccionado</p>
             </div>
@@ -416,9 +414,9 @@ export const CashRegisterStats = () => {
 
         <TabsContent value="services" className="space-y-4 mt-4">
           {serviceStats.length > 0 ? (
-            <Card>
-              <CardHeader><CardTitle className="text-lg">Top 10 servicios más vendidos</CardTitle></CardHeader>
-              <CardContent>
+            <div className="glow-card">
+              <div className="glow-card-h"><div><h3>Top 10 servicios más vendidos</h3></div></div>
+              <div className="glow-card-b">
                 <div className="h-[400px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={serviceStats} layout="vertical">
@@ -440,16 +438,16 @@ export const CashRegisterStats = () => {
                         <span>{s.name}</span>
                       </div>
                       <div className="flex items-center gap-4 text-sm">
-                        <span className="text-muted-foreground">{s.count}x</span>
+                        <span className="text-outline">{s.count}x</span>
                         <span className="font-medium">{formatCurrency(s.revenue)}</span>
                       </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-12 text-outline">
               <Scissors className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No hay datos de servicios para el período seleccionado</p>
             </div>

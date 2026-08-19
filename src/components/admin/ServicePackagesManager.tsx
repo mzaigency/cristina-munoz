@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -219,77 +216,105 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 className="gp-spinner" />
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
 
+  const totalSaving = packages.reduce(
+    (a, pkg) => a + Math.max(0, pkg.original_total - pkg.package_price),
+    0,
+  );
+
   return (
-    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div className="gp-page-h">
+    <div className="glow-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div className="glow-page-h">
         <div>
-          <h2>Paquetes de Servicios</h2>
-          <p>{packages.length} paquetes</p>
+          <h2>Paquetes</h2>
+          <p>
+            {packages.length} {packages.length === 1 ? "paquete" : "paquetes"}
+            {totalSaving > 0 && ` · ahorran ${totalSaving.toFixed(0)} € frente a suelto`}
+          </p>
         </div>
-        <div className="gp-page-actions">
-          <button className="gp-btn primary sm" onClick={handleOpenCreate}>
+        <div className="glow-page-actions">
+          <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={handleOpenCreate}>
             <Plus style={{ width: 14, height: 14 }} /> Nuevo
           </button>
         </div>
       </div>
 
       {packages.length === 0 ? (
-        <div className="gp-card">
-          <div className="gp-empty">
-            <div className="gp-empty-ic"><Package style={{ width: 24, height: 24 }} /></div>
+        <div className="glow-card">
+          <div className="glow-empty">
+            <div className="glow-empty-ic"><Package style={{ width: 24, height: 24 }} /></div>
             <h4>Sin paquetes</h4>
             <p>Crea combos de servicios con descuento</p>
-            <button className="gp-btn primary" style={{ marginTop: 12 }} onClick={handleOpenCreate}>
+            <button className="glow-btn glow-btn--primary" style={{ marginTop: 12 }} onClick={handleOpenCreate}>
               <Plus style={{ width: 14, height: 14 }} /> Crear paquete
             </button>
           </div>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {packages.map(pkg => (
-            <div key={pkg.id} className="gp-card pad" style={!pkg.is_active ? { opacity: 0.55 } : {}}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+        /* Una sola matriz, como Servicios y Productos */
+        <div className="glow-card glow-card--clip">
+          {packages.map((pkg) => {
+            const saving = Math.max(0, pkg.original_total - pkg.package_price);
+            return (
+              <div
+                key={pkg.id}
+                className="glow-row"
+                style={{ alignItems: "flex-start", ...(!pkg.is_active ? { opacity: 0.55 } : {}) }}
+              >
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 15, fontWeight: 700, color: "var(--gp-ink)" }}>{pkg.name}</span>
-                    {!pkg.is_active && <span className="gp-badge neutral"><span className="pip" style={{ background: "currentColor" }} />Inactivo</span>}
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                    <span className="glow-row-nm">{pkg.name}</span>
+                    {!pkg.is_active && <span className="glow-badge">Inactivo</span>}
                     {pkg.discount_percentage > 0 && (
-                      <span className="gp-badge ok">
-                        <Percent style={{ width: 11, height: 11 }} />{pkg.discount_percentage.toFixed(0)}% dto
+                      <span className="glow-badge glow-badge--ok">
+                        <Percent style={{ width: 11, height: 11 }} />
+                        {pkg.discount_percentage.toFixed(0)}%
                       </span>
                     )}
                   </div>
                   {pkg.description && (
-                    <p style={{ fontSize: 13.5, color: "var(--gp-muted-c)", marginBottom: 8 }}>{pkg.description}</p>
+                    <div className="glow-row-mt" style={{ marginTop: 3 }}>{pkg.description}</div>
                   )}
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                    {pkg.services.map((s, i) => (
-                      <span key={i} className="gp-badge neutral">
-                        <Scissors style={{ width: 11, height: 11 }} />{s.name}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 7 }}>
+                    {pkg.services.map((sv, i) => (
+                      <span key={i} className="glow-badge">
+                        <Scissors style={{ width: 11, height: 11 }} />{sv.name}
                       </span>
                     ))}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontSize: 13, color: "var(--gp-muted-c)", textDecoration: "line-through" }}>{pkg.original_total.toFixed(2)} €</span>
-                    <span className="gp-mono" style={{ fontSize: 18, fontWeight: 800, color: "var(--gp-accent)" }}>{pkg.package_price.toFixed(2)} €</span>
-                  </div>
                 </div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button className="gp-icon-btn" onClick={() => handleOpenEdit(pkg)}>
+
+                <div style={{ textAlign: "right", flex: "none" }}>
+                  <div className="glow-row-amt" style={{ marginLeft: 0 }}>
+                    {pkg.package_price.toFixed(2)} €
+                  </div>
+                  {saving > 0 && (
+                    <div className="glow-row-mt" style={{ textDecoration: "line-through" }}>
+                      {pkg.original_total.toFixed(2)} €
+                    </div>
+                  )}
+                </div>
+
+                <div className="glow-row-actions">
+                  <button className="glow-icon-btn" aria-label={`Editar ${pkg.name}`} onClick={() => handleOpenEdit(pkg)}>
                     <Edit style={{ width: 14, height: 14 }} />
                   </button>
-                  <button className="gp-icon-btn" style={{ color: "var(--gp-danger)" }} onClick={() => handleDelete(pkg.id)}>
+                  <button
+                    className="glow-icon-btn"
+                    aria-label={`Eliminar ${pkg.name}`}
+                    style={{ color: "var(--glow-danger-ink)" }}
+                    onClick={() => handleDelete(pkg.id)}
+                  >
                     <Trash2 style={{ width: 14, height: 14 }} />
                   </button>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -301,8 +326,8 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
 
           <div className="space-y-4 py-2">
             <div>
-              <Label>Nombre *</Label>
-              <Input
+              <label>Nombre *</label>
+              <input className="glow-input"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Ej: Pack Novia Completo"
@@ -310,8 +335,8 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
             </div>
 
             <div>
-              <Label>Descripción</Label>
-              <Textarea
+              <label>Descripción</label>
+              <textarea className="glow-input"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Descripción del paquete..."
@@ -320,11 +345,11 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
             </div>
 
             <div>
-              <Label className="mb-2 block">Servicios incluidos *</Label>
+              <label className="mb-2 block">Servicios incluidos *</label>
               <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-3">
                 {Object.entries(groupedServices).map(([category, categoryServices]) => (
                   <div key={category}>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">{category}</p>
+                    <p className="text-xs font-medium text-outline mb-1">{category}</p>
                     <div className="space-y-1">
                       {categoryServices.map(service => (
                         <label
@@ -336,14 +361,14 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
                             onCheckedChange={() => toggleService(service.id)}
                           />
                           <span className="flex-1 text-sm">{service.name}</span>
-                          <span className="text-sm text-muted-foreground">{service.price?.toFixed(2)}€</span>
+                          <span className="text-sm text-outline">{service.price?.toFixed(2)}€</span>
                         </label>
                       ))}
                     </div>
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">{selectedServices.length} servicios seleccionados</p>
+              <p className="text-xs text-outline mt-1">{selectedServices.length} servicios seleccionados</p>
             </div>
 
             <div className="bg-muted/50 rounded-lg p-3">
@@ -352,8 +377,8 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
                 <span className="font-medium">{originalTotal.toFixed(2)}€</span>
               </div>
               <div>
-                <Label>Precio del paquete (€)</Label>
-                <Input
+                <label>Precio del paquete (€)</label>
+                <input className="glow-input"
                   type="number"
                   step="0.01"
                   value={formData.package_price}
@@ -361,24 +386,24 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
                 />
               </div>
               {discountPercentage > 0 && (
-                <p className="text-sm text-green-600 mt-2">
+                <p className="text-sm text-glow-ok-ink mt-2">
                   Ahorro: {discountPercentage.toFixed(0)}% ({(originalTotal - formData.package_price).toFixed(2)}€)
                 </p>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="glow-form-grid">
               <div>
-                <Label>Válido desde</Label>
-                <Input
+                <label>Válido desde</label>
+                <input className="glow-input"
                   type="date"
                   value={formData.valid_from}
                   onChange={(e) => setFormData({ ...formData, valid_from: e.target.value })}
                 />
               </div>
               <div>
-                <Label>Válido hasta</Label>
-                <Input
+                <label>Válido hasta</label>
+                <input className="glow-input"
                   type="date"
                   value={formData.valid_until}
                   onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
@@ -387,7 +412,7 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
             </div>
 
             <div className="flex items-center justify-between">
-              <Label>Paquete activo</Label>
+              <label>Paquete activo</label>
               <Switch
                 checked={formData.is_active}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
@@ -396,9 +421,9 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
           </div>
 
           <DialogFooter>
-            <button className="gp-btn" onClick={() => setIsDialogOpen(false)}>Cancelar</button>
-            <button className="gp-btn primary" onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="gp-spinner-sm" />}
+            <button className="glow-btn" onClick={() => setIsDialogOpen(false)}>Cancelar</button>
+            <button className="glow-btn glow-btn--primary" onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="glow-spinner-sm" />}
               {editingPackage ? "Guardar" : "Crear"}
             </button>
           </DialogFooter>

@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { X, Sparkles, ArrowRight, CheckCircle2, Circle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -109,8 +107,8 @@ export function OnboardingChecklist({ tenantId, onNavigate }: OnboardingChecklis
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
     >
-      <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20 overflow-hidden">
-        <CardContent className="p-4">
+      <div className="glow-card bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20 overflow-hidden">
+        <div className="glow-card-b">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-primary/10">
@@ -118,19 +116,15 @@ export function OnboardingChecklist({ tenantId, onNavigate }: OnboardingChecklis
               </div>
               <div>
                 <h3 className="text-sm font-semibold">Primeros pasos</h3>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[11px] text-outline">
                   {completedCount}/{QUICK_STEPS.length} completados
                 </p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={handleDismiss}
-            >
+            <button className="glow-icon-btn"
+              onClick={handleDismiss}>
               <X className="h-3.5 w-3.5" />
-            </Button>
+            </button>
           </div>
 
           <Progress value={progress} className="h-1.5 mb-3" />
@@ -145,23 +139,20 @@ export function OnboardingChecklist({ tenantId, onNavigate }: OnboardingChecklis
                   onClick={() => onNavigate(step.tab)}
                   className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/50 transition-colors text-left"
                 >
-                  <Circle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-                  <span className="text-xs font-medium text-foreground flex-1">{step.label}</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Circle className="h-4 w-4 text-outline/40 shrink-0" />
+                  <span className="text-xs font-medium text-on-surface flex-1">{step.label}</span>
+                  <ArrowRight className="h-3.5 w-3.5 text-outline" />
                 </button>
               ))}
           </div>
 
-          <Button
-            variant="link"
-            size="sm"
-            className="mt-2 h-auto p-0 text-xs"
+          <button className="glow-btn glow-btn--sm mt-2 h-auto text-xs"
             onClick={() => onNavigate("dashboard")}
           >
             Ver toda la formación →
-          </Button>
-        </CardContent>
-      </Card>
+          </button>
+        </div>
+      </div>
     </motion.div>
   );
 }

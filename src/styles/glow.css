@@ -1,0 +1,503 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Glow Design System — panel de administración
+   Fuente única de color, radio, tipografía, sombra, espaciado y motion.
+
+   Los tokens viven en :root a propósito. Los sheets y diálogos de Radix se
+   montan en un portal, fuera del árbol del panel; con los tokens scopeados a
+   un contenedor perderían el tema. Es justo el problema que obligó a duplicar
+   a mano los tokens de msg-* más abajo en index.css.
+
+   REGLA: ningún componente del panel escribe un color a mano. Si un color no
+   está en este archivo, no existe.
+
+   El sistema entero se apoya en 6 hexes. El resto se deriva con color-mix,
+   así un cambio de marca es un cambio de una línea.
+   Modificadores en BEM (glow-btn--sm) a propósito: dentro de @layer components
+   Tailwind genera variantes responsive de cualquier clase que se llame igual que
+   una utility suya, y `.glow-btn.block` acababa compilando como
+   `.sm\:block.glow-btn`. Con `--` eso no puede pasar.
+
+   Este archivo está en el `content` de tailwind.config para que la capa no se
+   purgue: así las primitivas existen siempre, se usen o no.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  :root {
+    /* ── Marca: los únicos colores literales del sistema.
+     Van en canales sueltos para que Tailwind pueda darles opacidad
+     (text-outline/70) sin duplicar el valor en tailwind.config ────────────────────── */
+    --glow-brand-rgb: 34  64 140;  /* #22408C  azul de marca */
+    --glow-brand: rgb(var(--glow-brand-rgb));
+    --glow-accent-rgb: 152  50 154;  /* #98329A  púrpura de marca */
+    --glow-accent: rgb(var(--glow-accent-rgb));
+    --glow-ok-rgb: 22 162  73;  /* #16A249  éxito */
+    --glow-ok: rgb(var(--glow-ok-rgb));
+    --glow-warn-rgb: 245 158  11;  /* #F59E0B  aviso */
+    --glow-warn: rgb(var(--glow-warn-rgb));
+    --glow-danger-rgb: 239  67  67;  /* #EF4343  error */
+    --glow-danger: rgb(var(--glow-danger-rgb));
+
+    /* Derivados: fondo suave y tinta legible sobre ese fondo.
+       No hay token "info": lo informativo es azul de marca. Así no vuelve a
+       colarse un azul ajeno como el #4361ee de hoy. */
+    --glow-brand-soft:   color-mix(in oklab, var(--glow-brand),  white 88%);
+    --glow-brand-softer: color-mix(in oklab, var(--glow-brand),  white 94%);
+    --glow-brand-ink:    color-mix(in oklab, var(--glow-brand),  black 22%);
+    --glow-accent-soft:  color-mix(in oklab, var(--glow-accent), white 88%);
+    --glow-accent-ink:   color-mix(in oklab, var(--glow-accent), black 22%);
+    --glow-ok-soft:      color-mix(in oklab, var(--glow-ok),     white 88%);
+    --glow-ok-ink:       color-mix(in oklab, var(--glow-ok),     black 30%);  /* el verde es el tono más claro: necesita más */
+    --glow-warn-soft:    color-mix(in oklab, var(--glow-warn),   white 88%);
+    --glow-warn-ink:     color-mix(in oklab, var(--glow-warn),   black 34%);
+    --glow-danger-soft:  color-mix(in oklab, var(--glow-danger), white 88%);
+    --glow-danger-ink:   color-mix(in oklab, var(--glow-danger), black 22%);
+
+    /* Firma visual de Glowapp. Reservada: CTA principal de una pantalla, nada más. */
+    --glow-gradient: linear-gradient(100deg, var(--glow-brand), var(--glow-accent));
+
+    /* ── Neutros: un solo gris, en el matiz azulado de la marca ────────────── */
+    --glow-ink-rgb: 19  21  32;  /* #131520  texto principal (= --foreground de marca) */
+    --glow-ink: rgb(var(--glow-ink-rgb));
+    --glow-ink-2-rgb: 58  61  74;  /* #3A3D4A  texto secundario */
+    --glow-ink-2: rgb(var(--glow-ink-2-rgb));
+    --glow-ink-3-rgb: 103 107 126;  /* #676B7E  terciario (= --muted-foreground) */
+    --glow-ink-3: rgb(var(--glow-ink-3-rgb));
+    --glow-ink-4-rgb: 157 161 178;  /* #9DA1B2  SOLO decorativo: nunca texto */
+    --glow-ink-4: rgb(var(--glow-ink-4-rgb));
+    --glow-line-rgb: 228 230 239;  /* #E4E6EF  borde de tarjeta, input, botón */
+    --glow-line: rgb(var(--glow-line-rgb));
+    --glow-line-soft-rgb: 239 241 247;  /* #EFF1F7  divisor dentro de una tarjeta */
+    --glow-line-soft: rgb(var(--glow-line-soft-rgb));
+    --glow-surface-rgb: 255 255 255;  /* #FFFFFF  tarjeta, hoja, menú */
+    --glow-surface: rgb(var(--glow-surface-rgb));
+    --glow-sunk-rgb: 242 243 248;  /* #F2F3F8  chip, input, zona hundida */
+    --glow-sunk: rgb(var(--glow-sunk-rgb));
+    --glow-bg-rgb: 246 247 251;  /* #F6F7FB  fondo del panel */
+    --glow-bg: rgb(var(--glow-bg-rgb));
+
+    /* ── Radio: 5 pasos ────────────────────────────────────────────────────── */
+    --glow-r-sm:   10px;  /* chips, badges, botón pequeño, icono              */
+    --glow-r-md:   14px;  /* botón, input                                     */
+    --glow-r-lg:   18px;  /* tarjeta, KPI                                     */
+    --glow-r-xl:   24px;  /* hoja, modal                                      */
+    --glow-r-full: 999px; /* píldora, avatar                                  */
+
+    /* ── Tipografía: 7 pasos ───────────────────────────────────────────────── */
+    --glow-t-2xs:  11px;    --glow-w-2xs:  800;  /* badge, micro-etiqueta      */
+    --glow-t-xs:   12.5px;  --glow-w-xs:   600;  /* metadato, hora, ayuda      */
+    --glow-t-sm:   13.5px;  --glow-w-sm:   600;  /* cuerpo secundario, fila    */
+    --glow-t-base: 15px;    --glow-w-base: 500;  /* cuerpo de lectura          */
+    --glow-t-lg:   17px;    --glow-w-lg:   800;  /* título de tarjeta          */
+    --glow-t-xl:   22px;    --glow-w-xl:   800;  /* título de sección          */
+    --glow-t-2xl:  28px;    --glow-w-2xl:  800;  /* cifra de KPI               */
+
+    /* ── Sombra: 3 niveles ─────────────────────────────────────────────────── */
+    --glow-e1: 0 1px 2px rgba(19, 21, 32, .05);
+    --glow-e2: 0 2px 4px rgba(19, 21, 32, .04), 0 12px 28px -14px rgba(19, 21, 32, .16);
+    --glow-e3: 0 24px 60px -20px rgba(19, 21, 32, .30);
+
+    /* ── Espaciado: múltiplos de 4 ─────────────────────────────────────────── */
+    --glow-s1: 4px;   --glow-s2: 8px;   --glow-s3: 12px;  --glow-s4: 16px;
+    --glow-s5: 20px;  --glow-s6: 24px;  --glow-s8: 32px;  --glow-s10: 40px;
+
+    /* ── Motion: easing de marca ───────────────────────────────────────────── */
+    --glow-ease: cubic-bezier(.23, 1, .32, 1);
+    --glow-fast: .15s;
+    --glow-base: .25s;
+
+    /* Badge de notificación. Decisión traída de la rama de Lovable: tinte suave
+     de marca en móvil, rojo sólido en escritorio, donde hay sitio para gritar. */
+  --glow-notif-bg: color-mix(in oklab, var(--glow-brand), transparent 88%);
+  --glow-notif-fg: var(--glow-brand);
+
+  --glow-focus: 0 0 0 4px var(--glow-brand-softer);
+  }
+
+  @media (min-width: 920px) {
+  :root { --glow-notif-bg: var(--glow-danger); --glow-notif-fg: #fff; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root { --glow-fast: .01ms; --glow-base: .01ms; }
+  }
+}
+
+@layer components {
+  /* ═══ Primitivas ═══════════════════════════════════════════════════════════ */
+
+  /* ── Botón ─────────────────────────────────────────────────────────────────
+     .primary  → azul de marca plano. El botón de acción por defecto.
+     .brand    → degradado de marca. Un solo botón por pantalla, el principal.
+     ─────────────────────────────────────────────────────────────────────────── */
+  .glow-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--glow-s2);
+    white-space: nowrap; cursor: pointer; font-family: inherit;
+    border: 1px solid var(--glow-line); border-radius: var(--glow-r-md);
+    padding: 9px 15px;
+    font-size: var(--glow-t-sm); font-weight: 700;
+    background: var(--glow-surface); color: var(--glow-ink);
+    transition: background var(--glow-fast) var(--glow-ease),
+                transform var(--glow-fast) var(--glow-ease),
+                box-shadow var(--glow-fast) var(--glow-ease);
+  }
+  .glow-btn:hover  { background: var(--glow-sunk); }
+  .glow-btn:active { transform: scale(.97); }
+  .glow-btn:focus-visible { outline: none; box-shadow: var(--glow-focus); }
+  .glow-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  .glow-btn--primary {
+    background: var(--glow-brand); color: #fff; border-color: transparent;
+    box-shadow: 0 8px 18px -10px color-mix(in oklab, var(--glow-brand), transparent 30%);
+  }
+  .glow-btn--primary:hover { background: var(--glow-brand-ink); }
+
+  .glow-btn--brand {
+    background: var(--glow-gradient); color: #fff; border-color: transparent;
+    box-shadow: 0 8px 18px -10px color-mix(in oklab, var(--glow-brand), transparent 30%);
+  }
+  .glow-btn--brand:hover { filter: brightness(1.06); }
+
+  .glow-btn--ghost { background: transparent; border-color: transparent; color: var(--glow-ink-2); }
+  .glow-btn--ghost:hover { background: var(--glow-sunk); color: var(--glow-ink); }
+
+  .glow-btn--danger { color: var(--glow-danger-ink); }
+  .glow-btn--danger:hover { background: var(--glow-danger-soft); }
+
+  .glow-btn--sm { padding: 6px 11px; font-size: var(--glow-t-xs); border-radius: var(--glow-r-sm); gap: 5px; }
+  .glow-btn--block { width: 100%; }
+  .glow-btn--icon { padding: 9px; }
+
+  /* ── Botón de icono ────────────────────────────────────────────────────────── */
+  .glow-icon-btn {
+    width: 38px; height: 38px; flex: none; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; position: relative;
+    border: 1px solid var(--glow-line); border-radius: var(--glow-r-md);
+    background: var(--glow-surface); color: var(--glow-ink-2);
+    transition: background var(--glow-fast) var(--glow-ease), color var(--glow-fast) var(--glow-ease);
+  }
+  .glow-icon-btn:hover { background: var(--glow-sunk); color: var(--glow-ink); }
+  .glow-icon-btn:focus-visible { outline: none; box-shadow: var(--glow-focus); }
+  .glow-icon-btn--ghost { border-color: transparent; background: transparent; }
+
+  /* ── Tarjeta ───────────────────────────────────────────────────────────────── */
+  .glow-card {
+    background: var(--glow-surface); border: 1px solid var(--glow-line);
+    border-radius: var(--glow-r-lg); box-shadow: var(--glow-e1);
+  }
+  .glow-card--pad { padding: var(--glow-s4); }
+  .glow-card--clip { overflow: hidden; }
+  .glow-card-h {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--glow-s3);
+    padding: var(--glow-s3) var(--glow-s4); border-bottom: 1px solid var(--glow-line-soft);
+  }
+  .glow-card-h h3 { margin: 0; font-size: var(--glow-t-lg); font-weight: var(--glow-w-lg);
+                    letter-spacing: -.01em; color: var(--glow-ink); }
+  .glow-card-h-sub { font-size: var(--glow-t-xs); font-weight: var(--glow-w-xs); color: var(--glow-ink-3); }
+  .glow-card-b { padding: var(--glow-s4); }
+
+  /* ── Cabecera de página ────────────────────────────────────────────────────── */
+  .glow-page-h {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: var(--glow-s4); flex-wrap: wrap; margin-bottom: var(--glow-s5);
+  }
+  .glow-page-h h2 { margin: 0; font-size: var(--glow-t-xl); font-weight: var(--glow-w-xl);
+                    letter-spacing: -.02em; line-height: 1.1; color: var(--glow-ink); }
+  .glow-page-h p  { margin: 3px 0 0; font-size: var(--glow-t-xs); font-weight: var(--glow-w-xs);
+                    color: var(--glow-ink-3); }
+  .glow-page-actions { display: flex; align-items: center; gap: var(--glow-s2); }
+
+  /* ── Badge ─────────────────────────────────────────────────────────────────── */
+  .glow-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: var(--glow-r-full);
+    font-size: var(--glow-t-2xs); font-weight: var(--glow-w-2xs); letter-spacing: .01em;
+    background: var(--glow-sunk); color: var(--glow-ink-2);
+  }
+  .glow-badge-pip { width: 6px; height: 6px; border-radius: 50%; flex: none; background: currentColor; }
+  .glow-badge--ok     { background: var(--glow-ok-soft);     color: var(--glow-ok-ink); }
+  .glow-badge--warn   { background: var(--glow-warn-soft);   color: var(--glow-warn-ink); }
+  .glow-badge--danger { background: var(--glow-danger-soft); color: var(--glow-danger-ink); }
+  .glow-badge--brand  { background: var(--glow-brand-soft);  color: var(--glow-brand-ink); }
+  .glow-badge--accent { background: var(--glow-accent-soft); color: var(--glow-accent-ink); }
+
+  /* ── Chip (filtro seleccionable) ───────────────────────────────────────────── */
+  .glow-chip {
+    padding: 6px 13px; border-radius: var(--glow-r-full); cursor: pointer; font-family: inherit;
+    font-size: var(--glow-t-xs); font-weight: 700;
+    background: var(--glow-sunk); color: var(--glow-ink-2); border: 1px solid transparent;
+    transition: background var(--glow-fast) var(--glow-ease), color var(--glow-fast) var(--glow-ease);
+  }
+  .glow-chip:hover { background: color-mix(in oklab, var(--glow-sunk), var(--glow-ink) 5%); }
+  .glow-chip--on {
+    background: var(--glow-brand-soft); color: var(--glow-brand-ink);
+    border-color: color-mix(in oklab, var(--glow-brand), white 70%);
+  }
+  .glow-chip:focus-visible { outline: none; box-shadow: var(--glow-focus); }
+
+  /* ── Input ─────────────────────────────────────────────────────────────────── */
+  .glow-input {
+    width: 100%; font-family: inherit; outline: none;
+    border: 1px solid var(--glow-line); border-radius: var(--glow-r-md);
+    background: var(--glow-surface); color: var(--glow-ink);
+    padding: 10px 13px; font-size: var(--glow-t-sm); font-weight: 500;
+    transition: border-color var(--glow-fast) var(--glow-ease), box-shadow var(--glow-fast) var(--glow-ease);
+  }
+  .glow-input::placeholder { color: var(--glow-ink-3); }
+  .glow-input:focus { border-color: var(--glow-brand); box-shadow: var(--glow-focus); }
+  .glow-input:disabled { background: var(--glow-sunk); color: var(--glow-ink-3); cursor: not-allowed; }
+
+  /* ── KPI ───────────────────────────────────────────────────────────────────── */
+  .glow-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--glow-s3); }
+  .glow-kpi {
+    background: var(--glow-surface); border: 1px solid var(--glow-line);
+    border-radius: var(--glow-r-lg); padding: var(--glow-s3) var(--glow-s4);
+    box-shadow: var(--glow-e1); position: relative; overflow: hidden;
+    transition: box-shadow var(--glow-base) var(--glow-ease), transform var(--glow-base) var(--glow-ease);
+  }
+  .glow-kpi:hover { box-shadow: var(--glow-e2); transform: translateY(-2px); }
+  .glow-kpi-top {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px;
+  }
+  .glow-kpi-top .glow-kpi-ic { margin-bottom: 0; }
+  .glow-kpi-ic {
+    width: 34px; height: 34px; flex: none; border-radius: var(--glow-r-sm);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 9px;
+    background: var(--glow-sunk); color: var(--glow-ink-2);
+  }
+  .glow-kpi-ic--ok     { background: var(--glow-ok-soft);     color: var(--glow-ok-ink); }
+  .glow-kpi-ic--warn   { background: var(--glow-warn-soft);   color: var(--glow-warn-ink); }
+  .glow-kpi-ic--danger { background: var(--glow-danger-soft); color: var(--glow-danger-ink); }
+  .glow-kpi-ic--brand  { background: var(--glow-brand-soft);  color: var(--glow-brand-ink); }
+  .glow-kpi-ic--accent { background: var(--glow-accent-soft); color: var(--glow-accent-ink); }
+  .glow-kpi-val { font-size: var(--glow-t-2xl); font-weight: var(--glow-w-2xl);
+                  letter-spacing: -.03em; line-height: 1; color: var(--glow-ink);
+                  font-variant-numeric: tabular-nums; }
+  .glow-kpi-lbl { font-size: var(--glow-t-xs); font-weight: 700; color: var(--glow-ink-3); margin-top: 4px; }
+  .glow-kpi-delta { font-size: var(--glow-t-xs); font-weight: 800; display: inline-flex; align-items: center; gap: 3px; }
+  .glow-kpi-delta--up   { color: var(--glow-ok); }
+  .glow-kpi-delta--down { color: var(--glow-danger); }
+
+  /* ── Fila de lista ─────────────────────────────────────────────────────────── */
+  .glow-list { display: flex; flex-direction: column; }
+  .glow-row {
+    display: flex; align-items: center; gap: var(--glow-s3);
+    padding: 11px var(--glow-s4); border-bottom: 1px solid var(--glow-line-soft);
+    transition: background var(--glow-fast) var(--glow-ease);
+  }
+  .glow-row:last-child { border-bottom: none; }
+  .glow-row--click { cursor: pointer; }
+  .glow-row--click:hover { background: var(--glow-bg); }
+  .glow-row-nm { font-size: var(--glow-t-sm); font-weight: 700; line-height: 1.3; color: var(--glow-ink); }
+  .glow-row-mt { font-size: var(--glow-t-2xs); font-weight: var(--glow-w-xs); color: var(--glow-ink-3); }
+  .glow-row-amt { margin-left: auto; font-size: var(--glow-t-base); font-weight: 800;
+                   font-variant-numeric: tabular-nums; color: var(--glow-ink); }
+
+  /* ── Avatar ────────────────────────────────────────────────────────────────── */
+  .glow-avatar {
+    border-radius: var(--glow-r-full); flex: none; color: #fff; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; font-size: var(--glow-t-xs);
+    background: var(--glow-brand); overflow: hidden;
+  }
+  .glow-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .glow-avatar--sm { width: 26px; height: 26px; font-size: var(--glow-t-2xs); }
+  .glow-avatar--lg { width: 48px; height: 48px; font-size: var(--glow-t-base); }
+
+  /* ── Estado vacío ──────────────────────────────────────────────────────────── */
+  .glow-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: var(--glow-s10) var(--glow-s5); gap: var(--glow-s3);
+  }
+  .glow-empty-ic {
+    width: 52px; height: 52px; border-radius: var(--glow-r-lg);
+    display: flex; align-items: center; justify-content: center;
+    background: var(--glow-sunk); color: var(--glow-ink-3);
+  }
+  .glow-empty h4 { margin: 0; font-size: var(--glow-t-lg); font-weight: var(--glow-w-lg); color: var(--glow-ink); }
+  .glow-empty p  { margin: 0; font-size: var(--glow-t-sm); font-weight: var(--glow-w-sm);
+                   color: var(--glow-ink-3); max-width: 34ch; }
+
+  /* ── Utilidades mínimas ────────────────────────────────────────────────────── */
+  .glow-mono { font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .glow-text-brand {
+    background: var(--glow-gradient); -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+  }
+
+  /* ── Sub-navegación de sección ────────────────────────────────────────────
+     Fila única: la pinta AdminSubNav y nadie más. Las secciones ya no llevan
+     su propia fila de pestañas.
+     ─────────────────────────────────────────────────────────────────────── */
+  .glow-subnav {
+    border-bottom: 1px solid var(--glow-line);
+    background: color-mix(in oklab, var(--glow-bg), white 40%);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .glow-subnav-row {
+    display: flex; align-items: center; gap: var(--glow-s5);
+    padding: 2px 0 0; overflow-x: auto; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
+  }
+  .glow-subnav-row::-webkit-scrollbar { display: none; }
+
+  .glow-subtab {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0;
+    min-height: 38px; padding: 9px 4px; border: none; background: none;
+    color: var(--glow-ink-3); font-family: inherit;
+    font-size: var(--glow-t-sm); font-weight: 600; white-space: nowrap;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: color var(--glow-fast) var(--glow-ease);
+  }
+  /* La marca de selección es la línea, no una tarjeta: se dibuja siempre y
+     solo se revela en el activo, así el texto nunca se mueve al cambiar. */
+  .glow-subtab::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+    border-radius: 2px; background: var(--glow-gradient);
+    opacity: 0; transform: scaleX(.4);
+    transition: opacity var(--glow-fast) var(--glow-ease),
+                transform var(--glow-base) var(--glow-ease);
+  }
+  .glow-subtab:hover { color: var(--glow-ink); }
+  .glow-subtab:focus-visible { outline: none; box-shadow: var(--glow-focus); border-radius: var(--glow-r-sm); }
+  .glow-subtab--on { color: var(--glow-brand-ink); font-weight: 800; }
+  .glow-subtab--on::after { opacity: 1; transform: none; }
+  .glow-subtab--locked { opacity: .5; cursor: not-allowed; }
+  .glow-subtab--locked:hover { color: var(--glow-ink-3); }
+
+  .glow-subtab-count {
+    font-size: var(--glow-t-2xs); font-weight: 800; padding: 1px 6px;
+    border-radius: var(--glow-r-full);
+    background: var(--glow-notif-bg); color: var(--glow-notif-fg);
+  }
+  .glow-subtab-pro {
+    font-size: 10px; font-weight: 800; padding: 1px 6px;
+    border-radius: var(--glow-r-full);
+    background: var(--glow-warn-soft); color: var(--glow-warn-ink);
+  }
+
+  /* ── Carga ─────────────────────────────────────────────────────────────── */
+  .glow-loader { display: flex; align-items: center; justify-content: center; padding: 48px 20px; }
+  .glow-spinner    { width: 28px; height: 28px; color: var(--glow-brand); animation: glowSpin .8s linear infinite; }
+  .glow-spinner-sm { width: 14px; height: 14px; display: inline-block; vertical-align: middle;
+                     margin-right: 6px; animation: glowSpin .8s linear infinite; }
+
+  /* ── Entrada de contenido al cambiar de pestaña ────────────────────────── */
+  .glow-fade { opacity: 1; }
+  @media (prefers-reduced-motion: no-preference) {
+    .glow-fade { animation: glowFadeUp .32s var(--glow-ease); }
+  }
+  /* ── Fila de filtros dentro de una sección ──────────────────────────────
+     Distinta de .glow-subnav: aquella es la navegación de la sección (una
+     sola, la del shell); esta filtra el contenido que ya estás viendo.
+     ─────────────────────────────────────────────────────────────────────── */
+  .glow-filter-row {
+    display: flex; gap: var(--glow-s5); margin-bottom: var(--glow-s5);
+    overflow-x: auto; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
+  }
+  .glow-filter-row::-webkit-scrollbar { display: none; }
+
+  /* ── Responsive ────────────────────────────────────────────────────────── */
+  .glow-show-sm { display: none; }
+  @media (max-width: 920px) {
+    .glow-hide-sm { display: none !important; }
+    .glow-show-sm { display: inline !important; }
+  }
+
+  /* ── Barra de búsqueda de una sección ──────────────────────────────────── */
+  .glow-search { display: flex; align-items: center; gap: var(--glow-s2); margin-bottom: var(--glow-s4); }
+  .glow-search .glow-input { flex: 1; }
+
+  /* ── Cabecera de grupo dentro de una lista ──────────────────────────────
+     Permite una sola matriz con secciones (categorías de servicio, meses…)
+     en vez de una tarjeta suelta por grupo.
+     ─────────────────────────────────────────────────────────────────────── */
+  .glow-group {
+    display: flex; align-items: center; gap: var(--glow-s2);
+    padding: 9px var(--glow-s4); background: var(--glow-bg);
+    border-bottom: 1px solid var(--glow-line-soft);
+    font-size: var(--glow-t-2xs); font-weight: 800;
+    letter-spacing: .05em; text-transform: uppercase; color: var(--glow-ink-3);
+    position: sticky; top: 0; z-index: 2;
+  }
+  .glow-group-dot { width: 8px; height: 8px; border-radius: var(--glow-r-full); flex: none; }
+  .glow-group-n {
+    margin-left: auto; letter-spacing: 0; text-transform: none;
+    font-size: var(--glow-t-2xs); font-weight: 600; color: var(--glow-ink-3);
+  }
+
+  /* Acciones de fila: visibles siempre en táctil, al pasar el ratón en escritorio */
+  .glow-row-actions { display: flex; gap: 5px; margin-left: var(--glow-s3); flex: none; }
+  @media (hover: hover) and (min-width: 921px) {
+    .glow-row-actions { opacity: 0; transition: opacity var(--glow-fast) var(--glow-ease); }
+    .glow-row:hover .glow-row-actions,
+    .glow-row:focus-within .glow-row-actions { opacity: 1; }
+  }
+
+  /* ── Campo de formulario ────────────────────────────────────────────────── */
+  .glow-field { display: flex; flex-direction: column; gap: 5px; }
+  .glow-field > label {
+    font-size: var(--glow-t-xs); font-weight: 700; color: var(--glow-ink-2);
+  }
+  .glow-field-hint { font-size: var(--glow-t-2xs); font-weight: 500; color: var(--glow-ink-3); }
+  .glow-field-error { font-size: var(--glow-t-2xs); font-weight: 600; color: var(--glow-danger-ink); }
+  .glow-form { display: flex; flex-direction: column; gap: var(--glow-s3); }
+  .glow-form-grid { display: grid; gap: var(--glow-s3); grid-template-columns: 1fr 1fr; }
+  @media (max-width: 620px) { .glow-form-grid { grid-template-columns: 1fr; } }
+
+  textarea.glow-input { min-height: 88px; resize: vertical; line-height: 1.5; }
+  select.glow-input { appearance: none; padding-right: 34px;
+    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                      linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position: calc(100% - 17px) 55%, calc(100% - 12px) 55%;
+    background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+
+  /* ── Muestra de color ───────────────────────────────────────────────────── */
+  .glow-swatch {
+    display: flex; align-items: center; gap: 9px; padding: 7px 11px;
+    border: 1px solid var(--glow-line); border-radius: var(--glow-r-md);
+    background: var(--glow-surface);
+  }
+  .glow-swatch-sq {
+    width: 22px; height: 22px; border-radius: 7px; flex: none;
+    border: 1px solid rgb(var(--glow-ink-rgb) / .08); cursor: pointer;
+  }
+
+  /* ── Barra de progreso ──────────────────────────────────────────────────── */
+  .glow-progress { height: 6px; border-radius: var(--glow-r-full); background: var(--glow-sunk); overflow: hidden; }
+  .glow-progress > i {
+    display: block; height: 100%; border-radius: var(--glow-r-full);
+    background: var(--glow-gradient); transition: width var(--glow-base) var(--glow-ease);
+  }
+  .glow-progress--warn > i  { background: var(--glow-warn); }
+  .glow-progress--danger > i { background: var(--glow-danger); }
+
+  /* ── Barra de herramientas (buscador + filtros) ─────────────────────────── */
+  .glow-toolbar {
+    display: flex; align-items: center; gap: var(--glow-s2);
+    flex-wrap: wrap; margin-bottom: var(--glow-s3);
+  }
+  .glow-toolbar .glow-input { max-width: 240px; }
+
+  /* ── Barra de guardado fija (formularios largos) ────────────────────────── */
+  .glow-save-bar {
+    position: sticky; bottom: 0; left: 0; right: 0; z-index: 30;
+    display: flex; align-items: center; gap: var(--glow-s3);
+    margin: var(--glow-s5) -16px 0; padding: 12px 16px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    background: color-mix(in oklab, var(--glow-surface), transparent 8%);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--glow-line);
+    box-shadow: 0 -8px 24px -14px rgb(var(--glow-ink-rgb) / .18);
+  }
+  @media (max-width: 620px) {
+    .glow-save-bar .glow-btn { width: 100%; justify-content: center; }
+  }
+
+  .glow-btn--grow { flex: 1; }
+
+}
+
+@keyframes glowSpin   { to { transform: rotate(360deg); } }
+@keyframes glowFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }

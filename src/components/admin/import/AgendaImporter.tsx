@@ -1,8 +1,5 @@
 import { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Loader2, Camera, Image as ImageIcon, X, Check, AlertTriangle, Sparkles, Crown, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -156,34 +153,28 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
   if (!mode) {
     return (
       <div className="space-y-4">
-        <Card className="p-6 text-center bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
+        <div className="glow-card p-6 text-center bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
           <Sparkles className="h-10 w-10 mx-auto mb-3 text-primary" />
           <h3 className="text-xl font-bold mb-2">Importa tus datos en 2 minutos</h3>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-sm text-outline mb-4">
             Sube fotos de tu agenda o tu carta de servicios y la IA los digitaliza por ti.
           </p>
-        </Card>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Card
-            onClick={() => setMode("bookings")}
-            className="p-5 cursor-pointer hover:border-primary hover:shadow-md transition-all"
-          >
+          <div className="glow-card p-5 cursor-pointer hover:border-primary hover:shadow-md transition-all" onClick={() => setMode("bookings")}>
             <div className="text-3xl mb-2">📅</div>
             <h4 className="font-semibold mb-1">Citas existentes</h4>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-outline">
               Sube fotos de tu agenda física u otra app y migramos las citas.
             </p>
-          </Card>
-          <Card
-            onClick={() => setMode("services")}
-            className="p-5 cursor-pointer hover:border-primary hover:shadow-md transition-all"
-          >
+          </div>
+          <div className="glow-card p-5 cursor-pointer hover:border-primary hover:shadow-md transition-all" onClick={() => setMode("services")}>
             <div className="text-3xl mb-2">💈</div>
             <h4 className="font-semibold mb-1">Servicios y precios</h4>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-outline">
               Foto de tu carta de servicios → catálogo digital al instante.
             </p>
-          </Card>
+          </div>
         </div>
       </div>
     );
@@ -196,11 +187,11 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
 
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => setMode(null)} className="-ml-2">
+        <button className="glow-btn glow-btn--ghost glow-btn--sm -ml-2" onClick={() => setMode(null)}>
           <ArrowLeft className="h-4 w-4 mr-1" /> Cambiar
-        </Button>
+        </button>
 
-        <Card className="p-5 bg-primary/5 border-primary/20">
+        <div className="glow-card p-5 bg-primary/5 border-primary/20">
           <div className="flex items-start gap-3">
             <Camera className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
             <div className="flex-1 text-sm">
@@ -210,16 +201,16 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
               <ul className="space-y-1 mb-3">
                 {guidelines.map((g) => (
                   <li key={g} className="flex items-center gap-2">
-                    <Check className="h-3.5 w-3.5 text-green-600 flex-shrink-0" /> {g}
+                    <Check className="h-3.5 w-3.5 text-glow-ok-ink flex-shrink-0" /> {g}
                   </li>
                 ))}
               </ul>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-outline">
                 💡 Buena luz, sin reflejos, una página por foto. Hasta {MAX_IMAGES} fotos.
               </p>
             </div>
           </div>
-        </Card>
+        </div>
 
         {previews.length > 0 && (
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -239,14 +230,9 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
         )}
 
         <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={files.length >= MAX_IMAGES}
-            className="h-12"
-          >
+          <button className="glow-btn h-12" onClick={() => fileInputRef.current?.click()} disabled={files.length>= MAX_IMAGES}>
             <ImageIcon className="h-4 w-4 mr-2" /> Galería
-          </Button>
+          </button>
           <label className={cn(
             "inline-flex items-center justify-center gap-2 h-12 rounded-md border border-input bg-background hover:bg-accent text-sm font-medium",
             files.length >= MAX_IMAGES && "opacity-50 pointer-events-none"
@@ -271,31 +257,31 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
           onChange={(e) => handleFiles(e.target.files)}
         />
 
-        <Button onClick={startProcessing} disabled={files.length === 0} className="w-full h-12 text-base">
+        <button className="glow-btn glow-btn--primary glow-btn--block text-base" onClick={startProcessing} disabled={files.length === 0}>
           <Sparkles className="h-4 w-4 mr-2" />
           Procesar {files.length > 0 ? `${files.length} foto${files.length > 1 ? "s" : ""}` : "fotos"}
-        </Button>
+        </button>
 
         {isBusiness && (
-          <Card className="p-4 bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-300">
+          <div className="glow-card p-4 bg-gradient-to-br from-glow-warn/5 to-glow-warn/50 border-glow-warn/30">
             <div className="flex items-start gap-3">
-              <Crown className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <Crown className="h-5 w-5 text-glow-warn-ink flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="font-semibold text-sm mb-1">Servicio Guante Blanco (gratis con tu plan Business)</p>
-                <p className="text-xs text-muted-foreground mb-3">
+                <p className="text-xs text-outline mb-3">
                   ¿Prefieres que lo hagamos por ti? Sube las fotos y nuestro equipo migra todo manualmente en 24h.
                 </p>
-                <Button size="sm" variant="outline" onClick={() => {
+                <button className="glow-btn glow-btn--sm" onClick={() => {
                   toast({ title: "Función próximamente", description: "Contacta con soporte por ahora." });
                 }}>
                   Solicitar
-                </Button>
+                </button>
               </div>
             </div>
-          </Card>
+          </div>
         )}
 
-        <p className="text-[11px] text-muted-foreground text-center">
+        <p className="text-[11px] text-outline text-center">
           🔒 Las fotos se procesan de forma segura y se eliminan tras 7 días.
         </p>
       </div>
@@ -304,34 +290,32 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
 
   if (step === "processing") {
     return (
-      <Card className="p-10 text-center">
+      <div className="glow-card p-10 text-center">
         <Loader2 className="h-10 w-10 mx-auto mb-4 animate-spin text-primary" />
         <h3 className="font-semibold mb-1">La IA está leyendo tus fotos…</h3>
-        <p className="text-sm text-muted-foreground">Esto puede tardar 20-40 segundos.</p>
-      </Card>
+        <p className="text-sm text-outline">Esto puede tardar 20-40 segundos.</p>
+      </div>
     );
   }
 
   if (step === "done" && result) {
     return (
-      <Card className="p-8 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
-          <Check className="h-8 w-8 text-green-600" />
+      <div className="glow-card p-8 text-center">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-glow-ok/10 flex items-center justify-center">
+          <Check className="h-8 w-8 text-glow-ok-ink" />
         </div>
         <h3 className="text-xl font-bold mb-2">¡Listo!</h3>
-        <p className="text-muted-foreground mb-6">
+        <p className="text-outline mb-6">
           Hemos creado <strong>{result.created}</strong> {mode === "bookings" ? "citas" : "servicios"}
           {result.clients ? <> y <strong>{result.clients}</strong> clientes nuevos</> : null}.
         </p>
         <div className="flex flex-col sm:flex-row gap-2 justify-center">
-          <Button onClick={() => {
-            setMode(null); setFiles([]); setPreviews([]); setRows([]); setResult(null); setStep("upload");
-          }} variant="outline">
+          <button className="glow-btn glow-btn--primary" onClick={() => { setMode(null); setFiles([]); setPreviews([]); setRows([]); setResult(null); setStep("upload"); }}>
             Importar más
-          </Button>
-          {onComplete && <Button onClick={onComplete}>Continuar</Button>}
+          </button>
+          {onComplete && <button className="glow-btn glow-btn--primary" onClick={onComplete}>Continuar</button>}
         </div>
-      </Card>
+      </div>
     );
   }
 
@@ -343,7 +327,7 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
         <h3 className="font-semibold">Revisa antes de guardar</h3>
         <Badge variant="secondary">{active.length} {mode === "bookings" ? "citas" : "servicios"}</Badge>
       </div>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-outline">
         Edita lo que necesites. Los campos vacíos se quedan en blanco — la IA no inventa datos.
       </p>
 
@@ -354,64 +338,56 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
           const b = r as BookingRow & Row;
           const s = r as ServiceRow & Row;
           return (
-            <Card
-              key={r._id}
-              className={cn(
+            <div className={cn("glow-card", cn(
                 "p-3 transition-opacity",
                 r._discarded && "opacity-40",
-                lowConf && !r._discarded && "border-amber-400 bg-amber-50/30",
-              )}
-            >
+                lowConf && !r._discarded && "border-glow-warn/30 bg-glow-warn/30",
+              ))} key={r._id}>
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-1.5">
                   {lowConf ? (
-                    <Badge variant="outline" className="text-[10px] border-amber-500 text-amber-700">
+                    <Badge variant="outline" className="text-[10px] border-glow-warn/30 text-glow-warn-ink">
                       <AlertTriangle className="h-3 w-3 mr-1" /> Revisar
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-[10px] border-green-500 text-green-700">
+                    <Badge variant="outline" className="text-[10px] border-glow-ok/30 text-glow-ok-ink">
                       <Check className="h-3 w-3 mr-1" /> OK
                     </Badge>
                   )}
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => updateRow(r._id, { _discarded: !r._discarded } as any)}
-                  className="h-7 px-2 text-xs"
-                >
+                <button className="glow-btn glow-btn--ghost glow-btn--sm h-7 px-2 text-xs" onClick={() => updateRow(r._id, { _discarded: !r._discarded } as any)}>
                   {r._discarded ? "Recuperar" : "Descartar"}
-                </Button>
+                </button>
               </div>
 
               {isBooking ? (
                 <div className="grid grid-cols-2 gap-2">
-                  <Input type="date" value={b.date ?? ""} onChange={(e) => updateRow(r._id, { date: e.target.value || null } as any)} className="h-8 text-xs" />
-                  <Input type="time" value={b.time ?? ""} onChange={(e) => updateRow(r._id, { time: e.target.value || null } as any)} className="h-8 text-xs" />
-                  <Input placeholder="Cliente" value={b.customer_name ?? ""} onChange={(e) => updateRow(r._id, { customer_name: e.target.value || null } as any)} className="h-8 text-xs col-span-2" />
-                  <Input placeholder="Teléfono" value={b.customer_phone ?? ""} onChange={(e) => updateRow(r._id, { customer_phone: e.target.value || null } as any)} className="h-8 text-xs" />
-                  <Input placeholder="Servicio" value={b.service_name ?? ""} onChange={(e) => updateRow(r._id, { service_name: e.target.value || null } as any)} className="h-8 text-xs" />
+                  <input className="glow-input h-8 text-xs" type="date" value={b.date ?? ""} onChange={(e) => updateRow(r._id, { date: e.target.value || null } as any)} />
+                  <input className="glow-input h-8 text-xs" type="time" value={b.time ?? ""} onChange={(e) => updateRow(r._id, { time: e.target.value || null } as any)} />
+                  <input className="glow-input h-8 text-xs col-span-2" placeholder="Cliente" value={b.customer_name ?? ""} onChange={(e) => updateRow(r._id, { customer_name: e.target.value || null } as any)} />
+                  <input className="glow-input h-8 text-xs" placeholder="Teléfono" value={b.customer_phone ?? ""} onChange={(e) => updateRow(r._id, { customer_phone: e.target.value || null } as any)} />
+                  <input className="glow-input h-8 text-xs" placeholder="Servicio" value={b.service_name ?? ""} onChange={(e) => updateRow(r._id, { service_name: e.target.value || null } as any)} />
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
-                  <Input placeholder="Servicio" value={s.name ?? ""} onChange={(e) => updateRow(r._id, { name: e.target.value } as any)} className="h-8 text-xs col-span-2" />
-                  <Input type="number" placeholder="Precio €" value={s.price ?? ""} onChange={(e) => updateRow(r._id, { price: e.target.value === "" ? null : Number(e.target.value) } as any)} className="h-8 text-xs" />
-                  <Input type="number" placeholder="Duración min" value={s.duration_minutes ?? ""} onChange={(e) => updateRow(r._id, { duration_minutes: e.target.value === "" ? null : Number(e.target.value) } as any)} className="h-8 text-xs" />
-                  <Input placeholder="Categoría" value={s.category ?? ""} onChange={(e) => updateRow(r._id, { category: e.target.value || null } as any)} className="h-8 text-xs col-span-2" />
+                  <input className="glow-input h-8 text-xs col-span-2" placeholder="Servicio" value={s.name ?? ""} onChange={(e) => updateRow(r._id, { name: e.target.value } as any)} />
+                  <input className="glow-input h-8 text-xs" type="number" placeholder="Precio €" value={s.price ?? ""} onChange={(e) => updateRow(r._id, { price: e.target.value === "" ? null : Number(e.target.value) } as any)} />
+                  <input className="glow-input h-8 text-xs" type="number" placeholder="Duración min" value={s.duration_minutes ?? ""} onChange={(e) => updateRow(r._id, { duration_minutes: e.target.value === "" ? null : Number(e.target.value) } as any)} />
+                  <input className="glow-input h-8 text-xs col-span-2" placeholder="Categoría" value={s.category ?? ""} onChange={(e) => updateRow(r._id, { category: e.target.value || null } as any)} />
                 </div>
               )}
-            </Card>
+            </div>
           );
         })}
       </div>
 
       <div className="flex gap-2 sticky bottom-0 bg-background pt-3 border-t">
-        <Button variant="outline" onClick={() => setStep("upload")} className="flex-1">
+        <button className="glow-btn flex-1" onClick={() => setStep("upload")}>
           Volver
-        </Button>
-        <Button onClick={commit} disabled={active.length === 0} className="flex-1">
+        </button>
+        <button className="glow-btn glow-btn--primary glow-btn--grow" onClick={commit} disabled={active.length === 0}>
           Guardar {active.length}
-        </Button>
+        </button>
       </div>
     </div>
   );

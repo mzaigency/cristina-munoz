@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { STYLIST_FALLBACK } from "@/lib/chartColors";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   AlertDialog,
@@ -10,8 +11,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -363,13 +362,13 @@ export const QuickBookingSheet = ({
                     <button
                       className="inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-semibold active:scale-95 transition"
                       style={{
-                        backgroundColor: `${currentStylist?.color || "#6366f1"}15`,
-                        color: currentStylist?.color || "#6366f1",
+                        backgroundColor: `${currentStylist?.color || STYLIST_FALLBACK}15`,
+                        color: currentStylist?.color || STYLIST_FALLBACK,
                       }}
                     >
                       <span
                         className="w-2 h-2 rounded-full flex-none"
-                        style={{ background: currentStylist?.color || "#6366f1" }}
+                        style={{ background: currentStylist?.color || STYLIST_FALLBACK }}
                       />
                       {currentStylist?.name || "Profesional"}
                     </button>
@@ -635,9 +634,7 @@ export const QuickBookingSheet = ({
         >
           <div className="flex gap-2">
             {onMoreOptions && (
-              <Button
-                variant="outline"
-                className="shrink-0 h-12 rounded-full border-line bg-chip text-ink-2 text-[14px] font-semibold active:scale-95"
+              <button className="glow-btn shrink-0 rounded-full border-line bg-chip text-ink-2 text-[14px] font-semibold active:scale-95"
                 onClick={() =>
                   onMoreOptions({
                     date,
@@ -650,14 +647,12 @@ export const QuickBookingSheet = ({
               >
                 Más opciones
                 <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+              </button>
             )}
-            <Button
-              className="flex-1 h-12 rounded-full text-[15px] font-semibold bg-gradient-brand text-white border-0 hover:opacity-95 active:scale-[.98] transition disabled:opacity-40"
+            <button className="glow-btn glow-btn--primary glow-btn--grow rounded-full text-[15px] font-semibold bg-gradient-brand text-white border-0 hover:opacity-95 active:scale-[.98] transition disabled:opacity-40"
               style={{ boxShadow: "0 8px 22px -10px rgba(34,64,140,.6)" }}
               disabled={!canSubmit}
-              onClick={handleCreate}
-            >
+              onClick={handleCreate}>
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -666,7 +661,7 @@ export const QuickBookingSheet = ({
                   Crear cita
                 </>
               )}
-            </Button>
+            </button>
           </div>
         </div>
       </SheetContent>

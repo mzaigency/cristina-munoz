@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
   format,
@@ -27,8 +24,8 @@ interface PDFReportsGeneratorProps {
 type ReportType = "monthly" | "productivity" | "services" | "fiscal";
 type RangeMode = "month" | "quarter" | "prev_quarter" | "custom";
 
-const BRAND_PRIMARY = "#22408b";
-const BRAND_ACCENT = "#99329a";
+const BRAND_PRIMARY = "#22408C";  // = --glow-brand
+const BRAND_ACCENT = "#98329A";  // = --glow-accent
 
 const fmtEUR = (n: number) => new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n || 0);
 
@@ -260,15 +257,15 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
   ];
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="glow-card overflow-hidden">
+      <div className="glow-card-h"><div>
+        <h3>
           <FileText className="h-5 w-5" style={{ color: BRAND_PRIMARY }} />
           Informes PDF
-        </CardTitle>
-        <CardDescription>Informes listos para imprimir o enviar.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
+        </h3>
+        <div className="glow-card-h-sub">Informes listos para imprimir o enviar.</div>
+      </div></div>
+      <div className="glow-card-b">
         {/* Selector de período */}
         <div className="space-y-3">
           <label className="text-sm font-medium block">Período</label>
@@ -302,12 +299,12 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
           {rangeMode === "custom" && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[11px] text-muted-foreground">Desde</label>
-                <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} />
+                <label className="text-[11px] text-outline">Desde</label>
+                <input className="glow-input" type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} />
               </div>
               <div>
-                <label className="text-[11px] text-muted-foreground">Hasta</label>
-                <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} />
+                <label className="text-[11px] text-outline">Hasta</label>
+                <input className="glow-input" type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} />
               </div>
             </div>
           )}
@@ -334,7 +331,7 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold leading-tight">{r.title}</p>
-                    <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{r.desc}</p>
+                    <p className="text-[11px] text-outline mt-1 leading-snug">{r.desc}</p>
                   </div>
                 </div>
               </button>
@@ -342,11 +339,11 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
           })}
         </div>
 
-        <p className="text-[11px] text-muted-foreground text-center">
+        <p className="text-[11px] text-outline text-center">
           Los informes se abren en una nueva ventana. Imprime o guarda como PDF desde el diálogo del navegador.
         </p>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -367,7 +364,7 @@ function buildHTML(type: ReportType, d: any): string {
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-        color: #1a1a2e; background: #fff; padding: 32px 36px; line-height: 1.5;
+        color: #131520; background: #fff; padding: 32px 36px; line-height: 1.5;
         -webkit-font-smoothing: antialiased;
       }
       .header {
@@ -380,9 +377,9 @@ function buildHTML(type: ReportType, d: any): string {
         font-size: 11px; font-weight: 700; letter-spacing: 2px;
         color: ${BRAND_PRIMARY}; text-transform: uppercase; margin-bottom: 6px;
       }
-      .salon-name { font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
-      .report-type { font-size: 13px; color: #64748b; margin-top: 4px; font-weight: 500; }
-      .meta-right { text-align: right; font-size: 11px; color: #64748b; line-height: 1.6; }
+      .salon-name { font-size: 26px; font-weight: 800; color: #131520; letter-spacing: -0.5px; }
+      .report-type { font-size: 13px; color: #676B7E; margin-top: 4px; font-weight: 500; }
+      .meta-right { text-align: right; font-size: 11px; color: #676B7E; line-height: 1.6; }
       .meta-right strong { color: #1e293b; }
 
       .section { margin-top: 32px; page-break-inside: avoid; }
@@ -399,7 +396,7 @@ function buildHTML(type: ReportType, d: any): string {
       .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
       .kpi-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
       .kpi-card {
-        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px;
+        background: #f8fafc; border: 1px solid #E4E6EF; border-radius: 14px;
         padding: 16px; position: relative; overflow: hidden;
       }
       .kpi-card.highlight {
@@ -407,10 +404,10 @@ function buildHTML(type: ReportType, d: any): string {
         color: #fff; border-color: transparent;
       }
       .kpi-card.highlight .kpi-label, .kpi-card.highlight .kpi-sub { color: rgba(255,255,255,0.85); }
-      .kpi-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #64748b; }
-      .kpi-value { font-size: 22px; font-weight: 800; margin-top: 6px; color: #0f172a; letter-spacing: -0.5px; }
+      .kpi-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #676B7E; }
+      .kpi-value { font-size: 22px; font-weight: 800; margin-top: 6px; color: #131520; letter-spacing: -0.5px; }
       .kpi-card.highlight .kpi-value { color: #fff; }
-      .kpi-sub { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+      .kpi-sub { font-size: 10px; color: #9DA1B2; margin-top: 4px; }
 
       .growth-badge {
         display: inline-block; padding: 3px 10px; border-radius: 999px;
@@ -427,29 +424,29 @@ function buildHTML(type: ReportType, d: any): string {
       }
       thead th:first-child { border-radius: 8px 0 0 8px; }
       thead th:last-child { border-radius: 0 8px 8px 0; }
-      tbody td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
+      tbody td { padding: 10px 12px; border-bottom: 1px solid #F2F3F8; }
       tbody tr:last-child td { border-bottom: none; }
       tbody tr:nth-child(even) { background: #fafbfc; }
       .num { text-align: right; font-variant-numeric: tabular-nums; }
 
       .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 12px; }
       .bar-label { flex: 0 0 140px; font-weight: 500; color: #334155; }
-      .bar-track { flex: 1; height: 10px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+      .bar-track { flex: 1; height: 10px; background: #F2F3F8; border-radius: 999px; overflow: hidden; }
       .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, ${BRAND_PRIMARY}, ${BRAND_ACCENT}); }
-      .bar-value { flex: 0 0 110px; text-align: right; font-weight: 600; color: #0f172a; font-variant-numeric: tabular-nums; }
+      .bar-value { flex: 0 0 110px; text-align: right; font-weight: 600; color: #131520; font-variant-numeric: tabular-nums; }
 
       .sparkline-card {
-        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px;
+        background: #f8fafc; border: 1px solid #E4E6EF; border-radius: 14px;
         padding: 20px; margin-top: 12px;
       }
 
       .footer {
-        margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0;
-        text-align: center; font-size: 10px; color: #94a3b8;
+        margin-top: 40px; padding-top: 16px; border-top: 1px solid #E4E6EF;
+        text-align: center; font-size: 10px; color: #9DA1B2;
       }
       .footer strong { color: ${BRAND_PRIMARY}; font-weight: 700; }
 
-      .empty { color: #94a3b8; font-style: italic; padding: 20px; text-align: center; font-size: 12px; }
+      .empty { color: #9DA1B2; font-style: italic; padding: 20px; text-align: center; font-size: 12px; }
 
       @media print {
         body { padding: 18mm 16mm; }
@@ -727,7 +724,7 @@ function renderFiscal(d: any) {
           <div class="kpi-value">${fmtEUR(d.mixed)}</div>
         </div>
       </div>
-      <p style="margin-top:10px; font-size:11px; color:#64748b">
+      <p style="margin-top:10px; font-size:11px; color:#676B7E">
         Propinas: <strong>${fmtEUR(d.tips)}</strong> · Descuentos aplicados: <strong>${fmtEUR(d.discounts)}</strong>
       </p>
     </div>
@@ -761,7 +758,7 @@ function renderFiscal(d: any) {
           `,
             )
             .join("")}
-          <tr style="background: #f1f5f9">
+          <tr style="background: #F2F3F8">
             <td><strong>TOTAL</strong></td>
             <td class="num"><strong>${d.txCount}</strong></td>
             <td class="num"><strong>${fmtEUR(d.cash)}</strong></td>
@@ -771,7 +768,7 @@ function renderFiscal(d: any) {
           </tr>
         </tbody>
       </table>
-      <p style="margin-top:12px; font-size:10px; color:#94a3b8; font-style: italic;">
+      <p style="margin-top:12px; font-size:10px; color:#9DA1B2; font-style: italic;">
         Nota: IVA calculado al 21% sobre el total facturado. Consulta con tu asesor el tipo aplicable a cada servicio.
       </p>
     </div>
@@ -899,10 +896,10 @@ function renderSparkline(daily: any[]) {
       <path d="${area}" fill="url(#sparkFill)" />
       <path d="${path}" fill="none" stroke="url(#sparkStroke)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
     </svg>
-    <div style="display:flex; justify-content: space-between; margin-top: 10px; font-size: 11px; color: #64748b;">
+    <div style="display:flex; justify-content: space-between; margin-top: 10px; font-size: 11px; color: #676B7E;">
       <span>${format(daily[0].date, "d MMM", { locale: es })}</span>
       <span>Mejor día: <strong style="color:${BRAND_PRIMARY}">${format(maxDay.date, "d MMM", { locale: es })}</strong> · ${fmtEUR(maxDay.total)}</span>
-      <span>Total: <strong style="color:#0f172a">${fmtEUR(total)}</strong></span>
+      <span>Total: <strong style="color:#131520">${fmtEUR(total)}</strong></span>
     </div>
   `;
 }

@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
@@ -126,8 +123,8 @@ export function NotificationSettings({
   const sections = [{
     title: "Citas",
     icon: Calendar,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
+    color: "text-glow-brand-ink",
+    bgColor: "bg-glow-brand/10",
     items: [{
       key: "new_booking" as const,
       label: "Nueva reserva",
@@ -148,8 +145,8 @@ export function NotificationSettings({
   }, {
     title: "Mensajes",
     icon: MessageCircle,
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
+    color: "text-glow-ok-ink",
+    bgColor: "bg-glow-ok/10",
     items: [{
       key: "new_message" as const,
       label: "Nuevo mensaje",
@@ -158,8 +155,8 @@ export function NotificationSettings({
   }, {
     title: "Reseñas",
     icon: Star,
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10",
+    color: "text-glow-warn-ink",
+    bgColor: "bg-glow-warn/10",
     items: [{
       key: "new_review" as const,
       label: "Nueva reseña",
@@ -168,8 +165,8 @@ export function NotificationSettings({
   }, {
     title: "Resumen diario",
     icon: Sun,
-    color: "text-orange-500",
-    bgColor: "bg-orange-500/10",
+    color: "text-glow-warn-ink",
+    bgColor: "bg-glow-warn/10",
     items: [{
       key: "daily_summary" as const,
       label: "Resumen matutino",
@@ -184,25 +181,25 @@ export function NotificationSettings({
             <Bell className="h-5 w-5 text-primary" />
             Notificaciones
           </h2>
-          <p className="text-sm text-muted-foreground">Configura qué alertas quieres recibir</p>
+          <p className="text-sm text-outline">Configura qué alertas quieres recibir</p>
         </div>
-        {hasChanges && <Button onClick={handleSave} disabled={saving} size="sm">
-            {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+        {hasChanges && <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={handleSave} disabled={saving}>
+            {saving ? <Loader2 className="glow-spinner-sm" /> : <Save className="h-4 w-4 mr-1" />}
             Guardar
-          </Button>}
+          </button>}
       </div>
 
       {/* Push master toggle */}
       {isSupported && (
-        <Card className="p-4">
+        <div className="glow-card p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${isEnabled ? 'bg-primary/10' : 'bg-muted'}`}>
-                {isEnabled ? <BellRing className="h-5 w-5 text-primary" /> : <BellOff className="h-5 w-5 text-muted-foreground" />}
+                {isEnabled ? <BellRing className="h-5 w-5 text-primary" /> : <BellOff className="h-5 w-5 text-outline" />}
               </div>
               <div>
-                <Label className="font-semibold text-sm">Notificaciones</Label>
-                <p className="text-xs text-muted-foreground">
+                <label className="font-semibold text-sm">Notificaciones</label>
+                <p className="text-xs text-outline">
                   {permission === 'denied' ? 'Bloqueadas en ajustes del navegador' : isEnabled ? 'Recibirás alertas en tu dispositivo' : 'Activa para recibir alertas en el móvil'}
                 </p>
               </div>
@@ -241,7 +238,7 @@ export function NotificationSettings({
               </button>
             </div>
           )}
-        </Card>
+        </div>
       )}
 
       {/* Notification categories */}
@@ -254,7 +251,7 @@ export function NotificationSettings({
     }} transition={{
       delay: sectionIndex * 0.05
     }}>
-          <Card className="p-4">
+          <div className="glow-card p-4">
             <h3 className="font-medium mb-3 flex items-center gap-2">
               <div className={`h-6 w-6 rounded-md ${section.bgColor} flex items-center justify-center`}>
                 <section.icon className={`h-3.5 w-3.5 ${section.color}`} />
@@ -264,13 +261,13 @@ export function NotificationSettings({
             <div className="space-y-3">
               {section.items.map(item => <div key={item.key} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
                   <div>
-                    <Label className="font-medium text-sm">{item.label}</Label>
-                    <p className="text-xs text-muted-foreground">{item.description}</p>
+                    <label className="font-medium text-sm">{item.label}</label>
+                    <p className="text-xs text-outline">{item.description}</p>
                   </div>
                   <Switch checked={preferences[item.key] as boolean} onCheckedChange={() => handleToggle(item.key)} />
                 </div>)}
             </div>
-          </Card>
+          </div>
         </motion.div>)}
     </div>;
 }

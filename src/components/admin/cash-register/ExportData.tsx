@@ -13,10 +13,10 @@ const inputStyle: React.CSSProperties = {
   padding: "8px 10px",
   fontSize: 13.5,
   fontWeight: 500,
-  background: "var(--gp-chip)",
-  border: "1.5px solid var(--gp-line2)",
+  background: "var(--glow-sunk)",
+  border: "1.5px solid var(--glow-line-soft)",
   borderRadius: 10,
-  color: "var(--gp-fg)",
+  color: "var(--glow-ink)",
   outline: "none",
   boxSizing: "border-box",
 };
@@ -144,25 +144,25 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ textAlign: "center", paddingTop: 8 }}>
-        <div className="gp-empty-ic" style={{ margin: "0 auto 10px" }}>
+        <div className="glow-empty-ic" style={{ margin: "0 auto 10px" }}>
           <FileSpreadsheet style={{ width: 24, height: 24 }} />
         </div>
         <h4 style={{ margin: 0 }}>Exportar caja</h4>
-        <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--gp-muted-c)" }}>
+        <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--glow-ink-3)" }}>
           Excel con fórmulas automáticas
         </p>
       </div>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-        <button className="gp-btn sm" onClick={() => setQuickPeriod("week")}>Semana</button>
-        <button className="gp-btn sm" onClick={() => setQuickPeriod("month")}>Mes</button>
-        <button className="gp-btn sm" onClick={() => setQuickPeriod("year")}>Año</button>
+        <button className="glow-btn glow-btn--sm" onClick={() => setQuickPeriod("week")}>Semana</button>
+        <button className="glow-btn glow-btn--sm" onClick={() => setQuickPeriod("month")}>Mes</button>
+        <button className="glow-btn glow-btn--sm" onClick={() => setQuickPeriod("year")}>Año</button>
       </div>
 
-      <div className="gp-card" style={{ padding: "14px 16px" }}>
+      <div className="glow-card" style={{ padding: "14px 16px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--gp-muted-c)", display: "block", marginBottom: 6 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--glow-ink-3)", display: "block", marginBottom: 6 }}>
               Desde
             </label>
             <input
@@ -173,7 +173,7 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
             />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--gp-muted-c)", display: "block", marginBottom: 6 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: "var(--glow-ink-3)", display: "block", marginBottom: 6 }}>
               Hasta
             </label>
             <input
@@ -187,13 +187,13 @@ export const ExportData = ({ tenantId }: ExportDataProps) => {
       </div>
 
       <button
-        className="gp-btn primary"
+        className="glow-btn glow-btn--primary"
         style={{ width: "100%", justifyContent: "center", padding: "12px 20px", fontSize: 15 }}
         onClick={exportToCSV}
         disabled={loading || !startDate || !endDate}
       >
         {loading
-          ? <Loader2 className="gp-spinner-sm" />
+          ? <Loader2 className="glow-spinner-sm" />
           : <Download style={{ width: 16, height: 16 }} />}
         Descargar Excel
       </button>

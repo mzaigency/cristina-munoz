@@ -2,9 +2,24 @@ import type { Config } from "tailwindcss";
 import animate from "tailwindcss-animate";
 import typography from "@tailwindcss/typography";
 
+/** Token de glow.css como color de Tailwind, conservando el modificador de opacidad. */
+const g = (name: string) => `rgb(var(--glow-${name}-rgb) / <alpha-value>)`;
+
 export default {
-  
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  // Explícito a propósito: sin esta línea Tailwind 3 usa "media" y las
+  // variantes dark: se activan solas con el SO en oscuro, invirtiendo medio
+  // panel mientras la otra mitad (tokens glow, blancos fijos) se queda clara.
+  darkMode: "class",
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+    // La capa glow vive en @layer components, que Tailwind purga por uso.
+    // Incluyéndola aquí el escáner encuentra sus propios nombres y la
+    // conserva entera: las primitivas existen siempre, se usen o no.
+    "./src/styles/*.css",
+  ],
   prefix: "",
   theme: {
     container: {
@@ -67,27 +82,40 @@ export default {
           "gold-light": "hsl(var(--salon-gold-light))",
           cream: "hsl(var(--salon-cream))",
         },
-        // Stitch-imported surface scale (mapeado a hexes glowapp reales)
-        "surface": "#ffffff",
-        "surface-container-lowest": "#ffffff",
-        "surface-container-low": "#F6F7FB",
-        "surface-container": "#EEF0F7",
-        "surface-container-high": "#E9ECF5",
-        "surface-container-highest": "#E3E7F2",
-        "surface-variant": "#E6E8F0",
-        "on-surface": "#131520",
-        "on-surface-variant": "#4A4D5C",
-        "on-background": "#131520",
-        "outline": "#676B7E",
-        "outline-variant": "#C9CCD8",
-        "primary-container": "#3358B0",
-        // Stitch agenda tokens (no chocan con shadcn)
-        "chip": "#F2F3F8",
-        "ink-2": "#3A3D4A",
-        "line": "rgba(230, 232, 240, 0.6)",
-        success: { DEFAULT: "#16A249", soft: "#E7F6EC" },
-        info: { DEFAULT: "#2E7FD4", soft: "#E6F0FB" },
-        warning: { DEFAULT: "#F59E0B", soft: "#FEF3E0" },
+        // Capa heredada de Stitch. Ya no tiene colores propios: apunta a los
+        // tokens de src/styles/glow.css, así `text-ink-2` y `--glow-ink-2` son
+        // el mismo color por construcción y no pueden desincronizarse.
+        // El formato `rgb(var(--x) / <alpha-value>)` conserva `text-outline/70`.
+        "surface": g("surface"),
+        "surface-container-lowest": g("surface"),
+        "surface-container-low": g("bg"),
+        "surface-container": g("sunk"),
+        "surface-container-high": g("line"),
+        "surface-container-highest": g("line"),
+        "surface-variant": g("line"),
+        "on-surface": g("ink"),
+        "on-surface-variant": g("ink-2"),
+        "on-background": g("ink"),
+        "outline": g("ink-3"),
+        "outline-variant": g("ink-4"),
+        "primary-container": g("brand"),
+        "chip": g("sunk"),
+        "ink-2": g("ink-2"),
+        "line": g("line"),
+        // Familia semántica del panel. Reemplaza a los 308 colores crudos de la
+        // paleta de Tailwind (amber-500, emerald-600…) que había repartidos.
+        // El tono base lleva canales, así `bg-glow-ok/10` sigue funcionando.
+        glow: {
+          brand: g("brand"), "brand-soft": "var(--glow-brand-soft)", "brand-ink": "var(--glow-brand-ink)",
+          accent: g("accent"), "accent-soft": "var(--glow-accent-soft)", "accent-ink": "var(--glow-accent-ink)",
+          ok: g("ok"), "ok-soft": "var(--glow-ok-soft)", "ok-ink": "var(--glow-ok-ink)",
+          warn: g("warn"), "warn-soft": "var(--glow-warn-soft)", "warn-ink": "var(--glow-warn-ink)",
+          danger: g("danger"), "danger-soft": "var(--glow-danger-soft)", "danger-ink": "var(--glow-danger-ink)",
+        },
+        success: { DEFAULT: g("ok"), soft: "var(--glow-ok-soft)" },
+        // No hay azul "info" propio: lo informativo es el azul de marca.
+        info: { DEFAULT: g("brand"), soft: "var(--glow-brand-soft)" },
+        warning: { DEFAULT: g("warn"), soft: "var(--glow-warn-soft)" },
       },
       fontFamily: {
         'sans': ['Plus Jakarta Sans', 'DM Sans', 'system-ui', 'sans-serif'],

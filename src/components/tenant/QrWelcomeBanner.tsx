@@ -40,7 +40,7 @@ export const QrWelcomeBanner = ({ tenantName }: QrWelcomeBannerProps) => {
         >
           <div
             className="mx-auto max-w-md rounded-2xl shadow-2xl border border-white/20 backdrop-blur-xl px-4 py-3 flex items-center gap-3"
-            style={{ background: "linear-gradient(100deg, #22408c, #98329a)" }}
+            style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
           >
             <div className="grid place-items-center w-9 h-9 rounded-full bg-white/20 shrink-0">
               <Sparkles className="h-4 w-4 text-white" />

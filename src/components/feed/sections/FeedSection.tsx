@@ -25,7 +25,7 @@ interface FeedSectionProps {
 }
 
 const TINT_CLASS: Record<NonNullable<FeedSectionProps["iconTint"]>, string> = {
-  primary: "bg-gradient-to-br from-primary to-[#99329a] text-white",
+  primary: "bg-gradient-to-br from-primary to-[#98329A] text-white",
   emerald: "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white",
   amber: "bg-gradient-to-br from-amber-400 to-amber-600 text-white",
   rose: "bg-gradient-to-br from-rose-400 to-rose-600 text-white",

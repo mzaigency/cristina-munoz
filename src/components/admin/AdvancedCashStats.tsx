@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
+import { chartColor } from "@/lib/chartColors";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
@@ -31,7 +31,6 @@ interface AdvancedCashStatsProps {
   tenantId: string;
 }
 
-const COLORS = ["#8B5CF6", "#06B6D4", "#10B981", "#F59E0B", "#EF4444"];
 
 export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
   const [loading, setLoading] = useState(true);
@@ -88,9 +87,9 @@ export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
       });
 
       setPaymentMethodData([
-        { name: "Efectivo", value: paymentMethods.cash, color: "#10B981" },
-        { name: "Tarjeta", value: paymentMethods.card, color: "#8B5CF6" },
-        { name: "Mixto", value: paymentMethods.mixed || 0, color: "#F59E0B" }
+        { name: "Efectivo", value: paymentMethods.cash, color: chartColor(2) },
+        { name: "Tarjeta", value: paymentMethods.card, color: chartColor(0) },
+        { name: "Mixto", value: paymentMethods.mixed || 0, color: chartColor(3) }
       ].filter(d => d.value > 0));
 
       // Tips trend (daily for this week)
@@ -127,7 +126,7 @@ export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
       const sortedServices = Object.entries(serviceCount)
         .sort(([, a], [, b]) => b - a)
         .slice(0, 5)
-        .map(([name, count], i) => ({ name, count, color: COLORS[i] }));
+        .map(([name, count], i) => ({ name, count, color: chartColor(i) }));
 
       setTopServices(sortedServices);
 
@@ -155,29 +154,29 @@ export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* Weekly Comparison */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Comparativa Semanal</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3>Comparativa Semanal</h3>
+          </div></div>
+          <div className="glow-card-b">
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyComparison}>
                   <XAxis dataKey="name" fontSize={12} />
                   <YAxis fontSize={12} tickFormatter={(v) => `${v}€`} />
                   <Tooltip formatter={(value: number) => [`${value.toFixed(2)}€`, "Ingresos"]} />
-                  <Bar dataKey="value" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" fill={chartColor(0)} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             {weeklyComparison.length === 2 && (
-              <p className="text-xs text-center text-muted-foreground mt-2">
+              <p className="text-xs text-center text-outline mt-2">
                 {weeklyComparison[1].value > weeklyComparison[0].value ? (
-                  <span className="text-green-600">
+                  <span className="text-glow-ok-ink">
                     ↑ +{((weeklyComparison[1].value - weeklyComparison[0].value) / Math.max(weeklyComparison[0].value, 1) * 100).toFixed(0)}% vs semana anterior
                   </span>
                 ) : weeklyComparison[1].value < weeklyComparison[0].value ? (
-                  <span className="text-red-600">
+                  <span className="text-glow-danger-ink">
                     ↓ {((weeklyComparison[1].value - weeklyComparison[0].value) / Math.max(weeklyComparison[0].value, 1) * 100).toFixed(0)}% vs semana anterior
                   </span>
                 ) : (
@@ -185,18 +184,18 @@ export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
                 )}
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Payment Methods */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3>
               <CreditCard className="h-4 w-4" />
               Métodos de Pago
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div></div>
+          <div className="glow-card-b">
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -218,18 +217,18 @@ export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Tips Trend */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3>
               <Gift className="h-4 w-4" />
               Tendencia de Propinas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div></div>
+          <div className="glow-card-b">
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={tipsData}>
@@ -239,25 +238,25 @@ export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
                   <Line 
                     type="monotone" 
                     dataKey="propinas" 
-                    stroke="#10B981" 
+                    stroke={chartColor(2)} 
                     strokeWidth={2}
-                    dot={{ fill: "#10B981" }}
+                    dot={{ fill: chartColor(2) }}
                   />
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Top Services */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3>
               <Scissors className="h-4 w-4" />
               Top 5 Servicios del Mes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div></div>
+          <div className="glow-card-b">
             <div className="space-y-3">
               {topServices.map((service, i) => (
                 <div key={service.name} className="flex items-center gap-3">
@@ -269,18 +268,18 @@ export function AdvancedCashStats({ tenantId }: AdvancedCashStatsProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{service.name}</p>
-                    <p className="text-xs text-muted-foreground">{service.count} veces</p>
+                    <p className="text-xs text-outline">{service.count} veces</p>
                   </div>
                 </div>
               ))}
               {topServices.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
+                <p className="text-sm text-outline text-center py-4">
                   Sin datos este mes
                 </p>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

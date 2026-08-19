@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { chartColor } from "@/lib/chartColors";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { BarChart3, MousePointerClick, Eye, Sparkles, Trophy } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -41,12 +40,12 @@ const SECTION_LABEL: Record<string, string> = {
 };
 
 const SECTION_COLOR: Record<string, string> = {
-  favorites: "#f43f5e",
-  foryou: "#22408b",
-  popular: "#f59e0b",
-  near: "#3b82f6",
-  today: "#10b981",
-  new: "#99329a",
+  favorites: chartColor(5),
+  foryou: "var(--glow-brand)",
+  popular: chartColor(3),
+  near: chartColor(0),
+  today: chartColor(2),
+  new: "var(--glow-accent)",
 };
 
 const RANGES = [
@@ -151,42 +150,36 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
     sub?: string;
     gradient: string;
   }) => (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-1 p-3">
-        <CardTitle className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+    <div className="glow-card">
+      <div className="glow-card-h"><div>
+        <h3>
           {title}
-        </CardTitle>
+        </h3>
         <div className={`p-1.5 rounded-xl ${gradient}`}>
           <Icon className="h-3.5 w-3.5 text-white" />
         </div>
-      </CardHeader>
-      <CardContent className="p-3 pt-0">
+      </div></div>
+      <div className="glow-card-b">
         <div className="text-lg font-bold tracking-tight">{value}</div>
         {sub && (
-          <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>
+          <p className="text-[10px] text-outline mt-0.5">{sub}</p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-on-surface flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-primary" />
           Métricas del feed
         </h2>
         <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1">
           {RANGES.map((r) => (
-            <Button
-              key={r.value}
-              size="sm"
-              variant={days === r.value ? "default" : "ghost"}
-              onClick={() => setDays(r.value)}
-              className="h-7 px-3 text-xs rounded-lg"
-            >
+            <button className="glow-btn glow-btn--primary glow-btn--sm h-7 px-3 text-xs rounded-lg" key={r.value} onClick={() => setDays(r.value)}>
               {r.label}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
@@ -196,21 +189,21 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
           title="Impresiones"
           value={loading ? "—" : totals.impressions.toLocaleString()}
           icon={Eye}
-          gradient="bg-gradient-to-br from-blue-500 to-indigo-600"
+          gradient="bg-gradient-to-br from-glow-brand to-glow-brand"
         />
         <KPI
           title="Clics"
           value={loading ? "—" : totals.clicks.toLocaleString()}
           sub={`CTR ${pct(totals.clicks, totals.impressions)}`}
           icon={MousePointerClick}
-          gradient="bg-gradient-to-br from-amber-500 to-orange-600"
+          gradient="bg-gradient-to-br from-glow-warn to-glow-warn"
         />
         <KPI
           title="Reservas"
           value={loading ? "—" : totals.conversions.toLocaleString()}
           sub={`CVR ${pct(totals.conversions, totals.clicks)}`}
           icon={Sparkles}
-          gradient="bg-gradient-to-br from-emerald-500 to-green-600"
+          gradient="bg-gradient-to-br from-glow-ok to-glow-ok"
         />
         <KPI
           title="Conv. global"
@@ -219,19 +212,19 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
           }
           sub="reservas / impresiones"
           icon={Trophy}
-          gradient="bg-gradient-to-br from-purple-500 to-pink-600"
+          gradient="bg-gradient-to-br from-glow-accent to-glow-accent"
         />
       </div>
 
-      <Card>
-        <CardHeader className="p-3 pb-2">
-          <CardTitle className="text-sm">Por sección</CardTitle>
-        </CardHeader>
-        <CardContent className="p-2 pt-0 space-y-3">
+      <div className="glow-card">
+        <div className="glow-card-h"><div>
+          <h3>Por sección</h3>
+        </div></div>
+        <div className="glow-card-b">
           {loading ? (
             <Skeleton className="h-48 w-full" />
           ) : chartData.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
+            <div className="py-12 text-center text-sm text-outline">
               Aún no hay eventos en este periodo.
             </div>
           ) : (
@@ -268,7 +261,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
                       {chartData.map((d) => (
                         <Cell
                           key={d.rawId}
-                          fill={SECTION_COLOR[d.rawId] || "#22408b"}
+                          fill={SECTION_COLOR[d.rawId] || "var(--glow-brand)"}
                         />
                       ))}
                     </Bar>
@@ -278,7 +271,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
 
               <div className="overflow-x-auto rounded-xl border">
                 <table className="w-full text-xs">
-                  <thead className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/30">
+                  <thead className="text-[10px] uppercase tracking-wider text-outline bg-muted/30">
                     <tr>
                       <th className="text-left p-2.5">Sección</th>
                       <th className="text-right p-2.5">Imp.</th>
@@ -300,7 +293,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
                               className="h-2 w-2 rounded-full"
                               style={{
                                 background:
-                                  SECTION_COLOR[r.rawId] || "#22408b",
+                                  SECTION_COLOR[r.rawId] || "var(--glow-brand)",
                               }}
                             />
                             <span className="font-medium">{r.section}</span>
@@ -318,7 +311,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
                         <td className="p-2.5 text-right tabular-nums">
                           {r.conversions.toLocaleString()}
                         </td>
-                        <td className="p-2.5 text-right tabular-nums font-semibold text-emerald-600">
+                        <td className="p-2.5 text-right tabular-nums font-semibold text-glow-ok-ink">
                           {r.cvr}%
                         </td>
                       </tr>
@@ -328,18 +321,18 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader className="p-3 pb-2">
-          <CardTitle className="text-sm">Evolución diaria</CardTitle>
-        </CardHeader>
-        <CardContent className="p-2 pt-0">
+      <div className="glow-card">
+        <div className="glow-card-h"><div>
+          <h3>Evolución diaria</h3>
+        </div></div>
+        <div className="glow-card-b">
           {loading ? (
             <Skeleton className="h-48 w-full" />
           ) : dailyData.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
+            <div className="py-12 text-center text-sm text-outline">
               Sin actividad en este periodo.
             </div>
           ) : (
@@ -365,7 +358,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
                     type="monotone"
                     dataKey="impressions"
                     name="Impresiones"
-                    stroke="#22408b"
+                    stroke="var(--glow-brand)"
                     strokeWidth={2}
                     dot={false}
                   />
@@ -373,7 +366,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
                     type="monotone"
                     dataKey="clicks"
                     name="Clics"
-                    stroke="#f59e0b"
+                    stroke={chartColor(3)}
                     strokeWidth={2}
                     dot={false}
                   />
@@ -381,7 +374,7 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
                     type="monotone"
                     dataKey="conversions"
                     name="Reservas"
-                    stroke="#10b981"
+                    stroke={chartColor(2)}
                     strokeWidth={2}
                     dot={false}
                   />
@@ -389,8 +382,8 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
               </ResponsiveContainer>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

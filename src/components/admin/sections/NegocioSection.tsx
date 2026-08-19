@@ -21,20 +21,11 @@ interface NegocioSectionProps {
   tenantSlug: string;
   subTab?: string;
   onSubTabChange?: (subTab: string) => void;
-  hideTabs?: boolean;
 }
 
 type NegocioTab = "resumen" | "equipo" | "horarios" | "estadisticas" | "objetivos";
 
-interface TabConfig {
-  id: NegocioTab;
-  label: string;
-  icon: React.ElementType;
-  requiredFeature?: PlanFeature;
-  requiredPlan?: string;
-}
-
-const NegocioSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: NegocioSectionProps) => {
+const NegocioSection = ({ tenantId, subTab, onSubTabChange }: NegocioSectionProps) => {
   const validTabs: NegocioTab[] = ["resumen", "equipo", "horarios", "estadisticas", "objetivos"];
   const [internalTab, setInternalTab] = useState<NegocioTab>("resumen");
   const activeTab: NegocioTab = validTabs.includes(subTab as NegocioTab)
@@ -64,52 +55,22 @@ const NegocioSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: NegocioS
     };
   }, [tenantId]);
 
-  const tabs: TabConfig[] = [
-    { id: "resumen", label: "Resumen", icon: LayoutDashboard },
-    { id: "equipo", label: "Equipo", icon: Users },
-    { id: "horarios", label: "Horarios", icon: Clock },
-    { id: "estadisticas", label: "Estadísticas", icon: BarChart3, requiredFeature: "advanced_analytics", requiredPlan: "pro" },
-    { id: "objetivos", label: "Objetivos & Reportes", icon: Target, requiredFeature: "monthly_goals", requiredPlan: "business" },
-  ];
-
-  const isTabLocked = (tab: TabConfig): boolean => {
-    if (!tab.requiredFeature) return false;
-    return !hasFeature(tab.requiredFeature);
+  /** Qué pestaña exige plan. AdminSubNav ya las bloquea en la fila; esto
+      cubre la navegación que llega desde el Resumen. */
+  const LOCKED: Partial<Record<NegocioTab, PlanFeature>> = {
+    estadisticas: "advanced_analytics",
+    objetivos: "monthly_goals",
   };
 
   const handleTabChange = (id: NegocioTab) => {
-    const tab = tabs.find((t) => t.id === id);
-    if (tab && !isTabLocked(tab)) setActiveTab(id);
+    const needs = LOCKED[id];
+    if (needs && !hasFeature(needs)) return;
+    setActiveTab(id);
   };
 
   return (
-    <div className="gp-mkt">
-      {!hideTabs && (
-        <div className="gp-mkt-tabs">
-          {tabs.map((tab) => {
-            const locked = isTabLocked(tab);
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                className={`gp-mkt-tab${activeTab === tab.id ? " on" : ""}${locked ? " locked" : ""}`}
-                onClick={() => handleTabChange(tab.id)}
-                type="button"
-              >
-                {locked ? <Lock /> : <Icon />}
-                <span>{tab.label}</span>
-                {locked && (
-                  <span className="gp-mkt-tab-pro">
-                    {tab.requiredPlan === "business" ? "Business" : "Pro"}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      <div className="gp-mkt-body">
+    <div className="glow-mkt">
+      <div className="glow-mkt-body">
         {activeTab === "resumen" && (
           <NegocioOverview tenantId={tenantId} onNavigate={(t) => handleTabChange(t as NegocioTab)} />
         )}
@@ -120,7 +81,7 @@ const NegocioSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: NegocioS
         )}
         {activeTab === "horarios" && <HoursManager tenantId={tenantId} />}
         {activeTab === "estadisticas" &&
-          (isTabLocked(tabs[3]) ? (
+          (!hasFeature("advanced_analytics") ? (
             <LockedFeature
               featureName="Estadísticas"
               currentPlan={planSlug}
@@ -132,7 +93,7 @@ const NegocioSection = ({ tenantId, subTab, onSubTabChange, hideTabs }: NegocioS
             <BusinessStats tenantId={tenantId} />
           ))}
         {activeTab === "objetivos" &&
-          (isTabLocked(tabs[4]) ? (
+          (!hasFeature("monthly_goals") ? (
             <LockedFeature
               featureName="Objetivos"
               currentPlan={planSlug}

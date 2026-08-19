@@ -230,7 +230,7 @@ export function DiscoverSections({
               disabled={geoLoading || hasLocation}
               className="w-full h-full min-h-[260px] liquid-glass-card flex flex-col items-center justify-center gap-3 p-6 text-center hover:scale-[1.02] transition-transform disabled:hover:scale-100"
             >
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-[#99329a] flex items-center justify-center shadow-lg">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-[#98329A] flex items-center justify-center shadow-lg">
                 <Navigation className="h-7 w-7 text-white" />
               </div>
               <div>

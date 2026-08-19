@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CHART_COLORS } from "@/lib/chartColors";
 import { supabase } from "@/integrations/supabase/client";
 import {
   X,
@@ -78,7 +79,7 @@ interface DaySchedule {
   end_time: string | null;
 }
 
-const PRESET_COLORS = ["#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#3B82F6", "#EF4444", "#06B6D4", "#84CC16"];
+const PRESET_COLORS = CHART_COLORS;  // misma paleta que las gráficas
 const COMMISSION_PRESETS = [30, 40, 50, 60];
 /** Lunes primero, como InlineScheduleEditor. */
 const WEEK_DAYS = [
@@ -337,10 +338,10 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
 
   if (loading || !stylist) {
     return (
-      <div className="gp-neg-drawer-backdrop" onClick={onClose}>
-        <div className="gp-neg-drawer" onClick={(e) => e.stopPropagation()}>
+      <div className="glow-neg-drawer-backdrop" onClick={onClose}>
+        <div className="glow-neg-drawer" onClick={(e) => e.stopPropagation()}>
           <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-            <Loader2 className="gp-spinner" />
+            <Loader2 className="glow-spinner" />
           </div>
         </div>
       </div>
@@ -353,31 +354,31 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
   }));
 
   return (
-    <div className="gp-neg-drawer-backdrop" onClick={onClose}>
-      <div className="gp-neg-drawer" onClick={(e) => e.stopPropagation()}>
+    <div className="glow-neg-drawer-backdrop" onClick={onClose}>
+      <div className="glow-neg-drawer" onClick={(e) => e.stopPropagation()}>
         {/* ── Cabecera fija ── */}
-        <div className="gp-neg-drawer-h">
-          <div className="gp-neg-drawer-h-left">
+        <div className="glow-neg-drawer-h">
+          <div className="glow-neg-drawer-h-left">
             <button
-              className="gp-neg-avatar-edit"
+              className="glow-neg-avatar-edit"
               onClick={() => fileRef.current?.click()}
               type="button"
               title="Cambiar foto"
               aria-label="Cambiar foto"
             >
               <div
-                className="gp-neg-stylist-avatar"
-                style={{ background: stylist.color || "var(--gp-accent)", width: 48, height: 48 }}
+                className="glow-neg-stylist-avatar"
+                style={{ background: stylist.color || "var(--glow-brand)", width: 48, height: 48 }}
               >
                 {uploadingAvatar ? (
-                  <Loader2 className="gp-spinner-sm" style={{ color: "#fff" }} />
+                  <Loader2 className="glow-spinner-sm" style={{ color: "#fff" }} />
                 ) : stylist.avatar_url ? (
                   <img src={stylist.avatar_url} alt={stylist.name} />
                 ) : (
                   <span>{stylist.name.charAt(0).toUpperCase()}</span>
                 )}
               </div>
-              <span className="gp-neg-avatar-edit-ic">
+              <span className="glow-neg-avatar-edit-ic">
                 <Camera style={{ width: 11, height: 11 }} />
               </span>
             </button>
@@ -390,44 +391,44 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
             />
             <div>
               <strong>{stylist.name}</strong>
-              <span className="gp-neg-drawer-sub">
+              <span className="glow-neg-drawer-sub">
                 {stylist.is_active ? (
-                  <span className="gp-badge ok">
+                  <span className="glow-badge glow-badge--ok">
                     <span className="pip" style={{ background: "currentColor" }} />
                     Activo
                   </span>
                 ) : (
-                  <span className="gp-badge neutral">Inactivo</span>
+                  <span className="glow-badge">Inactivo</span>
                 )}
               </span>
             </div>
           </div>
-          <button className="gp-icon-btn" onClick={onClose} type="button" aria-label="Cerrar">
+          <button className="glow-icon-btn" onClick={onClose} type="button" aria-label="Cerrar">
             <X style={{ width: 18, height: 18 }} />
           </button>
         </div>
 
         {/* ── Contenido: un solo scroll ── */}
-        <div className="gp-neg-drawer-body gp-team-detail">
+        <div className="glow-neg-drawer-body glow-team-detail">
           {/* Este mes */}
           <section>
-            <div className="gp-neg-mini-kpis">
-              <div className="gp-neg-mini-kpi">
+            <div className="glow-neg-mini-kpis">
+              <div className="glow-neg-mini-kpi">
                 <Calendar />
                 <strong>{bookingsMonth}</strong>
                 <span>Citas mes</span>
               </div>
-              <div className="gp-neg-mini-kpi">
+              <div className="glow-neg-mini-kpi">
                 <Euro />
                 <strong>{Math.round(revenueMonth).toLocaleString("es-ES")}€</strong>
                 <span>Facturado</span>
               </div>
-              <div className="gp-neg-mini-kpi">
+              <div className="glow-neg-mini-kpi">
                 <Star />
                 <strong>{ratingAvg > 0 ? ratingAvg.toFixed(1) : "—"}</strong>
                 <span>{reviewsCount} reseñas</span>
               </div>
-              <div className="gp-neg-mini-kpi">
+              <div className="glow-neg-mini-kpi">
                 <Percent />
                 <strong>{earnings}€</strong>
                 <span>A pagar</span>
@@ -437,21 +438,21 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
 
           {/* Horario */}
           <section>
-            <div className="gp-team-sec-h">
-              <h4 className="gp-neg-section-h">
+            <div className="glow-team-sec-h">
+              <h4 className="glow-neg-section-h">
                 <Clock /> Horario semanal
               </h4>
               {!usesSalonHours && !editingSchedule && (
-                <button className="gp-btn sm" onClick={() => setEditingSchedule(true)} type="button">
+                <button className="glow-btn glow-btn--sm" onClick={() => setEditingSchedule(true)} type="button">
                   <Pencil style={{ width: 12, height: 12 }} /> Editar
                 </button>
               )}
             </div>
 
             {/* De dónde sale el horario: del salón o propio */}
-            <div className="gp-team-seg" role="radiogroup" aria-label="Origen del horario">
+            <div className="glow-team-seg" role="radiogroup" aria-label="Origen del horario">
               <button
-                className={`gp-team-seg-opt${usesSalonHours && !editingSchedule ? " on" : ""}`}
+                className={`glow-team-seg-opt${usesSalonHours && !editingSchedule ? " on" : ""}`}
                 onClick={() => {
                   if (editingSchedule && usesSalonHours) {
                     // Estaba creando uno propio sin guardar: basta con descartar
@@ -468,7 +469,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
                 Del salón
               </button>
               <button
-                className={`gp-team-seg-opt${!usesSalonHours || editingSchedule ? " on" : ""}`}
+                className={`glow-team-seg-opt${!usesSalonHours || editingSchedule ? " on" : ""}`}
                 onClick={() => {
                   if (usesSalonHours && !editingSchedule) setEditingSchedule(true);
                 }}
@@ -496,28 +497,28 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
             ) : (
               <>
                 {usesSalonHours && (
-                  <p className="gp-neg-help" style={{ margin: 0 }}>
+                  <p className="glow-neg-help" style={{ margin: 0 }}>
                     Sigue el horario del negocio: si cambias el del salón, el suyo cambia también. Toca
                     «Propio» para personalizarlo.
                   </p>
                 )}
                 {schedule === null ? (
                   <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
-                    <Loader2 className="gp-spinner-sm" />
+                    <Loader2 className="glow-spinner-sm" />
                   </div>
                 ) : (
-                  <div className="gp-neg-sched">
+                  <div className="glow-neg-sched">
                     {orderedSchedule.map(({ value, label, row }) => {
                       const working = row?.is_working && row.start_time && row.end_time;
                       return (
-                        <div key={value} className={`gp-neg-sched-row${working ? "" : " off"}`}>
-                          <span className="gp-neg-sched-day">{label}</span>
+                        <div key={value} className={`glow-neg-sched-row${working ? "" : " off"}`}>
+                          <span className="glow-neg-sched-day">{label}</span>
                           {working ? (
-                            <span className="gp-neg-sched-hours">
+                            <span className="glow-neg-sched-hours">
                               {hhmm(row!.start_time)} – {hhmm(row!.end_time)}
                             </span>
                           ) : (
-                            <span className="gp-neg-sched-rest">
+                            <span className="glow-neg-sched-rest">
                               <Moon style={{ width: 11, height: 11 }} /> Descansa
                             </span>
                           )}
@@ -535,15 +536,15 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
 
           {/* Comisión */}
           <section>
-            <div className="gp-team-sec-h">
-              <h4 className="gp-neg-section-h">
+            <div className="glow-team-sec-h">
+              <h4 className="glow-neg-section-h">
                 <Percent /> Comisión
               </h4>
             </div>
-            <div className="gp-neg-form-row">
-              <div className="gp-mkt-chip-row">
+            <div className="glow-neg-form-row">
+              <div className="glow-mkt-chip-row">
                 <button
-                  className={`gp-mkt-chip${commission.commission_type === "percentage" ? " on" : ""}`}
+                  className={`glow-mkt-chip${commission.commission_type === "percentage" ? " on" : ""}`}
                   onClick={() => {
                     setCommission({ ...commission, commission_type: "percentage" });
                     setCommissionDirty(true);
@@ -553,7 +554,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
                   % de lo facturado
                 </button>
                 <button
-                  className={`gp-mkt-chip${commission.commission_type === "fixed" ? " on" : ""}`}
+                  className={`glow-mkt-chip${commission.commission_type === "fixed" ? " on" : ""}`}
                   onClick={() => {
                     setCommission({ ...commission, commission_type: "fixed" });
                     setCommissionDirty(true);
@@ -566,12 +567,12 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
             </div>
 
             {commission.commission_type === "percentage" ? (
-              <div className="gp-neg-form-row">
-                <div className="gp-mkt-chip-row">
+              <div className="glow-neg-form-row">
+                <div className="glow-mkt-chip-row">
                   {COMMISSION_PRESETS.map((p) => (
                     <button
                       key={p}
-                      className={`gp-mkt-chip${commission.commission_percentage === p ? " on" : ""}`}
+                      className={`glow-mkt-chip${commission.commission_percentage === p ? " on" : ""}`}
                       onClick={() => {
                         setCommission({ ...commission, commission_percentage: p });
                         setCommissionDirty(true);
@@ -581,7 +582,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
                       {p}%
                     </button>
                   ))}
-                  <div className="gp-neg-input-suffix sm">
+                  <div className="glow-neg-input-suffix sm">
                     <input
                       type="number"
                       min="0"
@@ -600,8 +601,8 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
                 </div>
               </div>
             ) : (
-              <div className="gp-neg-form-row">
-                <div className="gp-neg-input-suffix">
+              <div className="glow-neg-form-row">
+                <div className="glow-neg-input-suffix">
                   <input
                     type="number"
                     min="0"
@@ -619,7 +620,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
               </div>
             )}
 
-            <div className="gp-neg-earn-preview">
+            <div className="glow-neg-earn-preview">
               <div>
                 <span>{commission.commission_type === "percentage" ? "Facturado este mes" : "Citas este mes"}</span>
                 <strong>
@@ -630,14 +631,14 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
               </div>
               <div>
                 <span>A pagar</span>
-                <strong className="gp-neg-earn-big">{earnings}€</strong>
+                <strong className="glow-neg-earn-big">{earnings}€</strong>
               </div>
             </div>
 
             {commissionDirty && (
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button className="gp-btn primary" onClick={saveCommission} disabled={saving} type="button">
-                  {saving && <Loader2 className="gp-spinner-sm" />}
+                <button className="glow-btn glow-btn--primary" onClick={saveCommission} disabled={saving} type="button">
+                  {saving && <Loader2 className="glow-spinner-sm" />}
                   Guardar comisión
                 </button>
               </div>
@@ -646,15 +647,15 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
 
           {/* Últimas citas */}
           <section>
-            <div className="gp-team-sec-h">
-              <h4 className="gp-neg-section-h">
+            <div className="glow-team-sec-h">
+              <h4 className="glow-neg-section-h">
                 <History /> Últimas citas
               </h4>
             </div>
             {recentBookings.length === 0 ? (
-              <p className="gp-neg-empty-text">Sin citas todavía.</p>
+              <p className="glow-neg-empty-text">Sin citas todavía.</p>
             ) : (
-              <div className="gp-neg-recent">
+              <div className="glow-neg-recent">
                 {recentBookings.map((b) => {
                   const svc = firstServiceName(b.services);
                   let dateLabel = "";
@@ -664,12 +665,12 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
                     dateLabel = b.Fecha;
                   }
                   return (
-                    <div key={b.id} className="gp-neg-recent-row">
-                      <div className="gp-neg-recent-date">
+                    <div key={b.id} className="glow-neg-recent-row">
+                      <div className="glow-neg-recent-date">
                         <strong>{dateLabel}</strong>
                         <span>{hhmm(b.Hora)}</span>
                       </div>
-                      <div className="gp-neg-recent-info">
+                      <div className="glow-neg-recent-info">
                         <strong>{b.customer_name ?? "Cliente"}</strong>
                         {svc && <span>{svc}</span>}
                       </div>
@@ -682,12 +683,12 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
 
           {/* Perfil */}
           <section>
-            <div className="gp-team-sec-h">
-              <h4 className="gp-neg-section-h">
+            <div className="glow-team-sec-h">
+              <h4 className="glow-neg-section-h">
                 <UserCog /> Perfil
               </h4>
             </div>
-            <div className="gp-neg-form-row">
+            <div className="glow-neg-form-row">
               <label>Nombre</label>
               <input
                 type="text"
@@ -699,13 +700,13 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
                 }}
               />
             </div>
-            <div className="gp-neg-form-row">
+            <div className="glow-neg-form-row">
               <label>Color en la agenda</label>
-              <div className="gp-neg-color-row">
+              <div className="glow-neg-color-row">
                 {PRESET_COLORS.map((c) => (
                   <button
                     key={c}
-                    className={`gp-neg-color-dot${stylist.color === c ? " on" : ""}`}
+                    className={`glow-neg-color-dot${stylist.color === c ? " on" : ""}`}
                     style={{ background: c }}
                     onClick={() => updateStylist({ color: c })}
                     type="button"
@@ -714,18 +715,18 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
                 ))}
               </div>
             </div>
-            <div className="gp-neg-form-row gp-neg-form-toggle">
+            <div className="glow-neg-form-row glow-neg-form-toggle">
               <div>
                 <label>Activo</label>
-                <p className="gp-neg-help" style={{ margin: 0 }}>
+                <p className="glow-neg-help" style={{ margin: 0 }}>
                   Los inactivos no aparecen al reservar.
                 </p>
               </div>
               <Switch checked={stylist.is_active} onCheckedChange={(v) => updateStylist({ is_active: v })} />
             </div>
 
-            <div className="gp-neg-danger-zone">
-              <button className="gp-btn danger" onClick={() => setConfirmDelete(true)} disabled={saving} type="button">
+            <div className="glow-neg-danger-zone">
+              <button className="glow-btn glow-btn--danger" onClick={() => setConfirmDelete(true)} disabled={saving} type="button">
                 <Trash2 style={{ width: 14, height: 14 }} /> Eliminar del equipo
               </button>
             </div>

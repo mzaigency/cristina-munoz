@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -321,27 +319,27 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 className="gp-spinner" />
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
 
   return (
-    <div className="gp-fade gp-mkt-promos">
-      <div className="gp-page-h">
+    <div className="glow-fade glow-mkt-promos">
+      <div className="glow-page-h">
         <div>
           <h2>Promociones y Cupones</h2>
           <p>{stats.active} activas · {stats.totalUses} canjes · {stats.total} en total</p>
         </div>
-        <div className="gp-page-actions">
-          <button className="gp-btn primary sm" onClick={openCreate}>
+        <div className="glow-page-actions">
+          <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={openCreate}>
             <Plus style={{ width: 14, height: 14 }} /> Nueva
           </button>
         </div>
       </div>
 
       {stats.expiringSoon.length > 0 && (
-        <div className="gp-mkt-alert">
+        <div className="glow-mkt-alert">
           <AlertTriangle style={{ width: 16, height: 16 }} />
           <div>
             <strong>{stats.expiringSoon.length} expira{stats.expiringSoon.length === 1 ? "" : "n"} esta semana</strong>
@@ -351,18 +349,18 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
       )}
 
       {promotions.length === 0 ? (
-        <div className="gp-card">
-          <div className="gp-empty">
-            <div className="gp-empty-ic"><Ticket style={{ width: 24, height: 24 }} /></div>
+        <div className="glow-card">
+          <div className="glow-empty">
+            <div className="glow-empty-ic"><Ticket style={{ width: 24, height: 24 }} /></div>
             <h4>Sin promociones</h4>
             <p>Crea una con plantilla o desde cero</p>
-            <button className="gp-btn primary" style={{ marginTop: 12 }} onClick={openCreate}>
+            <button className="glow-btn glow-btn--primary" style={{ marginTop: 12 }} onClick={openCreate}>
               <Plus style={{ width: 14, height: 14 }} /> Crear primera promo
             </button>
           </div>
         </div>
       ) : (
-        <div className="gp-mkt-promo-list">
+        <div className="glow-mkt-promo-list">
           {promotions.map((promo) => {
             const status = promoStatus(promo);
             const usagePct = promo.max_uses
@@ -371,11 +369,11 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
             return (
               <div
                 key={promo.id}
-                className={`gp-card pad gp-mkt-promo${!promo.is_active ? " is-off" : ""}`}
+                className={`glow-card pad glow-mkt-promo${!promo.is_active ? " is-off" : ""}`}
               >
-                <div className="gp-mkt-promo-h">
-                  <div className="gp-mkt-promo-title">
-                    <div className="gp-mkt-promo-discount">
+                <div className="glow-mkt-promo-h">
+                  <div className="glow-mkt-promo-title">
+                    <div className="glow-mkt-promo-discount">
                       {promo.discount_type === "percentage" ? (
                         <>
                           <span>{promo.discount_value}</span>
@@ -390,22 +388,22 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
                     </div>
                     <div>
                       <strong>{promo.name}</strong>
-                      <span className={`gp-badge ${status.tone}`}>
+                      <span className={`glow-badge ${status.tone}`}>
                         <span className="pip" style={{ background: "currentColor" }} />
                         {status.label}
                       </span>
                     </div>
                   </div>
-                  <div className="gp-mkt-promo-actions">
-                    <button className="gp-icon-btn" onClick={() => sharePromo(promo)} title="Compartir">
+                  <div className="glow-mkt-promo-actions">
+                    <button className="glow-icon-btn" onClick={() => sharePromo(promo)} title="Compartir">
                       <Share2 style={{ width: 14, height: 14 }} />
                     </button>
-                    <button className="gp-icon-btn" onClick={() => openEdit(promo)} title="Editar">
+                    <button className="glow-icon-btn" onClick={() => openEdit(promo)} title="Editar">
                       <Edit style={{ width: 14, height: 14 }} />
                     </button>
                     <button
-                      className="gp-icon-btn"
-                      style={{ color: "var(--gp-danger)" }}
+                      className="glow-icon-btn"
+                      style={{ color: "var(--glow-danger-ink)" }}
                       onClick={() => handleDelete(promo.id)}
                       title="Eliminar"
                     >
@@ -414,24 +412,24 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
                   </div>
                 </div>
 
-                <div className="gp-mkt-promo-meta">
+                <div className="glow-mkt-promo-meta">
                   {promo.code && (
-                    <button className="gp-mkt-code" onClick={() => copyCode(promo.code!)}>
+                    <button className="glow-mkt-code" onClick={() => copyCode(promo.code!)}>
                       <Tag style={{ width: 11, height: 11 }} />
                       {promo.code}
                       <Copy style={{ width: 11, height: 11 }} />
                     </button>
                   )}
                   {promo.min_purchase > 0 && (
-                    <span className="gp-mkt-promo-tag">Mín. {promo.min_purchase}€</span>
+                    <span className="glow-mkt-promo-tag">Mín. {promo.min_purchase}€</span>
                   )}
                   {promo.applies_to !== "all" && (
-                    <span className="gp-mkt-promo-tag">
+                    <span className="glow-mkt-promo-tag">
                       {promo.applies_to === "services" ? "Servicios" : "Productos"}
                     </span>
                   )}
                   {promo.valid_until && (
-                    <span className="gp-mkt-promo-tag">
+                    <span className="glow-mkt-promo-tag">
                       <Calendar style={{ width: 11, height: 11 }} />
                       Hasta {format(new Date(promo.valid_until), "d MMM", { locale: es })}
                     </span>
@@ -439,22 +437,22 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
                 </div>
 
                 {(usagePct !== null || promo.uses_count > 0) && (
-                  <div className="gp-mkt-promo-usage">
-                    <div className="gp-mkt-promo-usage-h">
+                  <div className="glow-mkt-promo-usage">
+                    <div className="glow-mkt-promo-usage-h">
                       <TrendingUp style={{ width: 12, height: 12 }} />
                       <span>
                         {promo.uses_count} {promo.max_uses ? `/ ${promo.max_uses}` : ""} usos
                       </span>
                     </div>
                     {usagePct !== null && (
-                      <div className="gp-mkt-promo-bar">
-                        <div className="gp-mkt-promo-bar-fill" style={{ width: `${usagePct}%` }} />
+                      <div className="glow-mkt-promo-bar">
+                        <div className="glow-mkt-promo-bar-fill" style={{ width: `${usagePct}%` }} />
                       </div>
                     )}
                   </div>
                 )}
 
-                <div className="gp-mkt-promo-toggle">
+                <div className="glow-mkt-promo-toggle">
                   <span>Activa</span>
                   <Switch checked={promo.is_active} onCheckedChange={() => toggleActive(promo)} />
                 </div>
@@ -473,17 +471,17 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
           </DialogHeader>
 
           {showPresets && !editingPromotion && (
-            <div className="gp-mkt-preset-grid">
+            <div className="glow-mkt-preset-grid">
               {PRESETS.map((p) => {
                 const Icon = p.icon;
                 return (
                   <button
                     key={p.id}
                     type="button"
-                    className={`gp-mkt-preset-tile tone-${p.tone}`}
+                    className={`glow-mkt-preset-tile tone-${p.tone}`}
                     onClick={() => applyPreset(p)}
                   >
-                    <span className="gp-mkt-preset-ic">
+                    <span className="glow-mkt-preset-ic">
                       <Icon />
                     </span>
                     <strong>{p.label}</strong>
@@ -493,10 +491,10 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
               })}
               <button
                 type="button"
-                className="gp-mkt-preset-tile tone-neutral"
+                className="glow-mkt-preset-tile tone-neutral"
                 onClick={() => setShowPresets(false)}
               >
-                <span className="gp-mkt-preset-ic">
+                <span className="glow-mkt-preset-ic">
                   <Sparkles />
                 </span>
                 <strong>Desde cero</strong>
@@ -508,8 +506,8 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
           {(!showPresets || editingPromotion) && (
             <div className="space-y-4 py-2">
               <div>
-                <Label>Nombre *</Label>
-                <Input
+                <label>Nombre *</label>
+                <input className="glow-input"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Ej: Black Friday 2024"
@@ -517,15 +515,14 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
               </div>
 
               <div>
-                <Label>Código promocional</Label>
+                <label>Código promocional</label>
                 <div className="flex gap-2">
-                  <Input
+                  <input className="glow-input flex-1"
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                     placeholder="BLACKFRIDAY"
-                    className="flex-1"
                   />
-                  <button type="button" className="gp-btn sm" onClick={generateCode}>
+                  <button type="button" className="glow-btn glow-btn--sm" onClick={generateCode}>
                     Generar
                   </button>
                 </div>
@@ -533,7 +530,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Tipo</Label>
+                  <label>Tipo</label>
                   <Select
                     value={formData.discount_type}
                     onValueChange={(v) => setFormData({ ...formData, discount_type: v })}
@@ -548,8 +545,8 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
                   </Select>
                 </div>
                 <div>
-                  <Label>Valor</Label>
-                  <Input
+                  <label>Valor</label>
+                  <input className="glow-input"
                     type="number"
                     value={formData.discount_value}
                     onChange={(e) =>
@@ -561,8 +558,8 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Compra mín. (€)</Label>
-                  <Input
+                  <label>Compra mín. (€)</label>
+                  <input className="glow-input"
                     type="number"
                     value={formData.min_purchase}
                     onChange={(e) =>
@@ -571,8 +568,8 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
                   />
                 </div>
                 <div>
-                  <Label>Usos máx.</Label>
-                  <Input
+                  <label>Usos máx.</label>
+                  <input className="glow-input"
                     type="number"
                     value={formData.max_uses}
                     onChange={(e) => setFormData({ ...formData, max_uses: e.target.value })}
@@ -583,16 +580,16 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Desde</Label>
-                  <Input
+                  <label>Desde</label>
+                  <input className="glow-input"
                     type="date"
                     value={formData.valid_from}
                     onChange={(e) => setFormData({ ...formData, valid_from: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label>Hasta</Label>
-                  <Input
+                  <label>Hasta</label>
+                  <input className="glow-input"
                     type="date"
                     value={formData.valid_until}
                     onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
@@ -601,7 +598,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
               </div>
 
               <div>
-                <Label>Aplica a</Label>
+                <label>Aplica a</label>
                 <Select
                   value={formData.applies_to}
                   onValueChange={(v) => setFormData({ ...formData, applies_to: v })}
@@ -618,7 +615,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
               </div>
 
               <div className="flex items-center justify-between">
-                <Label>Activa</Label>
+                <label>Activa</label>
                 <Switch
                   checked={formData.is_active}
                   onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
@@ -628,12 +625,12 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
           )}
 
           <DialogFooter>
-            <button type="button" className="gp-btn" onClick={() => setIsDialogOpen(false)}>
+            <button type="button" className="glow-btn" onClick={() => setIsDialogOpen(false)}>
               Cancelar
             </button>
             {(!showPresets || editingPromotion) && (
-              <button type="button" className="gp-btn primary" onClick={handleSave} disabled={saving}>
-                {saving && <Loader2 className="gp-spinner-sm" />}
+              <button type="button" className="glow-btn glow-btn--primary" onClick={handleSave} disabled={saving}>
+                {saving && <Loader2 className="glow-spinner-sm" />}
                 {editingPromotion ? "Guardar" : "Crear"}
               </button>
             )}

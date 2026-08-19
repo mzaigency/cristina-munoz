@@ -44,11 +44,11 @@ const SECTION_LABEL: Record<string, string> = {
 
 const SECTION_COLOR: Record<string, string> = {
   favorites: "#f43f5e",
-  foryou: "#22408b",
+  foryou: "#22408C",
   popular: "#f59e0b",
   near: "#3b82f6",
   today: "#10b981",
-  new: "#99329a",
+  new: "#98329A",
 };
 
 const RANGES = [
@@ -258,7 +258,7 @@ export const FeedAnalytics = () => {
                     />
                     <Bar dataKey="impressions" name="Impresiones" radius={[6, 6, 0, 0]}>
                       {chartData.map((d) => (
-                        <Cell key={d.rawId} fill={SECTION_COLOR[d.rawId] || "#22408b"} />
+                        <Cell key={d.rawId} fill={SECTION_COLOR[d.rawId] || "#22408C"} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -288,7 +288,7 @@ export const FeedAnalytics = () => {
                           <div className="flex items-center gap-2">
                             <span
                               className="h-2 w-2 rounded-full"
-                              style={{ background: SECTION_COLOR[r.rawId] || "#22408b" }}
+                              style={{ background: SECTION_COLOR[r.rawId] || "#22408C" }}
                             />
                             <span className="font-medium">{r.section}</span>
                           </div>

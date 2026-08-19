@@ -71,16 +71,16 @@ const fromMinutes = (mins: number): string =>
   `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(Math.round(mins) % 60).padStart(2, "0")}`;
 
 const STATUS_DOT: Record<string, string> = {
-  arrived: "#16A249",
-  confirmed: "#2E7FD4",
-  pending: "#F59E0B",
+  arrived: "var(--glow-ok)",
+  confirmed: "var(--glow-brand)",
+  pending: "var(--glow-warn)",
 };
 
-const COMPLETED_BG = "#F1FAF4";
-const COMPLETED_COLOR = "#16A249";
+const COMPLETED_BG = "var(--glow-ok-soft)";
+const COMPLETED_COLOR = "var(--glow-ok)";
 const CARD_SHADOW = "0 1px 2px rgba(20,22,40,.05), 0 6px 16px -12px rgba(20,22,40,.3)";
 const SHADOW_DRAG = "0 2px 6px rgba(20,22,40,.10), 0 22px 44px -18px rgba(20,22,40,.55)";
-const STRIPES = "repeating-linear-gradient(45deg,#F4F5F9,#F4F5F9 6px,#fff 6px,#fff 12px)";
+const STRIPES = "repeating-linear-gradient(45deg,var(--glow-sunk),var(--glow-sunk) 6px,#fff 6px,#fff 12px)";
 
 const isCompleted = (b: WeekBooking) => !!b.notes?.includes("[✓ COMPLETADA]");
 
@@ -153,7 +153,7 @@ function CardBody({
         {height < H_TIME && (
           <span
             className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
-            style={{ background: done ? COMPLETED_COLOR : STATUS_DOT[b.status] || "#2E7FD4" }}
+            style={{ background: done ? COMPLETED_COLOR : STATUS_DOT[b.status] || "var(--glow-brand)" }}
           />
         )}
       </span>
@@ -523,7 +523,7 @@ export function AgendaWeekBoard({
                                     className="absolute left-0 right-0 z-[1] overflow-hidden rounded-lg border border-line pointer-events-none"
                                      style={{ top: 0, height: railHeight, background: STRIPES }}
                                    >
-                                     <span className="pointer-events-auto absolute top-0.5 left-1 inline-flex items-center gap-0.5 rounded-full bg-slate-200 pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline max-w-[calc(100%-8px)]">
+                                     <span className="pointer-events-auto absolute top-0.5 left-1 inline-flex items-center gap-0.5 rounded-full bg-surface-container-high pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline max-w-[calc(100%-8px)]">
                                       <Lock className="w-2 h-2 flex-none" />
                                       <span className="truncate">{label}</span>
                                       {onUnblock && (
@@ -621,7 +621,7 @@ export function AgendaWeekBoard({
                                       )}
 
                                       <span
-                                        className="pointer-events-auto absolute top-0.5 inline-flex items-center gap-0.5 rounded-full bg-slate-200 pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline"
+                                        className="pointer-events-auto absolute top-0.5 inline-flex items-center gap-0.5 rounded-full bg-surface-container-high pl-1.5 pr-0.5 py-0.5 text-[10px] font-bold text-outline"
                                         style={{
                                           left: onMove ? 15 : 4,
                                           maxWidth: `calc(100% - ${onMove ? 19 : 8}px)`,
@@ -678,7 +678,7 @@ export function AgendaWeekBoard({
                                 }
 
                                 const done = isCompleted(b);
-                                const color = stylistColors[b.stylist] || "#22408C";
+                                const color = stylistColors[b.stylist] || "var(--glow-brand)";
 
                                 return (
                                   <div
@@ -843,7 +843,7 @@ export function AgendaWeekBoard({
                                         ) : (
                                           <CardBody
                                             b={ghost.b}
-                                            color={stylistColors[ghost.b.stylist] || "#22408C"}
+                                            color={stylistColors[ghost.b.stylist] || "var(--glow-brand)"}
                                             height={rawH}
                                             startMin={ghost.start}
                                           />

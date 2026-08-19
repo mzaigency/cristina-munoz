@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { 
   AlertTriangle, 
@@ -27,9 +25,9 @@ interface SubscriptionExpiredScreenProps {
 type PlanSlug = "starter" | "pro" | "business";
 
 const PLAN_ICONS: Record<string, { icon: React.ReactNode; color: string; bgColor: string }> = {
-  starter: { icon: <Zap className="h-6 w-6" />, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-  pro: { icon: <Crown className="h-6 w-6" />, color: "text-amber-500", bgColor: "bg-amber-500/10" },
-  business: { icon: <Sparkles className="h-6 w-6" />, color: "text-purple-500", bgColor: "bg-purple-500/10" },
+  starter: { icon: <Zap className="h-6 w-6" />, color: "text-glow-brand-ink", bgColor: "bg-glow-brand/10" },
+  pro: { icon: <Crown className="h-6 w-6" />, color: "text-glow-warn-ink", bgColor: "bg-glow-warn/10" },
+  business: { icon: <Sparkles className="h-6 w-6" />, color: "text-glow-accent-ink", bgColor: "bg-glow-accent/10" },
 };
 
 export function SubscriptionExpiredScreen({ 
@@ -66,10 +64,10 @@ export function SubscriptionExpiredScreen({
       {/* Header */}
       <header className="p-4 flex items-center justify-between border-b">
         <h1 className="font-bold text-lg truncate">{tenantName}</h1>
-        <Button variant="ghost" size="sm" onClick={handleSignOut}>
+        <button className="glow-btn glow-btn--ghost glow-btn--sm" onClick={handleSignOut}>
           <LogOut className="h-4 w-4 mr-2" />
           Salir
-        </Button>
+        </button>
       </header>
 
       {/* Main content */}
@@ -77,31 +75,31 @@ export function SubscriptionExpiredScreen({
         <div className="w-full max-w-md space-y-6">
           {/* Warning Icon */}
           <div className="flex justify-center">
-            <div className="p-4 rounded-full bg-amber-500/10">
-              <AlertTriangle className="h-12 w-12 text-amber-500" />
+            <div className="p-4 rounded-full bg-glow-warn/10">
+              <AlertTriangle className="h-12 w-12 text-glow-warn-ink" />
             </div>
           </div>
 
           {/* Title */}
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-bold">Suscripción Expirada</h2>
-            <p className="text-muted-foreground">
+            <p className="text-outline">
               Tu suscripción ha expirado. Renueva para seguir gestionando tu negocio.
             </p>
           </div>
 
           {/* What's affected */}
-          <Card className="border-amber-500/30 bg-amber-500/5">
-            <CardContent className="p-4">
+          <div className="glow-card border-glow-warn/30 bg-glow-warn/5">
+            <div className="glow-card-b">
               <h3 className="font-medium text-sm mb-2">Sin suscripción activa:</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
+              <ul className="text-sm text-outline space-y-1">
                 <li>• Tu página web no es visible para clientes</li>
                 <li>• No puedes recibir nuevas reservas</li>
                 <li>• No tienes acceso al panel de gestión</li>
                 <li>• Tus datos están seguros y no se eliminan</li>
               </ul>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Plan options */}
           <div className="space-y-3">
@@ -120,12 +118,12 @@ export function SubscriptionExpiredScreen({
                     </div>
                     <div className="text-left">
                       <p className="font-semibold">{plan.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-outline">
                         Desde {plan.monthly_price}€/mes
                       </p>
                     </div>
                   </div>
-                  <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <ArrowRight className="h-5 w-5 text-outline group-hover:text-primary transition-colors" />
                 </button>
               );
             })}
@@ -133,15 +131,13 @@ export function SubscriptionExpiredScreen({
 
           {/* Contact support */}
           <div className="text-center pt-4">
-            <p className="text-xs text-muted-foreground mb-2">
+            <p className="text-xs text-outline mb-2">
               ¿Necesitas ayuda o tienes preguntas?
             </p>
-            <Button variant="link" size="sm" asChild className="gap-1">
-              <a href="mailto:gglowapp@gmail.com">
+            <a className="glow-btn glow-btn--sm gap-1" href="mailto:gglowapp@gmail.com">
                 <Mail className="h-3 w-3" />
                 Contactar soporte
               </a>
-            </Button>
           </div>
         </div>
       </div>

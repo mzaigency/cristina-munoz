@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   Calendar,
@@ -173,23 +171,23 @@ export function TrainingChecklist({ tenantId, onNavigate }: TrainingChecklistPro
 
   return (
     <div className="space-y-4">
-      <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
-        <CardContent className="p-4">
+      <div className="glow-card bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
+        <div className="glow-card-b">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-xl bg-primary/10">
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1">
               <h3 className="text-sm font-semibold">Formación</h3>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-outline">
                 {completedCount}/{TRAINING_STEPS.length} pasos completados
               </p>
             </div>
             <span className="text-2xl font-bold text-primary">{Math.round(progress)}%</span>
           </div>
           <Progress value={progress} className="h-2" />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <div className="space-y-2">
         {TRAINING_STEPS.map((step, index) => {
@@ -201,30 +199,30 @@ export function TrainingChecklist({ tenantId, onNavigate }: TrainingChecklistPro
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <Card className={cn("transition-all", isCompleted && "bg-primary/5 border-primary/20")}>
-                <CardContent className="p-3">
+              <div className={cn("glow-card", cn("transition-all", isCompleted && "bg-primary/5 border-primary/20"))}>
+                <div className="glow-card-b">
                   <div className="flex items-center gap-3">
                     <button onClick={() => toggleStep(step.id)} className="shrink-0 transition-transform active:scale-90">
                       {isCompleted ? (
                         <CheckCircle2 className="h-6 w-6 text-primary" />
                       ) : (
-                        <Circle className="h-6 w-6 text-muted-foreground/40" />
+                        <Circle className="h-6 w-6 text-outline/40" />
                       )}
                     </button>
                     <div className="flex-1 min-w-0">
-                      <p className={cn("text-sm font-medium", isCompleted && "line-through text-muted-foreground")}>
+                      <p className={cn("text-sm font-medium", isCompleted && "line-through text-outline")}>
                         {step.title}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">{step.description}</p>
+                      <p className="text-xs text-outline truncate">{step.description}</p>
                     </div>
                     {!isCompleted && onNavigate && (
-                      <Button size="sm" variant="ghost" onClick={() => handleStepNavigate(step)} className="shrink-0 h-8 w-8 p-0">
+                      <button className="glow-btn glow-btn--ghost glow-btn--sm shrink-0 h-8 w-8 p-0" onClick={() => handleStepNavigate(step)}>
                         <ArrowRight className="h-4 w-4" />
-                      </Button>
+                      </button>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </motion.div>
           );
         })}

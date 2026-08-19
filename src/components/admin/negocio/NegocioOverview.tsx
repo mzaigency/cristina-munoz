@@ -266,7 +266,7 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 className="gp-spinner" />
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
@@ -274,9 +274,9 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
   const monthLabel = format(new Date(), "MMMM yyyy", { locale: es });
 
   return (
-    <div className="gp-fade gp-neg-overview">
+    <div className="glow-fade glow-neg-overview">
       {/* Hero KPIs */}
-      <div className="gp-mkt-kpis">
+      <div className="glow-mkt-kpis">
         <NegKpi
           label="Equipo activo"
           value={data.activeStylists}
@@ -313,9 +313,9 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
 
       {/* Alerts */}
       {data.alerts.length > 0 && (
-        <div className="gp-neg-alerts">
+        <div className="glow-neg-alerts">
           {data.alerts.map((a, i) => (
-            <div key={i} className="gp-mkt-alert">
+            <div key={i} className="glow-mkt-alert">
               <AlertTriangle style={{ width: 16, height: 16 }} />
               <div>
                 <strong>{a.text}</strong>
@@ -326,9 +326,9 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
       )}
 
       {/* Goal ring + leaderboard */}
-      <div className="gp-mkt-grid-2">
-        <section className="gp-card pad gp-mkt-card gp-neg-goal">
-          <div className="gp-mkt-card-h">
+      <div className="glow-mkt-grid-2">
+        <section className="glow-card glow-card--pad glow-mkt-card glow-neg-goal">
+          <div className="glow-mkt-card-h">
             <div>
               <h3>Objetivo de {monthLabel}</h3>
               <p>
@@ -337,15 +337,15 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
                   : "Define tu meta este mes"}
               </p>
             </div>
-            <button className="gp-btn sm" onClick={() => onNavigate("objetivos")}>
+            <button className="glow-btn glow-btn--sm" onClick={() => onNavigate("objetivos")}>
               <Target style={{ width: 13, height: 13 }} /> Ajustar
             </button>
           </div>
-          <div className="gp-neg-ring-wrap">
+          <div className="glow-neg-ring-wrap">
             <GoalRing pct={goalPct} hasGoal={data.revenueGoal > 0} />
-            <div className="gp-neg-ring-meta">
-              <span className="gp-neg-ring-pct">{goalPct}%</span>
-              <span className="gp-neg-ring-sub">
+            <div className="glow-neg-ring-meta">
+              <span className="glow-neg-ring-pct">{goalPct}%</span>
+              <span className="glow-neg-ring-sub">
                 {data.revenueGoal > 0
                   ? goalPct >= 100
                     ? "Objetivo superado 🎉"
@@ -356,31 +356,31 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
           </div>
         </section>
 
-        <section className="gp-card pad gp-mkt-card">
-          <div className="gp-mkt-card-h">
+        <section className="glow-card glow-card--pad glow-mkt-card">
+          <div className="glow-mkt-card-h">
             <div>
               <h3>Top equipo</h3>
               <p>Por ingresos este mes</p>
             </div>
-            <button className="gp-btn sm" onClick={() => onNavigate("equipo")}>
+            <button className="glow-btn glow-btn--sm" onClick={() => onNavigate("equipo")}>
               Ver equipo <ArrowRight style={{ width: 13, height: 13 }} />
             </button>
           </div>
           {data.leaders.length === 0 ? (
-            <div className="gp-mkt-empty">
+            <div className="glow-mkt-empty">
               <Users />
               <p>Sin datos de equipo</p>
             </div>
           ) : (
-            <div className="gp-neg-leaders">
+            <div className="glow-neg-leaders">
               {data.leaders.map((l, i) => (
-                <div key={l.id} className="gp-neg-leader">
-                  <div className="gp-neg-leader-rank tone-rank">
+                <div key={l.id} className="glow-neg-leader">
+                  <div className="glow-neg-leader-rank tone-rank">
                     {i === 0 ? <Crown style={{ width: 13, height: 13 }} /> : `#${i + 1}`}
                   </div>
                   <div
-                    className="gp-neg-leader-avatar"
-                    style={{ background: l.color || "var(--gp-accent)" }}
+                    className="glow-neg-leader-avatar"
+                    style={{ background: l.color || "var(--glow-brand)" }}
                   >
                     {l.avatar_url ? (
                       <img src={l.avatar_url} alt={l.name} />
@@ -388,7 +388,7 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
                       <span>{l.name.charAt(0).toUpperCase()}</span>
                     )}
                   </div>
-                  <div className="gp-neg-leader-info">
+                  <div className="glow-neg-leader-info">
                     <strong>{l.name}</strong>
                     <span>
                       {l.bookings} citas
@@ -400,7 +400,7 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
                       )}
                     </span>
                   </div>
-                  <div className="gp-neg-leader-revenue">
+                  <div className="glow-neg-leader-revenue">
                     {Math.round(l.revenue).toLocaleString("es-ES")}€
                   </div>
                 </div>
@@ -411,16 +411,16 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
       </div>
 
       {/* Insights */}
-      <section className="gp-card pad gp-mkt-card">
-        <div className="gp-mkt-card-h">
+      <section className="glow-card glow-card--pad glow-mkt-card">
+        <div className="glow-mkt-card-h">
           <div>
             <h3>Insights del mes</h3>
             <p>Patrones detectados en {monthLabel}</p>
           </div>
         </div>
-        <div className="gp-neg-insights">
-          <div className="gp-neg-insight">
-            <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
+        <div className="glow-neg-insights">
+          <div className="glow-neg-insight">
+            <div className="glow-mkt-quick-ic" style={{ background: "var(--glow-brand-soft)", color: "var(--glow-brand)" }}>
               <Calendar />
             </div>
             <div>
@@ -428,8 +428,8 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
               <strong>{data.bestDay ?? "—"}</strong>
             </div>
           </div>
-          <div className="gp-neg-insight">
-            <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
+          <div className="glow-neg-insight">
+            <div className="glow-mkt-quick-ic" style={{ background: "var(--glow-warn-soft)", color: "var(--glow-warn-ink)" }}>
               <Clock />
             </div>
             <div>
@@ -437,8 +437,8 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
               <strong>{data.bestHour ?? "—"}</strong>
             </div>
           </div>
-          <div className="gp-neg-insight">
-            <div className="gp-mkt-quick-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
+          <div className="glow-neg-insight">
+            <div className="glow-mkt-quick-ic" style={{ background: "var(--glow-ok-soft)", color: "var(--glow-ok-ink)" }}>
               <TrendingUp />
             </div>
             <div>
@@ -450,8 +450,8 @@ export function NegocioOverview({ tenantId, onNavigate }: NegocioOverviewProps) 
               </strong>
             </div>
           </div>
-          <div className="gp-neg-insight">
-            <div className="gp-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--gp-mkt-rose), white 80%)", color: "var(--gp-mkt-rose)" }}>
+          <div className="glow-neg-insight">
+            <div className="glow-mkt-quick-ic" style={{ background: "color-mix(in oklab, var(--glow-accent), white 80%)", color: "var(--glow-accent)" }}>
               <Trophy />
             </div>
             <div>
@@ -481,11 +481,11 @@ function NegKpi({
   onClick: () => void;
 }) {
   return (
-    <button className={`gp-mkt-kpi tone-${tone}`} onClick={onClick} type="button">
-      <span className="gp-mkt-kpi-ic">{icon}</span>
-      <span className="gp-mkt-kpi-value">{value}</span>
-      <span className="gp-mkt-kpi-label">{label}</span>
-      {sub && <span className="gp-mkt-kpi-sub">{sub}</span>}
+    <button className={`glow-mkt-kpi tone-${tone}`} onClick={onClick} type="button">
+      <span className="glow-mkt-kpi-ic">{icon}</span>
+      <span className="glow-mkt-kpi-value">{value}</span>
+      <span className="glow-mkt-kpi-label">{label}</span>
+      {sub && <span className="glow-mkt-kpi-sub">{sub}</span>}
     </button>
   );
 }
@@ -496,15 +496,15 @@ function GoalRing({ pct, hasGoal }: { pct: number; hasGoal: boolean }) {
   const safePct = Math.max(0, Math.min(100, pct));
   const offset = c - (safePct / 100) * c;
   return (
-    <svg viewBox="0 0 140 140" className="gp-neg-ring-svg" aria-hidden>
-      <circle cx="70" cy="70" r={r} fill="none" stroke="var(--gp-line)" strokeWidth="12" />
+    <svg viewBox="0 0 140 140" className="glow-neg-ring-svg" aria-hidden>
+      <circle cx="70" cy="70" r={r} fill="none" stroke="var(--glow-line)" strokeWidth="12" />
       {hasGoal && (
         <circle
           cx="70"
           cy="70"
           r={r}
           fill="none"
-          stroke="url(#gp-ring-grad)"
+          stroke="url(#glow-ring-grad)"
           strokeWidth="12"
           strokeLinecap="round"
           strokeDasharray={c}
@@ -513,9 +513,9 @@ function GoalRing({ pct, hasGoal }: { pct: number; hasGoal: boolean }) {
         />
       )}
       <defs>
-        <linearGradient id="gp-ring-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="var(--gp-ok)" />
-          <stop offset="100%" stopColor="var(--gp-accent)" />
+        <linearGradient id="glow-ring-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="var(--glow-ok-ink)" />
+          <stop offset="100%" stopColor="var(--glow-brand)" />
         </linearGradient>
       </defs>
     </svg>

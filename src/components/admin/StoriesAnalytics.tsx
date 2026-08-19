@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
+import { chartColor } from "@/lib/chartColors";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Eye, TrendingUp, Clock, Image as ImageIcon, 
   BarChart3, Users, Calendar, Sparkles,
@@ -10,7 +10,6 @@ import {
 import { format, formatDistanceToNow, subDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -172,10 +171,10 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
 
   const getStoryTypeColor = (type: string) => {
     switch (type) {
-      case "work": return "bg-purple-500/20 text-purple-400";
-      case "promo": return "bg-rose-500/20 text-rose-400";
-      case "behind_scenes": return "bg-blue-500/20 text-blue-400";
-      default: return "bg-muted text-muted-foreground";
+      case "work": return "bg-glow-accent/20 text-glow-accent-ink";
+      case "promo": return "bg-glow-danger/20 text-glow-danger-ink";
+      case "behind_scenes": return "bg-glow-brand/20 text-glow-brand-ink";
+      default: return "bg-muted text-outline";
     }
   };
 
@@ -184,12 +183,12 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
       <div className="space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-4">
+            <div className="glow-card animate-pulse" key={i}>
+              <div className="glow-card-b">
                 <div className="h-4 bg-muted rounded w-1/2 mb-2" />
                 <div className="h-8 bg-muted rounded w-1/3" />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -201,95 +200,90 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Analytics de Stories</h2>
-          <p className="text-muted-foreground">Rendimiento y estadísticas de tus stories</p>
+          <h2 className="text-2xl font-bold text-on-surface">Analytics de Stories</h2>
+          <p className="text-outline">Rendimiento y estadísticas de tus stories</p>
         </div>
         
         {/* Period selector */}
         <div className="flex gap-2">
           {(["7d", "30d", "all"] as const).map((period) => (
-            <Button
-              key={period}
-              variant={selectedPeriod === period ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedPeriod(period)}
-            >
+            <button className="glow-btn glow-btn--primary glow-btn--sm" key={period} onClick={() => setSelectedPeriod(period)}>
               {period === "7d" ? "7 días" : period === "30d" ? "30 días" : "Todo"}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
+        <div className="glow-card">
+          <div className="glow-card-b">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/20">
-                <ImageIcon className="w-5 h-5 text-purple-400" />
+              <div className="p-2 rounded-lg bg-glow-accent/20">
+                <ImageIcon className="w-5 h-5 text-glow-accent-ink" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Stories</p>
+                <p className="text-sm text-outline">Total Stories</p>
                 <p className="text-2xl font-bold">{totalStories}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4">
+        <div className="glow-card">
+          <div className="glow-card-b">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/20">
-                <Sparkles className="w-5 h-5 text-green-400" />
+              <div className="p-2 rounded-lg bg-glow-ok/20">
+                <Sparkles className="w-5 h-5 text-glow-ok-ink" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Activas</p>
+                <p className="text-sm text-outline">Activas</p>
                 <p className="text-2xl font-bold">{activeStories}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4">
+        <div className="glow-card">
+          <div className="glow-card-b">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/20">
-                <Eye className="w-5 h-5 text-blue-400" />
+              <div className="p-2 rounded-lg bg-glow-brand/20">
+                <Eye className="w-5 h-5 text-glow-brand-ink" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Vistas</p>
+                <p className="text-sm text-outline">Total Vistas</p>
                 <p className="text-2xl font-bold">{totalViews}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="p-4">
+        <div className="glow-card">
+          <div className="glow-card-b">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/20">
-                <TrendingUp className="w-5 h-5 text-amber-400" />
+              <div className="p-2 rounded-lg bg-glow-warn/20">
+                <TrendingUp className="w-5 h-5 text-glow-warn-ink" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Promedio/Story</p>
+                <p className="text-sm text-outline">Promedio/Story</p>
                 <p className="text-2xl font-bold">{avgViewsPerStory}</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Charts */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* Views over time */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3>
               <BarChart3 className="w-5 h-5" />
               Vistas por día
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div></div>
+          <div className="glow-card-b">
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={dailyStats}>
@@ -319,24 +313,24 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Story type distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
+        <div className="glow-card">
+          <div className="glow-card-h"><div>
+            <h3>
               <Users className="w-5 h-5" />
               Distribución por tipo
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
+          </div></div>
+          <div className="glow-card-b">
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={[
                   { name: "Trabajo", value: storyTypeDistribution.work, fill: "hsl(var(--primary))" },
-                  { name: "Promo", value: storyTypeDistribution.promo, fill: "#f43f5e" },
-                  { name: "Detrás", value: storyTypeDistribution.behind_scenes, fill: "#3b82f6" },
+                  { name: "Promo", value: storyTypeDistribution.promo, fill: chartColor(0) },
+                  { name: "Detrás", value: storyTypeDistribution.behind_scenes, fill: chartColor(1) },
                 ]}>
                   <XAxis 
                     dataKey="name" 
@@ -358,22 +352,22 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Recent stories list */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
+      <div className="glow-card">
+        <div className="glow-card-h"><div>
+          <h3>
             <Clock className="w-5 h-5" />
             Stories recientes
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </h3>
+        </div></div>
+        <div className="glow-card-b">
           {filteredStories.length === 0 ? (
-            <div className="gp-empty">
-              <div className="gp-empty-ic"><ImageIcon style={{ width: 24, height: 24 }} /></div>
+            <div className="glow-empty">
+              <div className="glow-empty-ic"><ImageIcon style={{ width: 24, height: 24 }} /></div>
               <h4>Sin stories</h4>
               <p>No hay stories en este período</p>
             </div>
@@ -409,15 +403,15 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
                           {getStoryTypeLabel(story.story_type)}
                         </span>
                         {isExpired && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-outline">
                             Expirada
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="text-sm text-outline truncate">
                         {story.caption || "Sin descripción"}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-outline">
                         {formatDistanceToNow(new Date(story.created_at), { 
                           addSuffix: true, 
                           locale: es 
@@ -426,7 +420,7 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
                     </div>
 
                     {/* Stats */}
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-4 text-sm text-outline">
                       <div className="flex items-center gap-1">
                         <Eye className="w-4 h-4" />
                         <span>{story.views_count || 0}</span>
@@ -436,9 +430,9 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
                     {/* Actions */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <button className="glow-icon-btn">
                           <MoreVertical className="w-4 h-4" />
-                        </Button>
+                        </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
@@ -455,8 +449,8 @@ export function StoriesAnalytics({ tenantId }: StoriesAnalyticsProps) {
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -127,13 +127,13 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
     : 0;
 
   return (
-    <div className="gp-absences">
-      <div className="gp-team-sec-h" style={{ marginTop: 4 }}>
-        <h4 className="gp-neg-section-h">
+    <div className="glow-absences">
+      <div className="glow-team-sec-h" style={{ marginTop: 4 }}>
+        <h4 className="glow-neg-section-h">
           <CalendarOff /> Ausencias
         </h4>
         {!adding && (
-          <button className="gp-btn sm" onClick={openAdd} type="button">
+          <button className="glow-btn glow-btn--sm" onClick={openAdd} type="button">
             <Plus style={{ width: 12, height: 12 }} /> Añadir
           </button>
         )}
@@ -141,20 +141,20 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
 
       {rows === null ? (
         <div style={{ display: "flex", justifyContent: "center", padding: 16 }}>
-          <Loader2 className="gp-spinner-sm" />
+          <Loader2 className="glow-spinner-sm" />
         </div>
       ) : rows.length === 0 && !adding ? (
-        <p className="gp-neg-help" style={{ margin: 0 }}>
+        <p className="glow-neg-help" style={{ margin: 0 }}>
           Sin ausencias próximas. Añade vacaciones o festivos y esos días no entrarán reservas.
         </p>
       ) : (
-        <div className="gp-absences-list">
+        <div className="glow-absences-list">
           {rows.map((r) => (
-            <div key={r.id} className="gp-absences-row">
-              <span className="gp-absences-dates">
+            <div key={r.id} className="glow-absences-row">
+              <span className="glow-absences-dates">
                 {r.date_from === r.date_to ? fmtDay(r.date_from) : `${fmtDay(r.date_from)} – ${fmtDay(r.date_to)}`}
               </span>
-              <span className="gp-absences-label">
+              <span className="glow-absences-label">
                 {r.is_closed ? (
                   r.label || "Vacaciones"
                 ) : (
@@ -165,7 +165,7 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
                 )}
               </span>
               <button
-                className="gp-sched-edit-ic"
+                className="glow-sched-edit-ic"
                 onClick={() => remove(r.id)}
                 title="Eliminar"
                 aria-label="Eliminar ausencia"
@@ -203,21 +203,21 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
                   gap: 10,
                   padding: "10px 14px",
                   borderRadius: 12,
-                  border: "1px solid oklch(0.92 0.01 265)",
+                  border: "1px solid var(--glow-line)",
                   background: "#fff",
                   cursor: "pointer",
                   textAlign: "left",
                   width: "100%",
                 }}
               >
-                <CalendarIcon style={{ width: 16, height: 16, color: "#22408b" }} />
-                <span style={{ fontSize: 14, fontWeight: 700, color: "#1f2340", flex: 1 }}>{rangeLabel}</span>
+                <CalendarIcon style={{ width: 16, height: 16, color: "var(--glow-brand)" }} />
+                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--glow-ink)", flex: 1 }}>{rangeLabel}</span>
                 {dayCount > 0 && (
                   <span
                     style={{
                       fontSize: 11,
                       fontWeight: 700,
-                      color: "#22408b",
+                      color: "var(--glow-brand)",
                       background: "rgba(34,64,139,0.1)",
                       padding: "3px 8px",
                       borderRadius: 999,
@@ -257,9 +257,9 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
                       fontWeight: 600,
                       padding: "5px 11px",
                       borderRadius: 999,
-                      border: on ? "1px solid #99329a" : "1px solid oklch(0.92 0.01 265)",
+                      border: on ? "1px solid var(--glow-accent)" : "1px solid var(--glow-line)",
                       background: on ? "rgba(153,50,154,0.1)" : "#fff",
-                      color: on ? "#99329a" : "#525673",
+                      color: on ? "var(--glow-accent)" : "var(--glow-ink-3)",
                       cursor: "pointer",
                     }}
                   >
@@ -270,7 +270,7 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
             </div>
             <input
               type="text"
-              className="gp-absences-form-label"
+              className="glow-absences-form-label"
               placeholder="O escribe otro motivo…"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
@@ -280,12 +280,12 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
             />
           </div>
 
-          <div className="gp-absences-form-actions">
-            <button className="gp-btn sm" onClick={() => setAdding(false)} disabled={saving} type="button">
+          <div className="glow-absences-form-actions">
+            <button className="glow-btn glow-btn--sm" onClick={() => setAdding(false)} disabled={saving} type="button">
               Cancelar
             </button>
-            <button className="gp-btn primary sm" onClick={add} disabled={saving} type="button">
-              {saving && <Loader2 className="gp-spinner-sm" />}
+            <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={add} disabled={saving} type="button">
+              {saving && <Loader2 className="glow-spinner-sm" />}
               Guardar ausencia
             </button>
           </div>

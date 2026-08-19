@@ -62,14 +62,14 @@ const firstServiceName = (services: unknown): string | null => {
 };
 
 const STATUS_TONE: Record<string, { label: string; short: string; cls: string; dot: string }> = {
-  arrived: { label: "Llegada", short: "LLEG", cls: "bg-success-soft text-success", dot: "#16A249" },
-  confirmed: { label: "Confirmada", short: "CONF", cls: "bg-info-soft text-info", dot: "#2E7FD4" },
-  pending: { label: "Pendiente", short: "PEND", cls: "bg-warning-soft text-warning", dot: "#F59E0B" },
+  arrived: { label: "Llegada", short: "LLEG", cls: "bg-success-soft text-success", dot: "var(--glow-ok)" },
+  confirmed: { label: "Confirmada", short: "CONF", cls: "bg-info-soft text-info", dot: "var(--glow-brand)" },
+  pending: { label: "Pendiente", short: "PEND", cls: "bg-warning-soft text-warning", dot: "var(--glow-warn)" },
   completed: {
     label: "Completada",
     short: "HECHA",
     cls: "bg-success-soft text-success",
-    dot: "#16A249",
+    dot: "var(--glow-ok)",
   },
 };
 
@@ -84,8 +84,8 @@ const SHADOW_SM = "0 1px 2px rgba(20,22,40,.06), 0 1px 0 rgba(20,22,40,.03)";
 /** Tarjeta levantada mientras se arrastra */
 const SHADOW_DRAG = "0 2px 6px rgba(20,22,40,.10), 0 22px 44px -18px rgba(20,22,40,.55)";
 
-const COMPLETED_BG = "#F1FAF4";
-const COMPLETED_COLOR = "#16A249";
+const COMPLETED_BG = "var(--glow-ok-soft)";
+const COMPLETED_COLOR = "var(--glow-ok)";
 
 type Placed = { b: TimelineBooking; start: number; end: number; col: number; cols: number };
 
@@ -353,7 +353,7 @@ export function AgendaDayTimeline({
                     {blockCount > 0 && (
                       <span
                         title={`${blockCount} bloqueo${blockCount > 1 ? "s" : ""}`}
-                        className="inline-flex items-center gap-0.5 flex-none rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-outline"
+                        className="inline-flex items-center gap-0.5 flex-none rounded-full bg-chip px-1.5 py-0.5 text-[10px] font-bold text-outline"
                       >
                         <Lock className="w-2.5 h-2.5" />
                         {blockCount > 1 ? blockCount : ""}
@@ -367,7 +367,7 @@ export function AgendaDayTimeline({
                     >
                       {realCount} {realCount === 1 ? "CITA" : "CITAS"}
                     </span>
-                    <span className="text-[10px] font-bold bg-slate-100 text-outline px-1.5 py-0.5 rounded whitespace-nowrap">
+                    <span className="text-[10px] font-bold bg-chip text-outline px-1.5 py-0.5 rounded whitespace-nowrap">
                       {occupancy}%
                     </span>
                     {onUnblock && fullBlocks.length > 0 && (
@@ -573,7 +573,7 @@ export function AgendaDayTimeline({
                         )}
 
                         <span
-                          className="pointer-events-auto absolute top-1 inline-flex items-center gap-1 rounded-full bg-slate-200 pl-2 pr-1 py-0.5 text-[10px] font-bold text-outline"
+                          className="pointer-events-auto absolute top-1 inline-flex items-center gap-1 rounded-full bg-surface-container-high pl-2 pr-1 py-0.5 text-[10px] font-bold text-outline"
                           style={{
                             left: canDrag ? 22 : 6,
                             maxWidth: `calc(100% - ${canDrag ? 28 : 12}px)`,

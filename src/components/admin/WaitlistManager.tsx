@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -426,32 +422,32 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
   };
 
   const getStatusBadge = (entry: WaitlistEntry) => {
-    if (entry.status === "proposed") return <span className="gp-badge info"><span className="pip" style={{ background: "currentColor" }} />Hueco propuesto</span>;
-    if (entry.status === "notified") return <span className="gp-badge warn"><Bell style={{ width: 10, height: 10 }} />Avisada</span>;
-    if (entry.status === "booked") return <span className="gp-badge ok"><span className="pip" style={{ background: "currentColor" }} />Reservada</span>;
-    if (entry.status === "cancelled") return <span className="gp-badge neutral"><XCircle style={{ width: 10, height: 10 }} />Cancelada</span>;
-    if (entry.status === "expired") return <span className="gp-badge neutral"><Hourglass style={{ width: 10, height: 10 }} />Caducada</span>;
+    if (entry.status === "proposed") return <span className="glow-badge glow-badge--brand"><span className="pip" style={{ background: "currentColor" }} />Hueco propuesto</span>;
+    if (entry.status === "notified") return <span className="glow-badge glow-badge--warn"><Bell style={{ width: 10, height: 10 }} />Avisada</span>;
+    if (entry.status === "booked") return <span className="glow-badge glow-badge--ok"><span className="pip" style={{ background: "currentColor" }} />Reservada</span>;
+    if (entry.status === "cancelled") return <span className="glow-badge"><XCircle style={{ width: 10, height: 10 }} />Cancelada</span>;
+    if (entry.status === "expired") return <span className="glow-badge"><Hourglass style={{ width: 10, height: 10 }} />Caducada</span>;
     return null;
   };
 
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 className="gp-spinner" />
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
 
   return (
-    <div className="gp-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div className="glow-fade" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
-      <div className="gp-page-h">
+      <div className="glow-page-h">
         <div>
           <h2>Lista de espera</h2>
           <p>{activeEntries.length} esperando · {proposedEntries.length} propuestas</p>
         </div>
-        <div className="gp-page-actions">
-          <button className="gp-btn primary" onClick={() => setIsAddOpen(true)}>
+        <div className="glow-page-actions">
+          <button className="glow-btn glow-btn--primary" onClick={() => setIsAddOpen(true)}>
             <Plus style={{ width: 14, height: 14 }} />
             Añadir
           </button>
@@ -459,14 +455,14 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
       </div>
 
       {/* Status tabs */}
-      <div className="gp-subtabs">
-        <button className={`gp-subtab${activeTab === "active" ? " on" : ""}`} onClick={() => setActiveTab("active")}>
-          Esperando {activeEntries.length > 0 && <span className="gp-subtab-count">{activeEntries.length}</span>}
+      <div className="glow-filter-row">
+        <button className={`glow-subtab${activeTab === "active" ? " glow-subtab--on" : ""}`} onClick={() => setActiveTab("active")}>
+          Esperando {activeEntries.length > 0 && <span className="glow-subtab-count">{activeEntries.length}</span>}
         </button>
-        <button className={`gp-subtab${activeTab === "proposed" ? " on" : ""}`} onClick={() => setActiveTab("proposed")}>
-          Propuestas {proposedEntries.length > 0 && <span className="gp-subtab-count">{proposedEntries.length}</span>}
+        <button className={`glow-subtab${activeTab === "proposed" ? " glow-subtab--on" : ""}`} onClick={() => setActiveTab("proposed")}>
+          Propuestas {proposedEntries.length > 0 && <span className="glow-subtab-count">{proposedEntries.length}</span>}
         </button>
-        <button className={`gp-subtab${activeTab === "history" ? " on" : ""}`} onClick={() => setActiveTab("history")}>
+        <button className={`glow-subtab${activeTab === "history" ? " glow-subtab--on" : ""}`} onClick={() => setActiveTab("history")}>
           Historial
         </button>
       </div>
@@ -474,21 +470,21 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
       {/* Resumen rápido de propuestas: conflictos y caducidades */}
       {activeTab === "proposed" && (conflictCount > 0 || urgentCount > 0) && (
         <div
-          className="gp-card pad"
+          className="glow-card glow-card--pad"
           style={{
             display: "flex",
             gap: 10,
             alignItems: "flex-start",
-            background: conflictCount > 0 ? "color-mix(in oklab, var(--gp-danger), white 92%)" : "var(--gp-chip)",
-            borderColor: conflictCount > 0 ? "color-mix(in oklab, var(--gp-danger), white 70%)" : "var(--gp-line)",
+            background: conflictCount > 0 ? "color-mix(in oklab, var(--glow-danger-ink), white 92%)" : "var(--glow-sunk)",
+            borderColor: conflictCount > 0 ? "color-mix(in oklab, var(--glow-danger-ink), white 70%)" : "var(--glow-line)",
           }}
         >
-          <span style={{ width: 28, height: 28, borderRadius: 9, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: "color-mix(in oklab, var(--gp-danger), white 82%)", color: "var(--gp-danger)" }}>
+          <span style={{ width: 28, height: 28, borderRadius: 9, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: "color-mix(in oklab, var(--glow-danger-ink), white 82%)", color: "var(--glow-danger-ink)" }}>
             <AlertTriangle style={{ width: 14, height: 14 }} />
           </span>
           <div>
-            <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 800, color: "var(--gp-ink)" }}>Requieren tu atención</p>
-            <p style={{ margin: 0, fontSize: 12.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>
+            <p style={{ margin: "0 0 2px", fontSize: 13, fontWeight: 800, color: "var(--glow-ink)" }}>Requieren tu atención</p>
+            <p style={{ margin: 0, fontSize: 12.5, color: "var(--glow-ink-3)", fontWeight: 600 }}>
               {conflictCount > 0 && <>{conflictCount} con el hueco ya ocupado. </>}
               {urgentCount > 0 && <>{urgentCount} caducan en menos de 2h.</>}
             </p>
@@ -500,9 +496,9 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
       {/* Empty state */}
       {tabEntries.length === 0 ? (
-        <div className="gp-card">
-          <div className="gp-empty">
-            <div className="gp-empty-ic"><Clock style={{ width: 24, height: 24 }} /></div>
+        <div className="glow-card">
+          <div className="glow-empty">
+            <div className="glow-empty-ic"><Clock style={{ width: 24, height: 24 }} /></div>
             <h4>
               {activeTab === "active" && "Sin clientes en espera"}
               {activeTab === "proposed" && "Sin propuestas activas"}
@@ -527,31 +523,31 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
             return (
               <div
                 key={entry.id}
-                className="gp-card pad"
+                className="glow-card glow-card--pad"
                 style={{
-                  ...(entry.status === "proposed" ? { borderColor: "color-mix(in oklab, var(--gp-info), white 55%)", background: "var(--gp-info-soft)" } : {}),
-                  ...(entry.priority >= 2 ? { borderLeft: "3px solid var(--gp-danger)" } : {}),
-                  ...(entry.priority === 1 ? { borderLeft: "3px solid var(--gp-warn)" } : {}),
+                  ...(entry.status === "proposed" ? { borderColor: "color-mix(in oklab, var(--glow-brand-ink), white 55%)", background: "var(--glow-brand-soft)" } : {}),
+                  ...(entry.priority >= 2 ? { borderLeft: "3px solid var(--glow-danger-ink)" } : {}),
+                  ...(entry.priority === 1 ? { borderLeft: "3px solid var(--glow-warn-ink)" } : {}),
                 }}
               >
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                   {activeTab === "active" && (
-                    <span style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--gp-accent-soft)", color: "var(--gp-accent)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, flex: "none" }}>
+                    <span style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--glow-brand-soft)", color: "var(--glow-brand)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, flex: "none" }}>
                       {index + 1}
                     </span>
                   )}
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: 15, fontWeight: 800, color: "var(--gp-ink)" }}>{entry.client_name}</span>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: "var(--glow-ink)" }}>{entry.client_name}</span>
                       {getStatusBadge(entry)}
                     </div>
 
-                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 12px", fontSize: 12.5, color: "var(--gp-muted-c)", fontWeight: 600 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 12px", fontSize: 12.5, color: "var(--glow-ink-3)", fontWeight: 600 }}>
                       {entry.user_id ? (
-                        <span style={{ color: "var(--gp-ok)", display: "flex", alignItems: "center", gap: 4 }}><Smartphone style={{ width: 13, height: 13 }} />App</span>
+                        <span style={{ color: "var(--glow-ok-ink)", display: "flex", alignItems: "center", gap: 4 }}><Smartphone style={{ width: 13, height: 13 }} />App</span>
                       ) : entry.client_phone ? (
-                        <a href={`tel:${entry.client_phone}`} style={{ color: "var(--gp-muted-c)", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
+                        <a href={`tel:${entry.client_phone}`} style={{ color: "var(--glow-ink-3)", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}>
                           <Phone style={{ width: 13, height: 13 }} />{entry.client_phone}
                         </a>
                       ) : (
@@ -571,7 +567,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                       const days = Math.max(0, Math.floor((Date.now() - new Date(entry.created_at).getTime()) / 86400000));
                       const left = entry.preferred_date ? null : Math.max(0, 60 - days);
                       return (
-                        <p style={{ margin: "6px 0 0", fontSize: 11.5, fontWeight: 600, color: "var(--gp-muted-c)" }}>
+                        <p style={{ margin: "6px 0 0", fontSize: 11.5, fontWeight: 600, color: "var(--glow-ink-3)" }}>
                           {days === 0 ? "Apuntada hoy" : `Esperando ${days} ${days === 1 ? "día" : "días"}`}
                           {left !== null && ` · caduca en ${left} ${left === 1 ? "día" : "días"}`}
                         </p>
@@ -581,11 +577,11 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
 
                     {entry.status === "proposed" && entry.proposed_date && (
-                      <div style={{ marginTop: 8, padding: "8px 12px", background: "color-mix(in oklab, var(--gp-info), white 82%)", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--gp-ink)" }}>
+                      <div style={{ marginTop: 8, padding: "8px 12px", background: "color-mix(in oklab, var(--glow-brand-ink), white 82%)", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--glow-brand-soft)" }}>
                         🎯 Propuesto: {format(new Date(entry.proposed_date), "d MMM", { locale: es })} · {String(entry.proposed_time).slice(0, 5)}
                         {proposedStylistName && ` · ${proposedStylistName}`}
                         {expiry && (
-                          <span style={{ display: "block", marginTop: 4, fontSize: 11.5, fontWeight: 700, color: expiry.urgent ? "var(--gp-danger)" : "var(--gp-muted-c)" }}>
+                          <span style={{ display: "block", marginTop: 4, fontSize: 11.5, fontWeight: 700, color: expiry.urgent ? "var(--glow-danger-ink)" : "var(--glow-ink-3)" }}>
                             <Clock style={{ width: 11, height: 11, display: "inline", marginRight: 4, verticalAlign: -1 }} />
                             {expiry.text}
                           </span>
@@ -594,7 +590,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                     )}
 
                     {conflict && (
-                      <div style={{ marginTop: 8, padding: "8px 12px", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--gp-danger)", background: "color-mix(in oklab, var(--gp-danger), white 88%)", display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ marginTop: 8, padding: "8px 12px", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--glow-danger-ink)", background: "color-mix(in oklab, var(--glow-danger-ink), white 88%)", display: "flex", alignItems: "center", gap: 6 }}>
                         <AlertTriangle style={{ width: 13, height: 13, flex: "none" }} />
                         Conflicto: ese hueco ya tiene una cita confirmada
                       </div>
@@ -602,9 +598,9 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
 
                     {isExpanded && (
-                      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "var(--gp-muted-c)" }}>
-                        {servicesText && <p style={{ margin: 0 }}><span style={{ fontWeight: 700, color: "var(--gp-ink2)" }}>Servicios:</span> {servicesText}</p>}
-                        {stylistName && <p style={{ margin: 0 }}><span style={{ fontWeight: 700, color: "var(--gp-ink2)" }}>Profesional:</span> {stylistName}</p>}
+                      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4, fontSize: 12.5, color: "var(--glow-ink-3)" }}>
+                        {servicesText && <p style={{ margin: 0 }}><span style={{ fontWeight: 700, color: "var(--glow-ink-2)" }}>Servicios:</span> {servicesText}</p>}
+                        {stylistName && <p style={{ margin: 0 }}><span style={{ fontWeight: 700, color: "var(--glow-ink-2)" }}>Profesional:</span> {stylistName}</p>}
                         {entry.notes && <p style={{ margin: 0, fontStyle: "italic" }}>"{entry.notes}"</p>}
                         <p style={{ margin: 0, fontSize: 11 }}>Apuntada {format(new Date(entry.created_at), "d MMM HH:mm", { locale: es })}</p>
                       </div>
@@ -613,7 +609,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                     {(servicesText || entry.notes || stylistName) && (
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                        style={{ marginTop: 6, fontSize: 11.5, color: "var(--gp-accent)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 3, padding: 0, fontFamily: "inherit" }}
+                        style={{ marginTop: 6, fontSize: 11.5, color: "var(--glow-brand)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 3, padding: 0, fontFamily: "inherit" }}
                       >
                         {isExpanded ? <><ChevronUp style={{ width: 12, height: 12 }} />Menos detalles</> : <><ChevronDown style={{ width: 12, height: 12 }} />Ver detalles</>}
                       </button>
@@ -623,7 +619,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                   {/* More menu */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="gp-icon-btn" style={{ width: 34, height: 34, flex: "none" }}>
+                      <button className="glow-icon-btn" style={{ width: 34, height: 34, flex: "none" }}>
                         <MoreVertical style={{ width: 16, height: 16 }} />
                       </button>
                     </DropdownMenuTrigger>
@@ -664,12 +660,12 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
                 {/* Action buttons */}
                 {["waiting", "notified"].includes(entry.status) && (
-                  <div style={{ display: "flex", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--gp-line2)" }}>
-                    <button className="gp-btn primary sm" style={{ flex: 1 }} onClick={() => setProposeEntry(entry)}>
+                  <div style={{ display: "flex", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--glow-line-soft)" }}>
+                    <button className="glow-btn glow-btn--primary glow-btn--sm" style={{ flex: 1 }} onClick={() => setProposeEntry(entry)}>
                       <Sparkles style={{ width: 13, height: 13 }} />
                       Proponer hueco
                     </button>
-                    <button className="gp-btn sm" style={{ flex: 1 }} onClick={() => handleMarkBooked(entry.id)}>
+                    <button className="glow-btn glow-btn--sm" style={{ flex: 1 }} onClick={() => handleMarkBooked(entry.id)}>
                       <CalendarPlus style={{ width: 13, height: 13 }} />
                       Ya reservada
                     </button>
@@ -677,18 +673,18 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                 )}
 
                 {entry.status === "proposed" && (
-                  <div style={{ display: "flex", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--gp-line2)", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--glow-line-soft)", flexWrap: "wrap" }}>
                     {entry.client_phone && (
-                      <button className="gp-btn primary sm" style={{ flex: 1, minWidth: 130 }} onClick={() => handleRemindWhatsApp(entry)}>
+                      <button className="glow-btn glow-btn--primary glow-btn--sm" style={{ flex: 1, minWidth: 130 }} onClick={() => handleRemindWhatsApp(entry)}>
                         <MessageCircle style={{ width: 13, height: 13 }} />
                         Recordar
                       </button>
                     )}
-                    <button className="gp-btn sm" style={{ flex: 1, minWidth: 110 }} onClick={() => handleCopyLink(entry)}>
+                    <button className="glow-btn glow-btn--sm" style={{ flex: 1, minWidth: 110 }} onClick={() => handleCopyLink(entry)}>
                       <LinkIcon style={{ width: 13, height: 13 }} />
                       Copiar enlace
                     </button>
-                    <button className="gp-btn sm" style={{ flex: 1, minWidth: 110 }} onClick={() => handleReleaseSlot(entry.id)}>
+                    <button className="glow-btn glow-btn--sm" style={{ flex: 1, minWidth: 110 }} onClick={() => handleReleaseSlot(entry.id)}>
                       <RotateCcw style={{ width: 13, height: 13 }} />
                       Liberar hueco
                     </button>
@@ -703,14 +699,14 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
       {/* Info card */}
       {activeTab === "active" && activeEntries.length > 0 && (
-        <div className="gp-card pad" style={{ background: "var(--gp-chip)", border: "1px dashed var(--gp-line)" }}>
+        <div className="glow-card glow-card--pad" style={{ background: "var(--glow-sunk)", border: "1px dashed var(--glow-line)" }}>
           <div style={{ display: "flex", gap: 10 }}>
-            <span style={{ width: 28, height: 28, borderRadius: 9, background: "var(--gp-accent-soft)", color: "var(--gp-accent)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+            <span style={{ width: 28, height: 28, borderRadius: 9, background: "var(--glow-brand-soft)", color: "var(--glow-brand)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
               <Sparkles style={{ width: 14, height: 14 }} />
             </span>
             <div>
-              <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 700, color: "var(--gp-ink)" }}>Cómo funciona</p>
-              <p style={{ margin: 0, fontSize: 12.5, color: "var(--gp-muted-c)", lineHeight: 1.5 }}>
+              <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 700, color: "var(--glow-ink)" }}>Cómo funciona</p>
+              <p style={{ margin: 0, fontSize: 12.5, color: "var(--glow-ink-3)", lineHeight: 1.5 }}>
                 Pulsa <b>Proponer hueco</b> para ofrecer una fecha a la clienta. Si tiene la app, le llega un aviso y puede confirmar con un toque. Si no, se abre WhatsApp.
               </p>
             </div>
@@ -730,46 +726,43 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
           <div className="space-y-4 py-2">
             <div>
-              <Label className="text-xs">Nombre del cliente *</Label>
-              <Input
+              <label className="text-xs">Nombre del cliente *</label>
+              <input className="glow-input mt-1"
                 value={formData.client_name}
                 onChange={(e) =>
                   setFormData({ ...formData, client_name: e.target.value })
                 }
                 placeholder="Nombre completo"
-                className="mt-1"
               />
             </div>
 
             <div>
-              <Label className="text-xs">Teléfono</Label>
-              <Input
+              <label className="text-xs">Teléfono</label>
+              <input className="glow-input mt-1"
                 value={formData.client_phone}
                 onChange={(e) =>
                   setFormData({ ...formData, client_phone: e.target.value })
                 }
                 placeholder="612 345 678 (opcional)"
                 type="tel"
-                className="mt-1"
               />
             </div>
 
             <div>
-              <Label className="text-xs">Fecha preferida</Label>
-              <Input
+              <label className="text-xs">Fecha preferida</label>
+              <input className="glow-input mt-1"
                 type="date"
                 value={formData.preferred_date}
                 onChange={(e) =>
                   setFormData({ ...formData, preferred_date: e.target.value })
                 }
-                className="mt-1"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Desde</Label>
-                <Input
+                <label className="text-xs">Desde</label>
+                <input className="glow-input mt-1"
                   type="time"
                   value={formData.preferred_time_start}
                   onChange={(e) =>
@@ -778,12 +771,11 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                       preferred_time_start: e.target.value,
                     })
                   }
-                  className="mt-1"
                 />
               </div>
               <div>
-                <Label className="text-xs">Hasta</Label>
-                <Input
+                <label className="text-xs">Hasta</label>
+                <input className="glow-input mt-1"
                   type="time"
                   value={formData.preferred_time_end}
                   onChange={(e) =>
@@ -792,13 +784,12 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                       preferred_time_end: e.target.value,
                     })
                   }
-                  className="mt-1"
                 />
               </div>
             </div>
 
             <div>
-              <Label className="text-xs">Profesional preferido</Label>
+              <label className="text-xs">Profesional preferido</label>
               <Select
                 value={formData.preferred_stylist_id || "none"}
                 onValueChange={(v) =>
@@ -823,7 +814,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
             </div>
 
             <div>
-              <Label className="text-xs">Prioridad</Label>
+              <label className="text-xs">Prioridad</label>
               <Select
                 value={formData.priority.toString()}
                 onValueChange={(v) =>
@@ -842,13 +833,13 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                   </SelectItem>
                   <SelectItem value="1">
                     <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                      <span className="w-2 h-2 rounded-full bg-glow-warn" />
                       Media
                     </span>
                   </SelectItem>
                   <SelectItem value="2">
                     <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-red-500" />
+                      <span className="w-2 h-2 rounded-full bg-glow-danger" />
                       Alta
                     </span>
                   </SelectItem>
@@ -857,35 +848,28 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
             </div>
 
             <div>
-              <Label className="text-xs">Notas</Label>
-              <Textarea
+              <label className="text-xs">Notas</label>
+              <textarea className="glow-input mt-1"
                 value={formData.notes}
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
                 placeholder="Observaciones adicionales..."
                 rows={2}
-                className="mt-1"
               />
             </div>
           </div>
 
           <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsAddOpen(false)}
-              className="flex-1 sm:flex-none"
-            >
+            <button className="glow-btn" onClick={() => setIsAddOpen(false)}>
               Cancelar
-            </Button>
-            <Button
+            </button>
+            <button className="glow-btn glow-btn--primary"
               onClick={handleSave}
-              disabled={saving}
-              className="flex-1 sm:flex-none"
-            >
+              disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Añadir
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

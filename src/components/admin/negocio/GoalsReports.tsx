@@ -215,14 +215,14 @@ export function GoalsReports({ tenantId, tenantName }: GoalsReportsProps) {
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 className="gp-spinner" />
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
 
   return (
-    <div className="gp-fade gp-neg-goals">
-      <div className="gp-page-h">
+    <div className="glow-fade glow-neg-goals">
+      <div className="glow-page-h">
         <div>
           <h2>Objetivos y Reportes</h2>
           <p>
@@ -232,15 +232,15 @@ export function GoalsReports({ tenantId, tenantName }: GoalsReportsProps) {
               : "Define tu meta"}
           </p>
         </div>
-        <div className="gp-page-actions">
+        <div className="glow-page-actions">
           {!editing ? (
-            <button className="gp-btn primary sm" onClick={() => setEditing(true)} type="button">
+            <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={() => setEditing(true)} type="button">
               <Pencil style={{ width: 13, height: 13 }} /> Editar
             </button>
           ) : (
             <>
               <button
-                className="gp-btn sm"
+                className="glow-btn glow-btn--sm"
                 onClick={() => {
                   setEditing(false);
                   setDraft(goal);
@@ -249,8 +249,8 @@ export function GoalsReports({ tenantId, tenantName }: GoalsReportsProps) {
               >
                 <X style={{ width: 13, height: 13 }} /> Cancelar
               </button>
-              <button className="gp-btn primary sm" onClick={save} disabled={saving} type="button">
-                {saving ? <Loader2 className="gp-spinner-sm" /> : <Save style={{ width: 13, height: 13 }} />}
+              <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={save} disabled={saving} type="button">
+                {saving ? <Loader2 className="glow-spinner-sm" /> : <Save style={{ width: 13, height: 13 }} />}
                 Guardar
               </button>
             </>
@@ -259,7 +259,7 @@ export function GoalsReports({ tenantId, tenantName }: GoalsReportsProps) {
       </div>
 
       {/* Goals 3-col */}
-      <div className="gp-neg-goals-grid">
+      <div className="glow-neg-goals-grid">
         <GoalCard
           icon={<Euro />}
           tone="ok"
@@ -296,44 +296,44 @@ export function GoalsReports({ tenantId, tenantName }: GoalsReportsProps) {
       </div>
 
       {/* History bars */}
-      <section className="gp-card pad gp-mkt-card">
-        <div className="gp-mkt-card-h">
+      <section className="glow-card glow-card--pad glow-mkt-card">
+        <div className="glow-mkt-card-h">
           <div>
             <h3>Últimos 6 meses</h3>
             <p>Ingresos vs objetivo</p>
           </div>
-          <TrendingUp style={{ width: 16, height: 16, color: "var(--gp-muted-c)" }} />
+          <TrendingUp style={{ width: 16, height: 16, color: "var(--glow-ink-3)" }} />
         </div>
-        <div className="gp-neg-history">
+        <div className="glow-neg-history">
           {history.map((h) => {
             const revH = (h.revenue / maxHistRev) * 100;
             const goalH = h.goal > 0 ? (h.goal / maxHistRev) * 100 : 0;
             const hit = h.goal > 0 && h.revenue >= h.goal;
             return (
-              <div key={h.key} className="gp-neg-history-col">
-                <div className="gp-neg-history-bars">
+              <div key={h.key} className="glow-neg-history-col">
+                <div className="glow-neg-history-bars">
                   {h.goal > 0 && (
                     <div
-                      className="gp-neg-history-goal"
+                      className="glow-neg-history-goal"
                       style={{ bottom: `${goalH}%` }}
                       title={`Objetivo ${h.goal}€`}
                     />
                   )}
                   <div
-                    className={`gp-neg-history-rev${hit ? " hit" : ""}`}
+                    className={`glow-neg-history-rev${hit ? " hit" : ""}`}
                     style={{ height: `${revH}%` }}
                     title={`${Math.round(h.revenue)}€`}
                   />
                 </div>
-                <span className="gp-neg-history-label">{h.label}</span>
-                <span className="gp-neg-history-val">
+                <span className="glow-neg-history-label">{h.label}</span>
+                <span className="glow-neg-history-val">
                   {h.revenue > 0 ? `${Math.round(h.revenue / 1000)}k` : "—"}
                 </span>
               </div>
             );
           })}
         </div>
-        <div className="gp-neg-history-legend">
+        <div className="glow-neg-history-legend">
           <span><span className="dot rev" /> Ingresos</span>
           <span><span className="dot goal" /> Objetivo</span>
         </div>
@@ -370,12 +370,12 @@ function GoalCard({
 }) {
   const pct = goal > 0 ? Math.min(100, (current / goal) * 100) : 0;
   return (
-    <div className="gp-card pad gp-neg-goal-card">
-      <div className="gp-neg-goal-h">
-        <span className={`gp-mkt-quick-ic tone-${tone}`}>{icon}</span>
+    <div className="glow-card glow-card--pad glow-neg-goal-card">
+      <div className="glow-neg-goal-h">
+        <span className={`glow-mkt-quick-ic tone-${tone}`}>{icon}</span>
         <span>{label}</span>
       </div>
-      <div className="gp-neg-goal-numbers">
+      <div className="glow-neg-goal-numbers">
         <strong>
           {Math.round(current).toLocaleString("es-ES")}
           {unit}
@@ -385,7 +385,7 @@ function GoalCard({
           {editing ? (
             <input
               type="number"
-              className="gp-neg-goal-input"
+              className="glow-neg-goal-input"
               value={draftValue}
               onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
               min={0}
@@ -402,10 +402,10 @@ function GoalCard({
       </div>
       {goal > 0 && (
         <>
-          <div className="gp-neg-goal-bar">
-            <div className={`gp-neg-goal-bar-fill tone-${tone}`} style={{ width: `${pct}%` }} />
+          <div className="glow-neg-goal-bar">
+            <div className={`glow-neg-goal-bar-fill tone-${tone}`} style={{ width: `${pct}%` }} />
           </div>
-          <div className="gp-neg-goal-pct">
+          <div className="glow-neg-goal-pct">
             <strong>{Math.round(pct)}%</strong>
             {pct >= 100 ? <Check style={{ width: 14, height: 14 }} /> : null}
           </div>

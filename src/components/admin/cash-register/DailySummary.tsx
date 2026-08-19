@@ -90,24 +90,24 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
 
   return (
     <>
-      <div className="gp-page-h" style={{ marginBottom: 0 }}>
+      <div className="glow-page-h" style={{ marginBottom: 0 }}>
         <div>
           <h2>Caja · {format(new Date(summary.date), "d MMM", { locale: es })}</h2>
           <p>{summary.transactionCount} transacciones</p>
         </div>
-        <div className="gp-page-actions">
-          <button className="gp-btn sm" onClick={onRefresh}>
+        <div className="glow-page-actions">
+          <button className="glow-btn glow-btn--sm" onClick={onRefresh}>
             <RefreshCw style={{ width: 13, height: 13 }} />
             <span>Actualizar</span>
           </button>
           {!summary.isClosed && summary.transactionCount > 0 && (
-            <button className="gp-btn primary sm" onClick={() => setShowCloseDialog(true)}>
+            <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={() => setShowCloseDialog(true)}>
               <Lock style={{ width: 13, height: 13 }} />
               <span>Cerrar caja</span>
             </button>
           )}
           {summary.isClosed && (
-            <button className="gp-btn sm" onClick={() => setShowReopenDialog(true)}>
+            <button className="glow-btn glow-btn--sm" onClick={() => setShowReopenDialog(true)}>
               <LockOpen style={{ width: 13, height: 13 }} />
               <span>Reabrir</span>
             </button>
@@ -115,42 +115,42 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
         </div>
       </div>
 
-      <div className="gp-kpis">
-        <div className="gp-kpi">
-          <div className="gp-kpi-top">
-            <span className="gp-kpi-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
+      <div className="glow-kpis">
+        <div className="glow-kpi">
+          <div className="glow-kpi-top">
+            <span className="glow-kpi-ic glow-kpi-ic--ok">
               <Banknote style={{ width: 16, height: 16 }} />
             </span>
           </div>
-          <div className="gp-kpi-val">{fmt(summary.cashTotal)}</div>
-          <div className="gp-kpi-lbl">Efectivo</div>
+          <div className="glow-kpi-val">{fmt(summary.cashTotal)}</div>
+          <div className="glow-kpi-lbl">Efectivo</div>
         </div>
-        <div className="gp-kpi">
-          <div className="gp-kpi-top">
-            <span className="gp-kpi-ic" style={{ background: "var(--gp-info-soft)", color: "var(--gp-info)" }}>
+        <div className="glow-kpi">
+          <div className="glow-kpi-top">
+            <span className="glow-kpi-ic glow-kpi-ic--brand">
               <CreditCard style={{ width: 16, height: 16 }} />
             </span>
           </div>
-          <div className="gp-kpi-val">{fmt(summary.cardTotal)}</div>
-          <div className="gp-kpi-lbl">Tarjeta</div>
+          <div className="glow-kpi-val">{fmt(summary.cardTotal)}</div>
+          <div className="glow-kpi-lbl">Tarjeta</div>
         </div>
-        <div className="gp-kpi">
-          <div className="gp-kpi-top">
-            <span className="gp-kpi-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
+        <div className="glow-kpi">
+          <div className="glow-kpi-top">
+            <span className="glow-kpi-ic glow-kpi-ic--accent">
               <TrendingUp style={{ width: 16, height: 16 }} />
             </span>
           </div>
-          <div className="gp-kpi-val">{fmt(summary.totalSales)}</div>
-          <div className="gp-kpi-lbl">Total</div>
+          <div className="glow-kpi-val">{fmt(summary.totalSales)}</div>
+          <div className="glow-kpi-lbl">Total</div>
         </div>
-        <div className="gp-kpi">
-          <div className="gp-kpi-top">
-            <span className="gp-kpi-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
+        <div className="glow-kpi">
+          <div className="glow-kpi-top">
+            <span className="glow-kpi-ic glow-kpi-ic--warn">
               <Receipt style={{ width: 16, height: 16 }} />
             </span>
           </div>
-          <div className="gp-kpi-val">{summary.transactionCount}</div>
-          <div className="gp-kpi-lbl">Operaciones</div>
+          <div className="glow-kpi-val">{summary.transactionCount}</div>
+          <div className="glow-kpi-lbl">Operaciones</div>
         </div>
       </div>
 
@@ -160,15 +160,15 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
             <AlertDialogTitle>¿Cerrar la caja de hoy?</AlertDialogTitle>
             <AlertDialogDescription>
               Una vez cerrada no se podrán registrar más cobros hoy.
-              <div style={{ marginTop: 14, padding: "12px 16px", background: "var(--gp-chip)", borderRadius: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ marginTop: 14, padding: "12px 16px", background: "var(--glow-sunk)", borderRadius: 10, display: "flex", flexDirection: "column", gap: 6 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13.5, fontWeight: 600 }}>
-                  <span>Efectivo</span><span className="gp-mono">{fmt(summary.cashTotal)}</span>
+                  <span>Efectivo</span><span className="glow-mono">{fmt(summary.cashTotal)}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13.5, fontWeight: 600 }}>
-                  <span>Tarjeta</span><span className="gp-mono">{fmt(summary.cardTotal)}</span>
+                  <span>Tarjeta</span><span className="glow-mono">{fmt(summary.cardTotal)}</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 800, borderTop: "1px solid var(--gp-line2)", paddingTop: 8 }}>
-                  <span>Total</span><span className="gp-mono" style={{ color: "var(--gp-accent)" }}>{fmt(summary.totalSales)}</span>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, fontWeight: 800, borderTop: "1px solid var(--glow-line-soft)", paddingTop: 8 }}>
+                  <span>Total</span><span className="glow-mono" style={{ color: "var(--glow-brand)" }}>{fmt(summary.totalSales)}</span>
                 </div>
               </div>
             </AlertDialogDescription>
@@ -176,7 +176,7 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isClosing}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleCloseRegister} disabled={isClosing}>
-              {isClosing ? <Loader2 className="gp-spinner-sm" /> : <Lock style={{ width: 14, height: 14, marginRight: 6 }} />}
+              {isClosing ? <Loader2 className="glow-spinner-sm" /> : <Lock style={{ width: 14, height: 14, marginRight: 6 }} />}
               Cerrar caja
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -192,7 +192,7 @@ export const DailySummary = ({ summary, onRefresh }: DailySummaryProps) => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isReopening}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleReopenRegister} disabled={isReopening}>
-              {isReopening ? <Loader2 className="gp-spinner-sm" /> : <LockOpen style={{ width: 14, height: 14, marginRight: 6 }} />}
+              {isReopening ? <Loader2 className="glow-spinner-sm" /> : <LockOpen style={{ width: 14, height: 14, marginRight: 6 }} />}
               Reabrir caja
             </AlertDialogAction>
           </AlertDialogFooter>

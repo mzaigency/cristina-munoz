@@ -466,14 +466,14 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
-        <Loader2 className="gp-spinner" />
+        <Loader2 className="glow-spinner" />
       </div>
     );
   }
 
   return (
-    <div className="gp-fade gp-neg-hours">
-      <div className="gp-page-h">
+    <div className="glow-fade glow-neg-hours">
+      <div className="glow-page-h">
         <div>
           <h2>Horarios</h2>
           <p>
@@ -483,14 +483,14 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
           </p>
         </div>
         {tab === "semana" && (
-          <div className="gp-page-actions">
+          <div className="glow-page-actions">
             <button
-              className="gp-btn primary sm"
+              className="glow-btn glow-btn--primary glow-btn--sm"
               onClick={saveWeekly}
               disabled={savingWeekly}
               type="button"
             >
-              {savingWeekly ? <Loader2 className="gp-spinner-sm" /> : <Save style={{ width: 13, height: 13 }} />}
+              {savingWeekly ? <Loader2 className="glow-spinner-sm" /> : <Save style={{ width: 13, height: 13 }} />}
               Guardar
             </button>
           </div>
@@ -498,16 +498,16 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
       </div>
 
       {/* Sub-tabs */}
-      <div className="gp-neg-hours-tabs">
+      <div className="glow-neg-hours-tabs">
         <button
-          className={`gp-mkt-chip${tab === "semana" ? " on" : ""}`}
+          className={`glow-mkt-chip${tab === "semana" ? " on" : ""}`}
           onClick={() => setTab("semana")}
           type="button"
         >
           <Calendar style={{ width: 13, height: 13 }} /> Semanal
         </button>
         <button
-          className={`gp-mkt-chip${tab === "especiales" ? " on" : ""}`}
+          className={`glow-mkt-chip${tab === "especiales" ? " on" : ""}`}
           onClick={() => setTab("especiales")}
           type="button"
         >
@@ -516,34 +516,34 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
       </div>
 
       {tab === "semana" && (
-        <div className="gp-neg-week">
+        <div className="glow-neg-week">
           {DAYS_OF_WEEK.map((day, idx) => {
             const h = hours.find((x) => x.day_of_week === day.value)!;
             return (
-              <div key={day.value} className={`gp-card pad gp-neg-week-day${!h.is_open ? " is-off" : ""}`}>
-                <div className="gp-neg-week-h">
-                  <div className="gp-neg-week-title">
+              <div key={day.value} className={`glow-card pad glow-neg-week-day${!h.is_open ? " is-off" : ""}`}>
+                <div className="glow-neg-week-h">
+                  <div className="glow-neg-week-title">
                     <input
                       type="checkbox"
                       checked={h.is_open}
                       onChange={(e) => updateHour(day.value, { is_open: e.target.checked })}
                     />
                     <strong>{DAYS_LONG[day.value]}</strong>
-                    {!h.is_open && <span className="gp-badge neutral">Cerrado</span>}
+                    {!h.is_open && <span className="glow-badge">Cerrado</span>}
                   </div>
                   {idx === 0 && h.is_open && (
-                    <button className="gp-btn sm" onClick={() => copyToAll(day.value)} type="button">
+                    <button className="glow-btn glow-btn--sm" onClick={() => copyToAll(day.value)} type="button">
                       <Copy style={{ width: 12, height: 12 }} /> A todos
                     </button>
                   )}
                 </div>
                 {h.is_open && (
-                  <div className="gp-neg-week-shifts">
-                    <div className="gp-neg-shift gp-neg-shift-morning">
-                      <div className="gp-neg-shift-h">
+                  <div className="glow-neg-week-shifts">
+                    <div className="glow-neg-shift glow-neg-shift-morning">
+                      <div className="glow-neg-shift-h">
                         <Sun style={{ width: 13, height: 13 }} /> Mañana
                       </div>
-                      <div className="gp-neg-shift-inputs">
+                      <div className="glow-neg-shift-inputs">
                         <input
                           type="time"
                           value={h.morning_start}
@@ -557,8 +557,8 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                         />
                       </div>
                     </div>
-                    <div className={`gp-neg-shift gp-neg-shift-afternoon${!h.has_afternoon ? " is-off" : ""}`}>
-                      <div className="gp-neg-shift-h">
+                    <div className={`glow-neg-shift glow-neg-shift-afternoon${!h.has_afternoon ? " is-off" : ""}`}>
+                      <div className="glow-neg-shift-h">
                         <Moon style={{ width: 13, height: 13 }} /> Tarde
                         <input
                           type="checkbox"
@@ -568,7 +568,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                         />
                       </div>
                       {h.has_afternoon ? (
-                        <div className="gp-neg-shift-inputs">
+                        <div className="glow-neg-shift-inputs">
                           <input
                             type="time"
                             value={h.afternoon_start}
@@ -582,7 +582,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                           />
                         </div>
                       ) : (
-                        <p className="gp-neg-shift-off">Sin turno</p>
+                        <p className="glow-neg-shift-off">Sin turno</p>
                       )}
                     </div>
                   </div>
@@ -594,12 +594,12 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
       )}
 
       {tab === "especiales" && (
-        <div className="gp-neg-special">
+        <div className="glow-neg-special">
           {/* Hero — active or next */}
           {(active.length > 0 || nextSpecial) && (
-            <div className="gp-neg-special-hero">
+            <div className="glow-neg-special-hero">
               {active.length > 0 && (
-                <div className="gp-neg-hero-active">
+                <div className="glow-neg-hero-active">
                   <CheckCircle2 style={{ width: 16, height: 16 }} />
                   <div>
                     <strong>Activo ahora: {active[0].label || (active[0].is_closed ? "Cerrado" : "Horario especial")}</strong>
@@ -610,7 +610,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                 </div>
               )}
               {!active.length && nextSpecial && (
-                <div className="gp-neg-hero-next">
+                <div className="glow-neg-hero-next">
                   <AlertCircle style={{ width: 16, height: 16 }} />
                   <div>
                     <strong>
@@ -630,30 +630,30 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
           )}
 
           {/* Quick action toolbar */}
-          <div className="gp-neg-quick-actions">
-            <button className="gp-neg-quick-action tone-rose" onClick={openVacaciones} type="button">
-              <span className="gp-mkt-quick-ic" style={{ background: "var(--gp-mkt-rose-soft)", color: "var(--gp-mkt-rose)" }}>
+          <div className="glow-neg-quick-actions">
+            <button className="glow-neg-quick-action tone-rose" onClick={openVacaciones} type="button">
+              <span className="glow-mkt-quick-ic" style={{ background: "var(--glow-accent-soft)", color: "var(--glow-accent)" }}>
                 <Plane />
               </span>
               <strong>Vacaciones</strong>
               <span>Rango cerrado</span>
             </button>
-            <button className="gp-neg-quick-action tone-warn" onClick={openFestivo} type="button">
-              <span className="gp-mkt-quick-ic" style={{ background: "var(--gp-warn-soft)", color: "var(--gp-warn)" }}>
+            <button className="glow-neg-quick-action tone-warn" onClick={openFestivo} type="button">
+              <span className="glow-mkt-quick-ic" style={{ background: "var(--glow-warn-soft)", color: "var(--glow-warn-ink)" }}>
                 <PartyPopper />
               </span>
               <strong>Festivo</strong>
               <span>Día cerrado</span>
             </button>
-            <button className="gp-neg-quick-action tone-ok" onClick={openHorarioVerano} type="button">
-              <span className="gp-mkt-quick-ic" style={{ background: "var(--gp-ok-soft)", color: "var(--gp-ok)" }}>
+            <button className="glow-neg-quick-action tone-ok" onClick={openHorarioVerano} type="button">
+              <span className="glow-mkt-quick-ic" style={{ background: "var(--glow-ok-soft)", color: "var(--glow-ok-ink)" }}>
                 <Sun />
               </span>
               <strong>Horario verano</strong>
               <span>Jul-Ago reducido</span>
             </button>
-            <button className="gp-neg-quick-action tone-brand" onClick={openCustom} type="button">
-              <span className="gp-mkt-quick-ic" style={{ background: "var(--gp-accent-soft)", color: "var(--gp-accent)" }}>
+            <button className="glow-neg-quick-action tone-brand" onClick={openCustom} type="button">
+              <span className="glow-mkt-quick-ic" style={{ background: "var(--glow-brand-soft)", color: "var(--glow-brand)" }}>
                 <Plus />
               </span>
               <strong>Personalizado</strong>
@@ -662,33 +662,33 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
           </div>
 
           {/* Festivos preset */}
-          <div className="gp-neg-festivos-banner">
+          <div className="glow-neg-festivos-banner">
             <div>
               <strong>Festivos nacionales {new Date().getFullYear()}</strong>
               <span>Año Nuevo · Reyes · 1 Mayo · 15 Ago · 12 Oct · Todos Santos · 6 Dic · 8 Dic · Navidad</span>
             </div>
-            <button className="gp-btn sm primary" onClick={addAllNationalHolidays} type="button">
+            <button className="glow-btn glow-btn--sm glow-btn--primary" onClick={addAllNationalHolidays} type="button">
               <CalendarOff style={{ width: 13, height: 13 }} /> Añadir todos
             </button>
           </div>
 
           {/* Month calendar visual */}
-          <div className="gp-card pad gp-mkt-card">
-            <div className="gp-mkt-card-h">
+          <div className="glow-card glow-card--pad glow-mkt-card">
+            <div className="glow-mkt-card-h">
               <div>
                 <h3>Calendario del mes</h3>
                 <p>{format(calMonth, "MMMM yyyy", { locale: es })}</p>
               </div>
               <div style={{ display: "flex", gap: 4 }}>
                 <button
-                  className="gp-icon-btn"
+                  className="glow-icon-btn"
                   onClick={() => setCalMonth(addMonths(calMonth, -1))}
                   type="button"
                 >
                   <ChevronLeft style={{ width: 14, height: 14 }} />
                 </button>
                 <button
-                  className="gp-icon-btn"
+                  className="glow-icon-btn"
                   onClick={() => setCalMonth(startOfMonth(new Date()))}
                   type="button"
                   title="Hoy"
@@ -696,7 +696,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                   <Calendar style={{ width: 14, height: 14 }} />
                 </button>
                 <button
-                  className="gp-icon-btn"
+                  className="glow-icon-btn"
                   onClick={() => setCalMonth(addMonths(calMonth, 1))}
                   type="button"
                 >
@@ -704,15 +704,15 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                 </button>
               </div>
             </div>
-            <div className="gp-neg-cal">
-              <div className="gp-neg-cal-headers">
+            <div className="glow-neg-cal">
+              <div className="glow-neg-cal-headers">
                 {["L", "M", "X", "J", "V", "S", "D"].map((d) => (
                   <span key={d}>{d}</span>
                 ))}
               </div>
-              <div className="gp-neg-cal-grid">
+              <div className="glow-neg-cal-grid">
                 {Array.from({ length: calStartWeekday }).map((_, i) => (
-                  <div key={`pad-${i}`} className="gp-neg-cal-cell is-pad" />
+                  <div key={`pad-${i}`} className="glow-neg-cal-cell is-pad" />
                 ))}
                 {Array.from({ length: calDaysCount }).map((_, i) => {
                   const d = addDays(calStart, i);
@@ -723,7 +723,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                   const baseOpen = isOpenWeekday(dow);
                   let state: "open" | "closed" | "special" | "special-closed" = baseOpen ? "open" : "closed";
                   if (ov) state = ov.is_closed ? "special-closed" : "special";
-                  const cellClass = `gp-neg-cal-cell state-${state}${isToday ? " is-today" : ""}`;
+                  const cellClass = `glow-neg-cal-cell state-${state}${isToday ? " is-today" : ""}`;
                   return (
                     <button
                       key={iso}
@@ -741,13 +741,13 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                       title={ov?.label || (state === "closed" ? "Cerrado" : "Abierto")}
                     >
                       <span>{i + 1}</span>
-                      {ov && <span className="gp-neg-cal-dot" />}
+                      {ov && <span className="glow-neg-cal-dot" />}
                     </button>
                   );
                 })}
               </div>
             </div>
-            <div className="gp-neg-cal-legend">
+            <div className="glow-neg-cal-legend">
               <span className="state-open">Abierto</span>
               <span className="state-closed">Cerrado</span>
               <span className="state-special">Especial</span>
@@ -757,14 +757,14 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
 
           {/* Timeline strip */}
           {(active.length + upcoming.length) > 0 && (
-            <div className="gp-card pad gp-mkt-card">
-              <div className="gp-mkt-card-h">
+            <div className="glow-card glow-card--pad glow-mkt-card">
+              <div className="glow-mkt-card-h">
                 <div>
                   <h3>Próximos cambios</h3>
                   <p>{active.length + upcoming.length} horarios programados</p>
                 </div>
               </div>
-              <div className="gp-neg-overrides">
+              <div className="glow-neg-overrides">
                 {[...active.map((it) => ({ ...it, status: "active" as const })), ...upcoming.map((it) => ({ ...it, status: "upcoming" as const }))].map(
                   (it) => {
                     const days = differenceInCalendarDays(parseISO(it.date_to), parseISO(it.date_from)) + 1;
@@ -772,10 +772,10 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                     return (
                       <div
                         key={it.id}
-                        className={`gp-neg-override${it.status === "active" ? " is-active" : ""}${it.is_closed ? " is-closed" : ""}`}
+                        className={`glow-neg-override${it.status === "active" ? " is-active" : ""}${it.is_closed ? " is-closed" : ""}`}
                       >
-                        <div className="gp-neg-override-h">
-                          <div className="gp-neg-override-icon">
+                        <div className="glow-neg-override-h">
+                          <div className="glow-neg-override-icon">
                             {it.is_closed ? (
                               <CalendarOff />
                             ) : it.label?.toLowerCase().includes("verano") ? (
@@ -784,7 +784,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                               <Calendar />
                             )}
                           </div>
-                          <div className="gp-neg-override-info">
+                          <div className="glow-neg-override-info">
                             <strong>
                               {it.label ||
                                 (it.is_closed
@@ -800,13 +800,13 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                             </span>
                           </div>
                           {it.status === "active" && (
-                            <span className="gp-badge ok">
+                            <span className="glow-badge glow-badge--ok">
                               <span className="pip" style={{ background: "currentColor" }} /> Activo
                             </span>
                           )}
                         </div>
                         {!it.is_closed && it.open_time && (
-                          <div className="gp-neg-override-bar">
+                          <div className="glow-neg-override-bar">
                             <HoursBar
                               isClosed={false}
                               openTime={it.open_time}
@@ -816,12 +816,12 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                             />
                           </div>
                         )}
-                        <div className="gp-neg-override-actions">
-                          <button className="gp-btn sm" onClick={() => openEdit(it)} type="button">
+                        <div className="glow-neg-override-actions">
+                          <button className="glow-btn glow-btn--sm" onClick={() => openEdit(it)} type="button">
                             Editar
                           </button>
                           <button
-                            className="gp-btn sm danger"
+                            className="glow-btn glow-btn--sm glow-btn--danger"
                             onClick={() => deleteOverride(it.id)}
                             type="button"
                           >
@@ -838,26 +838,26 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
 
           {/* Past collapsed */}
           {past.length > 0 && (
-            <details className="gp-card pad gp-mkt-card">
-              <summary className="gp-neg-past-summary">
+            <details className="glow-card glow-card--pad glow-mkt-card">
+              <summary className="glow-neg-past-summary">
                 Pasados ({past.length})
               </summary>
-              <div className="gp-neg-overrides" style={{ marginTop: 12 }}>
+              <div className="glow-neg-overrides" style={{ marginTop: 12 }}>
                 {past.slice(0, 10).map((it) => (
-                  <div key={it.id} className="gp-neg-override is-past">
-                    <div className="gp-neg-override-h">
-                      <div className="gp-neg-override-icon">
+                  <div key={it.id} className="glow-neg-override is-past">
+                    <div className="glow-neg-override-h">
+                      <div className="glow-neg-override-icon">
                         {it.is_closed ? <CalendarOff /> : <Calendar />}
                       </div>
-                      <div className="gp-neg-override-info">
+                      <div className="glow-neg-override-info">
                         <strong>{it.label || (it.is_closed ? "Cerrado" : `${formatHM(it.open_time)}–${formatHM(it.close_time)}`)}</strong>
                         <span>{format(parseISO(it.date_from), "d MMM yyyy", { locale: es })}</span>
                       </div>
                       <button
-                        className="gp-icon-btn"
+                        className="glow-icon-btn"
                         onClick={() => deleteOverride(it.id)}
                         type="button"
-                        style={{ color: "var(--gp-danger)" }}
+                        style={{ color: "var(--glow-danger-ink)" }}
                       >
                         <Trash2 style={{ width: 13, height: 13 }} />
                       </button>
@@ -872,18 +872,18 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
 
       {/* Form overlay */}
       {showForm && (
-        <div className="gp-neg-create-backdrop" onClick={() => !saving && setShowForm(false)}>
-          <div className="gp-neg-form-card" onClick={(e) => e.stopPropagation()}>
-            <div className="gp-neg-form-h">
+        <div className="glow-neg-create-backdrop" onClick={() => !saving && setShowForm(false)}>
+          <div className="glow-neg-form-card" onClick={(e) => e.stopPropagation()}>
+            <div className="glow-neg-form-h">
               <h3>{editingId ? "Editar horario especial" : "Nuevo horario especial"}</h3>
-              <button className="gp-icon-btn" onClick={() => setShowForm(false)} type="button">
+              <button className="glow-icon-btn" onClick={() => setShowForm(false)} type="button">
                 <X style={{ width: 16, height: 16 }} />
               </button>
             </div>
 
-            <div className="gp-mkt-chip-row">
+            <div className="glow-mkt-chip-row">
               <button
-                className={`gp-mkt-chip${formMode === "day" ? " on" : ""}`}
+                className={`glow-mkt-chip${formMode === "day" ? " on" : ""}`}
                 onClick={() => {
                   setFormMode("day");
                   setForm({ ...form, date_to: form.date_from });
@@ -893,7 +893,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                 Día
               </button>
               <button
-                className={`gp-mkt-chip${formMode === "week" ? " on" : ""}`}
+                className={`glow-mkt-chip${formMode === "week" ? " on" : ""}`}
                 onClick={() => {
                   setFormMode("week");
                   setForm({ ...form, date_to: format(addDays(parseISO(form.date_from), 6), "yyyy-MM-dd") });
@@ -903,7 +903,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                 Semana
               </button>
               <button
-                className={`gp-mkt-chip${formMode === "range" ? " on" : ""}`}
+                className={`glow-mkt-chip${formMode === "range" ? " on" : ""}`}
                 onClick={() => setFormMode("range")}
                 type="button"
               >
@@ -911,7 +911,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
               </button>
             </div>
 
-            <div className="gp-neg-form-row">
+            <div className="glow-neg-form-row">
               <label>Etiqueta</label>
               <input
                 type="text"
@@ -921,8 +921,8 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
               />
             </div>
 
-            <div className="gp-neg-form-grid">
-              <div className="gp-neg-form-row">
+            <div className="glow-neg-form-grid">
+              <div className="glow-neg-form-row">
                 <label>Desde</label>
                 <input
                   type="date"
@@ -944,7 +944,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                   }}
                 />
               </div>
-              <div className="gp-neg-form-row">
+              <div className="glow-neg-form-row">
                 <label>Hasta</label>
                 <input
                   type="date"
@@ -955,7 +955,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
               </div>
             </div>
 
-            <div className="gp-neg-form-row gp-neg-form-toggle">
+            <div className="glow-neg-form-row glow-neg-form-toggle">
               <label>Cerrado</label>
               <input
                 type="checkbox"
@@ -966,8 +966,8 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
 
             {!form.is_closed && (
               <>
-                <div className="gp-neg-form-grid">
-                  <div className="gp-neg-form-row">
+                <div className="glow-neg-form-grid">
+                  <div className="glow-neg-form-row">
                     <label>Apertura</label>
                     <input
                       type="time"
@@ -975,7 +975,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                       onChange={(e) => setForm({ ...form, open_time: e.target.value })}
                     />
                   </div>
-                  <div className="gp-neg-form-row">
+                  <div className="glow-neg-form-row">
                     <label>Cierre</label>
                     <input
                       type="time"
@@ -984,7 +984,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                     />
                   </div>
                 </div>
-                <div className="gp-neg-form-row gp-neg-form-toggle">
+                <div className="glow-neg-form-row glow-neg-form-toggle">
                   <label>Con pausa</label>
                   <input
                     type="checkbox"
@@ -993,8 +993,8 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                   />
                 </div>
                 {form.has_break && (
-                  <div className="gp-neg-form-grid">
-                    <div className="gp-neg-form-row">
+                  <div className="glow-neg-form-grid">
+                    <div className="glow-neg-form-row">
                       <label>Pausa desde</label>
                       <input
                         type="time"
@@ -1002,7 +1002,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                         onChange={(e) => setForm({ ...form, break_start: e.target.value })}
                       />
                     </div>
-                    <div className="gp-neg-form-row">
+                    <div className="glow-neg-form-row">
                       <label>Pausa hasta</label>
                       <input
                         type="time"
@@ -1016,7 +1016,7 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
             )}
 
             {!form.is_closed && (
-              <div className="gp-neg-bar-preview">
+              <div className="glow-neg-bar-preview">
                 <HoursBar
                   isClosed={false}
                   openTime={form.open_time}
@@ -1027,12 +1027,12 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
               </div>
             )}
 
-            <div className="gp-neg-create-actions">
-              <button className="gp-btn" onClick={() => setShowForm(false)} disabled={saving}>
+            <div className="glow-neg-create-actions">
+              <button className="glow-btn" onClick={() => setShowForm(false)} disabled={saving}>
                 Cancelar
               </button>
-              <button className="gp-btn primary" onClick={saveForm} disabled={saving}>
-                {saving && <Loader2 className="gp-spinner-sm" />}
+              <button className="glow-btn glow-btn--primary" onClick={saveForm} disabled={saving}>
+                {saving && <Loader2 className="glow-spinner-sm" />}
                 {editingId ? "Guardar" : "Crear"}
               </button>
             </div>
@@ -1067,7 +1067,7 @@ function HoursBar({
   const pct = (min: number) => Math.max(0, Math.min(100, ((min - dayStart) / total) * 100));
 
   if (isClosed) {
-    return <div className="gp-neg-bar gp-neg-bar-closed" />;
+    return <div className="glow-neg-bar glow-neg-bar-closed" />;
   }
 
   const o = toMin(openTime);
@@ -1084,16 +1084,16 @@ function HoursBar({
   }
 
   return (
-    <div className="gp-neg-bar">
+    <div className="glow-neg-bar">
       {ranges.map((r, i) => (
         <div
           key={i}
-          className="gp-neg-bar-range"
+          className="glow-neg-bar-range"
           style={{ left: `${pct(r.start)}%`, width: `${pct(r.end) - pct(r.start)}%` }}
         />
       ))}
       {[9, 12, 15, 18, 21].map((h) => (
-        <div key={h} className="gp-neg-bar-tick" style={{ left: `${pct(h * 60)}%` }} />
+        <div key={h} className="glow-neg-bar-tick" style={{ left: `${pct(h * 60)}%` }} />
       ))}
     </div>
   );
