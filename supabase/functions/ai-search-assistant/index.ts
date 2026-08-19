@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, clientIp, rateLimited } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,6 +31,11 @@ serve(async (req) => {
 
   try {
     const { query } = await req.json();
+
+    // Anti-abuso: la búsqueda con IA cuesta créditos → 15 por IP cada 5 min
+    if (!(await checkRateLimit("ai-search", clientIp(req), 15, 300))) {
+      return rateLimited(corsHeaders, "Demasiadas búsquedas seguidas. Espera un momento.");
+    }
 
     if (!query || typeof query !== 'string') {
       return new Response(

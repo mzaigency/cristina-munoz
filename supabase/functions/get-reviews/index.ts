@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { checkRateLimit, clientIp, rateLimited } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,9 @@ serve(async (req) => {
   }
 
   try {
+    if (!(await checkRateLimit("get-reviews", clientIp(req), 30, 300))) {
+      return rateLimited(corsHeaders);
+    }
     const GOOGLE_PLACES_API_KEY = Deno.env.get('GOOGLE_PLACES_API_KEY');
     const PLACE_ID = Deno.env.get('GOOGLE_PLACE_ID');
 

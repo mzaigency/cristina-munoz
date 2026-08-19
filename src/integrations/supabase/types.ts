@@ -1306,6 +1306,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: string
+          identifier: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: string
+          identifier: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: string
+          identifier?: string
+        }
+        Relationships: []
+      }
       review_invites: {
         Row: {
           booking_id: string | null
@@ -2959,6 +2980,15 @@ export type Database = {
       }
       check_password_reset_rate_limit: {
         Args: { user_email: string }
+        Returns: boolean
+      }
+      check_rate_limit: {
+        Args: {
+          _bucket: string
+          _identifier: string
+          _max_requests: number
+          _window_seconds: number
+        }
         Returns: boolean
       }
       check_superadmin_email: { Args: { _email: string }; Returns: boolean }

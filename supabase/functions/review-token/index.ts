@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
+import { checkRateLimit, clientIp, rateLimited } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,6 +57,11 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
+
+    // Anti-abuso: evita fuerza bruta sobre los enlaces de valoración
+    if (!(await checkRateLimit("review-token", clientIp(req), 20, 600))) {
+      return json({ error: "Demasiados intentos. Espera unos minutos." }, 429);
+    }
 
     // Service role: la tabla de invitaciones no es accesible de forma anónima
     const admin = createClient(
