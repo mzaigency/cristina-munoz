@@ -4,6 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useGlowConfirm } from "./layout/GlowConfirm";
+import { GlowModal } from "./layout/GlowModal";
 import { AnimatePresence } from "framer-motion";
 import { Search, UserPlus, Users, Download, Upload } from "lucide-react";
 
@@ -35,6 +37,7 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
 
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { confirm, confirmDialog } = useGlowConfirm();
 
   useEffect(() => {
     fetchClients();
@@ -154,7 +157,14 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
   };
 
   const handleDeleteClient = async (clientId: string) => {
-    if (!confirm("¿Estás seguro de eliminar este cliente?")) return;
+    const name = clients.find((c) => c.id === clientId)?.name;
+    const ok = await confirm({
+      title: "¿Eliminar este cliente?",
+      description: name
+        ? `Se borrarán la ficha y las notas de ${name}. Las citas pasadas no se tocan.`
+        : "Se borrarán su ficha y sus notas. Las citas pasadas no se tocan.",
+    });
+    if (!ok) return;
     try {
       const { error } = await supabase.from("clients" as any).delete().eq("id", clientId);
       if (error) throw error;
@@ -304,33 +314,22 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
       />
 
       {/* Form */}
-      {isMobile ? (
-        <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <SheetContent side="bottom" className="h-auto max-h-[85vh]">
-            <SheetHeader><SheetTitle>{editingClient ? "Editar cliente" : "Nuevo cliente"}</SheetTitle></SheetHeader>
-            <ClientForm
-              tenantId={tenantId}
-              editingClient={editingClient}
-              initialData={formInitialData}
-              onSaved={() => { setIsFormOpen(false); fetchClients(); }}
-              existingClients={clients}
-            />
-          </SheetContent>
-        </Sheet>
-      ) : (
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>{editingClient ? "Editar cliente" : "Nuevo cliente"}</DialogTitle></DialogHeader>
-            <ClientForm
-              tenantId={tenantId}
-              editingClient={editingClient}
-              initialData={formInitialData}
-              onSaved={() => { setIsFormOpen(false); fetchClients(); }}
-              existingClients={clients}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
+      <GlowModal
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        title={editingClient ? "Editar cliente" : "Nuevo cliente"}
+        icon={<UserPlus />}
+        size="sm"
+      >
+        <ClientForm
+          tenantId={tenantId}
+          editingClient={editingClient}
+          initialData={formInitialData}
+          onSaved={() => { setIsFormOpen(false); fetchClients(); }}
+          existingClients={clients}
+        />
+      </GlowModal>
+      {confirmDialog}
     </div>
   );
 }

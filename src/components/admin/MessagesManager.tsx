@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { MessageCircle, Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { GlowModal } from './layout/GlowModal';
 import { ConversationList } from '@/components/messages/ConversationList';
 import { ChatWindow } from '@/components/messages/ChatWindow';
 import {
@@ -180,36 +180,35 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
   const totalUnread = conversations.reduce((acc, c) => acc + c.unread_count_salon, 0);
 
   const newMsgDialog = (
-    <Dialog open={newMessageDialog} onOpenChange={setNewMessageDialog}>
-      <DialogContent className={isMobile ? 'mx-4 max-w-[calc(100vw-32px)]' : undefined}>
-        <DialogHeader>
-          <DialogTitle>Iniciar conversación</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 pt-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">
-              Buscar cliente por nombre o username
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-outline" />
-              <input className="glow-input pl-9"
-                type="text"
-                placeholder="Nombre o @username"
-                value={searchUsername}
-                onChange={(e) => setSearchUsername(e.target.value)}
-              />
-            </div>
-            {searching && (
-              <p className="text-xs text-outline mt-2">Buscando…</p>
-            )}
-            <p className="text-xs text-outline mt-2">
-              El cliente debe tener una cuenta registrada
-            </p>
+    <GlowModal
+      open={newMessageDialog}
+      onOpenChange={setNewMessageDialog}
+      title="Iniciar conversación"
+      description="El cliente debe tener una cuenta registrada en Glowapp."
+      icon={<MessageCircle />}
+      size="sm"
+    >
+      <div className="glow-form">
+        <div className="glow-field">
+          <label htmlFor="msg-search">Buscar cliente por nombre o username</label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-outline" />
+            <input
+              id="msg-search"
+              className="glow-input pl-9"
+              type="text"
+              placeholder="Nombre o @username"
+              value={searchUsername}
+              onChange={(e) => setSearchUsername(e.target.value)}
+            />
           </div>
-          {searchResults.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Resultados</p>
-              <div className="max-h-[260px] overflow-y-auto space-y-1">
+          {searching && <span className="glow-field-hint">Buscando…</span>}
+        </div>
+        {searchResults.length > 0 && (
+          <div className="glow-field">
+            <label>Resultados</label>
+            {/* Sin scroll propio: scrollea el cuerpo de la hoja */}
+            <div className="space-y-1">
                 {searchResults.map((p) => (
                   <button
                     key={p.id}
@@ -234,13 +233,12 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
                       )}
                     </div>
                   </button>
-                ))}
-              </div>
+              ))}
             </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+          </div>
+        )}
+      </div>
+    </GlowModal>
   );
 
   // ── Mobile ────────────────────────────────────────────────

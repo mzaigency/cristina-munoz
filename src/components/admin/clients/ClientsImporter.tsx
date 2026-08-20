@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { GlowModal } from "../layout/GlowModal";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileUp, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
+import { Upload, FileUp, CheckCircle2, AlertTriangle, Loader2, Users } from "lucide-react";
 import type { Client } from "./types";
 import { parseCsv, findCol, parseBirthday, normPhone, normEmail, type ParsedRow } from "./importCsv";
 
@@ -127,19 +127,36 @@ export function ClientsImporter({ tenantId, existingClients, open, onOpenChange,
     }
   };
 
+  const close = () => { reset(); onOpenChange(false); };
+
+  // El pie cambia según el paso: nada que hacer hasta que hay un CSV cargado.
+  const footer =
+    done !== null ? (
+      <button className="glow-btn glow-btn--grow" onClick={close}>Cerrar</button>
+    ) : rows.length === 0 && !fileName ? undefined : (
+      <>
+        <button className="glow-btn" onClick={reset} disabled={importing}>Cambiar archivo</button>
+        <button
+          className="glow-btn glow-btn--primary"
+          onClick={handleImport}
+          disabled={rows.length === 0 || importing}
+        >
+          {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          Importar {rows.length} clientes
+        </button>
+      </>
+    );
+
   return (
-    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) reset(); }}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Importar clientes desde CSV</DialogTitle>
-        </DialogHeader>
-
-        <p className="text-sm text-outline">
-          Trae tus clientes de Booksy, Fresha, Treatwell o cualquier CSV. En Booksy:
-          Clientes → Exportar lista de clientes. Detectamos las columnas solos y
-          omitimos los que ya tienes.
-        </p>
-
+    <GlowModal
+      open={open}
+      onOpenChange={(o) => { onOpenChange(o); if (!o) reset(); }}
+      title="Importar clientes"
+      description="Desde Booksy, Fresha, Treatwell o cualquier CSV."
+      icon={<Users />}
+      footer={footer}
+    >
+      <div className="glow-form">
         <input
           ref={inputRef}
           type="file"
@@ -149,27 +166,36 @@ export function ClientsImporter({ tenantId, existingClients, open, onOpenChange,
         />
 
         {done !== null ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-glow-ok/30 bg-glow-ok/5 p-6 text-center">
-            <CheckCircle2 className="h-10 w-10 text-glow-ok-ink" />
-            <p className="font-semibold">{done} clientes importados</p>
-            <p className="text-sm text-outline">Los encontrarás con la etiqueta "Importado"</p>
-            <button className="glow-btn" onClick={() => { reset(); onOpenChange(false); }}>Cerrar</button>
+          <div className="glow-empty">
+            <span className="glow-empty-ic !bg-glow-ok-soft !text-glow-ok-ink">
+              <CheckCircle2 className="h-6 w-6" />
+            </span>
+            <h4>{done} clientes importados</h4>
+            <p>Los encontrarás con la etiqueta "Importado".</p>
           </div>
         ) : rows.length === 0 && !fileName ? (
-          <button
-            onClick={() => inputRef.current?.click()}
-            className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border p-10 text-center transition-colors hover:border-primary/50 hover:bg-muted/40"
-          >
-            <FileUp className="h-8 w-8 text-outline" />
-            <span className="text-sm font-medium">Selecciona el archivo CSV</span>
-            <span className="text-xs text-outline">o arrástralo aquí desde tu ordenador</span>
-          </button>
+          <>
+            <p className="text-[13.5px] font-medium leading-relaxed text-outline">
+              En Booksy: Clientes → Exportar lista de clientes. Detectamos las columnas
+              solos y omitimos los que ya tienes.
+            </p>
+            <button
+              onClick={() => inputRef.current?.click()}
+              className="flex flex-col items-center gap-2 rounded-[18px] border-2 border-dashed border-line p-8 text-center transition-colors active:bg-chip min-[920px]:hover:border-glow-brand/40 min-[920px]:hover:bg-chip"
+            >
+              <FileUp className="h-7 w-7 text-outline" />
+              <span className="text-[14px] font-bold text-on-surface">Selecciona el archivo CSV</span>
+              <span className="text-[12.5px] font-medium text-outline">
+                o arrástralo aquí desde tu ordenador
+              </span>
+            </button>
+          </>
         ) : (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-border p-4">
-              <p className="text-sm font-semibold">{fileName}</p>
-              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                <span className="font-medium text-glow-ok-ink">{rows.length} nuevos para importar</span>
+          <>
+            <div className="rounded-[18px] border border-line p-4">
+              <p className="truncate text-[14px] font-extrabold text-on-surface">{fileName}</p>
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px] font-semibold">
+                <span className="text-glow-ok-ink">{rows.length} nuevos para importar</span>
                 {duplicates > 0 && <span className="text-outline">{duplicates} ya existentes (se omiten)</span>}
                 {skipped > 0 && (
                   <span className="inline-flex items-center gap-1 text-glow-warn-ink">
@@ -179,44 +205,28 @@ export function ClientsImporter({ tenantId, existingClients, open, onOpenChange,
               </div>
             </div>
 
+            {/* Vista previa como filas, no como tabla: tres columnas no caben en
+                un móvil y obligaban a hacer scroll lateral dentro de la hoja. */}
             {rows.length > 0 && (
-              <div className="max-h-44 overflow-y-auto rounded-xl border border-border">
-                <table className="w-full text-xs">
-                  <thead className="sticky top-0 bg-muted/80 backdrop-blur">
-                    <tr className="text-left">
-                      <th className="px-3 py-2 font-medium">Nombre</th>
-                      <th className="px-3 py-2 font-medium">Teléfono</th>
-                      <th className="px-3 py-2 font-medium">Email</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.slice(0, 30).map((r, i) => (
-                      <tr key={i} className="border-t border-border/60">
-                        <td className="px-3 py-1.5">{r.name}</td>
-                        <td className="px-3 py-1.5 text-outline">{r.phone || "—"}</td>
-                        <td className="px-3 py-1.5 text-outline">{r.email || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="overflow-hidden rounded-[18px] border border-line">
+                {rows.slice(0, 30).map((r, i) => (
+                  <div key={i} className="border-b border-line-soft px-3.5 py-2.5 last:border-b-0">
+                    <p className="truncate text-[13.5px] font-bold text-on-surface">{r.name}</p>
+                    <p className="truncate text-[12.5px] font-medium text-outline">
+                      {[r.phone, r.email].filter(Boolean).join(" · ") || "Sin teléfono ni email"}
+                    </p>
+                  </div>
+                ))}
                 {rows.length > 30 && (
-                  <p className="border-t border-border/60 px-3 py-1.5 text-center text-xs text-outline">
+                  <p className="border-t border-line-soft py-2 text-center text-[12.5px] font-semibold text-outline">
                     … y {rows.length - 30} más
                   </p>
                 )}
               </div>
             )}
-
-            <div className="flex justify-end gap-2">
-              <button className="glow-btn" onClick={reset} disabled={importing}>Cambiar archivo</button>
-              <button className="glow-btn glow-btn--primary" onClick={handleImport} disabled={rows.length === 0 || importing}>
-                {importing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                Importar {rows.length} clientes
-              </button>
-            </div>
-          </div>
+          </>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </GlowModal>
   );
 }

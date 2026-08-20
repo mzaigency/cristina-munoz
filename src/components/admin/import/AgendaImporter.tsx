@@ -362,18 +362,18 @@ export const AgendaImporter = ({ tenantId, defaultMode, onComplete }: Props) => 
 
               {isBooking ? (
                 <div className="grid grid-cols-2 gap-2">
-                  <input className="glow-input h-8 text-xs" type="date" value={b.date ?? ""} onChange={(e) => updateRow(r._id, { date: e.target.value || null } as any)} />
-                  <input className="glow-input h-8 text-xs" type="time" value={b.time ?? ""} onChange={(e) => updateRow(r._id, { time: e.target.value || null } as any)} />
-                  <input className="glow-input h-8 text-xs col-span-2" placeholder="Cliente" value={b.customer_name ?? ""} onChange={(e) => updateRow(r._id, { customer_name: e.target.value || null } as any)} />
-                  <input className="glow-input h-8 text-xs" placeholder="Teléfono" value={b.customer_phone ?? ""} onChange={(e) => updateRow(r._id, { customer_phone: e.target.value || null } as any)} />
-                  <input className="glow-input h-8 text-xs" placeholder="Servicio" value={b.service_name ?? ""} onChange={(e) => updateRow(r._id, { service_name: e.target.value || null } as any)} />
+                  <input className="glow-input" type="date" value={b.date ?? ""} onChange={(e) => updateRow(r._id, { date: e.target.value || null } as any)} />
+                  <input className="glow-input" type="time" value={b.time ?? ""} onChange={(e) => updateRow(r._id, { time: e.target.value || null } as any)} />
+                  <input className="glow-input col-span-2" placeholder="Cliente" value={b.customer_name ?? ""} onChange={(e) => updateRow(r._id, { customer_name: e.target.value || null } as any)} />
+                  <input className="glow-input" placeholder="Teléfono" value={b.customer_phone ?? ""} onChange={(e) => updateRow(r._id, { customer_phone: e.target.value || null } as any)} />
+                  <input className="glow-input" placeholder="Servicio" value={b.service_name ?? ""} onChange={(e) => updateRow(r._id, { service_name: e.target.value || null } as any)} />
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
-                  <input className="glow-input h-8 text-xs col-span-2" placeholder="Servicio" value={s.name ?? ""} onChange={(e) => updateRow(r._id, { name: e.target.value } as any)} />
-                  <input className="glow-input h-8 text-xs" type="number" placeholder="Precio €" value={s.price ?? ""} onChange={(e) => updateRow(r._id, { price: e.target.value === "" ? null : Number(e.target.value) } as any)} />
-                  <input className="glow-input h-8 text-xs" type="number" placeholder="Duración min" value={s.duration_minutes ?? ""} onChange={(e) => updateRow(r._id, { duration_minutes: e.target.value === "" ? null : Number(e.target.value) } as any)} />
-                  <input className="glow-input h-8 text-xs col-span-2" placeholder="Categoría" value={s.category ?? ""} onChange={(e) => updateRow(r._id, { category: e.target.value || null } as any)} />
+                  <input className="glow-input col-span-2" placeholder="Servicio" value={s.name ?? ""} onChange={(e) => updateRow(r._id, { name: e.target.value } as any)} />
+                  <input className="glow-input" type="number" placeholder="Precio €" value={s.price ?? ""} onChange={(e) => updateRow(r._id, { price: e.target.value === "" ? null : Number(e.target.value) } as any)} />
+                  <input className="glow-input" type="number" placeholder="Duración min" value={s.duration_minutes ?? ""} onChange={(e) => updateRow(r._id, { duration_minutes: e.target.value === "" ? null : Number(e.target.value) } as any)} />
+                  <input className="glow-input col-span-2" placeholder="Categoría" value={s.category ?? ""} onChange={(e) => updateRow(r._id, { category: e.target.value || null } as any)} />
                 </div>
               )}
             </div>

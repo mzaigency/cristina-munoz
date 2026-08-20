@@ -133,14 +133,14 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
   };
 
   return (
-    <div className="p-4 space-y-4">
-      <div>
-        <label className="text-sm font-medium mb-1.5 block">Nombre *</label>
+    <div className="glow-form">
+      <div className="glow-field">
+        <label>Nombre *</label>
         <input className="glow-input" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Nombre del cliente" />
       </div>
 
-      <div>
-        <label className="text-sm font-medium mb-1.5 block">Teléfono</label>
+      <div className="glow-field">
+        <label>Teléfono</label>
         <input className="glow-input"
           value={formData.phone}
           onChange={(e) => { setFormData({ ...formData, phone: e.target.value }); checkDuplicate(e.target.value); }}
@@ -155,19 +155,19 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
         )}
       </div>
 
-      <div>
-        <label className="text-sm font-medium mb-1.5 block">Email</label>
+      <div className="glow-field">
+        <label>Email</label>
         <input className="glow-input" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="cliente@email.com" type="email" />
       </div>
 
-      <div>
-        <label className="text-sm font-medium mb-1.5 block">Cumpleaños</label>
+      <div className="glow-field">
+        <label>Cumpleaños</label>
         <input className="glow-input" value={formData.birthday} onChange={(e) => setFormData({ ...formData, birthday: e.target.value })} type="date" />
       </div>
 
       {/* Profile linking */}
-      <div>
-        <label className="text-sm font-medium mb-1.5 block">Vincular cuenta de usuario</label>
+      <div className="glow-field">
+        <label>Vincular cuenta de usuario</label>
         {linkedProfile ? (
           <div className="flex items-center gap-2 p-2.5 rounded-lg border bg-primary/5 border-primary/20">
             <Avatar className="h-8 w-8">
@@ -227,8 +227,8 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
         )}
       </div>
 
-      <div>
-        <label className="text-sm font-medium mb-1.5 block">Etiquetas</label>
+      <div className="glow-field">
+        <label>Etiquetas</label>
         <div className="flex flex-wrap gap-2">
           {TAG_OPTIONS.map(tag => (
             <Badge
@@ -243,12 +243,12 @@ export function ClientForm({ tenantId, editingClient, initialData, onSaved, exis
         </div>
       </div>
 
-      <div>
-        <label className="text-sm font-medium mb-1.5 block">Notas privadas</label>
+      <div className="glow-field">
+        <label>Notas privadas</label>
         <textarea className="glow-input" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Preferencias, alergias, observaciones..." rows={3} />
       </div>
 
-      <button className="glow-btn glow-btn--primary glow-btn--block" onClick={handleSave} disabled={saving}>
+      <button className="glow-btn glow-btn--primary glow-btn--block mt-1" onClick={handleSave} disabled={saving}>
         {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
         {editingClient ? "Guardar cambios" : "Crear cliente"}
       </button>

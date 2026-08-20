@@ -4850,49 +4850,6 @@ body.msg-chat-open { overflow: hidden; }
 .glow-team-sec-h .glow-neg-section-h svg { width: 14px; height: 14px; color: var(--glow-ink-3); }
 
 /* ---- Create dialog ---- */
-.glow-neg-create-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px;
-  animation: gpFadeIn 0.18s ease-out;
-}
-.glow-neg-create {
-  width: 100%;
-  max-width: 360px;
-  background: var(--glow-surface);
-  border-radius: 16px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  border: 1px solid var(--glow-line);
-}
-.glow-neg-create h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--glow-ink); }
-.glow-neg-create label { display: flex; flex-direction: column; gap: 4px; }
-.glow-neg-create label > span {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--glow-ink-3);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.glow-neg-create input[type="text"] {
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--glow-line);
-  background: var(--glow-bg);
-  font-family: inherit;
-  font-size: 14px;
-  color: var(--glow-ink);
-  outline: none;
-}
-.glow-neg-create input:focus { border-color: var(--glow-brand); }
-.glow-neg-create-actions { display: flex; justify-content: flex-end; gap: 8px; }
 
 /* ---- Hours Manager ---- */
 .glow-neg-hours { display: flex; flex-direction: column; gap: 16px; }
@@ -5243,25 +5200,6 @@ details[open] .glow-neg-past-summary::before { transform: rotate(90deg); }
 .glow-neg-bar-preview { padding: 8px 0; }
 
 /* ---- Form card overlay ---- */
-.glow-neg-form-card {
-  width: 100%;
-  max-width: 460px;
-  max-height: 92vh;
-  overflow-y: auto;
-  background: var(--glow-surface);
-  border-radius: 18px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  border: 1px solid var(--glow-line);
-}
-.glow-neg-form-h {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.glow-neg-form-h h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--glow-ink); }
 
 /* ---- Goals + Reports ---- */
 .glow-neg-goals { display: flex; flex-direction: column; gap: 14px; }
@@ -5965,4 +5903,24 @@ details[open] .glow-neg-past-summary::before { transform: rotate(90deg); }
 .msg-auto-toggle:hover {
   color: hsl(var(--foreground));
   background: hsl(var(--muted));
+}
+
+/* ═══ Táctil ════════════════════════════════════════════════════════════════
+   Va al final y SIN @layer a propósito: las reglas de este archivo no están
+   en ninguna capa, así que una regla dentro de @layer components (glow.css)
+   nunca podría ganarles. La especificidad también está calculada para superar
+   a selectores como `.glow-neg-form-row input[type="text"]`.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (pointer: coarse) {
+  /* iOS Safari hace zoom al enfocar un campo de menos de 16px y quitar el zoom
+     del viewport no es opción (accesibilidad). En táctil, todo campo del panel
+     mide 16px. */
+  body[data-glow-panel] input[type],
+  body[data-glow-panel] input:not([type]),
+  body[data-glow-panel] textarea,
+  body[data-glow-panel] select { font-size: 16px; }
+
+  /* Elegir color de profesional con el pulgar: 28px se queda corto. */
+  body[data-glow-panel] .glow-neg-color-row { gap: 10px; }
+  body[data-glow-panel] .glow-neg-color-dot { width: 36px; height: 36px; border-radius: 11px; }
 }

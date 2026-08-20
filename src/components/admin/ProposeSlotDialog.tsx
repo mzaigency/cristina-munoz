@@ -1,13 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { GlowModal } from "./layout/GlowModal";
 import {
   Select,
   SelectContent,
@@ -194,29 +187,43 @@ export function ProposeSlotDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto pb-[max(env(safe-area-inset-bottom),1rem)]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Proponer hueco
-          </DialogTitle>
-          <DialogDescription>
-            A {waitlistEntry.client_name}
-            {waitlistEntry.user_id
-              ? " (recibirá aviso en la app)"
-              : waitlistEntry.client_phone
-                ? " (te abriremos WhatsApp)"
-                : " (sin contacto digital)"}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-2">
+    <GlowModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Proponer hueco"
+      description={
+        <>
+          A {waitlistEntry.client_name}
+          {waitlistEntry.user_id
+            ? " (recibirá aviso en la app)"
+            : waitlistEntry.client_phone
+              ? " (te abriremos WhatsApp)"
+              : " (sin contacto digital)"}
+        </>
+      }
+      icon={<Sparkles />}
+      footer={
+        <>
+          <button className="glow-btn" onClick={() => onOpenChange(false)} disabled={submitting}>
+            Cancelar
+          </button>
+          <button
+            className="glow-btn glow-btn--primary"
+            onClick={handlePropose}
+            disabled={submitting || !date || !time}
+          >
+            {submitting && <Loader2 className="glow-spinner-sm" />}
+            Proponer
+          </button>
+        </>
+      }
+    >
+      <div className="glow-form">
           <div>
             <label className="text-xs flex items-center gap-1.5">
               <CalIcon className="h-3.5 w-3.5" /> Fecha
             </label>
-            <input className="glow-input mt-1"
+            <input className="glow-input"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
@@ -228,15 +235,15 @@ export function ProposeSlotDialog({
             <label className="text-xs flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" /> Hora
             </label>
-            <input className="glow-input mt-1"
+            <input className="glow-input"
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
             />
           </div>
 
-          <div>
-            <label className="text-xs">Profesional</label>
+          <div className="glow-field">
+            <label>Profesional</label>
             <Select
               value={stylistId || "none"}
               onValueChange={(v) => setStylistId(v === "none" ? "" : v)}
@@ -267,18 +274,6 @@ export function ProposeSlotDialog({
           </div>
         </div>
 
-        <DialogFooter className="gap-2">
-          <button className="glow-btn" onClick={() => onOpenChange(false)} disabled={submitting}>
-            Cancelar
-          </button>
-          <button className="glow-btn glow-btn--primary"
-            onClick={handlePropose}
-            disabled={submitting || !date || !time}>
-            {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Proponer
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </GlowModal>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { GlowModal } from "./layout/GlowModal";
+import { useGlowConfirm } from "./layout/GlowConfirm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -116,6 +117,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
     loyalty_points_required: 0,
   });
   const { toast } = useToast();
+  const { confirm, confirmDialog } = useGlowConfirm();
 
   useEffect(() => {
     fetchPromotions();
@@ -262,10 +264,14 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar esta promoción?")) return;
+  const handleDelete = async (promo: Promotion) => {
+    const ok = await confirm({
+      title: "¿Eliminar esta promoción?",
+      description: `"${promo.name}" dejará de poder aplicarse. No se puede deshacer.`,
+    });
+    if (!ok) return;
     try {
-      const { error } = await supabase.from("promotions").delete().eq("id", id);
+      const { error } = await supabase.from("promotions").delete().eq("id", promo.id);
       if (error) throw error;
       toast({ title: "Promoción eliminada" });
       fetchPromotions();
@@ -404,7 +410,7 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
                     <button
                       className="glow-icon-btn"
                       style={{ color: "var(--glow-danger-ink)" }}
-                      onClick={() => handleDelete(promo.id)}
+                      onClick={() => handleDelete(promo)}
                       title="Eliminar"
                     >
                       <Trash2 style={{ width: 14, height: 14 }} />
@@ -462,13 +468,26 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
         </div>
       )}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingPromotion ? "Editar Promoción" : "Nueva Promoción"}
-            </DialogTitle>
-          </DialogHeader>
+      <GlowModal
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        title={editingPromotion ? "Editar promoción" : "Nueva promoción"}
+        description={showPresets && !editingPromotion ? "Empieza por una plantilla o créala a tu medida." : undefined}
+        icon={<Ticket />}
+        footer={
+          <>
+            <button type="button" className="glow-btn" onClick={() => setIsDialogOpen(false)}>
+              Cancelar
+            </button>
+            {(!showPresets || editingPromotion) && (
+              <button type="button" className="glow-btn glow-btn--primary" onClick={handleSave} disabled={saving}>
+                {saving && <Loader2 className="glow-spinner-sm" />}
+                {editingPromotion ? "Guardar" : "Crear promoción"}
+              </button>
+            )}
+          </>
+        }
+      >
 
           {showPresets && !editingPromotion && (
             <div className="glow-mkt-preset-grid">
@@ -624,19 +643,8 @@ export function PromotionsManager({ tenantId }: PromotionsManagerProps) {
             </div>
           )}
 
-          <DialogFooter>
-            <button type="button" className="glow-btn" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
-            </button>
-            {(!showPresets || editingPromotion) && (
-              <button type="button" className="glow-btn glow-btn--primary" onClick={handleSave} disabled={saving}>
-                {saving && <Loader2 className="glow-spinner-sm" />}
-                {editingPromotion ? "Guardar" : "Crear"}
-              </button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </GlowModal>
+      {confirmDialog}
     </div>
   );
 }

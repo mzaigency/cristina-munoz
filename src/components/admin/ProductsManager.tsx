@@ -1,13 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { GlowModal } from "./layout/GlowModal";
 import {
   Select,
   SelectContent,
@@ -15,17 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Pencil, Trash2, Package, AlertTriangle, PackagePlus, Star, ImagePlus, X } from "lucide-react";
+import { useGlowConfirm } from "./layout/GlowConfirm";
+import { Loader2, Plus, Pencil, Trash2, Package, PackagePlus, Star, ImagePlus, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 interface Product {
@@ -58,7 +43,6 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
   const [catFilter, setCatFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -79,6 +63,7 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
     cost: "",
   });
   const { toast } = useToast();
+  const { confirm, confirmDialog } = useGlowConfirm();
 
   useEffect(() => {
     fetchProducts();
@@ -255,13 +240,16 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!selectedProduct) return;
+  const handleDelete = async (product: Product) => {
+    const ok = await confirm({
+      title: "¿Eliminar producto?",
+      description: `"${product.name}" desaparecerá de la caja y de tu tienda. No se puede deshacer.`,
+    });
+    if (!ok) return;
     try {
-      const { error } = await supabase.from("products").delete().eq("id", selectedProduct.id);
+      const { error } = await supabase.from("products").delete().eq("id", product.id);
       if (error) throw error;
       toast({ title: "Producto eliminado" });
-      setDeleteDialogOpen(false);
       setSelectedProduct(null);
       fetchProducts();
     } catch (error) {
@@ -329,16 +317,21 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
           </p>
         </div>
         <div className="glow-page-actions">
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={() => openDialog()}>
-                <Plus style={{ width: 14, height: 14 }} /> Nuevo producto
+          <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={() => openDialog()}>
+            <Plus style={{ width: 14, height: 14 }} /> Nuevo producto
+          </button>
+          <GlowModal
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            title={selectedProduct ? "Editar producto" : "Nuevo producto"}
+            description="Se vende desde la caja y desde tu tienda online."
+            icon={<Package />}
+            footer={
+              <button className="glow-btn glow-btn--primary glow-btn--grow" onClick={handleSave} disabled={saving}>
+                {saving ? <><Loader2 className="glow-spinner-sm" />Guardando…</> : "Guardar producto"}
               </button>
-            </DialogTrigger>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{selectedProduct ? "Editar producto" : "Nuevo producto"}</DialogTitle>
-            </DialogHeader>
+            }
+          >
             <div className="glow-form">
               {/* Imagen */}
               <div className="glow-field">
@@ -423,12 +416,8 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                   <input className="glow-input" type="number" value={formData.min_stock} onChange={(e) => setFormData({ ...formData, min_stock: e.target.value })} placeholder="0" />
                 </div>
               </div>
-              <button className="glow-btn glow-btn--primary glow-btn--block" onClick={handleSave} disabled={saving}>
-                {saving ? <><Loader2 className="glow-spinner-sm" />Guardando...</> : "Guardar producto"}
-              </button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </GlowModal>
         </div>
       </div>
 
@@ -543,7 +532,7 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
                         className="glow-icon-btn"
                         aria-label={`Eliminar ${product.name}`}
                         style={{ color: "var(--glow-danger-ink)" }}
-                        onClick={() => { setSelectedProduct(product); setDeleteDialogOpen(true); }}
+                        onClick={() => handleDelete(product)}
                       >
                         <Trash2 style={{ width: 14, height: 14 }} />
                       </button>
@@ -556,66 +545,54 @@ export const ProductsManager = ({ tenantId }: ProductsManagerProps) => {
         </div>
       )}
 
-      {/* Stock Entry Dialog */}
-      <Dialog open={stockDialogOpen} onOpenChange={setStockDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <PackagePlus className="h-5 w-5" />
-              Entrada de stock
-            </DialogTitle>
-          </DialogHeader>
-          {selectedProduct && (
-            <div className="glow-form">
-              <div className="p-3 bg-muted rounded-lg">
-                <p className="font-medium">{selectedProduct.name}</p>
-                <p className="text-sm text-outline">Stock actual: {selectedProduct.stock} unidades</p>
-              </div>
-              <div className="glow-field">
-                <label>Cantidad a añadir *</label>
-                <input className="glow-input text-center text-lg" 
-                  type="number" 
-                  value={stockEntry.quantity} 
-                  onChange={(e) => setStockEntry({ ...stockEntry, quantity: e.target.value })} 
-                  placeholder="Ej: 10"
-                />
-              </div>
-              <div className="glow-field">
-                <label>Precio de compra (opcional)</label>
-                <input className="glow-input" 
-                  type="number" 
-                  step="0.01"
-                  value={stockEntry.cost} 
-                  onChange={(e) => setStockEntry({ ...stockEntry, cost: e.target.value })} 
-                  placeholder="0.00"
-                />
-                <p className="text-xs text-outline">Se actualizará el coste del producto</p>
-              </div>
-              <button className="glow-btn glow-btn--primary glow-btn--block" onClick={handleStockEntry} disabled={saving}>
-                {saving ? <Loader2 className="glow-spinner-sm" /> : <PackagePlus style={{ width: 14, height: 14, display: "inline-block", marginRight: 6, verticalAlign: "middle" }} />}
-                Añadir stock
-              </button>
+      {/* Entrada de stock */}
+      <GlowModal
+        open={stockDialogOpen}
+        onOpenChange={setStockDialogOpen}
+        title="Entrada de stock"
+        description={selectedProduct ? `${selectedProduct.name} · ${selectedProduct.stock} uds. ahora mismo` : undefined}
+        icon={<PackagePlus />}
+        size="sm"
+        footer={
+          <button className="glow-btn glow-btn--primary glow-btn--grow" onClick={handleStockEntry} disabled={saving}>
+            {saving ? <Loader2 className="glow-spinner-sm" /> : <PackagePlus style={{ width: 15, height: 15 }} />}
+            Añadir stock
+          </button>
+        }
+      >
+        {selectedProduct && (
+          <div className="glow-form">
+            <div className="glow-field">
+              <label htmlFor="stock-qty">Cantidad a añadir *</label>
+              <input
+                id="stock-qty"
+                className="glow-input text-center text-[19px] font-extrabold"
+                type="number"
+                inputMode="numeric"
+                value={stockEntry.quantity}
+                onChange={(e) => setStockEntry({ ...stockEntry, quantity: e.target.value })}
+                placeholder="Ej: 10"
+              />
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            <div className="glow-field">
+              <label htmlFor="stock-cost">Precio de compra (opcional)</label>
+              <input
+                id="stock-cost"
+                className="glow-input"
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                value={stockEntry.cost}
+                onChange={(e) => setStockEntry({ ...stockEntry, cost: e.target.value })}
+                placeholder="0.00"
+              />
+              <span className="glow-field-hint">Se actualizará el coste del producto.</span>
+            </div>
+          </div>
+        )}
+      </GlowModal>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar producto?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el producto "{selectedProduct?.name}".
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {confirmDialog}
     </div>
   );
 };

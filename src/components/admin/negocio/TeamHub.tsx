@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Moon,
   Wallet,
+  UserPlus,
 } from "lucide-react";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 import { StylistDrawer } from "./StylistDrawer";
@@ -18,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { PlanUsageBar } from "@/components/admin/PlanUsageBar";
 import { UpgradePrompt } from "@/components/admin/UpgradePrompt";
+import { GlowModal } from "@/components/admin/layout/GlowModal";
 
 /**
  * Equipo — lista tipo contactos, pensada para equipos de 1-10 personas.
@@ -456,50 +458,58 @@ export function TeamHub({ tenantId }: TeamHubProps) {
       )}
 
       {/* Alta */}
-      {creating && (
-        <div className="glow-neg-create-backdrop" onClick={() => !saving && setCreating(false)}>
-          <div className="glow-neg-create" onClick={(e) => e.stopPropagation()}>
-            <h3>Nuevo profesional</h3>
-            <label>
-              <span>Nombre</span>
-              <input
-                type="text"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !saving) handleCreate();
-                }}
-                placeholder="Ej: Cristina Muñoz"
-                autoFocus
-              />
-            </label>
-            <label>
-              <span>Color en la agenda</span>
-              <div className="glow-neg-color-row">
-                {PRESET_COLORS.map((c) => (
-                  <button
-                    key={c}
-                    className={`glow-neg-color-dot${newColor === c ? " on" : ""}`}
-                    style={{ background: c }}
-                    onClick={() => setNewColor(c)}
-                    type="button"
-                    aria-label={`Color ${c}`}
-                  />
-                ))}
-              </div>
-            </label>
-            <div className="glow-neg-create-actions">
-              <button className="glow-btn" onClick={() => setCreating(false)} disabled={saving}>
-                Cancelar
-              </button>
-              <button className="glow-btn glow-btn--primary" onClick={handleCreate} disabled={saving}>
-                {saving && <Loader2 className="glow-spinner-sm" />}
-                Añadir al equipo
-              </button>
+      <GlowModal
+        open={creating}
+        onOpenChange={(o) => !saving && setCreating(o)}
+        title="Nuevo profesional"
+        description="Le reservamos su columna en la agenda."
+        icon={<UserPlus />}
+        size="sm"
+        footer={
+          <>
+            <button className="glow-btn" onClick={() => setCreating(false)} disabled={saving}>
+              Cancelar
+            </button>
+            <button className="glow-btn glow-btn--primary" onClick={handleCreate} disabled={saving}>
+              {saving && <Loader2 className="glow-spinner-sm" />}
+              Añadir al equipo
+            </button>
+          </>
+        }
+      >
+        <div className="glow-form">
+          <div className="glow-field">
+            <label htmlFor="team-name">Nombre</label>
+            <input
+              id="team-name"
+              className="glow-input"
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !saving) handleCreate();
+              }}
+              placeholder="Ej: Cristina Muñoz"
+              autoFocus
+            />
+          </div>
+          <div className="glow-field">
+            <label>Color en la agenda</label>
+            <div className="glow-neg-color-row">
+              {PRESET_COLORS.map((c) => (
+                <button
+                  key={c}
+                  className={`glow-neg-color-dot${newColor === c ? " on" : ""}`}
+                  style={{ background: c }}
+                  onClick={() => setNewColor(c)}
+                  type="button"
+                  aria-label={`Color ${c}`}
+                />
+              ))}
             </div>
           </div>
         </div>
-      )}
+      </GlowModal>
     </div>
   );
 }

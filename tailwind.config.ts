@@ -102,6 +102,7 @@ export default {
         "chip": g("sunk"),
         "ink-2": g("ink-2"),
         "line": g("line"),
+        "line-soft": g("line-soft"),
         // Familia semántica del panel. Reemplaza a los 308 colores crudos de la
         // paleta de Tailwind (amber-500, emerald-600…) que había repartidos.
         // El tono base lleva canales, así `bg-glow-ok/10` sigue funcionando.

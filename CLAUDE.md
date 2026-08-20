@@ -261,12 +261,59 @@ escritorio — nada de una lista para móvil y una `<table>` distinta detrás de
 en escritorio, siempre visibles en táctil). Cabecera con métricas reales y
 `glow-toolbar` con buscador + chips de filtro.
 
-### Formularios
-`glow-field` (label arriba, `glow-input`, `glow-field-hint` debajo) dentro de
+### Formularios y hojas
+Todo formulario del panel se abre con **`GlowModal`** (`src/components/admin/layout/GlowModal.tsx`):
+en móvil sale como hoja desde abajo (tirador, cabecera fija, cuerpo con scroll,
+pie pegado con safe-area) y en escritorio como modal centrado. **Mismo markup en
+los dos casos** — una pantalla no duplica su formulario en un `isMobile ? Sheet : Dialog`.
+
+Va montado sobre Radix directamente, no sobre `Sheet`/`Dialog` de shadcn: esos traen
+`grid p-6 gap-4 max-w-lg` y una X de 16px, y dentro de `@layer components` una utility
+de Tailwind siempre gana a una primitiva `glow-*`. Por eso el CONTENEDOR se estiliza con
+utilities desde el .tsx y en `glow.css` solo viven los hijos (`glow-sheet-h`, `-grip`,
+`-title`, `-ico`, `-sub`, `-body`, `-f`, `-x`), que son nuestros y no colisionan.
+
+Las acciones van en la prop `footer`: en móvil se reparten el ancho, en escritorio se
+alinean a la derecha.
+
+Dentro: `glow-field` (label arriba, `glow-input`, `glow-field-hint` debajo) dentro de
 `glow-form` / `glow-form-grid`. **No usar `Card`, `Label` ni `Input` de shadcn en el
-panel** — son otro lenguaje visual (otro radio, otra sombra). Sí se conservan los
-componentes de Radix por comportamiento (`Select`, `Switch`, `Dialog`, `Sheet`).
-Formularios largos: `glow-save-bar` fija abajo.
+panel** — son otro lenguaje visual. Sí se conservan los de Radix por comportamiento
+(`Select`, `Switch`, `Dialog`, `Sheet`). Formularios largos fuera de una hoja:
+`glow-save-bar`.
+
+**Nada de `confirm()` del navegador**: `useGlowConfirm()`
+(`src/components/admin/layout/GlowConfirm.tsx`) devuelve `{ confirm, confirmDialog }`
+y se usa `if (!(await confirm({ title: … }))) return;` + `{confirmDialog}` en el árbol.
+El botón que confirma un borrado usa `glow-btn--danger-solid` (rojo sólido); en una
+fila de acciones el borrado sigue siendo `glow-btn--danger` (suave).
+
+Excepciones vivas de shadcn `Dialog`, todas justificadas: `ImageCropper` (el lienzo se
+arrastra con el dedo y pelearía con el scroll de la hoja), `UpgradePrompt` y `HelpCenter`
+(ya tienen su propia rama móvil), `ClientsCRM` (el detalle es una hoja lateral, que es
+el patrón correcto ahí), `LocalCalendarCRM` y `QuickPayment` (ya rediseñados).
+
+### Táctil
+El bloque `@media (pointer: coarse)` **al final de `index.css`, sin `@layer`**: las reglas
+de `index.css` no están en ninguna capa, así que una regla dentro de `@layer components`
+(glow.css) nunca podría ganarles, y la especificidad está calculada para superar a
+selectores como `.glow-neg-form-row input[type="text"]`.
+
+- **44px de objetivo táctil**: `glow-icon-btn`, `glow-chip`, `glow-subtab` y `glow-btn--sm`
+  crecen con un `::before` de `inset: -4px` (no mueve el layout). **`::after` en
+  `.glow-subtab` ya es el subrayado del activo** — de ahí que se use `::before`.
+- **iOS Safari hace zoom al enfocar un campo de menos de 16px** y quitar el zoom del
+  viewport no es opción (accesibilidad): en táctil todo campo del panel mide 16px.
+  De paso el alto sube de ~39 a 44px.
+- Las opciones de un `Select` de Radix miden 32px: suben a 42px. Van en un portal
+  colgando de `body`, por eso el selector cuelga de `body[data-glow-panel]`.
+
+### Tablas
+**No hay tablas en el panel.** Seis columnas numéricas no caben en 375px y el scroll
+lateral no se ve venir. En su lugar, una matriz: nombre arriba y una tira de métricas
+(`label` de 10px + valor) repartidas con `flex-1`. Ver `CashRegisterStats` y
+`TenantFeedAnalytics`. La única `<table>` que queda es la del ticket impreso de
+`QuickPayment`, que es una cadena de HTML para el PDF, no interfaz.
 
 ### Modo oscuro
 El panel es **solo claro**. `darkMode: "class"` está fijado a propósito: sin esa línea
@@ -290,6 +337,8 @@ invirtiendo media interfaz. No reintroducir `dark:` en el panel.
 | `src/styles/glow.css` | **Design system del panel**: tokens + primitivas `glow-*` |
 | `src/lib/chartColors.ts` | Paleta de gráficas y color por defecto de profesional |
 | `src/components/admin/layout/AdminSubNav.tsx` | Fila única de pestañas de sección |
+| `src/components/admin/layout/GlowModal.tsx` | Hoja del panel: abajo en móvil, modal centrado en escritorio |
+| `src/components/admin/layout/GlowConfirm.tsx` | `useGlowConfirm()` — sustituye a `confirm()` del navegador |
 | `src/index.css` | Tokens shadcn, font-ashing, CSS de secciones (`glow-mkt-*`, `glow-neg-*`, `ag-*`) |
 | `src/content/competitors.ts` | Copy completo de páginas alternativa-a-* |
 | `src/hooks/usePlanLimits.ts` | Qué funciones van en cada plan (Starter/Pro/Business) |

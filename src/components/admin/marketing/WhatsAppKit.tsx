@@ -306,7 +306,7 @@ export function WhatsAppKit({ tenantSlug, tenantName }: WhatsAppKitProps) {
                   <p className="text-[11px] text-outline">{tpl.description}</p>
                 </div>
               </div>
-              <textarea className="glow-input min-h-[88px] resize-none rounded-xl border-border/60 bg-background/60 text-sm leading-relaxed"
+              <textarea className="glow-input min-h-[88px] resize-none leading-relaxed"
                 value={text}
                 readOnly
               />

@@ -166,6 +166,14 @@
   .glow-btn--danger { color: var(--glow-danger-ink); }
   .glow-btn--danger:hover { background: var(--glow-danger-soft); }
 
+  /* Sólido: solo para el botón que CONFIRMA un borrado. En una fila de acciones
+     el borrado va siempre en la variante suave de arriba. */
+  .glow-btn--danger-solid {
+    background: var(--glow-danger-ink); color: #fff; border-color: transparent;
+    box-shadow: 0 8px 18px -10px color-mix(in oklab, var(--glow-danger), transparent 30%);
+  }
+  .glow-btn--danger-solid:hover { background: var(--glow-danger); }
+
   .glow-btn--sm { padding: 6px 11px; font-size: var(--glow-t-xs); border-radius: var(--glow-r-sm); gap: 5px; }
   .glow-btn--block { width: 100%; }
   .glow-btn--icon { padding: 9px; }
@@ -482,6 +490,11 @@
     flex-wrap: wrap; margin-bottom: var(--glow-s3);
   }
   .glow-toolbar .glow-input { max-width: 240px; }
+  /* En móvil el buscador ocupa su propia línea: con 240px fijos el primer chip
+     cabía al lado y el resto caía suelto en la siguiente. */
+  @media (max-width: 620px) {
+    .glow-toolbar .glow-input { max-width: none; flex: 1 0 100%; }
+  }
 
   /* ── Barra de guardado fija (formularios largos) ────────────────────────── */
   .glow-save-bar {
@@ -500,6 +513,115 @@
 
   .glow-btn--grow { flex: 1; }
 
+  /* ── Objetivos táctiles ──────────────────────────────────────────────────────
+     En escritorio 38px va bien; con el dedo se queda corto (la guía son 44).
+     El área se agranda con un ::before para no mover el layout, y el hueco entre
+     acciones sube a 8px para que dos áreas contiguas no se solapen. */
+  @media (pointer: coarse) {
+    .glow-icon-btn::before,
+    .glow-chip::before,
+    .glow-subtab::before,
+    .glow-btn--sm::before { content: ""; position: absolute; inset: -4px; }
+    /* OJO: ::after en .glow-subtab ya es el subrayado del activo — usar ::before */
+    .glow-chip, .glow-btn--sm {
+      position: relative;
+      /* con 33px de alto el ::before no llega a 44: la píldora crece también */
+      min-height: 38px;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .glow-row-actions { gap: var(--glow-s2); }
+
+    /* Las opciones de un Select de Radix miden 32px. Van en un portal colgando
+       de body, por eso el selector cuelga de body[data-glow-panel] igual que
+       la fuente del panel. */
+    body[data-glow-panel] [role="option"],
+    body[data-glow-panel] [role="menuitem"],
+    body[data-glow-panel] [role="menuitemradio"],
+    body[data-glow-panel] [role="menuitemcheckbox"] { min-height: 42px; }
+
+    /* iOS Safari hace zoom al enfocar un campo de menos de 16px, y quitar el
+       zoom del viewport no es opción (accesibilidad). Así que en táctil el
+       campo crece: de paso el alto sube de 39 a 42px. */
+    .glow-input, select.glow-input, textarea.glow-input { font-size: 16px; }
+    /* Los campos definidos en index.css van SIN capa, así que ganan a esta
+       regla pase lo que pase: su versión está al final de index.css. */
+  }
+
+  /* ── Hoja / modal (GlowModal) ───────────────────────────────────────────────
+     Piezas internas de la hoja del panel. El CONTENEDOR (el Content de Radix)
+     se estiliza con utilities desde GlowModal.tsx a propósito: shadcn le mete
+     `grid p-6 gap-4 max-w-lg`, y dentro de @layer components una utility
+     siempre gana a una primitiva, así que aquí no se pelea — solo van los
+     hijos, que son nuestros y no colisionan con nada. */
+
+  /* Cabecera: tirador (solo en la hoja) + título + subtítulo */
+  .glow-sheet-h {
+    flex: none;
+    padding: 10px var(--glow-s5) var(--glow-s4);
+    border-bottom: 1px solid var(--glow-line-soft);
+    text-align: left;
+  }
+  .glow-sheet-grip {
+    width: 40px; height: 5px; margin: 0 auto var(--glow-s4);
+    border-radius: var(--glow-r-full);
+    background: rgb(var(--glow-ink-4-rgb) / .38);
+  }
+  .glow-sheet-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: var(--glow-t-xl); font-weight: var(--glow-w-xl);
+    letter-spacing: -.02em; line-height: 1.25; color: var(--glow-ink);
+  }
+  .glow-sheet-ico {
+    width: 34px; height: 34px; flex: none;
+    display: grid; place-items: center;
+    border-radius: var(--glow-r-full);
+    background: var(--glow-gradient);
+    color: #fff;
+  }
+  .glow-sheet-ico > svg { width: 17px; height: 17px; }
+  /* En una confirmación destructiva el círculo no lleva el degradado de marca:
+     el degradado es firma, y aquí lo que toca comunicar es peligro. */
+  .glow-sheet-ico--danger { background: var(--glow-danger-soft); color: var(--glow-danger-ink); }
+  .glow-sheet-sub {
+    margin-top: 6px;
+    font-size: var(--glow-t-sm); font-weight: 500; color: var(--glow-ink-3);
+  }
+
+  /* Cuerpo con scroll propio: cabecera y pie se quedan fijos */
+  .glow-sheet-body {
+    flex: 1 1 auto; min-height: 0;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: var(--glow-s5);
+  }
+
+  /* Pie pegado abajo. La safe-area la pone el propio SheetContent de shadcn
+     (`pb-[env(safe-area-inset-bottom)]`), no hace falta repetirla. */
+  .glow-sheet-f {
+    flex: none;
+    display: flex; align-items: center; gap: var(--glow-s2);
+    padding: var(--glow-s3) var(--glow-s5);
+    border-top: 1px solid var(--glow-line-soft);
+    background: color-mix(in oklab, var(--glow-surface), transparent 6%);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  .glow-sheet-f > .glow-btn { min-height: 46px; }
+  /* En móvil los botones se reparten el ancho; en escritorio van a la derecha */
+  .glow-sheet-f--fill > .glow-btn { flex: 1; justify-content: center; }
+  .glow-sheet-f--end { justify-content: flex-end; }
+
+  /* La X de Radix mide 16px: por debajo del objetivo táctil de 44px */
+  .glow-sheet-x {
+    top: 12px; right: 12px;
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    border-radius: var(--glow-r-full);
+    background: var(--glow-sunk);
+    color: var(--glow-ink-3);
+    opacity: 1;
+  }
+  .glow-sheet-x > svg { width: 17px; height: 17px; }
+  .glow-sheet-x:hover { background: var(--glow-line); color: var(--glow-ink); }
 
 @keyframes glowSpin   { to { transform: rotate(360deg); } }
 @keyframes glowFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }

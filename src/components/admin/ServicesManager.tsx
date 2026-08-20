@@ -1,31 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { GlowModal } from "./layout/GlowModal";
+import { useGlowConfirm } from "./layout/GlowConfirm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Pencil, Trash2, Upload, Image, X, GripVertical, Crown , Search} from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Upload, Image, X, Crown, Search, Scissors } from "lucide-react";
 import { ImageCropper } from "./ImageCropper";
 import { PlanUsageBar } from "./PlanUsageBar";
 import { UpgradePrompt } from "./UpgradePrompt";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 
 interface Service {
   id: string;
@@ -78,7 +61,6 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCategoryImageDialogOpen, setIsCategoryImageDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -93,6 +75,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
     price: "" as string | number,
   });
   const { toast } = useToast();
+  const { confirm, confirmDialog } = useGlowConfirm();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   
   // Plan limits
@@ -251,25 +234,28 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!selectedService) return;
+  const handleDelete = async (service: Service) => {
+    const ok = await confirm({
+      title: "¿Eliminar servicio?",
+      description: `"${service.name}" dejará de poder reservarse. Las citas ya reservadas no cambian.`,
+    });
+    if (!ok) return;
 
     try {
       setSaving(true);
-      
+
       const { error } = await supabase
         .from("services")
         .delete()
-        .eq("id", selectedService.id);
+        .eq("id", service.id);
 
       if (error) throw error;
 
       toast({
         title: "Servicio eliminado",
-        description: `${selectedService.name} se ha eliminado correctamente`,
+        description: `${service.name} se ha eliminado correctamente`,
       });
 
-      setIsDeleteDialogOpen(false);
       setSelectedService(null);
       fetchData();
     } catch (error: any) {
@@ -404,36 +390,6 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
     const hours = Math.floor(total / 60);
     const mins = total % 60;
     return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
-  };
-
-  // Drag & drop sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  // Handle service reorder within category
-  const handleDragEnd = async (event: DragEndEvent, category: string) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const categoryServices = groupedServices[category];
-    const oldIndex = categoryServices.findIndex(s => s.id === active.id);
-    const newIndex = categoryServices.findIndex(s => s.id === over.id);
-
-    const reordered = arrayMove(categoryServices, oldIndex, newIndex);
-    
-    // Update local state immediately
-    setServices(prev => {
-      const others = prev.filter(s => s.category !== category);
-      return [...others, ...reordered];
-    });
-
-    // Save to database
-    const updates = reordered.map((s, idx) => ({ id: s.id, sort_order: idx }));
-    for (const upd of updates) {
-      await supabase.from("services").update({ sort_order: upd.sort_order }).eq("id", upd.id);
-    }
   };
 
   // Group services by category
@@ -607,10 +563,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                         className="glow-icon-btn"
                         aria-label={`Eliminar ${service.name}`}
                         style={{ color: "var(--glow-danger-ink)" }}
-                        onClick={() => {
-                          setSelectedService(service);
-                          setIsDeleteDialogOpen(true);
-                        }}
+                        onClick={() => handleDelete(service)}
                       >
                         <Trash2 style={{ width: 14, height: 14 }} />
                       </button>
@@ -624,19 +577,24 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
       </div>
 
       {/* Service Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {selectedService ? "Editar Servicio" : "Nuevo Servicio"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedService ? "Modifica los datos del servicio" : "Añade un nuevo servicio a tu catálogo"}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="glow-form">
-            <div>
+      <GlowModal
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        title={selectedService ? "Editar servicio" : "Nuevo servicio"}
+        description={selectedService ? "Modifica los datos del servicio." : "Se mostrará en tu web y en la reserva online."}
+        icon={<Scissors />}
+        footer={
+          <>
+            <button className="glow-btn" onClick={() => setIsDialogOpen(false)}>Cancelar</button>
+            <button className="glow-btn glow-btn--primary" onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="glow-spinner-sm" />}
+              {selectedService ? "Guardar cambios" : "Crear servicio"}
+            </button>
+          </>
+        }
+      >
+        <div className="glow-form">
+            <div className="glow-field">
               <label htmlFor="service-name">Nombre del servicio</label>
               <input className="glow-input"
                 id="service-name"
@@ -647,7 +605,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
             </div>
             
             <div className="glow-form-grid">
-              <div>
+              <div className="glow-field">
                 <label htmlFor="service-category">Categoría</label>
                 <div className="relative">
                   <input className="glow-input"
@@ -688,7 +646,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                 )}
               </div>
               
-              <div>
+              <div className="glow-field">
                 <label htmlFor="service-type">Tipo</label>
                 <Select
                   value={formData.type}
@@ -705,7 +663,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
               </div>
             </div>
 
-            <div>
+            <div className="glow-field">
               <label htmlFor="duration1">
                 {formData.type === "Compuesto" ? "Duración Parte 1 (min)" : "Duración (min)"}
               </label>
@@ -721,7 +679,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
 
             {formData.type === "Compuesto" && (
               <>
-                <div>
+                <div className="glow-field">
                   <label htmlFor="duration-pause">Tiempo de exposición/pausa (min)</label>
                   <input className="glow-input"
                     id="duration-pause"
@@ -732,7 +690,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
                     onChange={(e) => setFormData({ ...formData, duration_exposure_pause: parseInt(e.target.value) || 0 })}
                   />
                 </div>
-                <div>
+                <div className="glow-field">
                   <label htmlFor="duration2">Duración Parte 2 (min)</label>
                   <input className="glow-input"
                     id="duration2"
@@ -746,7 +704,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
               </>
             )}
 
-            <div>
+            <div className="glow-field">
               <label htmlFor="service-price">Precio (€) - Opcional</label>
               <input className="glow-input"
                 id="service-price"
@@ -763,50 +721,25 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
             </div>
           </div>
 
-          <DialogFooter>
-            <button className="glow-btn" onClick={() => setIsDialogOpen(false)}>Cancelar</button>
-            <button className="glow-btn glow-btn--primary" onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="glow-spinner-sm" />}
-              {selectedService ? "Guardar Cambios" : "Crear Servicio"}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </GlowModal>
 
-      {/* Delete Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar servicio?</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Estás seguro de que quieres eliminar "{selectedService?.name}"? 
-              Esta acción no se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {confirmDialog}
 
       {/* Category Image Dialog */}
-      <Dialog open={isCategoryImageDialogOpen} onOpenChange={setIsCategoryImageDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Imagen de Categoría</DialogTitle>
-            <DialogDescription>
-              Sube una imagen cuadrada (1:1) para la categoría "{selectedCategory}"
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="glow-form">
+      <GlowModal
+        open={isCategoryImageDialogOpen}
+        onOpenChange={setIsCategoryImageDialogOpen}
+        title="Imagen de categoría"
+        description={`Sube una imagen cuadrada (1:1) para "${selectedCategory}".`}
+        icon={<Image />}
+        size="sm"
+        footer={
+          <button className="glow-btn glow-btn--grow" onClick={() => setIsCategoryImageDialogOpen(false)}>
+            Cerrar
+          </button>
+        }
+      >
+        <div className="glow-form">
             {selectedCategory && getCategoryImage(selectedCategory) && (
               <div className="relative">
                 <div className="aspect-square w-48 mx-auto overflow-hidden rounded-lg bg-muted">
@@ -856,11 +789,7 @@ export const ServicesManager = ({ tenantId }: ServicesManagerProps) => {
             </div>
           </div>
 
-          <DialogFooter>
-            <button className="glow-btn" onClick={() => setIsCategoryImageDialogOpen(false)}>Cerrar</button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </GlowModal>
 
       {/* Image Cropper */}
       <ImageCropper

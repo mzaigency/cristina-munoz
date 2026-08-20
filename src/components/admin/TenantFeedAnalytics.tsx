@@ -269,55 +269,42 @@ export const TenantFeedAnalytics = ({ tenantId }: Props) => {
                 </ResponsiveContainer>
               </div>
 
-              <div className="overflow-x-auto rounded-xl border">
-                <table className="w-full text-xs">
-                  <thead className="text-[10px] uppercase tracking-wider text-outline bg-muted/30">
-                    <tr>
-                      <th className="text-left p-2.5">Sección</th>
-                      <th className="text-right p-2.5">Imp.</th>
-                      <th className="text-right p-2.5">Clics</th>
-                      <th className="text-right p-2.5">CTR</th>
-                      <th className="text-right p-2.5">Conv.</th>
-                      <th className="text-right p-2.5">CVR</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {chartData.map((r) => (
-                      <tr
-                        key={r.rawId}
-                        className="border-t hover:bg-muted/20"
-                      >
-                        <td className="p-2.5">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="h-2 w-2 rounded-full"
-                              style={{
-                                background:
-                                  SECTION_COLOR[r.rawId] || "var(--glow-brand)",
-                              }}
-                            />
-                            <span className="font-medium">{r.section}</span>
-                          </div>
-                        </td>
-                        <td className="p-2.5 text-right tabular-nums">
-                          {r.impressions.toLocaleString()}
-                        </td>
-                        <td className="p-2.5 text-right tabular-nums">
-                          {r.clicks.toLocaleString()}
-                        </td>
-                        <td className="p-2.5 text-right tabular-nums">
-                          {r.ctr}%
-                        </td>
-                        <td className="p-2.5 text-right tabular-nums">
-                          {r.conversions.toLocaleString()}
-                        </td>
-                        <td className="p-2.5 text-right tabular-nums font-semibold text-glow-ok-ink">
-                          {r.cvr}%
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {/* Una matriz, no una tabla: seis columnas numéricas no caben en
+                  375px y obligaban a hacer scroll lateral sin avisar. */}
+              <div className="overflow-hidden rounded-[18px] border border-line">
+                {chartData.map((r) => (
+                  <div key={r.rawId} className="border-b border-line-soft p-3 last:border-b-0">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span
+                        className="h-2 w-2 flex-none rounded-full"
+                        style={{ background: SECTION_COLOR[r.rawId] || "var(--glow-brand)" }}
+                      />
+                      <span className="truncate text-[13.5px] font-bold text-on-surface">{r.section}</span>
+                    </div>
+                    <div className="flex items-end justify-between gap-1">
+                      {[
+                        { k: "Imp.", v: r.impressions.toLocaleString() },
+                        { k: "Clics", v: r.clicks.toLocaleString() },
+                        { k: "CTR", v: `${r.ctr}%` },
+                        { k: "Conv.", v: r.conversions.toLocaleString() },
+                        { k: "CVR", v: `${r.cvr}%`, ok: true },
+                      ].map((m) => (
+                        <div key={m.k} className="min-w-0 flex-1">
+                          <p className="truncate text-[10px] font-extrabold uppercase tracking-wider text-outline">
+                            {m.k}
+                          </p>
+                          <p
+                            className={`truncate text-[13.5px] font-bold tabular-nums ${
+                              m.ok ? "text-glow-ok-ink" : "text-on-surface"
+                            }`}
+                          >
+                            {m.v}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </>
           )}

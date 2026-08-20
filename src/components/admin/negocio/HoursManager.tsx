@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useGlowConfirm } from "../layout/GlowConfirm";
+import { GlowModal } from "../layout/GlowModal";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2,
@@ -13,7 +15,6 @@ import {
   Sparkles,
   Plus,
   Trash2,
-  X,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -183,6 +184,7 @@ const formatHM = (t?: string | null) => (t ? t.slice(0, 5) : "");
 
 export function HoursManager({ tenantId }: HoursManagerProps) {
   const { toast } = useToast();
+  const { confirm, confirmDialog } = useGlowConfirm();
   const [tab, setTab] = useState<"semana" | "especiales">("semana");
 
   // Weekly hours
@@ -439,7 +441,11 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
   };
 
   const deleteOverride = async (id: string) => {
-    if (!confirm("¿Eliminar este horario especial?")) return;
+    const ok = await confirm({
+      title: "¿Eliminar este horario especial?",
+      description: "Esos días vuelven a tu horario habitual.",
+    });
+    if (!ok) return;
     const { error } = await supabase.from("tenant_hours_overrides").delete().eq("id", id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -881,17 +887,26 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
         </div>
       )}
 
-      {/* Form overlay */}
-      {showForm && (
-        <div className="glow-neg-create-backdrop" onClick={() => !saving && setShowForm(false)}>
-          <div className="glow-neg-form-card" onClick={(e) => e.stopPropagation()}>
-            <div className="glow-neg-form-h">
-              <h3>{editingId ? "Editar horario especial" : "Nuevo horario especial"}</h3>
-              <button className="glow-icon-btn" onClick={() => setShowForm(false)} type="button">
-                <X style={{ width: 16, height: 16 }} />
-              </button>
-            </div>
-
+      {/* Alta / edición de horario especial */}
+      <GlowModal
+        open={showForm}
+        onOpenChange={(o) => !saving && setShowForm(o)}
+        title={editingId ? "Editar horario especial" : "Nuevo horario especial"}
+        description="Vacaciones, festivos o una jornada distinta a la habitual."
+        icon={<CalendarOff />}
+        footer={
+          <>
+            <button className="glow-btn" onClick={() => setShowForm(false)} disabled={saving}>
+              Cancelar
+            </button>
+            <button className="glow-btn glow-btn--primary" onClick={saveForm} disabled={saving}>
+              {saving && <Loader2 className="glow-spinner-sm" />}
+              {editingId ? "Guardar" : "Crear"}
+            </button>
+          </>
+        }
+      >
+        <div className="glow-form">
             <div className="glow-mkt-chip-row">
               <button
                 className={`glow-mkt-chip${formMode === "day" ? " on" : ""}`}
@@ -1086,18 +1101,9 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
               </div>
             )}
 
-            <div className="glow-neg-create-actions">
-              <button className="glow-btn" onClick={() => setShowForm(false)} disabled={saving}>
-                Cancelar
-              </button>
-              <button className="glow-btn glow-btn--primary" onClick={saveForm} disabled={saving}>
-                {saving && <Loader2 className="glow-spinner-sm" />}
-                {editingId ? "Guardar" : "Crear"}
-              </button>
-            </div>
-          </div>
         </div>
-      )}
+      </GlowModal>
+      {confirmDialog}
     </div>
   );
 }

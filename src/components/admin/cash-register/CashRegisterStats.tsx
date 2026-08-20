@@ -370,36 +370,41 @@ export const CashRegisterStats = () => {
               <div className="glow-card">
                 <div className="glow-card-h"><div><h3>Detalle por estilista</h3></div></div>
                 <div className="glow-card-b">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-2">Estilista</th>
-                          <th className="text-right py-2">Ingresos</th>
-                          <th className="text-right py-2">Transacciones</th>
-                          <th className="text-right py-2">Servicios</th>
-                          <th className="text-right py-2">Ticket medio</th>
-                          <th className="text-right py-2">Propinas</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {stylistStats.map(s => (
-                          <tr key={s.id} className="border-b last:border-0">
-                            <td className="py-2">
-                              <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} />
-                                {s.name}
-                              </div>
-                            </td>
-                            <td className="text-right font-medium">{formatCurrency(s.total)}</td>
-                            <td className="text-right">{s.transactions}</td>
-                            <td className="text-right">{s.services}</td>
-                            <td className="text-right">{formatCurrency(s.avgTicket)}</td>
-                            <td className="text-right text-glow-accent-ink">{formatCurrency(s.tips)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  {/* Matriz en vez de tabla: seis columnas no entran en un
+                      móvil y el scroll lateral no se veía venir. */}
+                  <div className="overflow-hidden rounded-[18px] border border-line">
+                    {stylistStats.map((st) => (
+                      <div key={st.id} className="border-b border-line-soft p-3 last:border-b-0">
+                        <div className="mb-2 flex items-center gap-2">
+                          <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ backgroundColor: st.color }} />
+                          <span className="min-w-0 flex-1 truncate text-[13.5px] font-bold text-on-surface">{st.name}</span>
+                          <span className="flex-none text-[15px] font-extrabold tabular-nums text-on-surface">
+                            {formatCurrency(st.total)}
+                          </span>
+                        </div>
+                        <div className="flex items-end justify-between gap-1">
+                          {[
+                            { k: "Trans.", v: String(st.transactions) },
+                            { k: "Servicios", v: String(st.services) },
+                            { k: "Ticket", v: formatCurrency(st.avgTicket) },
+                            { k: "Propinas", v: formatCurrency(st.tips), accent: true },
+                          ].map((m) => (
+                            <div key={m.k} className="min-w-0 flex-1">
+                              <p className="truncate text-[10px] font-extrabold uppercase tracking-wider text-outline">
+                                {m.k}
+                              </p>
+                              <p
+                                className={`truncate text-[13.5px] font-bold tabular-nums ${
+                                  m.accent ? "text-glow-accent-ink" : "text-on-surface"
+                                }`}
+                              >
+                                {m.v}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

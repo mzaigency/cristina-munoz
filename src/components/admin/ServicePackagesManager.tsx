@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { GlowModal } from "./layout/GlowModal";
+import { useGlowConfirm } from "./layout/GlowConfirm";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +58,7 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
     valid_until: ""
   });
   const { toast } = useToast();
+  const { confirm, confirmDialog } = useGlowConfirm();
 
   useEffect(() => {
     fetchData();
@@ -179,9 +181,14 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar este paquete?")) return;
-    
+  const handleDelete = async (pkg: ServicePackage) => {
+    const ok = await confirm({
+      title: "¿Eliminar este paquete?",
+      description: `"${pkg.name}" dejará de ofrecerse. Las citas ya reservadas no cambian.`,
+    });
+    if (!ok) return;
+    const id = pkg.id;
+
     try {
       const { error } = await supabase
         .from("service_packages" as any)
@@ -307,7 +314,7 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
                     className="glow-icon-btn"
                     aria-label={`Eliminar ${pkg.name}`}
                     style={{ color: "var(--glow-danger-ink)" }}
-                    onClick={() => handleDelete(pkg.id)}
+                    onClick={() => handleDelete(pkg)}
                   >
                     <Trash2 style={{ width: 14, height: 14 }} />
                   </button>
@@ -318,117 +325,136 @@ export function ServicePackagesManager({ tenantId }: ServicePackagesManagerProps
         </div>
       )}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingPackage ? "Editar Paquete" : "Nuevo Paquete"}</DialogTitle>
-          </DialogHeader>
+      <GlowModal
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        title={editingPackage ? "Editar paquete" : "Nuevo paquete"}
+        description="Agrupa varios servicios a un precio cerrado."
+        icon={<Package />}
+        footer={
+          <>
+            <button className="glow-btn" onClick={() => setIsDialogOpen(false)}>Cancelar</button>
+            <button className="glow-btn glow-btn--primary" onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="glow-spinner-sm" />}
+              {editingPackage ? "Guardar" : "Crear paquete"}
+            </button>
+          </>
+        }
+      >
+        <div className="glow-form">
+          <div className="glow-field">
+            <label htmlFor="pkg-name">Nombre *</label>
+            <input
+              id="pkg-name"
+              className="glow-input"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Ej: Pack Novia Completo"
+            />
+          </div>
 
-          <div className="space-y-4 py-2">
-            <div>
-              <label>Nombre *</label>
-              <input className="glow-input"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Ej: Pack Novia Completo"
+          <div className="glow-field">
+            <label htmlFor="pkg-desc">Descripción</label>
+            <textarea
+              id="pkg-desc"
+              className="glow-input"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Descripción del paquete..."
+              rows={2}
+            />
+          </div>
+
+          {/* Sin scroll propio a propósito: dos zonas de scroll anidadas en una
+              hoja son un incordio con el dedo. Scrollea la hoja entera. */}
+          <div className="glow-field">
+            <label>Servicios incluidos *</label>
+            <div className="rounded-[14px] border border-line p-1.5">
+              {Object.entries(groupedServices).map(([category, categoryServices]) => (
+                <div key={category} className="mb-1 last:mb-0">
+                  <p className="px-2 pb-1 pt-2 text-[11px] font-extrabold uppercase tracking-wide text-outline">
+                    {category}
+                  </p>
+                  {categoryServices.map((service) => (
+                    <label
+                      key={service.id}
+                      className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-[10px] px-2 active:bg-chip min-[920px]:hover:bg-chip"
+                    >
+                      <Checkbox
+                        checked={selectedServices.includes(service.id)}
+                        onCheckedChange={() => toggleService(service.id)}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-ink-2">
+                        {service.name}
+                      </span>
+                      <span className="flex-none text-[13px] font-semibold text-outline">
+                        {service.price?.toFixed(2)}€
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <span className="glow-field-hint">{selectedServices.length} servicios seleccionados</span>
+          </div>
+
+          <div className="rounded-[14px] bg-chip p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[13.5px] font-semibold text-ink-2">Precio original</span>
+              <span className="text-[15px] font-extrabold text-on-surface">{originalTotal.toFixed(2)}€</span>
+            </div>
+            <div className="glow-field">
+              <label htmlFor="pkg-price">Precio del paquete (€)</label>
+              <input
+                id="pkg-price"
+                className="glow-input"
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                value={formData.package_price}
+                onChange={(e) => setFormData({ ...formData, package_price: parseFloat(e.target.value) || 0 })}
               />
             </div>
+            {discountPercentage > 0 && (
+              <p className="mt-2 text-[13px] font-semibold text-glow-ok-ink">
+                Ahorro: {discountPercentage.toFixed(0)}% ({(originalTotal - formData.package_price).toFixed(2)}€)
+              </p>
+            )}
+          </div>
 
-            <div>
-              <label>Descripción</label>
-              <textarea className="glow-input"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Descripción del paquete..."
-                rows={2}
+          <div className="glow-form-grid">
+            <div className="glow-field">
+              <label htmlFor="pkg-from">Válido desde</label>
+              <input
+                id="pkg-from"
+                className="glow-input"
+                type="date"
+                value={formData.valid_from}
+                onChange={(e) => setFormData({ ...formData, valid_from: e.target.value })}
               />
             </div>
-
-            <div>
-              <label className="mb-2 block">Servicios incluidos *</label>
-              <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-3">
-                {Object.entries(groupedServices).map(([category, categoryServices]) => (
-                  <div key={category}>
-                    <p className="text-xs font-medium text-outline mb-1">{category}</p>
-                    <div className="space-y-1">
-                      {categoryServices.map(service => (
-                        <label
-                          key={service.id}
-                          className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer"
-                        >
-                          <Checkbox
-                            checked={selectedServices.includes(service.id)}
-                            onCheckedChange={() => toggleService(service.id)}
-                          />
-                          <span className="flex-1 text-sm">{service.name}</span>
-                          <span className="text-sm text-outline">{service.price?.toFixed(2)}€</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-outline mt-1">{selectedServices.length} servicios seleccionados</p>
-            </div>
-
-            <div className="bg-muted/50 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">Precio original:</span>
-                <span className="font-medium">{originalTotal.toFixed(2)}€</span>
-              </div>
-              <div>
-                <label>Precio del paquete (€)</label>
-                <input className="glow-input"
-                  type="number"
-                  step="0.01"
-                  value={formData.package_price}
-                  onChange={(e) => setFormData({ ...formData, package_price: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              {discountPercentage > 0 && (
-                <p className="text-sm text-glow-ok-ink mt-2">
-                  Ahorro: {discountPercentage.toFixed(0)}% ({(originalTotal - formData.package_price).toFixed(2)}€)
-                </p>
-              )}
-            </div>
-
-            <div className="glow-form-grid">
-              <div>
-                <label>Válido desde</label>
-                <input className="glow-input"
-                  type="date"
-                  value={formData.valid_from}
-                  onChange={(e) => setFormData({ ...formData, valid_from: e.target.value })}
-                />
-              </div>
-              <div>
-                <label>Válido hasta</label>
-                <input className="glow-input"
-                  type="date"
-                  value={formData.valid_until}
-                  onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label>Paquete activo</label>
-              <Switch
-                checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+            <div className="glow-field">
+              <label htmlFor="pkg-until">Válido hasta</label>
+              <input
+                id="pkg-until"
+                className="glow-input"
+                type="date"
+                value={formData.valid_until}
+                onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
               />
             </div>
           </div>
 
-          <DialogFooter>
-            <button className="glow-btn" onClick={() => setIsDialogOpen(false)}>Cancelar</button>
-            <button className="glow-btn glow-btn--primary" onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="glow-spinner-sm" />}
-              {editingPackage ? "Guardar" : "Crear"}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <label className="flex min-h-[44px] cursor-pointer items-center justify-between gap-3">
+            <span className="text-[13.5px] font-bold text-ink-2">Paquete activo</span>
+            <Switch
+              checked={formData.is_active}
+              onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+            />
+          </label>
+        </div>
+      </GlowModal>
+      {confirmDialog}
     </div>
   );
 }

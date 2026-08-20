@@ -1,12 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { GlowModal } from "./layout/GlowModal";
+import { useGlowConfirm } from "./layout/GlowConfirm";
 import {
   Select,
   SelectContent,
@@ -115,6 +110,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
     notes: "",
   });
   const { toast } = useToast();
+  const { confirm, confirmDialog } = useGlowConfirm();
 
   useEffect(() => {
     fetchData();
@@ -364,7 +360,12 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar definitivamente?")) return;
+    const ok = await confirm({
+      title: "¿Quitar de la lista de espera?",
+      description: "La persona dejará de estar en espera. No se puede deshacer.",
+      confirmLabel: "Quitar",
+    });
+    if (!ok) return;
 
     try {
       const { error } = await supabase
@@ -577,7 +578,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
 
                     {entry.status === "proposed" && entry.proposed_date && (
-                      <div style={{ marginTop: 8, padding: "8px 12px", background: "color-mix(in oklab, var(--glow-brand-ink), white 82%)", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--glow-brand-soft)" }}>
+                      <div style={{ marginTop: 8, padding: "8px 12px", background: "var(--glow-brand-soft)", borderRadius: 10, fontSize: 12, fontWeight: 700, color: "var(--glow-brand-ink)" }}>
                         🎯 Propuesto: {format(new Date(entry.proposed_date), "d MMM", { locale: es })} · {String(entry.proposed_time).slice(0, 5)}
                         {proposedStylistName && ` · ${proposedStylistName}`}
                         {expiry && (
@@ -715,19 +716,26 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
       )}
 
       {/* Add Dialog */}
-      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto pb-[max(env(safe-area-inset-bottom),1rem)]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-primary" />
-              Añadir a Lista de Espera
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div>
-              <label className="text-xs">Nombre del cliente *</label>
-              <input className="glow-input mt-1"
+      <GlowModal
+        open={isAddOpen}
+        onOpenChange={setIsAddOpen}
+        title="Añadir a lista de espera"
+        description="Te avisamos cuando se libere un hueco que le encaje."
+        icon={<Plus />}
+        footer={
+          <>
+            <button className="glow-btn" onClick={() => setIsAddOpen(false)}>Cancelar</button>
+            <button className="glow-btn glow-btn--primary" onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="glow-spinner-sm" />}
+              Añadir
+            </button>
+          </>
+        }
+      >
+        <div className="glow-form">
+            <div className="glow-field">
+              <label>Nombre del cliente *</label>
+              <input className="glow-input"
                 value={formData.client_name}
                 onChange={(e) =>
                   setFormData({ ...formData, client_name: e.target.value })
@@ -736,9 +744,9 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
               />
             </div>
 
-            <div>
-              <label className="text-xs">Teléfono</label>
-              <input className="glow-input mt-1"
+            <div className="glow-field">
+              <label>Teléfono</label>
+              <input className="glow-input"
                 value={formData.client_phone}
                 onChange={(e) =>
                   setFormData({ ...formData, client_phone: e.target.value })
@@ -748,9 +756,9 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
               />
             </div>
 
-            <div>
-              <label className="text-xs">Fecha preferida</label>
-              <input className="glow-input mt-1"
+            <div className="glow-field">
+              <label>Fecha preferida</label>
+              <input className="glow-input"
                 type="date"
                 value={formData.preferred_date}
                 onChange={(e) =>
@@ -760,9 +768,9 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs">Desde</label>
-                <input className="glow-input mt-1"
+              <div className="glow-field">
+                <label>Desde</label>
+                <input className="glow-input"
                   type="time"
                   value={formData.preferred_time_start}
                   onChange={(e) =>
@@ -773,9 +781,9 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
                   }
                 />
               </div>
-              <div>
-                <label className="text-xs">Hasta</label>
-                <input className="glow-input mt-1"
+              <div className="glow-field">
+                <label>Hasta</label>
+                <input className="glow-input"
                   type="time"
                   value={formData.preferred_time_end}
                   onChange={(e) =>
@@ -788,8 +796,8 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
               </div>
             </div>
 
-            <div>
-              <label className="text-xs">Profesional preferido</label>
+            <div className="glow-field">
+              <label>Profesional preferido</label>
               <Select
                 value={formData.preferred_stylist_id || "none"}
                 onValueChange={(v) =>
@@ -813,8 +821,8 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
               </Select>
             </div>
 
-            <div>
-              <label className="text-xs">Prioridad</label>
+            <div className="glow-field">
+              <label>Prioridad</label>
               <Select
                 value={formData.priority.toString()}
                 onValueChange={(v) =>
@@ -847,9 +855,9 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
               </Select>
             </div>
 
-            <div>
-              <label className="text-xs">Notas</label>
-              <textarea className="glow-input mt-1"
+            <div className="glow-field">
+              <label>Notas</label>
+              <textarea className="glow-input"
                 value={formData.notes}
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
@@ -860,19 +868,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
-            <button className="glow-btn" onClick={() => setIsAddOpen(false)}>
-              Cancelar
-            </button>
-            <button className="glow-btn glow-btn--primary"
-              onClick={handleSave}
-              disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Añadir
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </GlowModal>
 
       {/* Propose Slot Dialog */}
       {proposeEntry && (
@@ -888,6 +884,7 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
           }}
         />
       )}
+      {confirmDialog}
     </div>
   );
 }
