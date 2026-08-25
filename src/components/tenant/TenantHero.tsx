@@ -75,7 +75,7 @@ export const TenantHero = ({ tenant, onBookNow, rating, reviewCount }: TenantHer
             alt={`${tenant.name}`}
             className="w-full h-full object-cover"
             loading="eager"
-            fetchPriority="high"
+            {...{ fetchpriority: "high" }}
             initial={{ scale: 1.1, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
