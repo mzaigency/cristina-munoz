@@ -27,9 +27,13 @@ function avatarColor(name: string) {
  * Una fila de la matriz de clientes, no una tarjeta suelta: el listado entero
  * vive dentro de un único `glow-card`, igual que Servicios o Productos.
  */
-export function ClientCard({ client, index, onClick }: ClientCardProps) {
+export const ClientCard = forwardRef<HTMLDivElement, ClientCardProps>(function ClientCard(
+  { client, index, onClick },
+  ref,
+) {
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.98 }}
