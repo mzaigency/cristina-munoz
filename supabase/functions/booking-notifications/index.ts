@@ -267,6 +267,7 @@ serve(async (req) => {
         "Fecha",
         "Hora",
         tenant_id,
+        compound_part,
         tenants!inner(name)
       `,
       )
@@ -286,6 +287,12 @@ serve(async (req) => {
 
       for (const booking of bookings2h) {
         if (!booking.user_id) continue;
+
+        // Parte 2 de un servicio compuesto: misma visita, no se repite el aviso.
+        if ((booking as any).compound_part === "part2") {
+          await supabase.from("bookings").update({ reminder_2h_sent: now.toISOString() }).eq("id", booking.id);
+          continue;
+        }
 
         // Check user preferences
         const prefs = await getUserPreferences(booking.user_id);
