@@ -655,7 +655,7 @@ export default function TenantAdmin() {
       <div className="glow-main-wrap" ref={mainWrapRef}>
 
         {/* Chrome sticky (header + tabs se ocultan/muestran juntos al scrollear) */}
-        <div className={`glow-chrome${chromeHidden ? "glow-chrome--hidden" : ""}`}>
+        <div className={`glow-chrome${chromeHidden ? " glow-chrome--hidden" : ""}`}>
 
         {/* Topbar */}
         <header className="glow-topbar" style={{ paddingTop: "env(safe-area-inset-top)" }}>
