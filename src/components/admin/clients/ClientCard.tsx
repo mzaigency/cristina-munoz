@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { ChevronRight, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -93,4 +94,4 @@ export const ClientCard = forwardRef<HTMLDivElement, ClientCardProps>(function C
       <ChevronRight style={{ width: 17, height: 17, color: "var(--glow-ink-3)", flex: "none" }} />
     </motion.div>
   );
-}
+});
