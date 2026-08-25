@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { checkRateLimit, clientIp, rateLimited } from "../_shared/rate-limit.ts";
+import { overrideReplacesWeekly, pickOverrideForDate } from "../_shared/hours-overrides.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -376,38 +377,47 @@ serve(async (req) => {
       return [{ start: open, end: close }];
     };
 
-    // ----------- Cargar horarios del negocio (override temporada > semanal) -----------
-    const { data: overrides } = await supabase
+    // ----------- Cargar horarios del negocio (excepción > semanal) -----------
+    // Se traen TODAS las excepciones que cubren la fecha y se resuelve con las
+    // mismas reglas que el frontend (ver _shared/hours-overrides.ts): antes se
+    // cogía una cualquiera con .limit(1), así que un festivo podía perder
+    // contra la jornada intensiva del mes y se reservaba con el salón cerrado.
+    const { data: overrideRows } = await supabase
       .from("tenant_hours_overrides")
-      .select("is_closed, open_time, close_time, break_start, break_end")
+      .select("is_closed, open_time, close_time, break_start, break_end, date_from, date_to, days_of_week, label")
       .eq("tenant_id", tenantId)
       .lte("date_from", bookingDate)
-      .gte("date_to", bookingDate)
-      .limit(1);
+      .gte("date_to", bookingDate);
+
+    const ov = pickOverrideForDate(overrideRows, bookingDate);
+
+    const dowBooking = new Date(bookingDate + "T12:00:00Z").getUTCDay();
+    const { data: weekly } = await supabase
+      .from("tenant_business_hours")
+      .select("is_open, open_time, close_time, break_start, break_end")
+      .eq("tenant_id", tenantId)
+      .eq("day_of_week", dowBooking)
+      .maybeSingle();
+
+    const weeklyRanges = weekly
+      ? (!weekly.is_open
+          ? []
+          : computeRanges(timeToMin(weekly.open_time), timeToMin(weekly.close_time), timeToMin(weekly.break_start), timeToMin(weekly.break_end)))
+      : null;
 
     let businessOpenRanges: Range[] = [];
     let businessSource: "override" | "weekly" | "none" = "none";
 
-    if (overrides && overrides.length > 0) {
-      const ov = overrides[0];
+    if (ov && (overrideReplacesWeekly(ov) || weeklyRanges === null || weeklyRanges.length > 0)) {
+      // Cierre o excepción de un solo día: manda del todo.
+      // Excepción de rango: solo cambia las horas de un día ya abierto.
       businessSource = "override";
       businessOpenRanges = ov.is_closed
         ? []
         : computeRanges(timeToMin(ov.open_time), timeToMin(ov.close_time), timeToMin(ov.break_start), timeToMin(ov.break_end));
-    } else {
-      const dow = new Date(bookingDate + "T12:00:00Z").getUTCDay();
-      const { data: weekly } = await supabase
-        .from("tenant_business_hours")
-        .select("is_open, open_time, close_time, break_start, break_end")
-        .eq("tenant_id", tenantId)
-        .eq("day_of_week", dow)
-        .maybeSingle();
-      if (weekly) {
-        businessSource = "weekly";
-        businessOpenRanges = !weekly.is_open
-          ? []
-          : computeRanges(timeToMin(weekly.open_time), timeToMin(weekly.close_time), timeToMin(weekly.break_start), timeToMin(weekly.break_end));
-      }
+    } else if (weeklyRanges !== null) {
+      businessSource = "weekly";
+      businessOpenRanges = weeklyRanges;
     }
 
     // Validar horario del negocio (no depende del estilista) — una sola vez
@@ -427,17 +437,17 @@ serve(async (req) => {
     const validateStylist = async (
       stylist: StylistRow,
     ): Promise<{ ok: true } | { ok: false; reason: string; label?: string }> => {
-      // 1) Override personal del estilista (vacaciones / horario especial)
+      // 1) Excepción personal del profesional (vacaciones / horario especial).
+      //    Gana la más específica y, a igualdad, el cierre.
       const { data: sOverrides } = await supabase
         .from("stylist_hours_overrides")
-        .select("is_closed, open_time, close_time, break_start, break_end, label")
+        .select("is_closed, open_time, close_time, break_start, break_end, label, date_from, date_to")
         .eq("stylist_id", stylist.id)
         .lte("date_from", bookingDate)
-        .gte("date_to", bookingDate)
-        .limit(1);
+        .gte("date_to", bookingDate);
 
-      if (sOverrides && sOverrides.length > 0) {
-        const sov = sOverrides[0];
+      const sov = pickOverrideForDate(sOverrides, bookingDate);
+      if (sov) {
         if (sov.is_closed) {
           return { ok: false, reason: "stylist_closed", label: sov.label || undefined };
         }

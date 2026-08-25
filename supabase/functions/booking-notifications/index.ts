@@ -157,6 +157,7 @@ serve(async (req) => {
         "Hora",
         tenant_id,
         services,
+        compound_part,
         tenants!inner(name, logo_url, address, city, phone, google_maps_url)
       `,
       )
@@ -174,6 +175,14 @@ serve(async (req) => {
 
       for (const booking of bookings24h) {
         if (!booking.user_id) continue;
+
+        // Un servicio compuesto son dos filas (parte 1 y parte 2) de la MISMA
+        // visita: solo se avisa por la primera, si no la clienta recibe dos
+        // correos y dos avisos para la misma cita.
+        if ((booking as any).compound_part === "part2") {
+          await supabase.from("bookings").update({ reminder_sent: now.toISOString() }).eq("id", booking.id);
+          continue;
+        }
 
         // Check user preferences
         const prefs = await getUserPreferences(booking.user_id);
@@ -258,6 +267,7 @@ serve(async (req) => {
         "Fecha",
         "Hora",
         tenant_id,
+        compound_part,
         tenants!inner(name)
       `,
       )
@@ -277,6 +287,12 @@ serve(async (req) => {
 
       for (const booking of bookings2h) {
         if (!booking.user_id) continue;
+
+        // Parte 2 de un servicio compuesto: misma visita, no se repite el aviso.
+        if ((booking as any).compound_part === "part2") {
+          await supabase.from("bookings").update({ reminder_2h_sent: now.toISOString() }).eq("id", booking.id);
+          continue;
+        }
 
         // Check user preferences
         const prefs = await getUserPreferences(booking.user_id);

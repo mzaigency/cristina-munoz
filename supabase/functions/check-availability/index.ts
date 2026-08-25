@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { z } from 'https://esm.sh/zod@3.22.4';
+import { overrideReplacesWeekly, pickOverrideForDate } from '../_shared/hours-overrides.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -186,15 +187,17 @@ serve(async (req) => {
 
     console.log(`Checking stylists: ${stylistsToCheck.map(s => s.slug).join(', ')}`);
 
-    // Fetch seasonal override (e.g. "all August: 8-15"). Overrides win over weekly hours.
+    // Excepciones del salón (p. ej. "todo agosto: 8-15"). Se traen todas las que
+    // cubren la fecha y se resuelve con las mismas reglas que el frontend:
+    // gana la más específica, el cierre gana los empates, `days_of_week` limita
+    // los días, y una excepción de rango no abre un día cerrado en el semanal.
     const { data: overrideRows } = await supabase
       .from('tenant_hours_overrides')
-      .select('is_closed, open_time, close_time, break_start, break_end')
+      .select('is_closed, open_time, close_time, break_start, break_end, date_from, date_to, days_of_week')
       .eq('tenant_id', tenantId)
       .lte('date_from', date)
-      .gte('date_to', date)
-      .limit(1);
-    const override = overrideRows && overrideRows.length > 0 ? overrideRows[0] : null;
+      .gte('date_to', date);
+    const override = pickOverrideForDate(overrideRows, date);
 
     // Pre-fetch stylist-specific overrides for that date (per stylist, win over tenant override)
     const stylistIds = stylistsToCheck.map((s) => s.id).filter(Boolean);
@@ -202,14 +205,17 @@ serve(async (req) => {
     if (stylistIds.length > 0) {
       const { data: sOverrides } = await supabase
         .from('stylist_hours_overrides')
-        .select('stylist_id, is_closed, open_time, close_time, break_start, break_end')
+        .select('stylist_id, is_closed, open_time, close_time, break_start, break_end, date_from, date_to')
         .in('stylist_id', stylistIds)
         .lte('date_from', date)
         .gte('date_to', date);
-      (sOverrides || []).forEach((o: any) => {
-        // first match per stylist
-        if (!stylistOverridesById[o.stylist_id]) stylistOverridesById[o.stylist_id] = o;
-      });
+      for (const id of stylistIds) {
+        const picked = pickOverrideForDate(
+          (sOverrides || []).filter((o: any) => o.stylist_id === id),
+          date,
+        );
+        if (picked) stylistOverridesById[id] = picked;
+      }
     }
 
     // Get working hours and bookings for each stylist
@@ -220,7 +226,8 @@ serve(async (req) => {
       // Get working hours: stylist override > tenant override > stylist-specific weekly > tenant weekly > defaults
       let hours: StylistHours;
       const stylistOv = s.id ? stylistOverridesById[s.id] : null;
-      if (stylistOv) {
+      const weeklyHours = await getStylistHoursForDay(supabase, s.id, s.slug, tenantId, dayOfWeek);
+      if (stylistOv && (overrideReplacesWeekly(stylistOv) || weeklyHours.is_working)) {
         hours = {
           stylist_id: s.id,
           slug: s.slug,
@@ -230,7 +237,7 @@ serve(async (req) => {
           break_start: stylistOv.break_start,
           break_end: stylistOv.break_end,
         };
-      } else if (override) {
+      } else if (override && (overrideReplacesWeekly(override) || weeklyHours.is_working)) {
         hours = {
           stylist_id: s.id,
           slug: s.slug,
@@ -241,7 +248,7 @@ serve(async (req) => {
           break_end: override.break_end,
         };
       } else {
-        hours = await getStylistHoursForDay(supabase, s.id, s.slug, tenantId, dayOfWeek);
+        hours = weeklyHours;
       }
       stylistWorkingRanges[s.slug] = getWorkingRanges(hours);
 
