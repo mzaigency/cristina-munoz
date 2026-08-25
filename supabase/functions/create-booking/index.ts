@@ -141,10 +141,51 @@ serve(async (req) => {
   try {
     const rawData = await req.json();
 
-    // Anti-abuso: máximo 8 reservas por IP cada 10 minutos
-    if (!(await checkRateLimit("create-booking", clientIp(req), 8, 600))) {
+    // ¿La petición viene del panel (admin o profesional del salón)?
+    // El personal del salón apunta muchas citas seguidas desde la misma IP,
+    // así que su límite es mucho más alto y va por usuario, no por IP.
+    let staffUserId: string | null = null;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader) {
+      try {
+        const userClient = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+          { global: { headers: { Authorization: authHeader } } },
+        );
+        const { data: userData } = await userClient.auth.getUser();
+        const uid = userData?.user?.id;
+        if (uid) {
+          const admin = createClient(
+            Deno.env.get("SUPABASE_URL") ?? "",
+            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+          );
+          const [{ data: adminRow }, { data: stylistRow }] = await Promise.all([
+            admin.from("tenant_admins").select("id").eq("user_id", uid).limit(1).maybeSingle(),
+            admin
+              .from("tenant_stylists")
+              .select("id")
+              .eq("user_id", uid)
+              .eq("is_active", true)
+              .limit(1)
+              .maybeSingle(),
+          ]);
+          if (adminRow || stylistRow) staffUserId = uid;
+        }
+      } catch (e) {
+        console.error("staff check failed", e);
+      }
+    }
+
+    // Anti-abuso: 8 reservas por IP cada 10 min para el público,
+    // 120 cada 10 min por usuario para el personal del salón.
+    const rlOk = staffUserId
+      ? await checkRateLimit("create-booking-staff", staffUserId, 120, 600)
+      : await checkRateLimit("create-booking", clientIp(req), 8, 600);
+    if (!rlOk) {
       return rateLimited(corsHeaders, "Demasiadas reservas seguidas. Espera unos minutos.");
     }
+
 
     // Validate input
     const validationResult = bookingRequestSchema.safeParse(rawData);
