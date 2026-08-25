@@ -1156,10 +1156,45 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           Hora: newTime,
           end_time: newEndTime,
           Fecha: targetDate,
+          // Recordatorios ya enviados = fecha antigua: se limpian para que la
+          // clienta reciba el aviso de la hora nueva.
+          reminder_sent: null,
+          reminder_2h_sent: null,
         })
         .eq("id", draggedBooking.id);
 
       if (error) throw error;
+
+      // Cita compuesta: mover también la segunda parte con el mismo desfase,
+      // si no se queda un bloque fantasma en la hora antigua.
+      const oldStart = (() => {
+        const [h, m] = (draggedBooking.Hora || "00:00").slice(0, 5).split(":").map(Number);
+        return h * 60 + (m || 0);
+      })();
+      const delta = snappedMinutes - oldStart;
+      const { data: hermanas } = await supabase
+        .from("bookings")
+        .select("id, Hora, total_duration")
+        .eq("related_booking_id", draggedBooking.id);
+      for (const hermana of hermanas || []) {
+        const [hh, mm] = (hermana.Hora || "00:00").slice(0, 5).split(":").map(Number);
+        const start = hh * 60 + (mm || 0) + delta;
+        const end = start + (hermana.total_duration || 0);
+        const fmt = (mins: number) =>
+          `${String(Math.floor((mins % 1440) / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+        await supabase
+          .from("bookings")
+          .update({
+            stylist: targetStylist,
+            Fecha: targetDate,
+            Hora: fmt(start),
+            end_time: fmt(end),
+            reminder_sent: null,
+            reminder_2h_sent: null,
+          })
+          .eq("id", hermana.id);
+      }
+
 
       toast({
         title: "Cita movida",

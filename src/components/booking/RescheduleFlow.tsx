@@ -205,17 +205,51 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
         return;
       }
 
+      const nuevaFecha = format(selectedDate, 'yyyy-MM-dd');
+
       const { error } = await supabase
         .from('bookings')
         .update({
-          Fecha: format(selectedDate, 'yyyy-MM-dd'),
+          Fecha: nuevaFecha,
           Hora: horaToSave,
           end_time: endTimeToSave,
+          // Los recordatorios ya enviados corresponden a la fecha anterior:
+          // si no se limpian, la clienta no recibe aviso de la nueva.
+          reminder_sent: null,
+          reminder_2h_sent: null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', booking.id);
 
       if (error) throw error;
+
+      // Cita compuesta: la segunda parte tiene que moverse con la primera,
+      // si no se queda un bloque fantasma en el hueco antiguo.
+      try {
+        const delta = startMinutes - timeToMinutes(booking.Hora);
+        const { data: hermanas } = await supabase
+          .from('bookings')
+          .select('id, Hora, total_duration')
+          .eq('related_booking_id', booking.id);
+        for (const h of hermanas || []) {
+          const hStart = timeToMinutes(h.Hora) + delta;
+          const hEnd = hStart + (h.total_duration || 0);
+          await supabase
+            .from('bookings')
+            .update({
+              Fecha: nuevaFecha,
+              Hora: `${minutesToTime(hStart)}:00`,
+              end_time: `${minutesToTime(hEnd % (24 * 60))}:00`,
+              reminder_sent: null,
+              reminder_2h_sent: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', h.id);
+        }
+      } catch (e) {
+        console.error('No se pudo mover la segunda parte de la cita compuesta', e);
+      }
+
 
       // Email de modificación de cita (no bloquea el flujo)
       try {
