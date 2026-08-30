@@ -1145,7 +1145,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     try {
       const group = await fetchBookingGroup(draggedBooking.id);
       const shifted = shiftBookingGroup(group, draggedBooking.id, targetDate, newTime, targetStylist);
-      await validateShiftedBookingGroup(shifted, tenantId);
+      await validateShiftedBookingGroup(shifted, tenantId, { onlyRealBookings: true });
 
       const updates = await Promise.all(
         shifted.map((part) =>
