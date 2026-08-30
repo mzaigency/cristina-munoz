@@ -219,7 +219,7 @@ serve(async (req) => {
     }
 
     // Get working hours and bookings for each stylist
-    const bookedSlotsByStylists: Record<string, Array<{ Hora: string; total_duration: number }>> = {};
+    const bookedSlotsByStylists: Record<string, Array<{ id?: string; Hora: string; total_duration: number }>> = {};
     const stylistWorkingRanges: Record<string, Array<{ start: number; end: number }>> = {};
 
     for (const s of stylistsToCheck) {
@@ -265,7 +265,7 @@ serve(async (req) => {
       // Fetch bookings from database
       const { data: bookings, error } = await supabase
         .from('bookings')
-        .select('Hora, total_duration, title')
+        .select('id, Hora, total_duration, title')
         .eq('Fecha', date)
         .eq('stylist', s.slug)
         .eq('status', 'confirmed')
@@ -282,7 +282,7 @@ serve(async (req) => {
         );
       }
 
-      const slots: Array<{ Hora: string; total_duration: number }> = [];
+      const slots: Array<{ id?: string; Hora: string; total_duration: number }> = [];
 
       for (const booking of bookings || []) {
         // Check if it's a vacation/blocked day
@@ -298,6 +298,7 @@ serve(async (req) => {
           }
         } else {
           slots.push({
+            id: booking.id,
             Hora: booking.Hora,
             total_duration: booking.total_duration || 60
           });
@@ -354,7 +355,7 @@ serve(async (req) => {
     ));
 
     // Determine final blocked slots based on stylist selection
-    let finalBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
+    let finalBookedSlots: Array<{ id?: string; Hora: string; total_duration: number }> = [];
     
     if (stylist === 'any') {
       // For "any" stylist, only block slots where ALL stylists are busy

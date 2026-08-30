@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatTimeHHmm, parseISODateToLocal } from "@/lib/datetime";
+import { fetchBookingGroup, shiftBookingGroup, validateShiftedBookingGroup } from "@/lib/bookingGroup";
 
 interface RescheduleFlowProps {
   booking: {
@@ -27,6 +28,7 @@ interface RescheduleFlowProps {
 }
 
 type BookedSlot = {
+  id?: string;
   Hora: string;
   total_duration: number;
 };
@@ -162,94 +164,30 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
     try {
       const horaToSave = selectedTime.length === 5 ? `${selectedTime}:00` : selectedTime;
 
-      // Mantener duración correcta: actualizar también end_time
-      const startMinutes = timeToMinutes(horaToSave);
-      const endMinutes = (startMinutes + booking.total_duration) % (24 * 60);
-      const endTimeToSave = `${minutesToTime(endMinutes)}:00`;
-
-      // Revalidar disponibilidad justo antes de guardar: la agenda puede
-      // haber cambiado desde que se cargaron los huecos, y el UPDATE directo
-      // no pasa por la validación de create-booking.
-      const { data: availData, error: availError } = await supabase.functions.invoke('check-availability', {
-        body: {
-          tenant_id: booking.tenant_id,
-          date: format(selectedDate, 'yyyy-MM-dd'),
-          stylist: booking.stylist,
-          totalDuration: booking.total_duration,
-        },
-      });
-
-      if (availError || !Array.isArray(availData?.bookedSlots)) {
-        toast({
-          title: "No se pudo comprobar la disponibilidad",
-          description: "Inténtalo de nuevo en unos segundos.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const endMinutesReal = startMinutes + booking.total_duration;
-      const conflict = toBookedRanges(availData.bookedSlots as BookedSlot[], selectedDate).some(
-        (r) => startMinutes < r.end && endMinutesReal > r.start,
-      );
-
-      if (conflict) {
-        toast({
-          title: "Esa hora ya no está disponible",
-          description: "Alguien la ha ocupado mientras tanto. Elige otra hora.",
-          variant: "destructive",
-        });
-        setSelectedTime(null);
-        setStep("time");
-        fetchAvailableSlots();
-        return;
-      }
-
       const nuevaFecha = format(selectedDate, 'yyyy-MM-dd');
 
-      const { error } = await supabase
-        .from('bookings')
-        .update({
-          Fecha: nuevaFecha,
-          Hora: horaToSave,
-          end_time: endTimeToSave,
-          // Los recordatorios ya enviados corresponden a la fecha anterior:
-          // si no se limpian, la clienta no recibe aviso de la nueva.
-          reminder_sent: null,
-          reminder_2h_sent: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', booking.id);
+      if (!booking.tenant_id) throw new Error("No se pudo identificar el salón de la cita");
+      const group = await fetchBookingGroup(booking.id);
+      const shifted = shiftBookingGroup(group, booking.id, nuevaFecha, horaToSave);
+      await validateShiftedBookingGroup(shifted, booking.tenant_id);
 
-      if (error) throw error;
-
-      // Cita compuesta: la segunda parte tiene que moverse con la primera,
-      // si no se queda un bloque fantasma en el hueco antiguo.
-      try {
-        const delta = startMinutes - timeToMinutes(booking.Hora);
-        const { data: hermanas } = await supabase
-          .from('bookings')
-          .select('id, Hora, total_duration')
-          .eq('related_booking_id', booking.id);
-        for (const h of hermanas || []) {
-          const hStart = timeToMinutes(h.Hora) + delta;
-          const hEnd = hStart + (h.total_duration || 0);
-          await supabase
+      const updates = await Promise.all(
+        shifted.map((part) =>
+          supabase
             .from('bookings')
             .update({
-              Fecha: nuevaFecha,
-              Hora: `${minutesToTime(hStart)}:00`,
-              end_time: `${minutesToTime(hEnd % (24 * 60))}:00`,
+              Fecha: part.nextDate,
+              Hora: part.nextTime,
+              end_time: part.nextEndTime,
               reminder_sent: null,
               reminder_2h_sent: null,
               updated_at: new Date().toISOString(),
             })
-            .eq('id', h.id);
-        }
-      } catch (e) {
-        console.error('No se pudo mover la segunda parte de la cita compuesta', e);
-      }
-
+            .eq('id', part.id),
+        ),
+      );
+      const updateError = updates.find((result) => result.error)?.error;
+      if (updateError) throw updateError;
 
       // Email de modificación de cita (no bloquea el flujo)
       try {
