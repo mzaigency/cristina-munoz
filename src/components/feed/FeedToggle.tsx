@@ -22,7 +22,7 @@ export function FeedToggle({ mode, onChange, followingCount = 0, className }: Fe
   };
 
   return (
-    <div className={cn("flex justify-center gap-6 py-2", className)}>
+    <div className={cn("flex justify-center gap-6 py-2 px-4", className)}>
       {(["discover", "following"] as const).map((tab) => {
         const isActive = mode === tab;
         return (
