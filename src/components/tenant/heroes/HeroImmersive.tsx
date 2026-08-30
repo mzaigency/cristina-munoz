@@ -80,7 +80,7 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
       />
 
       {/* Contenido abajo-izquierda */}
-      <div className="absolute inset-x-0 bottom-0 z-10 px-6 lg:px-12 pb-8 lg:pb-14">
+      <div className="absolute inset-x-0 bottom-0 z-10 px-6 lg:px-12 pb-16 lg:pb-14">
         <div className="mx-auto max-w-6xl">
           <motion.h1
             initial={{ opacity: 0, y: 18 }}

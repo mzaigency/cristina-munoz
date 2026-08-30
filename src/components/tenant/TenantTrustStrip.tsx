@@ -46,13 +46,13 @@ export function TenantTrustStrip({ tenantId, city }: TenantTrustStripProps) {
   items.push({ icon: <Calendar className="h-4 w-4" style={{ color: "#98329A" }} />, label: t("trust.online") });
 
   return (
-    <div className="border-b border-neutral-200/70 bg-white">
+    <div className="relative z-10 -mt-9 md:-mt-10 bg-transparent">
       <div className="container mx-auto max-w-6xl px-4">
-        <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 py-3.5 md:justify-between">
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-[24px] border border-neutral-100 bg-white p-5 shadow-[0_10px_30px_-8px_rgba(16,20,40,0.14)] md:flex md:items-center md:justify-between">
           {items.map((it, i) => (
-            <li key={i} className="flex items-center gap-2 text-[13px] font-medium text-neutral-700 font-body">
-              {it.icon}
-              <span className="tabular-nums">{it.label}</span>
+            <li key={i} className="flex min-w-0 items-center gap-2 text-[13px] font-medium text-neutral-700 font-body">
+              <span className="shrink-0">{it.icon}</span>
+              <span className="truncate tabular-nums">{it.label}</span>
             </li>
           ))}
         </ul>
