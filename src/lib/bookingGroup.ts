@@ -95,17 +95,16 @@ export function shiftBookingGroup(
   });
 }
 
-export async function validateShiftedBookingGroup(rows: ShiftedBooking[]) {
-  const excludedBookingIds = rows.map((row) => row.id);
+export async function validateShiftedBookingGroup(rows: ShiftedBooking[], tenantId: string) {
+  const excludedBookingIds = new Set(rows.map((row) => row.id));
 
   for (const row of rows) {
     const { data, error } = await supabase.functions.invoke("check-availability", {
       body: {
-        tenant_id: undefined,
+        tenant_id: tenantId,
         date: row.nextDate,
         stylist: row.stylist,
         totalDuration: row.total_duration,
-        excludeBookingIds: excludedBookingIds,
       },
     });
     if (error || !Array.isArray(data?.bookedSlots)) {
@@ -115,7 +114,8 @@ export async function validateShiftedBookingGroup(rows: ShiftedBooking[]) {
     const [hours, minutes] = row.nextTime.slice(0, 5).split(":").map(Number);
     const start = hours * 60 + minutes;
     const end = start + row.total_duration;
-    const hasConflict = data.bookedSlots.some((slot: { Hora: string; total_duration: number }) => {
+    const hasConflict = data.bookedSlots.some((slot: { id?: string; Hora: string; total_duration: number }) => {
+      if (slot.id && excludedBookingIds.has(slot.id)) return false;
       const [slotHours, slotMinutes] = slot.Hora.slice(0, 5).split(":").map(Number);
       const slotStart = slotHours * 60 + slotMinutes;
       return start < slotStart + slot.total_duration && end > slotStart;

@@ -265,7 +265,7 @@ serve(async (req) => {
       // Fetch bookings from database
       const { data: bookings, error } = await supabase
         .from('bookings')
-        .select('Hora, total_duration, title')
+        .select('id, Hora, total_duration, title')
         .eq('Fecha', date)
         .eq('stylist', s.slug)
         .eq('status', 'confirmed')
@@ -282,7 +282,7 @@ serve(async (req) => {
         );
       }
 
-      const slots: Array<{ Hora: string; total_duration: number }> = [];
+      const slots: Array<{ id?: string; Hora: string; total_duration: number }> = [];
 
       for (const booking of bookings || []) {
         // Check if it's a vacation/blocked day
@@ -298,6 +298,7 @@ serve(async (req) => {
           }
         } else {
           slots.push({
+            id: booking.id,
             Hora: booking.Hora,
             total_duration: booking.total_duration || 60
           });

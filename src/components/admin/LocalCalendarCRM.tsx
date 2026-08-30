@@ -72,6 +72,7 @@ import { cn } from "@/lib/utils";
 import { AdminBookingFlow } from "./AdminBookingFlow";
 import { QuickBookingSheet } from "./QuickBookingSheet";
 import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
+import { fetchBookingGroup, shiftBookingGroup, validateShiftedBookingGroup } from "@/lib/bookingGroup";
 
 interface LocalBooking {
   id: string;
@@ -1141,60 +1142,28 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
     const newTime = `${String(targetHour).padStart(2, "0")}:${String(targetMinute).padStart(2, "0")}`;
 
-    // Calculate new end time
-    const durationMinutes = draggedBooking.total_duration;
-    const newEndMinutes = snappedMinutes + durationMinutes;
-    const newEndHour = Math.floor(newEndMinutes / 60);
-    const newEndMin = newEndMinutes % 60;
-    const newEndTime = `${String(newEndHour).padStart(2, "0")}:${String(newEndMin).padStart(2, "0")}`;
-
     try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({
-          stylist: targetStylist,
-          Hora: newTime,
-          end_time: newEndTime,
-          Fecha: targetDate,
-          // Recordatorios ya enviados = fecha antigua: se limpian para que la
-          // clienta reciba el aviso de la hora nueva.
-          reminder_sent: null,
-          reminder_2h_sent: null,
-        })
-        .eq("id", draggedBooking.id);
+      const group = await fetchBookingGroup(draggedBooking.id);
+      const shifted = shiftBookingGroup(group, draggedBooking.id, targetDate, newTime, targetStylist);
+      await validateShiftedBookingGroup(shifted, tenantId);
 
-      if (error) throw error;
-
-      // Cita compuesta: mover también la segunda parte con el mismo desfase,
-      // si no se queda un bloque fantasma en la hora antigua.
-      const oldStart = (() => {
-        const [h, m] = (draggedBooking.Hora || "00:00").slice(0, 5).split(":").map(Number);
-        return h * 60 + (m || 0);
-      })();
-      const delta = snappedMinutes - oldStart;
-      const { data: hermanas } = await supabase
-        .from("bookings")
-        .select("id, Hora, total_duration")
-        .eq("related_booking_id", draggedBooking.id);
-      for (const hermana of hermanas || []) {
-        const [hh, mm] = (hermana.Hora || "00:00").slice(0, 5).split(":").map(Number);
-        const start = hh * 60 + (mm || 0) + delta;
-        const end = start + (hermana.total_duration || 0);
-        const fmt = (mins: number) =>
-          `${String(Math.floor((mins % 1440) / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
-        await supabase
+      const updates = await Promise.all(
+        shifted.map((part) =>
+          supabase
           .from("bookings")
           .update({
             stylist: targetStylist,
-            Fecha: targetDate,
-            Hora: fmt(start),
-            end_time: fmt(end),
+            Fecha: part.nextDate,
+            Hora: part.nextTime,
+            end_time: part.nextEndTime,
             reminder_sent: null,
             reminder_2h_sent: null,
           })
-          .eq("id", hermana.id);
-      }
-
+          .eq("id", part.id),
+        ),
+      );
+      const updateError = updates.find((result) => result.error)?.error;
+      if (updateError) throw updateError;
 
       toast({
         title: "Cita movida",
