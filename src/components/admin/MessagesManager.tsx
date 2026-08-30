@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { MessageCircle, Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -85,6 +85,25 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
       document.body.classList.remove('msg-chat-open');
     };
   }, [isMobile, selectedConversation]);
+
+  // Móvil: el alto del shell se mide en runtime (topbar + subnav sticky + safe areas
+  // + bottom nav varían por dispositivo; un calc() fijo dejaba la lista cortada).
+  const shellRef = useRef<HTMLDivElement>(null);
+  const [shellH, setShellH] = useState<number | null>(null);
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = shellRef.current;
+    if (!el) return;
+    const measure = () => {
+      const top = el.getBoundingClientRect().top;
+      const bottomNav = document.querySelector<HTMLElement>('.glow-bottom');
+      const bottomH = bottomNav ? bottomNav.getBoundingClientRect().height : 0;
+      setShellH(Math.max(280, Math.round(window.innerHeight - top - bottomH - 10)));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [isMobile]);
 
   const handleSendMessage = (content: string) => {
     if (user) sendMessage(content, 'salon', user.id);
@@ -257,14 +276,9 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
       </div>
     );
 
-    // Admin mobile: topbar 56px + bottom nav ~64px + safe areas
-    const adminMobileShellStyle: React.CSSProperties = {
-      height: 'calc(100dvh - 56px - env(safe-area-inset-top) - 64px - env(safe-area-inset-bottom))',
-    };
-
     return (
       <>
-        <div className="msg-shell-mobile" style={adminMobileShellStyle}>
+        <div ref={shellRef} className="msg-shell-mobile" style={shellH ? { height: shellH } : undefined}>
           <header className="msg-sidebar-header">
             <span className="msg-sidebar-title">
               <MessageCircle className="h-5 w-5" style={{ color: 'var(--glow-brand)' }} />
