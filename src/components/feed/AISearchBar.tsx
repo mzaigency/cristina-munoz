@@ -126,13 +126,13 @@ export function AISearchBar({
 
   return (
     <div className="relative px-4">
-      {/* Liquid Glass search container */}
+      {/* Search container — estilo glow: tarjeta blanca, borde fino, foco de marca */}
       <div
         className={cn(
-          "relative flex items-center rounded-2xl transition-all duration-400",
-          isFocused 
-            ? "liquid-glass-card !rounded-2xl ring-1 ring-primary/20" 
-            : "liquid-glass-solid !rounded-2xl"
+          "relative flex items-center rounded-[18px] bg-surface border transition-all duration-300",
+          isFocused
+            ? "border-glow-brand/40 shadow-[var(--glow-focus)]"
+            : "border-line shadow-[var(--glow-e1)]"
         )}
       >
         {/* AI/Search Icon */}
@@ -213,7 +213,7 @@ export function AISearchBar({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute left-4 right-4 top-full mt-2 overflow-hidden rounded-2xl liquid-glass-card z-50"
+            className="absolute left-4 right-4 top-full mt-2 overflow-hidden rounded-[18px] bg-surface border border-line shadow-[var(--glow-e3)] z-50"
           >
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-2.5">
@@ -279,7 +279,7 @@ export function AISearchBar({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute left-4 right-4 top-full mt-2 overflow-hidden rounded-2xl liquid-glass-card z-50 max-h-[60vh] overflow-y-auto"
+            className="absolute left-4 right-4 top-full mt-2 overflow-hidden rounded-[18px] bg-surface border border-line shadow-[var(--glow-e3)] z-50 max-h-[60vh] overflow-y-auto"
           >
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-3">

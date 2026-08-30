@@ -74,10 +74,10 @@ export function PremiumSalonCard({
       className="group"
     >
       <Link to={`/${salon.slug}`} className="block">
-        <div className="relative overflow-hidden liquid-glass-card">
-          
+        <div className="relative overflow-hidden rounded-[24px] bg-surface border border-line shadow-[var(--glow-e2)] transition-shadow duration-300 group-hover:shadow-[var(--glow-e3)]">
+
           {/* Image Container */}
-          <div className={cn("relative overflow-hidden rounded-t-[24px]", isFeatured ? "h-72 sm:h-64" : "h-64")}>
+          <div className={cn("relative overflow-hidden", isFeatured ? "h-72 sm:h-64" : "h-64")}>
             {salon.hero_image_url ? (
               index === 0 ? (
                 <img
@@ -132,7 +132,7 @@ export function PremiumSalonCard({
                   initial={{ opacity: 0, x: -12, scale: 0.9 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   transition={{ delay: index * 0.08 + 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/90 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider shadow-lg"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-glow-ok/90 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider shadow-lg"
                 >
                   <Zap className="h-3 w-3" />
                   Huecos hoy
@@ -143,7 +143,7 @@ export function PremiumSalonCard({
                   initial={{ opacity: 0, x: -12, scale: 0.9 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   transition={{ delay: index * 0.08 + 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/90 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider shadow-lg"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-glow-warn/90 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider shadow-lg"
                 >
                   <Sparkles className="h-3 w-3" />
                   Popular
@@ -196,11 +196,11 @@ export function PremiumSalonCard({
           {/* Content */}
           <div className="p-5">
             <div className="flex items-start justify-between gap-3 mb-2">
-              <h3 className="font-bold text-foreground text-[19px] leading-tight line-clamp-1 group-hover:text-primary transition-colors duration-400">
+              <h3 className="font-bold text-foreground text-[19px] leading-tight line-clamp-1 group-hover:text-glow-brand transition-colors duration-300">
                 {salon.name}
               </h3>
               {salon.average_price && (
-                <span className="shrink-0 text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg">
+                <span className="shrink-0 text-xs font-bold text-glow-brand-ink bg-glow-brand-soft px-2.5 py-1 rounded-lg">
                   Desde {salon.average_price}€
                 </span>
               )}
@@ -238,17 +238,17 @@ export function PremiumSalonCard({
                 )}
               </div>
 
-              {/* Liquid Glass Buttons */}
+              {/* Botones — estilo glow */}
               <div className="flex items-center gap-2">
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={handleFollowClick}
                   disabled={followLoading}
                   className={cn(
-                    "flex items-center justify-center gap-1.5 h-9 px-4 rounded-full text-xs font-semibold transition-all flex-1",
+                    "flex items-center justify-center gap-1.5 h-9 px-4 rounded-full text-xs font-semibold border transition-all flex-1",
                     following
-                      ? "bg-primary/10 text-primary border-[0.5px] border-primary/30"
-                      : "liquid-glass-pill text-foreground/70"
+                      ? "bg-glow-brand-soft text-glow-brand-ink border-transparent"
+                      : "bg-surface-container border-line text-ink-2 hover:bg-line-soft",
                   )}
                 >
                   {following ? (

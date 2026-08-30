@@ -58,11 +58,11 @@ export function CategoryPills({
             whileTap={{ scale: 0.93 }}
             onClick={() => handleFilterClick(filter.id, isSelected)}
             className={cn(
-              "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-semibold text-xs transition-all duration-300",
-              isHuecos && isSelected && "bg-emerald-500 text-white shadow-lg shadow-emerald-500/25",
-              isHuecos && !isSelected && "liquid-glass-pill !bg-emerald-500/8 text-emerald-600 dark:text-emerald-400",
-              isPopular && isSelected && "bg-amber-500 text-white shadow-lg shadow-amber-500/25",
-              isPopular && !isSelected && "liquid-glass-pill !bg-amber-500/8 text-amber-600 dark:text-amber-400",
+              "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-semibold text-xs border transition-all duration-200",
+              isHuecos && isSelected && "bg-glow-ok text-white border-transparent shadow-md shadow-glow-ok/25",
+              isHuecos && !isSelected && "bg-glow-ok-soft text-glow-ok-ink border-transparent",
+              isPopular && isSelected && "bg-glow-warn text-white border-transparent shadow-md shadow-glow-warn/25",
+              isPopular && !isSelected && "bg-glow-warn-soft text-glow-warn-ink border-transparent",
             )}
           >
             {loadingAvailability && isHuecos ? (
@@ -75,7 +75,7 @@ export function CategoryPills({
               <span
                 className={cn(
                   "ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold",
-                  isSelected ? "bg-white/20" : "bg-emerald-500 text-white",
+                  isSelected ? "bg-white/20" : "bg-glow-ok text-white",
                 )}
               >
                 {availableCount}
@@ -86,17 +86,17 @@ export function CategoryPills({
       })}
 
       {/* Divider */}
-      <div className="shrink-0 w-px h-6 my-auto bg-border/30" />
+      <div className="shrink-0 w-px h-6 my-auto bg-line" />
 
       {/* All button */}
       <motion.button
         whileTap={{ scale: 0.93 }}
         onClick={() => onSelect(null)}
         className={cn(
-          "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-semibold text-xs transition-all duration-300",
+          "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-semibold text-xs border transition-all duration-200",
           selected === null
-            ? "gradient-primary text-primary-foreground shadow-md shadow-primary/20"
-            : "liquid-glass-pill text-muted-foreground",
+            ? "bg-glow-brand text-white border-transparent shadow-md shadow-glow-brand/20"
+            : "bg-surface border-line text-ink-2 hover:bg-surface-container",
         )}
       >
         <Sparkles className="h-3.5 w-3.5" />
@@ -114,10 +114,10 @@ export function CategoryPills({
             whileTap={{ scale: 0.93 }}
             onClick={() => onSelect(isSelected ? null : category.id)}
             className={cn(
-              "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-semibold text-xs transition-all duration-300",
+              "shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-semibold text-xs border transition-all duration-200",
               isSelected
-                ? "gradient-primary text-primary-foreground shadow-md shadow-primary/20"
-                : "liquid-glass-pill text-muted-foreground",
+                ? "bg-glow-brand text-white border-transparent shadow-md shadow-glow-brand/20"
+                : "bg-surface border-line text-ink-2 hover:bg-surface-container",
             )}
           >
             <Icon className="h-3.5 w-3.5" />
