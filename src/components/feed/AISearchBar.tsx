@@ -126,13 +126,13 @@ export function AISearchBar({
 
   return (
     <div className="relative px-4">
-      {/* Liquid Glass search container */}
+      {/* Search container — estilo glow: tarjeta blanca, borde fino, foco de marca */}
       <div
         className={cn(
-          "relative flex items-center rounded-2xl transition-all duration-400",
-          isFocused 
-            ? "liquid-glass-card !rounded-2xl ring-1 ring-primary/20" 
-            : "liquid-glass-solid !rounded-2xl"
+          "relative flex items-center rounded-[18px] bg-surface border transition-all duration-300",
+          isFocused
+            ? "border-glow-brand/40 shadow-[var(--glow-focus)]"
+            : "border-line shadow-[var(--glow-e1)]"
         )}
       >
         {/* AI/Search Icon */}

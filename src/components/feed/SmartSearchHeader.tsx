@@ -31,9 +31,8 @@ export function SmartSearchHeader() {
 
   return (
     <div className="sticky top-0 z-50">
-      <div className="relative liquid-glass-solid">
+      <div className="relative bg-surface/92 backdrop-blur-xl border-b border-line">
         <div className="h-[env(safe-area-inset-top)]" />
-        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/15 to-transparent" />
 
         <div className="px-4 pt-3 pb-3">
           <motion.div
