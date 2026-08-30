@@ -285,6 +285,7 @@ const Index = () => {
   return (
     <>
       <AppLayout>
+        <div className="font-poppins">
         <SEO
           title="GlowApp | Reserva Cita en Salones de Belleza Cerca de Ti"
           description="Descubre peluquerías, spas y centros de estética cerca de ti. Reserva cita online al instante. La app de belleza #1 en España con +500 salones."
@@ -292,8 +293,8 @@ const Index = () => {
           canonicalUrl="/"
         />
 
-        {/* Liquid Glass animated background */}
-        <div className="fixed inset-0 -z-10 liquid-bg" />
+        {/* Fondo plano de la familia glow (mismo gris azulado del panel) */}
+        <div className="fixed inset-0 -z-10" style={{ background: "var(--glow-bg)" }} />
 
         {/* Header Bar */}
         <SmartSearchHeader />
