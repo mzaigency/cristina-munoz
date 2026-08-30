@@ -75,7 +75,7 @@ export function FeedSection({
       data-section-id={sectionId}
     >
       {/* Header */}
-      <div className="flex items-end justify-between mb-3 px-0">
+      <div className="flex items-end justify-between mb-3 px-4">
         <div className="flex items-center gap-2.5 min-w-0">
           <div
             className={cn(
