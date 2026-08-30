@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import {
   Accordion,
@@ -10,7 +9,7 @@ import {
 } from "@/components/ui/accordion";
 import { Service, ServicePackage } from "@/types/booking";
 import { Badge } from "@/components/ui/badge";
-import { Package, Sparkles, Tag } from "lucide-react";
+import { Check, Package, Sparkles, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ServiceSelectionProps {
@@ -125,46 +124,56 @@ export const ServiceSelection = ({ services, selectedServices, onNext, tenantId 
     return selected.reduce((sum, s) => sum + (s.price || 0), 0);
   }, [selected, selectedPackage, packages]);
 
-  const renderServiceItem = (service: Service, isInPackage = false) => (
-    <div
-      key={service.id}
-      className={cn(
-        "flex items-center justify-between rounded-xl border bg-card p-3 sm:p-4 cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-accent/50 active:bg-accent/70 active:scale-[0.99] group touch-manipulation",
-        selected.some((s) => s.id === service.id) && 'bg-primary/10 border-primary shadow-sm',
-        isInPackage && 'opacity-60 pointer-events-none'
-      )}
-      onClick={() => !isInPackage && toggleService(service)}
-    >
-      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-        <Checkbox
-          checked={selected.some((s) => s.id === service.id)}
-          onCheckedChange={() => !isInPackage && toggleService(service)}
-          className="flex-shrink-0"
-          disabled={isInPackage}
-        />
-        <div className="min-w-0 flex-1">
-          <p className="font-medium text-foreground text-sm sm:text-base truncate">{service.name}</p>
-          {service.type === 'Compuesto' ? (
-            <>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                {service.duration_part1_active + service.duration_part2_active} min activos + {service.duration_exposure_pause} min pausa
-              </p>
-              <p className="text-xs text-muted-foreground italic mt-0.5">
-                ✓ Incluye corte y peinado
-              </p>
-            </>
-          ) : (
-            <p className="text-xs sm:text-sm text-muted-foreground">{service.duration} min</p>
-          )}
+  const renderServiceItem = (service: Service, isInPackage = false) => {
+    const isSelected = selected.some((s) => s.id === service.id);
+    return (
+      <button
+        key={service.id}
+        type="button"
+        aria-pressed={isSelected}
+        disabled={isInPackage}
+        className={cn(
+          "w-full text-left flex items-center justify-between gap-3 rounded-2xl border bg-card p-4 min-h-[64px] cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-accent/50 active:bg-accent/70 active:scale-[0.99] group touch-manipulation",
+          isSelected && 'bg-primary/10 border-primary shadow-sm',
+          isInPackage && 'opacity-60 pointer-events-none'
+        )}
+        onClick={() => !isInPackage && toggleService(service)}
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <span
+            aria-hidden
+            className={cn(
+              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-200",
+              isSelected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"
+            )}
+          >
+            {isSelected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-foreground text-sm sm:text-base">{service.name}</p>
+            {service.type === 'Compuesto' ? (
+              <>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  {service.duration_part1_active + service.duration_part2_active} min activos + {service.duration_exposure_pause} min pausa
+                </p>
+                <p className="text-xs text-muted-foreground italic mt-0.5">
+                  ✓ Incluye corte y peinado
+                </p>
+              </>
+            ) : (
+              <p className="text-xs sm:text-sm text-muted-foreground">{service.duration} min</p>
+            )}
+          </div>
         </div>
-      </div>
-      {service.price !== null && service.price !== undefined && service.price > 0 && (
-        <span className="text-sm sm:text-base font-semibold text-primary ml-2 whitespace-nowrap">
-          {formatPrice(service.price)}
-        </span>
-      )}
-    </div>
-  );
+        {service.price !== null && service.price !== undefined && service.price > 0 && (
+          <span className="text-sm sm:text-base font-semibold text-primary whitespace-nowrap">
+            {formatPrice(service.price)}
+          </span>
+        )}
+      </button>
+    );
+  };
+
 
   return (
     <div className="space-y-6">
@@ -186,7 +195,7 @@ export const ServiceSelection = ({ services, selectedServices, onNext, tenantId 
                 <div
                   key={pkg.id}
                   className={cn(
-                    "relative rounded-xl border-2 p-4 cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-md active:scale-[0.99]",
+                    "relative rounded-2xl border-2 p-4 cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:shadow-md active:scale-[0.99]",
                     isSelected 
                       ? "border-primary bg-primary/10 shadow-md" 
                       : "border-dashed border-primary/40 bg-gradient-to-r from-primary/5 to-transparent hover:border-primary/60"
@@ -201,13 +210,21 @@ export const ServiceSelection = ({ services, selectedServices, onNext, tenantId 
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <Checkbox checked={isSelected} className="flex-shrink-0" />
+                        <span
+                          aria-hidden
+                          className={cn(
+                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-200",
+                            isSelected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"
+                          )}
+                        >
+                          {isSelected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+                        </span>
                         <h4 className="font-semibold text-foreground">{pkg.name}</h4>
                       </div>
                       {pkg.description && (
-                        <p className="text-sm text-muted-foreground mt-1 ml-6">{pkg.description}</p>
+                        <p className="text-sm text-muted-foreground mt-1 ml-9">{pkg.description}</p>
                       )}
-                      <div className="flex flex-wrap gap-1 mt-2 ml-6">
+                      <div className="flex flex-wrap gap-1 mt-2 ml-9">
                         {(pkg.services as any[]).map((s: any, idx: number) => (
                           <Badge key={idx} variant="outline" className="text-xs">
                             {s.name}
