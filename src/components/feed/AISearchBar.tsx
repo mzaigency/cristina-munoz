@@ -213,7 +213,7 @@ export function AISearchBar({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute left-4 right-4 top-full mt-2 overflow-hidden rounded-2xl liquid-glass-card z-50"
+            className="absolute left-4 right-4 top-full mt-2 overflow-hidden rounded-[18px] bg-surface border border-line shadow-[var(--glow-e3)] z-50"
           >
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-2.5">
@@ -279,7 +279,7 @@ export function AISearchBar({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute left-4 right-4 top-full mt-2 overflow-hidden rounded-2xl liquid-glass-card z-50 max-h-[60vh] overflow-y-auto"
+            className="absolute left-4 right-4 top-full mt-2 overflow-hidden rounded-[18px] bg-surface border border-line shadow-[var(--glow-e3)] z-50 max-h-[60vh] overflow-y-auto"
           >
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-3">
