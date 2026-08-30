@@ -219,7 +219,7 @@ serve(async (req) => {
     }
 
     // Get working hours and bookings for each stylist
-    const bookedSlotsByStylists: Record<string, Array<{ Hora: string; total_duration: number }>> = {};
+    const bookedSlotsByStylists: Record<string, Array<{ id?: string; Hora: string; total_duration: number }>> = {};
     const stylistWorkingRanges: Record<string, Array<{ start: number; end: number }>> = {};
 
     for (const s of stylistsToCheck) {
@@ -355,7 +355,7 @@ serve(async (req) => {
     ));
 
     // Determine final blocked slots based on stylist selection
-    let finalBookedSlots: Array<{ Hora: string; total_duration: number }> = [];
+    let finalBookedSlots: Array<{ id?: string; Hora: string; total_duration: number }> = [];
     
     if (stylist === 'any') {
       // For "any" stylist, only block slots where ALL stylists are busy

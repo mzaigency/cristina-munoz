@@ -28,6 +28,7 @@ interface RescheduleFlowProps {
 }
 
 type BookedSlot = {
+  id?: string;
   Hora: string;
   total_duration: number;
 };
@@ -162,49 +163,6 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
     setSubmitting(true);
     try {
       const horaToSave = selectedTime.length === 5 ? `${selectedTime}:00` : selectedTime;
-
-      // Mantener duración correcta: actualizar también end_time
-      const startMinutes = timeToMinutes(horaToSave);
-      const endMinutes = (startMinutes + booking.total_duration) % (24 * 60);
-      const endTimeToSave = `${minutesToTime(endMinutes)}:00`;
-
-      // Revalidar disponibilidad justo antes de guardar: la agenda puede
-      // haber cambiado desde que se cargaron los huecos, y el UPDATE directo
-      // no pasa por la validación de create-booking.
-      const { data: availData, error: availError } = await supabase.functions.invoke('check-availability', {
-        body: {
-          tenant_id: booking.tenant_id,
-          date: format(selectedDate, 'yyyy-MM-dd'),
-          stylist: booking.stylist,
-          totalDuration: booking.total_duration,
-        },
-      });
-
-      if (availError || !Array.isArray(availData?.bookedSlots)) {
-        toast({
-          title: "No se pudo comprobar la disponibilidad",
-          description: "Inténtalo de nuevo en unos segundos.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const endMinutesReal = startMinutes + booking.total_duration;
-      const conflict = toBookedRanges(availData.bookedSlots as BookedSlot[], selectedDate).some(
-        (r) => startMinutes < r.end && endMinutesReal > r.start,
-      );
-
-      if (conflict) {
-        toast({
-          title: "Esa hora ya no está disponible",
-          description: "Alguien la ha ocupado mientras tanto. Elige otra hora.",
-          variant: "destructive",
-        });
-        setSelectedTime(null);
-        setStep("time");
-        fetchAvailableSlots();
-        return;
-      }
 
       const nuevaFecha = format(selectedDate, 'yyyy-MM-dd');
 
