@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { MessageCircle, Plus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
