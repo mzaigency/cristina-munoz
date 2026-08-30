@@ -95,7 +95,23 @@ export function shiftBookingGroup(
   });
 }
 
-export async function validateShiftedBookingGroup(rows: ShiftedBooking[], tenantId: string) {
+export class SlotUnavailableError extends Error {
+  constructor(message = "Algún tramo de la cita ya no está disponible") {
+    super(message);
+    this.name = "SlotUnavailableError";
+  }
+}
+
+/**
+ * `onlyRealBookings` ignores the synthetic slots that check-availability adds for
+ * closed hours, breaks and days off (they carry no id). The admin panel must be
+ * able to move an appointment outside opening hours on purpose.
+ */
+export async function validateShiftedBookingGroup(
+  rows: ShiftedBooking[],
+  tenantId: string,
+  options: { onlyRealBookings?: boolean } = {},
+) {
   const excludedBookingIds = new Set(rows.map((row) => row.id));
 
   for (const row of rows) {
@@ -116,10 +132,11 @@ export async function validateShiftedBookingGroup(rows: ShiftedBooking[], tenant
     const end = start + row.total_duration;
     const hasConflict = data.bookedSlots.some((slot: { id?: string; Hora: string; total_duration: number }) => {
       if (slot.id && excludedBookingIds.has(slot.id)) return false;
+      if (options.onlyRealBookings && !slot.id) return false;
       const [slotHours, slotMinutes] = slot.Hora.slice(0, 5).split(":").map(Number);
       const slotStart = slotHours * 60 + slotMinutes;
       return start < slotStart + slot.total_duration && end > slotStart;
     });
-    if (hasConflict) throw new Error("Algún tramo de la cita ya no está disponible");
+    if (hasConflict) throw new SlotUnavailableError();
   }
 }

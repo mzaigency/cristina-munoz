@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatTimeHHmm, parseISODateToLocal } from "@/lib/datetime";
-import { fetchBookingGroup, shiftBookingGroup, validateShiftedBookingGroup } from "@/lib/bookingGroup";
+import { fetchBookingGroup, shiftBookingGroup, validateShiftedBookingGroup, SlotUnavailableError } from "@/lib/bookingGroup";
 
 interface RescheduleFlowProps {
   booking: {
@@ -231,11 +231,22 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
       onSuccess();
     } catch (error) {
       console.error('Error rescheduling:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo reagendar la cita",
-        variant: "destructive",
-      });
+      if (error instanceof SlotUnavailableError) {
+        toast({
+          title: "Esa hora ya no está disponible",
+          description: "Alguien acaba de reservarla. Elige otra hora, por favor.",
+          variant: "destructive",
+        });
+        setSelectedTime(null);
+        setStep("time");
+        fetchAvailableSlots();
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo reagendar la cita",
+          variant: "destructive",
+        });
+      }
     } finally {
       setSubmitting(false);
     }
