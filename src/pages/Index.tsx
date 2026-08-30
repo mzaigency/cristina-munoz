@@ -447,6 +447,7 @@ const Index = () => {
             )}
           </AnimatePresence>
         </div>
+        </div>
       </AppLayout>
     </>
   );
