@@ -11,7 +11,7 @@ interface SearchHeaderProps {
 
 export function SearchHeader({ searchQuery, onSearchChange, showNotifications = true }: SearchHeaderProps) {
   return (
-    <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50 safe-area-top">
+    <div className="sticky top-0 z-40 bg-background border-b border-border safe-area-top">
       <div className="px-4 py-3">
         <div className="flex items-center gap-3">
           {/* Search Input */}

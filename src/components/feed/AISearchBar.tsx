@@ -197,7 +197,7 @@ export function AISearchBar({
               size="icon"
               onClick={() => handleAISearch()}
               disabled={!searchQuery.trim() || isAISearching}
-              className="h-9 w-9 rounded-xl gradient-primary border-0 shadow-md shadow-primary/20 disabled:opacity-40"
+              className="h-9 w-9 rounded-xl bg-primary text-primary-foreground border-0 shadow-md shadow-black/10 disabled:opacity-40"
             >
               {isAISearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
@@ -217,7 +217,7 @@ export function AISearchBar({
           >
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-2.5">
-                <div className="h-5 w-5 rounded-lg gradient-primary flex items-center justify-center">
+                <div className="h-5 w-5 rounded-lg bg-primary flex items-center justify-center">
                   <Sparkles className="h-3 w-3 text-white" />
                 </div>
                 <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">
@@ -283,7 +283,7 @@ export function AISearchBar({
           >
             <div className="p-3">
               <div className="flex items-center gap-1.5 mb-3">
-                <div className="h-5 w-5 rounded-lg gradient-primary flex items-center justify-center">
+                <div className="h-5 w-5 rounded-lg bg-primary flex items-center justify-center">
                   <Sparkles className="h-3 w-3 text-white" />
                 </div>
                 <span className="text-xs font-semibold text-foreground">{resultMessage}</span>

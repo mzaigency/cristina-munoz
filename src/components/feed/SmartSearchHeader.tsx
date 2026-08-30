@@ -31,7 +31,7 @@ export function SmartSearchHeader() {
 
   return (
     <div className="sticky top-0 z-50">
-      <div className="relative bg-surface/92 backdrop-blur-xl border-b border-line">
+      <div className="relative bg-surface border-b border-line">
         <div className="h-[env(safe-area-inset-top)]" />
 
         <div className="px-4 pt-3 pb-3">
@@ -56,7 +56,7 @@ export function SmartSearchHeader() {
 
             <div className="flex items-center gap-2">
               {isSuperadmin && (
-                <Link to="/superadmin" className="p-2 rounded-full liquid-glass-pill text-amber-500">
+              <Link to="/superadmin" className="p-2 rounded-full bg-muted text-amber-500">
                   <Crown className="h-5 w-5" />
                 </Link>
               )}
@@ -66,7 +66,7 @@ export function SmartSearchHeader() {
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
                   size="sm"
-                  className="rounded-full gradient-primary border-0 shadow-lg shadow-primary/20"
+                  className="rounded-full bg-primary text-primary-foreground border-0 shadow-lg shadow-black/10"
                   asChild
                 >
                   <Link to="/negocios" className="flex items-center gap-1.5">
