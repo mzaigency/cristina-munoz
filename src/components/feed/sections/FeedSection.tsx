@@ -129,7 +129,6 @@ export function FeedSection({
           className={cn(
             "flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory",
             "-mx-4 px-4 pb-2",
-            "[mask-image:linear-gradient(to_right,transparent_0,black_16px,black_calc(100%-16px),transparent_100%)]",
           )}
         >
           {children}
