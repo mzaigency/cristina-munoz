@@ -86,6 +86,25 @@ export function MessagesManager({ tenantId }: MessagesManagerProps) {
     };
   }, [isMobile, selectedConversation]);
 
+  // Móvil: el alto del shell se mide en runtime (topbar + subnav sticky + safe areas
+  // + bottom nav varían por dispositivo; un calc() fijo dejaba la lista cortada).
+  const shellRef = useRef<HTMLDivElement>(null);
+  const [shellH, setShellH] = useState<number | null>(null);
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = shellRef.current;
+    if (!el) return;
+    const measure = () => {
+      const top = el.getBoundingClientRect().top;
+      const bottomNav = document.querySelector<HTMLElement>('.glow-bottom');
+      const bottomH = bottomNav ? bottomNav.getBoundingClientRect().height : 0;
+      setShellH(Math.max(280, Math.round(window.innerHeight - top - bottomH - 10)));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [isMobile]);
+
   const handleSendMessage = (content: string) => {
     if (user) sendMessage(content, 'salon', user.id);
   };
