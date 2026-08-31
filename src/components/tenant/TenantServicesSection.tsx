@@ -195,14 +195,14 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
               return (
                 <article key={category}>
                   {image && (
-                    <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-neutral-100 shadow-[0_18px_40px_-22px_rgba(20,22,40,0.18)] mb-5 group">
+                    <div className="relative aspect-[16/9] rounded-[24px] overflow-hidden bg-neutral-100 shadow-[0_14px_32px_-20px_rgba(20,22,40,0.28)] mb-4 group">
                       <img
                         src={image}
                         alt={category}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                       />
-                      <div className="absolute top-3.5 left-3.5 px-3.5 py-1.5 bg-white/95 backdrop-blur-sm rounded-full text-[12px] font-semibold" style={{ color: "#22408C" }}>
+                      <div className="absolute top-3.5 left-3.5 px-3.5 py-1.5 bg-white rounded-full text-[12px] font-semibold" style={{ color: "#22408C" }}>
                         {catServices.length} {t("services.countLabel")}
                       </div>
                     </div>
