@@ -208,7 +208,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
                     </div>
                   )}
                   <div className="flex items-baseline justify-between gap-4 mb-2">
-                    <h3 className="font-body text-neutral-900 font-bold tracking-[-0.02em]" style={{ fontSize: "clamp(1.4rem, 2.4vw, 1.9rem)" }}>
+                    <h3 className="font-body text-neutral-900 font-bold tracking-[-0.02em]" style={{ fontSize: "clamp(1.15rem, 2vw, 1.5rem)" }}>
                       {category}
                     </h3>
                     {!image && (
