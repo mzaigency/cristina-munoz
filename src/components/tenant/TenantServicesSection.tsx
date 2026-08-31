@@ -152,19 +152,16 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
         />
 
         {/* Pestañas de categoría */}
-        <div className="flex flex-wrap gap-2 mb-7 -mt-2">
+        <div className="-mx-5 mb-5 flex gap-2.5 overflow-x-auto px-5 pb-1 md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
           {categories.map((cat) => {
             const on = cat === current;
             return (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className="rounded-full px-4 py-2 text-[13px] font-semibold font-body transition-all duration-200 active:scale-[0.97]"
-                style={
-                  on
-                    ? { background: BRAND_GRAD, color: "#fff", boxShadow: "0 8px 20px -10px rgba(84,52,160,.5)" }
-                    : { background: "#eceef4", color: "#4c4f61" }
-                }
+                className={`shrink-0 whitespace-nowrap rounded-full px-5 py-2.5 text-[13px] font-semibold font-body transition-all duration-200 active:scale-[0.97] ${
+                  on ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-500"
+                }`}
               >
                 {cat}
               </button>
@@ -175,9 +172,9 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
         {/* Vista compacta: lista de la categoría activa */}
         {!showFull && (
           <>
-            <ul>
-              {(groupedServices[current] || []).map((s, i, arr) => (
-                <ServiceRow key={s.id} service={s} last={i === arr.length - 1} />
+            <ul className="space-y-3">
+              {(groupedServices[current] || []).map((s) => (
+                <ServiceRow key={s.id} service={s} />
               ))}
             </ul>
             <button
