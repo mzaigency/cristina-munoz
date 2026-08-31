@@ -142,7 +142,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
   };
 
   return (
-    <section id="servicios" className="py-20 md:py-28 bg-[#f5f6fb]">
+    <section id="servicios" className="py-12 md:py-20 bg-[#f5f6fb]">
       <div className="container mx-auto px-5 md:px-8 max-w-3xl">
         <SectionHeader
           eyebrow={t("services.menuKicker")}
