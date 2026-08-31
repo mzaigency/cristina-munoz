@@ -188,7 +188,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
 
         {/* Vista completa: todas las categorías con foto */}
         {showFull && (
-          <div className="grid gap-10 lg:gap-12">
+          <div className="grid gap-8 lg:gap-10">
             {categories.map((category) => {
               const catServices = groupedServices[category];
               const image = getCategoryImage(category);
