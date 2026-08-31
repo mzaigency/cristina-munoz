@@ -179,7 +179,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
             </ul>
             <button
               onClick={() => setShowFull(true)}
-              className="mt-7 w-full rounded-2xl border border-neutral-300/80 bg-white py-3.5 text-[14px] font-semibold text-[#22408C] transition-colors hover:bg-neutral-50 active:scale-[0.99]"
+              className="mt-4 w-full rounded-[20px] border border-neutral-200 bg-white py-3.5 text-[14px] font-semibold text-[#22408C] transition-colors hover:bg-neutral-50 active:scale-[0.99]"
             >
               {t("services.seeFullMenu")}
             </button>
