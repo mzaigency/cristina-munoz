@@ -120,20 +120,20 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
 
   if (categories.length === 0) return null;
 
-  const ServiceRow = ({ service, last }: { service: Service; last: boolean }) => {
+  const ServiceRow = ({ service }: { service: Service; last?: boolean }) => {
     const price = formatPrice(service.price);
     return (
-      <li
-        className={`flex items-baseline gap-3 sm:gap-5 py-4 ${last ? "" : "border-b border-neutral-200/70"}`}
-      >
-        <span className="flex-1 font-body text-[15.5px] md:text-base font-semibold text-neutral-800 leading-snug">
-          {service.name}
-        </span>
-        <span className="text-[13px] text-neutral-400 tabular-nums whitespace-nowrap font-body">
-          {formatDuration(totalDurationOf(service))}
-        </span>
+      <li className="flex items-center justify-between gap-4 rounded-[20px] border border-neutral-100 bg-white p-4 shadow-[0_4px_14px_-10px_rgba(16,20,40,0.35)]">
+        <div className="min-w-0">
+          <h3 className="font-body text-[14.5px] md:text-[15.5px] font-semibold text-neutral-800 leading-snug">
+            {service.name}
+          </h3>
+          <p className="mt-0.5 text-[12px] text-neutral-400 font-body tabular-nums">
+            {formatDuration(totalDurationOf(service))}
+          </p>
+        </div>
         {price && (
-          <span className="text-[17px] md:text-[19px] font-bold tabular-nums whitespace-nowrap text-neutral-900 font-body ml-1">
+          <span className="text-[15px] md:text-[17px] font-bold tabular-nums whitespace-nowrap text-neutral-900 font-body">
             {price}
           </span>
         )}
