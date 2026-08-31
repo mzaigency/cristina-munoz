@@ -120,20 +120,20 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
 
   if (categories.length === 0) return null;
 
-  const ServiceRow = ({ service, last }: { service: Service; last: boolean }) => {
+  const ServiceRow = ({ service }: { service: Service; last?: boolean }) => {
     const price = formatPrice(service.price);
     return (
-      <li
-        className={`flex items-baseline gap-3 sm:gap-5 py-4 ${last ? "" : "border-b border-neutral-200/70"}`}
-      >
-        <span className="flex-1 font-body text-[15.5px] md:text-base font-semibold text-neutral-800 leading-snug">
-          {service.name}
-        </span>
-        <span className="text-[13px] text-neutral-400 tabular-nums whitespace-nowrap font-body">
-          {formatDuration(totalDurationOf(service))}
-        </span>
+      <li className="flex items-center justify-between gap-4 rounded-[20px] border border-neutral-100 bg-white p-4 shadow-[0_4px_14px_-10px_rgba(16,20,40,0.35)]">
+        <div className="min-w-0">
+          <h3 className="font-body text-[14.5px] md:text-[15.5px] font-semibold text-neutral-800 leading-snug">
+            {service.name}
+          </h3>
+          <p className="mt-0.5 text-[12px] text-neutral-400 font-body tabular-nums">
+            {formatDuration(totalDurationOf(service))}
+          </p>
+        </div>
         {price && (
-          <span className="text-[17px] md:text-[19px] font-bold tabular-nums whitespace-nowrap text-neutral-900 font-body ml-1">
+          <span className="text-[15px] md:text-[17px] font-bold tabular-nums whitespace-nowrap text-neutral-900 font-body">
             {price}
           </span>
         )}
@@ -142,7 +142,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
   };
 
   return (
-    <section id="servicios" className="py-20 md:py-28 bg-[#f5f6fb]">
+    <section id="servicios" className="py-12 md:py-20 bg-[#f5f6fb]">
       <div className="container mx-auto px-5 md:px-8 max-w-3xl">
         <SectionHeader
           eyebrow={t("services.menuKicker")}
@@ -152,19 +152,16 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
         />
 
         {/* Pestañas de categoría */}
-        <div className="flex flex-wrap gap-2 mb-7 -mt-2">
+        <div className="-mx-5 mb-5 flex gap-2.5 overflow-x-auto pl-5 pr-10 pb-1 md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
           {categories.map((cat) => {
             const on = cat === current;
             return (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className="rounded-full px-4 py-2 text-[13px] font-semibold font-body transition-all duration-200 active:scale-[0.97]"
-                style={
-                  on
-                    ? { background: BRAND_GRAD, color: "#fff", boxShadow: "0 8px 20px -10px rgba(84,52,160,.5)" }
-                    : { background: "#eceef4", color: "#4c4f61" }
-                }
+                className={`shrink-0 whitespace-nowrap rounded-full px-5 py-2.5 text-[13px] font-semibold font-body transition-all duration-200 active:scale-[0.97] ${
+                  on ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-500"
+                }`}
               >
                 {cat}
               </button>
@@ -175,14 +172,14 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
         {/* Vista compacta: lista de la categoría activa */}
         {!showFull && (
           <>
-            <ul>
-              {(groupedServices[current] || []).map((s, i, arr) => (
-                <ServiceRow key={s.id} service={s} last={i === arr.length - 1} />
+            <ul className="space-y-3">
+              {(groupedServices[current] || []).map((s) => (
+                <ServiceRow key={s.id} service={s} />
               ))}
             </ul>
             <button
               onClick={() => setShowFull(true)}
-              className="mt-7 w-full rounded-2xl border border-neutral-300/80 bg-white py-3.5 text-[14px] font-semibold text-[#22408C] transition-colors hover:bg-neutral-50 active:scale-[0.99]"
+              className="mt-4 w-full rounded-[20px] border border-neutral-200 bg-white py-3.5 text-[14px] font-semibold text-[#22408C] transition-colors hover:bg-neutral-50 active:scale-[0.99]"
             >
               {t("services.seeFullMenu")}
             </button>
@@ -191,27 +188,27 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
 
         {/* Vista completa: todas las categorías con foto */}
         {showFull && (
-          <div className="grid gap-10 lg:gap-12">
+          <div className="grid gap-8 lg:gap-10">
             {categories.map((category) => {
               const catServices = groupedServices[category];
               const image = getCategoryImage(category);
               return (
                 <article key={category}>
                   {image && (
-                    <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-neutral-100 shadow-[0_18px_40px_-22px_rgba(20,22,40,0.18)] mb-5 group">
+                    <div className="relative aspect-[16/9] rounded-[24px] overflow-hidden bg-neutral-100 shadow-[0_14px_32px_-20px_rgba(20,22,40,0.28)] mb-4 group">
                       <img
                         src={image}
                         alt={category}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                       />
-                      <div className="absolute top-3.5 left-3.5 px-3.5 py-1.5 bg-white/95 backdrop-blur-sm rounded-full text-[12px] font-semibold" style={{ color: "#22408C" }}>
+                      <div className="absolute top-3.5 left-3.5 px-3.5 py-1.5 bg-white rounded-full text-[12px] font-semibold" style={{ color: "#22408C" }}>
                         {catServices.length} {t("services.countLabel")}
                       </div>
                     </div>
                   )}
                   <div className="flex items-baseline justify-between gap-4 mb-2">
-                    <h3 className="font-body text-neutral-900 font-bold tracking-[-0.02em]" style={{ fontSize: "clamp(1.4rem, 2.4vw, 1.9rem)" }}>
+                    <h3 className="font-body text-neutral-900 font-bold tracking-[-0.02em]" style={{ fontSize: "clamp(1.15rem, 2vw, 1.5rem)" }}>
                       {category}
                     </h3>
                     {!image && (
@@ -221,9 +218,9 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
                     )}
                   </div>
                   <div className="h-[3px] w-9 rounded-full mb-4" style={{ background: BRAND_GRAD }} />
-                  <ul>
-                    {catServices.map((s, i, arr) => (
-                      <ServiceRow key={s.id} service={s} last={i === arr.length - 1} />
+                  <ul className="space-y-3">
+                    {catServices.map((s) => (
+                      <ServiceRow key={s.id} service={s} />
                     ))}
                   </ul>
                 </article>
@@ -231,7 +228,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
             })}
             <button
               onClick={() => setShowFull(false)}
-              className="w-full rounded-2xl border border-neutral-300/80 bg-white py-3.5 text-[14px] font-semibold text-[#22408C] transition-colors hover:bg-neutral-50 active:scale-[0.99] inline-flex items-center justify-center gap-2"
+              className="w-full rounded-[20px] border border-neutral-200 bg-white py-3.5 text-[14px] font-semibold text-[#22408C] transition-colors hover:bg-neutral-50 active:scale-[0.99] inline-flex items-center justify-center gap-2"
             >
               <ChevronUp className="h-4 w-4" />
               {t("services.seeLess")}
