@@ -218,9 +218,9 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
                     )}
                   </div>
                   <div className="h-[3px] w-9 rounded-full mb-4" style={{ background: BRAND_GRAD }} />
-                  <ul>
-                    {catServices.map((s, i, arr) => (
-                      <ServiceRow key={s.id} service={s} last={i === arr.length - 1} />
+                  <ul className="space-y-3">
+                    {catServices.map((s) => (
+                      <ServiceRow key={s.id} service={s} />
                     ))}
                   </ul>
                 </article>
