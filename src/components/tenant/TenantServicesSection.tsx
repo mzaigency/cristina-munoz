@@ -152,7 +152,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
         />
 
         {/* Pestañas de categoría */}
-        <div className="-mx-5 mb-5 flex gap-2.5 overflow-x-auto px-5 pb-1 md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
+        <div className="-mx-5 mb-5 flex gap-2.5 overflow-x-auto pl-5 pr-10 pb-1 md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
           {categories.map((cat) => {
             const on = cat === current;
             return (
