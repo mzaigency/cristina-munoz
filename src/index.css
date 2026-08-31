@@ -5766,14 +5766,26 @@ details[open] .glow-neg-past-summary::before { transform: rotate(90deg); }
 
 /* CTA en gradiente de marca */
 .tv-cta {
+  position: relative;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   font-weight: 700; color: #fff; border: none; cursor: pointer;
   background: var(--tv-brand-grad);
-  border-radius: 18px; padding: 13px 22px; font-size: 14px;
-  box-shadow: 0 14px 30px -14px rgba(84, 52, 160, 0.5);
+  border-radius: 22px; padding: 13px 22px; font-size: 14px;
+  box-shadow: 0 14px 30px -14px rgba(84, 52, 160, 0.45);
   transition: filter .18s var(--tv-ease), transform .18s var(--tv-ease);
   -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
 }
+/* Brillo "shine" al hover, estilo liquid glass iOS 26 */
+.tv-cta::before {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.7s ease;
+  pointer-events: none;
+}
+.tv-cta:hover::before { transform: translateX(100%); }
 .tv-cta:hover { filter: brightness(1.07); }
 .tv-cta:active { transform: scale(0.97); }
 
@@ -5813,14 +5825,58 @@ details[open] .glow-neg-past-summary::before { transform: rotate(90deg); }
   @keyframes tvPanelIn { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: none; } }
 }
 
-/* Barra de reserva fija (móvil) */
+/* Barra de reserva fija (móvil) — isla flotante liquid glass iOS 26 */
 .tv-bookbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
-  background: #ffffff;
-  border-top: 1px solid #ececf2;
-  box-shadow: 0 -8px 24px -18px rgba(16, 20, 40, 0.35);
+  display: flex; align-items: center; justify-content: center;
+  padding: 12px 20px calc(14px + env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+.tv-bookbar__island {
+  position: relative;
+  width: 100%; max-width: 420px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 8px 8px 18px;
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(22px) saturate(1.15);
+  -webkit-backdrop-filter: blur(22px) saturate(1.15);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 30px;
+  box-shadow:
+    0 8px 32px rgba(16, 20, 40, 0.10),
+    0 0 0 1px rgba(34, 64, 140, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.55);
+  pointer-events: auto;
+}
+/* Glow exterior azul Glow / cyan suave */
+.tv-bookbar__island::before {
+  content: "";
+  position: absolute; inset: -3px;
+  background: linear-gradient(100deg, rgba(34, 64, 140, 0.18), rgba(34, 211, 238, 0.10));
+  border-radius: 33px;
+  filter: blur(14px);
+  z-index: -1;
+  opacity: 0.7;
+  transition: opacity 0.6s ease;
+}
+/* Reflejo líquido superior */
+.tv-bookbar__island::after {
+  content: "";
+  position: absolute; top: 0; left: 14%; right: 14%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  border-radius: 999px;
+}
+.tv-bookbar__info {
+  display: flex; flex-direction: column;
+  min-width: 0;
+}
+.tv-bookbar__price {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: rgba(34, 64, 140, 0.72);
+}
+.tv-bookbar__label {
+  font-size: 13px; font-weight: 500; color: #4b4f5c;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 @media (min-width: 1024px) { .tv-bookbar { display: none; } }
 /* El footer deja hueco para que la barra no tape el sello Glowapp */
