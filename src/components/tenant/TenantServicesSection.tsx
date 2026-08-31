@@ -228,7 +228,7 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
             })}
             <button
               onClick={() => setShowFull(false)}
-              className="w-full rounded-2xl border border-neutral-300/80 bg-white py-3.5 text-[14px] font-semibold text-[#22408C] transition-colors hover:bg-neutral-50 active:scale-[0.99] inline-flex items-center justify-center gap-2"
+              className="w-full rounded-[20px] border border-neutral-200 bg-white py-3.5 text-[14px] font-semibold text-[#22408C] transition-colors hover:bg-neutral-50 active:scale-[0.99] inline-flex items-center justify-center gap-2"
             >
               <ChevronUp className="h-4 w-4" />
               {t("services.seeLess")}
