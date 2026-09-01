@@ -46,21 +46,20 @@ export function TenantBookBar({ onBookNow, fromPrice }: TenantBookBarProps) {
         transition: "transform 320ms cubic-bezier(0.23, 1, 0.32, 1)",
       }}
     >
-      <div className="min-w-0 flex-1">
-        {formattedFrom && (
-          <div className="text-[12px] font-semibold text-neutral-700 font-body">{formattedFrom}</div>
-        )}
-        <div className="truncate text-[13px] text-neutral-600 font-body">{t("bookbar.sub")}</div>
+      <div className="tv-bookbar__island">
+        <div className="tv-bookbar__info">
+          {formattedFrom && <div className="tv-bookbar__price">{formattedFrom}</div>}
+          <div className="tv-bookbar__label">{t("bookbar.sub")}</div>
+        </div>
+        <button
+          className="tv-cta"
+          onClick={onBookNow}
+          aria-label={t("hero.bookNow")}
+        >
+          <CalendarPlus className="h-4 w-4" />
+          {t("hero.bookNow")}
+        </button>
       </div>
-      <button
-        className="tv-cta shrink-0"
-        onClick={onBookNow}
-        aria-label={t("hero.bookNow")}
-        style={{ padding: "12px 22px", minHeight: 48 }}
-      >
-        <CalendarPlus className="h-4 w-4" />
-        {t("hero.bookNow")}
-      </button>
     </div>
   );
 }
