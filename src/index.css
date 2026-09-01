@@ -5767,10 +5767,11 @@ details[open] .glow-neg-past-summary::before { transform: rotate(90deg); }
 /* CTA en gradiente de marca */
 .tv-cta {
   position: relative;
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   font-weight: 700; color: #fff; border: none; cursor: pointer;
   background: var(--tv-brand-grad);
-  border-radius: 22px; padding: 13px 22px; font-size: 14px;
+  border-radius: 22px; padding: 13px 18px; font-size: 14px;
+  white-space: nowrap;
   box-shadow: 0 14px 30px -14px rgba(84, 52, 160, 0.45);
   transition: filter .18s var(--tv-ease), transform .18s var(--tv-ease);
   -webkit-tap-highlight-color: transparent;
