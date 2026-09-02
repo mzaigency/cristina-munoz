@@ -10,7 +10,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const APP_URL = "https://www.glowapp.app";
 
 const BodySchema = z.object({
   email: z.string().trim().email().max(255),
