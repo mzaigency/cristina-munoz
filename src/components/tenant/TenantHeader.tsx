@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Phone, User, LogOut, Shield, Calendar, MessageCircle, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +13,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useT } from "@/lib/tenantI18n";
 
 interface Tenant {
@@ -30,8 +31,6 @@ interface TenantHeaderProps {
   activeSection: string;
 }
 
-const EASE = [0.22, 1, 0.36, 1] as const;
-
 export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -41,12 +40,14 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
   const { user } = useAuth();
   const t = useT();
 
-  const brand = tenant.primary_color || "hsl(var(--primary))";
-
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 24);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -90,118 +91,165 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
     }
   };
 
-  return (
-    <>
-      <motion.header
-        initial={{ y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: EASE }}
-        className="fixed inset-x-0 top-0 z-50 flex justify-center px-3 pt-3"
-        style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
-      >
-        <div
-          className={`flex w-full max-w-3xl items-center gap-2 rounded-full border py-2 pl-2 pr-2 transition-[background-color,box-shadow,border-color] duration-300 sm:pl-3 ${
-            isScrolled
-              ? "border-border bg-background/85 shadow-[0_8px_30px_-12px_rgba(20,22,48,0.25)] backdrop-blur-xl"
-              : "border-white/25 bg-background/25 backdrop-blur-md"
-          }`}
-        >
-          {/* Volver a Glowapp */}
-          <Link
-            to="/"
-            aria-label={t("nav.backToGlow")}
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors duration-300 ${
-              isScrolled ? "bg-muted text-foreground hover:bg-muted/70" : "bg-white/20 text-white hover:bg-white/30"
-            }`}
-          >
-            <Home className="h-4 w-4" />
-          </Link>
+  const handleUserIconClick = () => {
+    navigate("/auth");
+  };
 
-          {/* Logo / nombre del salón */}
-          <button
-            onClick={() => handleNavClick("inicio")}
-            className="flex min-w-0 items-center"
-            aria-label={tenant.name}
-          >
-            {tenant.logo_url ? (
-              <img src={tenant.logo_url} alt={tenant.name} className="h-8 w-auto rounded-lg" />
+  const handleMyBookingsClick = () => {
+    navigate("/mis-citas");
+  };
+
+  const handleProfileClick = () => {
+    navigate("/perfil");
+  };
+
+  const handleMessagesClick = () => {
+    navigate("/mensajes");
+  };
+
+  const handleAdminClick = () => {
+    navigate(`/admin/${tenant.slug}`);
+  };
+
+  return (
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled ? "liquid-glass-solid !border-x-0 !border-t-0 border-b shadow-sm" : "bg-transparent border-transparent"
+      }`}
+      style={{
+        paddingTop: "env(safe-area-inset-top)",
+        borderColor: isScrolled ? tenant.primary_color || "hsl(var(--border))" : "transparent",
+      }}
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-14 md:h-16">
+          {/* Home Button + Logo */}
+          <div className="flex items-center gap-3">
+            {/* Home button to go back to main app */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  to="/"
+                  className={`flex items-center justify-center h-9 w-9 rounded-full transition-all duration-300 ${
+                    isScrolled
+                      ? "bg-muted hover:bg-muted/80 text-foreground"
+                      : "bg-white/20 hover:bg-white/30 text-white"
+                  }`}
+                >
+                  <Home className="h-4 w-4" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t("nav.backToGlow")}</p>
+              </TooltipContent>
+            </Tooltip>
+
+          {tenant.logo_url ? (
+              <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-auto rounded-xl" />
             ) : (
               <span
-                className={`truncate text-base font-semibold transition-colors duration-300 sm:text-lg ${
+                className={`text-xl font-bold transition-colors duration-300 ${
                   isScrolled ? "" : "text-white drop-shadow-md"
                 }`}
-                style={{ color: isScrolled ? brand : undefined, fontFamily: "var(--font-heading)" }}
+                style={{
+                  color: isScrolled ? tenant.primary_color || "hsl(var(--primary))" : undefined,
+                  fontFamily: "var(--font-heading)",
+                }}
               >
                 {tenant.name}
               </span>
             )}
-          </button>
+          </div>
 
-          {/* Navegación escritorio */}
-          <nav className="mx-auto hidden items-center gap-6 md:flex">
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-6">
             {navItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`text-sm font-medium transition-colors duration-300 ${
+                className={`text-sm font-medium transition-all duration-300 ${
                   isScrolled
                     ? activeSection === item.id
-                      ? ""
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-primary"
                     : "text-white/90 hover:text-white drop-shadow-md"
                 }`}
-                style={{ color: isScrolled && activeSection === item.id ? brand : undefined }}
+                style={{
+                  color:
+                    isScrolled && activeSection === item.id ? tenant.primary_color || "hsl(var(--primary))" : undefined,
+                }}
               >
                 {item.label}
               </button>
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-            {/* Teléfono */}
+          {/* Phone, Account & Mobile Menu */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Phone - Icon only on mobile, full on desktop */}
             {tenant.phone && (
-              <a
-                href={`tel:${tenant.phone}`}
-                aria-label="Llamar"
-                className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 touch-manipulation lg:w-auto lg:gap-2 lg:px-4 lg:text-sm lg:font-medium ${
-                  isScrolled ? "bg-muted hover:bg-muted/70" : "bg-white/20 text-white hover:bg-white/30"
-                }`}
-                style={{ color: isScrolled ? brand : undefined }}
-              >
-                <Phone className="h-4 w-4" />
-                <span className="hidden lg:inline">{tenant.phone}</span>
-              </a>
+              <>
+                {/* Mobile: Just icon */}
+                <a
+                  href={`tel:${tenant.phone}`}
+                  className={`sm:hidden flex items-center justify-center h-9 w-9 rounded-full transition-all duration-300 touch-manipulation ${
+                    isScrolled
+                      ? "bg-primary/10 text-primary hover:bg-primary/20"
+                      : "bg-white/20 hover:bg-white/30 text-white"
+                  }`}
+                  aria-label="Llamar"
+                >
+                  <Phone className="h-4 w-4" />
+                </a>
+                {/* Desktop: Full phone number */}
+                <a
+                  href={`tel:${tenant.phone}`}
+                  className={`hidden sm:flex items-center gap-2 text-sm font-medium transition-colors duration-300 ${
+                    isScrolled ? "" : "text-white drop-shadow-md"
+                  }`}
+                  style={{
+                    color: isScrolled ? tenant.primary_color || "hsl(var(--primary))" : undefined,
+                  }}
+                >
+                  <Phone className="h-4 w-4" />
+                  {tenant.phone}
+                </a>
+              </>
             )}
 
-            {/* Cuenta */}
+            {/* Account Menu */}
             {user ? (
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                  <button
-                    className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 ${
-                      isScrolled ? "text-foreground hover:bg-muted" : "text-white hover:bg-white/25"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-9 w-9 transition-colors duration-300 ${
+                      isScrolled ? "text-foreground" : "text-white hover:text-white/80 hover:bg-white/20"
                     }`}
-                    aria-label={t("nav.myAccount")}
                   >
                     <User className="h-5 w-5" />
-                  </button>
+                  </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="z-[100] border-border bg-background/95 backdrop-blur">
+                <DropdownMenuContent
+                  align="end"
+                  className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/95 border-border z-[100]"
+                >
                   <DropdownMenuLabel>{t("nav.myAccount")}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/perfil")}>
-                    <User className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem onClick={handleProfileClick}>
+                    <User className="h-4 w-4 mr-2" />
                     Mi Perfil
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/mis-citas")}>
-                    <Calendar className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem onClick={handleMyBookingsClick}>
+                    <Calendar className="h-4 w-4 mr-2" />
                     {t("nav.myBookings")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/mensajes")} className="relative">
-                    <MessageCircle className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem onClick={handleMessagesClick} className="relative">
+                    <MessageCircle className="h-4 w-4 mr-2" />
                     Mensajes
                     {unreadCount > 0 && (
-                      <span className="absolute right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-bold text-destructive-foreground">
+                      <span className="absolute right-2 min-w-[20px] h-5 flex items-center justify-center bg-destructive text-destructive-foreground text-xs font-bold rounded-full px-1.5">
                         {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     )}
@@ -209,99 +257,77 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                   {isAdmin && (
                     <>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => navigate(`/admin/${tenant.slug}`)}>
-                        <Shield className="mr-2 h-4 w-4" />
+                      <DropdownMenuItem onClick={handleAdminClick}>
+                        <Shield className="h-4 w-4 mr-2" />
                         Panel Admin
                       </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
+                    <LogOut className="h-4 w-4 mr-2" />
                     {t("nav.signOut")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <button
-                onClick={() => navigate("/auth")}
-                className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 ${
-                  isScrolled ? "text-foreground hover:bg-muted" : "text-white hover:bg-white/25"
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleUserIconClick}
+                className={`h-9 w-9 transition-colors duration-300 ${
+                  isScrolled ? "text-foreground" : "text-white hover:text-white/80 hover:bg-white/20"
                 }`}
-                aria-label={t("nav.myAccount")}
               >
                 <User className="h-5 w-5" />
-              </button>
+              </Button>
             )}
 
-            {/* CTA reservar (escritorio) */}
-            <button
-              onClick={() => handleNavClick("reserva")}
-              className="hidden items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97] md:inline-flex"
-              style={{ backgroundColor: brand }}
-            >
-              {t("nav.booking")}
-            </button>
-
-            {/* Menú móvil */}
-            <button
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 md:hidden ${
-                isScrolled ? "text-foreground hover:bg-muted" : "text-white hover:bg-white/25"
-              }`}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`md:hidden transition-colors duration-300 ${isScrolled ? "" : "text-white hover:bg-white/20"}`}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="Menú"
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+            </Button>
           </div>
         </div>
-      </motion.header>
 
-      <AnimatePresence>
+        {/* Mobile Navigation */}
         {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.22, ease: EASE }}
-            className="fixed inset-x-3 z-40 rounded-3xl border border-border bg-background/95 p-4 shadow-xl backdrop-blur-xl md:hidden"
-            style={{ top: "calc(max(0.75rem, env(safe-area-inset-top)) + 4rem)" }}
+          <nav
+            className={`md:hidden py-4 border-t transition-colors ${
+              isScrolled ? "bg-background" : "bg-background/95 backdrop-blur-sm"
+            }`}
           >
-            <nav className="space-y-1">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.id)}
-                  className={`block w-full rounded-2xl px-4 py-3 text-left text-base font-medium transition-colors ${
-                    activeSection === item.id ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/60"
-                  }`}
-                  style={{ color: activeSection === item.id ? brand : undefined }}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </nav>
-            <div className="mt-3 space-y-2 border-t border-border pt-3">
+            <div className="flex flex-col gap-2">
+              {/* Link to main app */}
               <Link
                 to="/"
+                className="py-2 px-4 text-left rounded-lg transition-colors flex items-center gap-2 text-muted-foreground hover:bg-muted"
                 onClick={() => setIsMenuOpen(false)}
-                className="flex items-center justify-center gap-2 rounded-full border border-border py-3 text-sm font-medium text-foreground"
               >
                 <Home className="h-4 w-4" />
                 {t("nav.backToGlow")}
               </Link>
-              <button
-                onClick={() => handleNavClick("reserva")}
-                className="w-full rounded-full py-3 text-sm font-semibold text-white"
-                style={{ backgroundColor: brand }}
-              >
-                {t("nav.booking")}
-              </button>
+              <div className="border-t my-2" />
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id)}
+                  className={`py-2 px-4 text-left rounded-lg transition-colors ${
+                    activeSection === item.id ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
             </div>
-          </motion.div>
+          </nav>
         )}
-      </AnimatePresence>
-    </>
+      </div>
+    </header>
   );
 };
 
