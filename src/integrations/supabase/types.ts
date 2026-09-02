@@ -3019,18 +3019,9 @@ export type Database = {
         Args: { _ciphertext: string; _tenant_id: string }
         Returns: string
       }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
-      email_queue_dispatch: { Args: never; Returns: undefined }
       encrypt_sensitive_data: {
         Args: { _plaintext: string; _tenant_id: string }
         Returns: string
-      }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
       }
       expire_old_waitlist_entries: { Args: never; Returns: undefined }
       get_feed_section_metrics: {
@@ -3236,23 +3227,6 @@ export type Database = {
       invoke_booking_notifications: { Args: never; Returns: undefined }
       is_superadmin: { Args: never; Returns: boolean }
       is_tenant_active: { Args: { _tenant_id: string }; Returns: boolean }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
-      }
       search_my_bookings: {
         Args: { phone_number: string }
         Returns: {
