@@ -11,9 +11,6 @@ const corsHeaders = {
 };
 
 const APP_URL = "https://www.glowapp.app";
-const FROM_EMAIL = "Glowapp <noreply@glowapp.app>";
-const SENDER_DOMAIN = "notify.glowapp.app";
-const LOGO_ICON = `${APP_URL}/email-assets/glowapp-icon.png`;
 
 const BodySchema = z.object({
   email: z.string().trim().email().max(255),
@@ -94,10 +91,6 @@ serve(async (req) => {
       tenantLogoUrl = t?.logo_url ?? null;
     }
 
-    const subject = `${code} es tu código de Glowapp`;
-
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
 
     const logEmail = async (status: string, errorMessage?: string) => {
       const { error } = await supabase.from("email_send_log").insert({
@@ -112,7 +105,6 @@ serve(async (req) => {
 
     try {
       await sendTemplateEmail("booking-otp", emailLower, {
-        subject,
         templateData: {
           code,
           tenantName: tenant_name,
