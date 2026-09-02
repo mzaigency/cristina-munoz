@@ -15,7 +15,7 @@ const corsHeaders = {
 }
 
 // Configuration
-const SITE_NAME = "GLOWAPP"
+const SITE_NAME = "Glowapp"
 const SENDER_DOMAIN = "notify.glowapp.app"
 const ROOT_DOMAIN = "glowapp.app"
 const FROM_DOMAIN = "glowapp.app"
