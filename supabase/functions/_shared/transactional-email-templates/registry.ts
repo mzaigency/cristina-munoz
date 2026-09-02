@@ -17,6 +17,7 @@ import { template as bookingUpdated } from './booking-updated.tsx'
 import { template as waitlistSlotAvailable } from './waitlist-slot-available.tsx'
 import { template as subscriptionPaymentIssue } from './subscription-payment-issue.tsx'
 import { template as clientWelcome } from './client-welcome.tsx'
+import { template as bookingOtp } from './booking-otp.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'booking-confirmation': bookingConfirmation,
@@ -27,4 +28,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'waitlist-slot-available': waitlistSlotAvailable,
   'subscription-payment-issue': subscriptionPaymentIssue,
   'client-welcome': clientWelcome,
+  'booking-otp': bookingOtp,
 }
