@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendAndLogTemplateEmail } from '../_shared/transactional-email-templates/send-and-log.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -266,12 +267,9 @@ serve(async (req) => {
           ? booking.services.map((s: any) => s.name).filter(Boolean).join(", ")
           : "";
 
-        await supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "booking-cancelled",
-            recipientEmail: email,
-            idempotencyKey: `booking-cancelled-${booking.id}`,
-            templateData: {
+        await sendAndLogTemplateEmail("booking-cancelled", email, {
+  idempotencyKey: `booking-cancelled-${booking.id}`,
+  templateData: {
               customerName: booking.customer_name || "Hola",
               tenantName: tenantData?.name || "el salón",
               tenantLogoUrl: tenantData?.logo_url ?? null,
@@ -282,8 +280,7 @@ serve(async (req) => {
               cancelledBy: isCancelledByClient ? "cliente" : "salon",
               rebookUrl: tenantData?.slug ? `https://glowapp.app/${tenantData.slug}` : "https://glowapp.app",
             },
-          },
-        });
+});
         console.log("Cancellation email sent");
       }
     } catch (mailErr) {

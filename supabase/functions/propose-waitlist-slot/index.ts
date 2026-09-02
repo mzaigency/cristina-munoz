@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendAndLogTemplateEmail } from '../_shared/transactional-email-templates/send-and-log.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -237,12 +238,9 @@ serve(async (req) => {
         const serviceNames = Array.isArray(entry.services)
           ? entry.services.map((s: any) => s?.name).filter(Boolean).join(", ")
           : "";
-        await supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "waitlist-slot-available",
-            recipientEmail: email,
-            idempotencyKey: `waitlist-proposal-${waitlist_id}-${proposed_date}-${timeShort}`,
-            templateData: {
+        await sendAndLogTemplateEmail("waitlist-slot-available", email, {
+  idempotencyKey: `waitlist-proposal-${waitlist_id}-${proposed_date}-${timeShort}`,
+  templateData: {
               customerName: entry.client_name || "Hola",
               tenantName,
               tenantLogoUrl: (tenant as any)?.logo_url ?? null,
@@ -252,8 +250,7 @@ serve(async (req) => {
               expiresIn: "24 horas",
               acceptUrl: confirmUrl,
             },
-          },
-        });
+});
       }
     } catch (mailErr) {
       console.error("propose-waitlist-slot email error:", mailErr);
