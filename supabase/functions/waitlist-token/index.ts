@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { checkRateLimit, clientIp, rateLimited } from "../_shared/rate-limit.ts";
+import { sendAndLogTemplateEmail } from '../_shared/transactional-email-templates/send-and-log.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -255,12 +256,9 @@ serve(async (req) => {
         email = authUser?.user?.email ?? null;
       }
       if (email) {
-        await admin.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "booking-confirmation",
-            recipientEmail: email,
-            idempotencyKey: `booking-confirm-${booking.id}`,
-            templateData: {
+        await sendAndLogTemplateEmail("booking-confirmation", email, {
+  idempotencyKey: `booking-confirm-${booking.id}`,
+  templateData: {
               customerName: entry.client_name || "Hola",
               tenantName: tenant.name ?? "el salón",
               tenantLogoUrl: tenant.logo_url ?? null,
@@ -269,8 +267,7 @@ serve(async (req) => {
               time: proposedTime,
               services: services.map((s: any) => s?.name).filter(Boolean).join(", "),
             },
-          },
-        });
+});
       }
     } catch (mailErr) {
       console.error("waitlist-token: email error", mailErr);

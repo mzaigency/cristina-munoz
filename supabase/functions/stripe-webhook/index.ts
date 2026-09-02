@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { sendAndLogTemplateEmail } from '../_shared/transactional-email-templates/send-and-log.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -369,12 +370,9 @@ async function maybeSendTenantWelcome(supabase: any, tenantId: string) {
     ownerName = profile?.first_name || (profile?.full_name || "").split(" ")[0] || ownerName;
   }
 
-  const { error: invokeError } = await supabase.functions.invoke("send-transactional-email", {
-    body: {
-      templateName: "tenant-welcome",
-      recipientEmail: tenant.email,
-      idempotencyKey: `tenant-welcome-${tenantId}`,
-      templateData: {
+  await sendAndLogTemplateEmail("tenant-welcome", tenant.email, {
+  idempotencyKey: `tenant-welcome-${tenantId}`,
+  templateData: {
         ownerName,
         tenantName: tenant.name,
         tenantSlug: tenant.slug,
@@ -382,14 +380,9 @@ async function maybeSendTenantWelcome(supabase: any, tenantId: string) {
         adminUrl: "https://glowapp.app/admin",
         publicUrl: tenant.slug ? `https://glowapp.app/${tenant.slug}` : undefined,
       },
-    },
-  });
+});
 
-  if (invokeError) {
-    logStep("welcome: invoke error", { error: invokeError.message });
-  } else {
-    logStep("welcome email queued", { tenantId, email: tenant.email });
-  }
+  logStep("welcome email sent", { tenantId, email: tenant.email });
 }
 
 serve(async (req) => {
@@ -552,12 +545,9 @@ serve(async (req) => {
                 .eq("id", ctx.tenantId)
                 .maybeSingle();
               if (ownerEmail) {
-                await supabase.functions.invoke("send-transactional-email", {
-                  body: {
-                    templateName: "subscription-payment-issue",
-                    recipientEmail: ownerEmail,
-                    idempotencyKey: `sub-payment-failed-${invoice.id}`,
-                    templateData: {
+                await sendAndLogTemplateEmail("subscription-payment-issue", ownerEmail, {
+  idempotencyKey: `sub-payment-failed-${invoice.id}`,
+  templateData: {
                       ownerName: owner?.user?.user_metadata?.full_name || tenantRow?.name || "Hola",
                       tenantName: tenantRow?.name || "tu salón",
                       planName: tenantRow?.subscription_plan || null,
@@ -565,8 +555,7 @@ serve(async (req) => {
                       kind: "payment_failed",
                       billingUrl: "https://glowapp.app/admin?tab=suscripcion",
                     },
-                  },
-                });
+});
               }
             } catch (mailErr) {
               logStep("payment_failed email error", { error: String(mailErr) });
@@ -592,12 +581,9 @@ serve(async (req) => {
               .eq("id", ctx.tenantId)
               .maybeSingle();
             if (ownerEmail) {
-              await supabase.functions.invoke("send-transactional-email", {
-                body: {
-                  templateName: "subscription-payment-issue",
-                  recipientEmail: ownerEmail,
-                  idempotencyKey: `sub-trial-ending-${sub.id}-${sub.trial_end ?? ""}`,
-                  templateData: {
+              await sendAndLogTemplateEmail("subscription-payment-issue", ownerEmail, {
+  idempotencyKey: `sub-trial-ending-${sub.id}-${sub.trial_end ?? ""}`,
+  templateData: {
                     ownerName: owner?.user?.user_metadata?.full_name || tenantRow?.name || "Hola",
                     tenantName: tenantRow?.name || "tu salón",
                     planName: tenantRow?.subscription_plan || null,
@@ -607,8 +593,7 @@ serve(async (req) => {
                     kind: "trial_ending",
                     billingUrl: "https://glowapp.app/admin?tab=suscripcion",
                   },
-                },
-              });
+});
             }
           }
         } catch (e) {

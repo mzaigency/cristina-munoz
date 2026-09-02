@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { checkRateLimit, clientIp, rateLimited } from "../_shared/rate-limit.ts";
 import { overrideReplacesWeekly, pickOverrideForDate } from "../_shared/hours-overrides.ts";
+import { sendAndLogTemplateEmail } from '../_shared/transactional-email-templates/send-and-log.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -925,12 +926,9 @@ serve(async (req) => {
           // Send confirmation email (only for first booking of a recurrence)
           if (customer_email) {
             try {
-              await supabase.functions.invoke("send-transactional-email", {
-                body: {
-                  templateName: "booking-confirmation",
-                  recipientEmail: customer_email,
-                  idempotencyKey: `booking-confirm-${createdBookings[0]?.id}`,
-                  templateData: {
+              await sendAndLogTemplateEmail("booking-confirmation", customer_email, {
+  idempotencyKey: `booking-confirm-${createdBookings[0]?.id}`,
+  templateData: {
                     customerName: customer_name,
                     tenantName,
                     tenantLogoUrl: tenantData?.logo_url ?? null,
@@ -943,8 +941,7 @@ serve(async (req) => {
                     services: bookingData.services.map((s) => s.name).join(", "),
                     manageUrl: "https://glowapp.app/mis-citas",
                   },
-                },
-              });
+});
             } catch (emailErr) {
               console.error("Error sending confirmation email:", emailErr);
             }
@@ -957,18 +954,14 @@ serve(async (req) => {
                 .eq("user_id", bookingData.user_id);
 
               if ((count ?? 0) <= createdBookings.length) {
-                await supabase.functions.invoke("send-transactional-email", {
-                  body: {
-                    templateName: "client-welcome",
-                    recipientEmail: customer_email,
-                    idempotencyKey: `client-welcome-${bookingData.user_id}`,
-                    templateData: {
+                await sendAndLogTemplateEmail("client-welcome", customer_email, {
+  idempotencyKey: `client-welcome-${bookingData.user_id}`,
+  templateData: {
                       customerName: customer_name,
                       tenantName,
                       appUrl: "https://glowapp.app",
                     },
-                  },
-                });
+});
               }
             } catch (welcomeErr) {
               console.error("Error sending client welcome email:", welcomeErr);

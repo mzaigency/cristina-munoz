@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendAndLogTemplateEmail } from '../_shared/transactional-email-templates/send-and-log.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -211,12 +212,9 @@ serve(async (req) => {
               const servicesText = Array.isArray(booking.services)
                 ? booking.services.map((s: any) => s?.name).filter(Boolean).join(", ")
                 : "";
-              await supabase.functions.invoke("send-transactional-email", {
-                body: {
-                  templateName: "booking-reminder-24h",
-                  recipientEmail: email,
-                  idempotencyKey: `booking-reminder-24h-${booking.id}`,
-                  templateData: {
+              await sendAndLogTemplateEmail("booking-reminder-24h", email, {
+  idempotencyKey: `booking-reminder-24h-${booking.id}`,
+  templateData: {
                     customerName: booking.customer_name || "",
                     tenantName,
                     tenantLogoUrl: tenant?.logo_url ?? null,
@@ -229,8 +227,7 @@ serve(async (req) => {
                     services: servicesText,
                     manageUrl: "https://glowapp.app/mis-citas",
                   },
-                },
-              });
+});
               results.emails_sent++;
             } catch (emailErr) {
               console.error("Error sending 24h reminder email:", emailErr);

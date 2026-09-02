@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://esm.sh/zod@3.22.4";
+import { EmailAPIError, sendLovableEmail } from "npm:@lovable.dev/email-js@0.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -111,84 +112,51 @@ serve(async (req) => {
     }
     if (!otp?.id) throw new Error("Failed to store OTP");
 
-    const messageId = crypto.randomUUID();
     const subject = `${code} es tu código de Glowapp`;
 
-    const { data: existingToken, error: tokenLookupError } = await supabase
-      .from("email_unsubscribe_tokens")
-      .select("token")
-      .eq("email", emailLower)
-      .maybeSingle();
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
 
-    if (tokenLookupError) {
-      console.error("otp unsubscribe token lookup error", tokenLookupError);
-      throw new Error("Failed to prepare email");
-    }
-
-    let unsubscribeToken = existingToken?.token;
-    if (!unsubscribeToken) {
-      unsubscribeToken = generateToken();
-      const { error: tokenInsertError } = await supabase
-        .from("email_unsubscribe_tokens")
-        .upsert({ token: unsubscribeToken, email: emailLower }, { onConflict: "email", ignoreDuplicates: true });
-
-      if (tokenInsertError) {
-        console.error("otp unsubscribe token insert error", tokenInsertError);
-        throw new Error("Failed to prepare email");
-      }
-
-      const { data: storedToken, error: tokenReadError } = await supabase
-        .from("email_unsubscribe_tokens")
-        .select("token")
-        .eq("email", emailLower)
-        .maybeSingle();
-
-      if (tokenReadError || !storedToken?.token) {
-        console.error("otp unsubscribe token read error", tokenReadError);
-        throw new Error("Failed to prepare email");
-      }
-      unsubscribeToken = storedToken.token;
-    }
-
-    await supabase.from("email_send_log").insert({
-      message_id: messageId,
-      template_name: "booking-otp",
-      recipient_email: emailLower,
-      status: "pending",
-    });
-
-    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: {
-        message_id: messageId,
-        to: emailLower,
-        from: FROM_EMAIL,
-        sender_domain: SENDER_DOMAIN,
-        subject,
-        html: otpEmail(code, tenant_name),
-        text: `Tu código de Glowapp es ${code}. Caduca en 10 minutos.`,
-        purpose: "transactional",
-        label: "booking-otp",
-        unsubscribe_token: unsubscribeToken,
-        idempotency_key: `booking-otp-${otp.id}`,
-        queued_at: new Date().toISOString(),
-      },
-    });
-
-    if (enqueueError) {
-      console.error("enqueue otp email error", enqueueError);
-      await supabase.from("otp_codes").delete().eq("id", otp.id);
-      await supabase.from("email_send_log").insert({
-        message_id: messageId,
+    const logEmail = async (status: string, errorMessage?: string) => {
+      const { error } = await supabase.from("email_send_log").insert({
+        message_id: null,
         template_name: "booking-otp",
         recipient_email: emailLower,
-        status: "failed",
-        error_message: enqueueError.message,
+        status,
+        error_message: errorMessage ?? null,
       });
-      return new Response(JSON.stringify({ error: "email_failed" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (error) console.error("email_send_log write failed", { code: error.code, message: error.message });
+    };
+
+    try {
+      await sendLovableEmail(
+        {
+          to: emailLower,
+          from: FROM_EMAIL,
+          sender_domain: SENDER_DOMAIN,
+          subject,
+          html: otpEmail(code, tenant_name),
+          text: `Tu código de Glowapp es ${code}. Caduca en 10 minutos.`,
+          purpose: "transactional",
+          label: "booking-otp",
+          idempotency_key: `booking-otp-${otp.id}`,
+        },
+        { apiKey, sendUrl: Deno.env.get("LOVABLE_SEND_URL") },
+      );
+      await logEmail("sent");
+    } catch (sendErr) {
+      if (sendErr instanceof EmailAPIError && sendErr.code === "recipient_suppressed") {
+        await logEmail("suppressed");
+      } else {
+        const message = sendErr instanceof Error ? sendErr.message : String(sendErr);
+        console.error("send otp email error", message);
+        await supabase.from("otp_codes").delete().eq("id", otp.id);
+        await logEmail("failed", message.slice(0, 1000));
+        return new Response(JSON.stringify({ error: "email_failed" }), {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {

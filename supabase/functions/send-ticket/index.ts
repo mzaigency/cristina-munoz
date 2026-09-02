@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EmailAPIError, sendLovableEmail } from "npm:@lovable.dev/email-js@0.1.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -280,79 +281,60 @@ const handler = async (req: Request): Promise<Response> => {
 </html>`;
 
 
-    console.log("Enqueueing email to:", ticketData.customerEmail);
+    console.log("Sending ticket email to:", ticketData.customerEmail);
 
-    // Enqueue through Lovable Emails queue (uses verified notify.glowapp.app).
-    const messageId = crypto.randomUUID();
-    // Unique per attempt: the email API rejects reusing a key from a failed run.
-    const idempotencyKey = `ticket-${ticketData.transactionId || messageId}-${Date.now()}`;
+    const idempotencyKey = `ticket-${ticketData.transactionId || crypto.randomUUID()}-${Date.now()}`;
     const subject = `${documentTitle} de ${tenant.name} - ${ticketData.date}`;
 
-    // Transactional sends require an unsubscribe token (one per address).
-    const normalizedEmail = ticketData.customerEmail.trim().toLowerCase();
-    let unsubscribeToken: string | null = null;
-    const { data: existingToken } = await supabase
-      .from("email_unsubscribe_tokens")
-      .select("token")
-      .eq("email", normalizedEmail)
-      .maybeSingle();
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
 
-    if (existingToken?.token) {
-      unsubscribeToken = existingToken.token;
-    } else {
-      const newToken = crypto.randomUUID().replace(/-/g, "");
-      await supabase
-        .from("email_unsubscribe_tokens")
-        .upsert({ token: newToken, email: normalizedEmail }, { onConflict: "email" });
-      const { data: storedToken } = await supabase
-        .from("email_unsubscribe_tokens")
-        .select("token")
-        .eq("email", normalizedEmail)
-        .maybeSingle();
-      unsubscribeToken = storedToken?.token || newToken;
-    }
-
-    await supabase.from("email_send_log").insert({
-      message_id: messageId,
-      template_name: "ticket",
-      recipient_email: ticketData.customerEmail,
-      status: "pending",
-    });
-
-    const { error: enqueueError } = await supabase.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: {
-        message_id: messageId,
-        to: ticketData.customerEmail,
-        from: `${tenant.name} <noreply@glowapp.app>`,
-        sender_domain: "notify.glowapp.app",
-        subject,
-        html: emailHtml,
-        text: subject,
-        purpose: "transactional",
-        label: "ticket",
-        unsubscribe_token: unsubscribeToken,
-        idempotency_key: idempotencyKey,
-        queued_at: new Date().toISOString(),
-      },
-    });
-
-    if (enqueueError) {
-      console.error("Failed to enqueue ticket email", enqueueError);
-      await supabase.from("email_send_log").insert({
-        message_id: messageId,
+    const logEmail = async (status: string, errorMessage?: string) => {
+      const { error } = await supabase.from("email_send_log").insert({
+        message_id: null,
         template_name: "ticket",
         recipient_email: ticketData.customerEmail,
-        status: "failed",
-        error_message: enqueueError.message,
+        status,
+        error_message: errorMessage ?? null,
       });
-      throw new Error("Failed to enqueue email");
+      if (error) console.error("email_send_log write failed", { code: error.code, message: error.message });
+    };
+
+    try {
+      await sendLovableEmail(
+        {
+          to: ticketData.customerEmail,
+          from: `${tenant.name} <noreply@glowapp.app>`,
+          sender_domain: "notify.glowapp.app",
+          subject,
+          html: emailHtml,
+          text: subject,
+          purpose: "transactional",
+          label: "ticket",
+          idempotency_key: idempotencyKey,
+        },
+        { apiKey, sendUrl: Deno.env.get("LOVABLE_SEND_URL") },
+      );
+      await logEmail("sent");
+    } catch (sendErr) {
+      if (sendErr instanceof EmailAPIError && sendErr.code === "recipient_suppressed") {
+        await logEmail("suppressed");
+        return new Response(JSON.stringify({ success: true, sent: false, reason: "recipient_suppressed" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      const message = sendErr instanceof Error ? sendErr.message : String(sendErr);
+      console.error("Failed to send ticket email", message);
+      await logEmail("failed", message.slice(0, 1000));
+      throw new Error("Failed to send email");
     }
 
-    return new Response(JSON.stringify({ success: true, queued: true, messageId }), {
+    return new Response(JSON.stringify({ success: true, sent: true }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
+
 
   } catch (error: any) {
     console.error("Error in send-ticket function:", error);
