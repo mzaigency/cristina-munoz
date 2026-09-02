@@ -60,6 +60,8 @@ project_id = "lyeyzdbplrgqsvyxpfek"
     verify_jwt = true
   [functions.send-tenant-welcome]
     verify_jwt = false
+  [functions.send-booking-updated-email]
+    verify_jwt = true
   [functions.send-ticket]
     verify_jwt = true
   [functions.send-verification-email]

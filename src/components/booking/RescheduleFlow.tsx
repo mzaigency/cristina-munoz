@@ -199,9 +199,8 @@ export function RescheduleFlow({ booking, onClose, onSuccess }: RescheduleFlowPr
             const { data } = await supabase.rpc('get_public_tenant_by_id', { _id: booking.tenant_id });
             tenant = Array.isArray(data) ? data[0] : data;
           }
-          await supabase.functions.invoke('send-transactional-email', {
+          await supabase.functions.invoke('send-booking-updated-email', {
             body: {
-              templateName: 'booking-updated',
               recipientEmail: email,
               idempotencyKey: `booking-updated-${booking.id}-${format(selectedDate, 'yyyy-MM-dd')}-${horaToSave}`,
               templateData: {
