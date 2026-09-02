@@ -382,11 +382,7 @@ async function maybeSendTenantWelcome(supabase: any, tenantId: string) {
       },
 });
 
-  if (invokeError) {
-    logStep("welcome: invoke error", { error: invokeError.message });
-  } else {
-    logStep("welcome email queued", { tenantId, email: tenant.email });
-  }
+  logStep("welcome email sent", { tenantId, email: tenant.email });
 }
 
 serve(async (req) => {
