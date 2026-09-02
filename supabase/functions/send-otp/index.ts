@@ -2,7 +2,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://esm.sh/zod@3.22.4";
-import { EmailAPIError, sendLovableEmail } from "npm:@lovable.dev/email-js@0.1.0";
+import { EmailAPIError } from "npm:@lovable.dev/email-js@0.1.0";
+import { sendTemplateEmail } from "../_shared/transactional-email-templates/send-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,31 +31,6 @@ function generateToken(): string {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function otpEmail(code: string, tenantName?: string) {
-  const title = tenantName ? `Confirma tu reserva en ${tenantName}` : "Confirma tu reserva";
-  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"></head>
-<body style="margin:0;padding:0;background-color:#ffffff;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F7FB;padding:28px 12px"><tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;background:#ffffff;border-radius:22px;overflow:hidden;border:1px solid #ECEDF3">
-<tr><td style="height:5px;line-height:5px;font-size:0;background:#22408B;background-image:linear-gradient(100deg,#22408B,#98329A)">&nbsp;</td></tr>
-<tr><td align="center" style="padding:26px 28px 0"><img src="${LOGO_ICON}" width="56" height="56" alt="Glowapp" style="display:block;border-radius:16px;border:1px solid #ECEDF3"></td></tr>
-<tr><td align="center" style="padding:16px 28px 0">
-  <span style="display:inline-block;padding:5px 14px;border-radius:999px;background:#EEF1FA;color:#22408B;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Código de confirmación</span>
-  <h1 style="color:#131520;font-size:23px;font-weight:800;margin:14px 0 8px;letter-spacing:-.02em;line-height:1.25">${title}</h1>
-  <p style="color:#4a4d5c;font-size:15px;margin:0;line-height:1.6">Introduce este código para confirmar tu cita:</p>
-</td></tr>
-<tr><td style="padding:20px 28px 0">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F6F7FB;border-radius:16px"><tr><td align="center" style="padding:22px 16px">
-    <span style="font-size:36px;font-weight:800;letter-spacing:.28em;color:#22408B;font-family:'Courier New',monospace">${code}</span>
-  </td></tr></table>
-</td></tr>
-<tr><td align="center" style="padding:16px 28px 26px"><p style="color:#8A8FA3;font-size:13px;margin:0;line-height:1.6">El código caduca en 10 minutos.<br>Si no has solicitado esta reserva, ignora este email.</p></td></tr>
-<tr><td style="padding:16px 28px 22px;background:#FBFBFD;border-top:1px solid #ECEDF3;text-align:center">
-  <p style="margin:0;font-size:11px;color:#A2A6B6">Enviado con <a href="${APP_URL}" style="color:#22408B;font-weight:700;text-decoration:none">Glowapp</a> · reservas y gestión para tu salón</p>
-</td></tr>
-</table></td></tr></table></body></html>`;
 }
 
 serve(async (req) => {
@@ -112,6 +88,12 @@ serve(async (req) => {
     }
     if (!otp?.id) throw new Error("Failed to store OTP");
 
+    let tenantLogoUrl: string | null = null;
+    if (tenant_id) {
+      const { data: t } = await supabase.from("tenants").select("logo_url").eq("id", tenant_id).maybeSingle();
+      tenantLogoUrl = t?.logo_url ?? null;
+    }
+
     const subject = `${code} es tu código de Glowapp`;
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
@@ -129,20 +111,15 @@ serve(async (req) => {
     };
 
     try {
-      await sendLovableEmail(
-        {
-          to: emailLower,
-          from: FROM_EMAIL,
-          sender_domain: SENDER_DOMAIN,
-          subject,
-          html: otpEmail(code, tenant_name),
-          text: `Tu código de Glowapp es ${code}. Caduca en 10 minutos.`,
-          purpose: "transactional",
-          label: "booking-otp",
-          idempotency_key: `booking-otp-${otp.id}`,
+      await sendTemplateEmail("booking-otp", emailLower, {
+        subject,
+        templateData: {
+          code,
+          tenantName: tenant_name,
+          tenantLogoUrl: tenantLogoUrl,
         },
-        { apiKey, sendUrl: Deno.env.get("LOVABLE_SEND_URL") },
-      );
+        idempotencyKey: `booking-otp-${otp.id}`,
+      });
       await logEmail("sent");
     } catch (sendErr) {
       if (sendErr instanceof EmailAPIError && sendErr.code === "recipient_suppressed") {
