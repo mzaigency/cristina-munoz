@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CheckCircle2, Loader2, Tag, Package, Phone, Clock, User as UserIcon, Scissors } from "lucide-react";
+import { CheckCircle2, Loader2, Tag, Package, Phone, Clock, User as UserIcon, Scissors, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
@@ -24,6 +24,8 @@ interface BookingConfirmationProps {
   totalPrice?: number;
   discountedPrice?: number;
   addonProducts?: SelectedAddon[];
+  hideFooter?: boolean;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 interface UserProfile {
@@ -36,6 +38,14 @@ const formatPrice = (price: number): string => {
   return `${price.toFixed(2).replace('.', ',')} €`;
 };
 
+const getStylistDisplayName = (stylist: string | null | undefined): string => {
+  if (!stylist || stylist === "any") return "Cualquiera disponible";
+  const s = stylist.toLowerCase();
+  if (s === "cris" || s.includes("cristina")) return "Cristina Muñoz";
+  if (s === "desi" || s.includes("desiree") || s.includes("desirée")) return "Desiree";
+  return stylist.charAt(0).toUpperCase() + stylist.slice(1).toLowerCase();
+};
+
 export const BookingConfirmation = ({
   bookingData,
   totalDuration,
@@ -45,6 +55,8 @@ export const BookingConfirmation = ({
   totalPrice = 0,
   discountedPrice,
   addonProducts = [],
+  hideFooter = false,
+  onLoadingChange,
 }: BookingConfirmationProps) => {
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -55,6 +67,11 @@ export const BookingConfirmation = ({
   const [savingPhone, setSavingPhone] = useState(false);
   const { toast } = useToast();
   const confettiRef = useRef<ConfettiRef>(null);
+
+  // Notify parent of loading / submitting state
+  useEffect(() => {
+    onLoadingChange?.(loading);
+  }, [loading, onLoadingChange]);
 
   const hasDiscount = discountedPrice !== undefined && discountedPrice < totalPrice;
   const finalPrice = hasDiscount ? discountedPrice : totalPrice;
@@ -427,53 +444,54 @@ export const BookingConfirmation = ({
     );
   }
 
-  const dayNum = bookingData.date ? format(bookingData.date, "d", { locale: es }) : "";
-  const monthShort = bookingData.date ? format(bookingData.date, "MMM", { locale: es }).toUpperCase() : "";
-  const weekday = bookingData.date ? format(bookingData.date, "EEEE", { locale: es }) : "";
+  const stylistDisplayName = getStylistDisplayName(bookingData.stylist);
 
   return (
-    <div className="space-y-5">
-      {/* Ticket estilo iOS Wallet */}
-      <div className="rounded-3xl bg-card border border-border/60 overflow-hidden shadow-sm">
-        {/* Cabecera: fecha grande + hora */}
-        <div className="flex items-stretch">
-          {/* Bloque fecha tipo icono calendario */}
-          <div className="flex flex-col items-center justify-center px-5 py-5 bg-gradient-to-br from-primary/10 to-accent/10 border-r border-border/40 min-w-[92px]">
-            <span className="text-[10px] font-bold tracking-widest text-primary">{monthShort}</span>
-            <span className="text-[38px] font-bold leading-none text-foreground tabular-nums mt-0.5">{dayNum}</span>
-            <span className="text-[11px] text-muted-foreground capitalize mt-1">{weekday}</span>
-          </div>
-
-          {/* Hora + total */}
-          <div className="flex-1 flex flex-col justify-center px-5 py-5 min-w-0">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" />
-              <span className="text-[11px] font-medium uppercase tracking-wider">Hora</span>
+    <div className="space-y-4">
+      {/* Tarjeta de Cita — Estilo Salón Exclusivo */}
+      <div className="rounded-2xl border border-neutral-200/90 bg-white shadow-xs overflow-hidden">
+        {/* Cabecera: Fecha y Hora destacada */}
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-neutral-50 via-white to-neutral-50/70 border-b border-neutral-200/70 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
+              <Calendar className="h-5 w-5" />
             </div>
-            <p className="text-[28px] font-bold text-foreground leading-tight tabular-nums mt-0.5">
-              {bookingData.time}
-            </p>
-            <p className="text-[12px] text-muted-foreground tabular-nums">{totalDuration} min</p>
-          </div>
-        </div>
-
-        {/* Divisor con muescas tipo ticket */}
-        <div className="relative h-3 border-y border-dashed border-border/60 bg-muted/30">
-          <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-background border border-border/60" />
-          <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-background border border-border/60" />
-        </div>
-
-        {/* Detalles */}
-        <div className="px-5 py-4 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <Scissors className="h-3.5 w-3.5 text-primary" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Servicios</p>
-              <p className="text-[14px] font-medium text-foreground leading-snug">
-                {bookingData.services.map((s) => s.name).join(" · ")}
+            <div className="min-w-0">
+              <p className="text-[15px] font-bold text-neutral-900 capitalize truncate">
+                {bookingData.date && format(bookingData.date, "EEEE, d 'de' MMMM", { locale: es })}
               </p>
+              <div className="flex items-center gap-2 mt-0.5 text-xs sm:text-[13px] text-neutral-500 font-medium">
+                <span className="font-bold text-primary tabular-nums">{bookingData.time} h</span>
+                <span className="text-neutral-300">·</span>
+                <span>{totalDuration} min de duración</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bloque central: Servicios, Profesional y Cliente */}
+        <div className="p-4 sm:p-5 space-y-3.5">
+          {/* Servicios */}
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0 text-neutral-600 mt-0.5">
+              <Scissors className="h-4 w-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
+                {bookingData.services.length === 1 ? "Servicio" : "Servicios"}
+              </p>
+              <div className="mt-1 space-y-1">
+                {bookingData.services.map((s) => (
+                  <div key={s.id} className="flex items-center justify-between gap-2 text-[13.5px]">
+                    <span className="font-semibold text-neutral-800 truncate">{s.name}</span>
+                    {s.price !== undefined && s.price !== null && (
+                      <span className="text-neutral-600 font-medium tabular-nums shrink-0">
+                        {formatPrice(s.price)}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
               {bookingData.packageId && (
                 <Badge variant="secondary" className="mt-1 text-[10px] h-4 px-1.5">
                   <Package className="h-2.5 w-2.5 mr-0.5" />
@@ -483,80 +501,113 @@ export const BookingConfirmation = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <UserIcon className="h-3.5 w-3.5 text-primary" />
+          {/* Profesional asignada */}
+          <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-primary font-bold text-xs">
+                {stylistDisplayName.charAt(0)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Profesional</p>
+                <p className="text-[13.5px] font-semibold text-neutral-900 truncate">
+                  {stylistDisplayName}
+                </p>
+              </div>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Profesional</p>
-              <p className="text-[14px] font-medium text-foreground">
-                {bookingData.stylist === "any" ? "Cualquiera disponible" : bookingData.stylist?.toUpperCase()}
-              </p>
+            <Badge variant="outline" className="text-[11px] font-medium border-neutral-200 text-neutral-600 shrink-0">
+              Asignada
+            </Badge>
+          </div>
+
+          {/* Cliente titular */}
+          <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center shrink-0 text-neutral-600 font-semibold text-xs">
+                {userProfile.full_name?.charAt(0) || "C"}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">A nombre de</p>
+                <p className="text-[13.5px] font-semibold text-neutral-900 truncate">{userProfile.full_name}</p>
+              </div>
             </div>
+            {userProfile.phone && (
+              <span className="text-xs text-neutral-500 tabular-nums shrink-0">{userProfile.phone}</span>
+            )}
           </div>
         </div>
 
-        {/* Precio destacado abajo */}
-        {finalPrice > 0 && (
-          <div className="px-5 py-4 border-t border-border/40 bg-muted/20 flex items-baseline justify-between">
-            <span className="text-[13px] font-medium text-muted-foreground">Total</span>
-            {hasDiscount ? (
-              <div className="flex items-baseline gap-2">
-                <span className="text-[13px] text-muted-foreground line-through tabular-nums">{formatPrice(totalPrice)}</span>
-                <span className="text-[22px] font-bold text-green-600 tabular-nums">{formatPrice(discountedPrice!)}</span>
-              </div>
-            ) : (
-              <span className="text-[22px] font-bold text-foreground tabular-nums">{formatPrice(totalPrice)}</span>
-            )}
-          </div>
-        )}
-
+        {/* Descuentos aplicados (si existen) */}
         {bookingData.appliedPromotion && (
-          <div className="px-5 py-2.5 border-t border-border/40 bg-green-500/5 flex items-center justify-between text-[12px]">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <Tag className="h-3 w-3 text-green-600 shrink-0" />
-              <span className="text-green-700 truncate font-medium">{bookingData.appliedPromotion.name}</span>
+          <div className="px-5 py-2.5 bg-green-50/80 border-t border-green-200/60 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5 text-green-800 font-medium truncate">
+              <Tag className="h-3.5 w-3.5 text-green-600 shrink-0" />
+              <span className="truncate">{bookingData.appliedPromotion.name}</span>
             </div>
-            <Badge variant="secondary" className="font-mono text-[10px] shrink-0">
+            <Badge variant="secondary" className="bg-white border-green-200 text-green-700 font-mono text-[10px] shrink-0">
               {bookingData.appliedPromotion.code}
             </Badge>
           </div>
         )}
+
+        {/* Pie de precio: Total destacado */}
+        {finalPrice > 0 && (
+          <div className="p-4 sm:p-5 bg-neutral-50/80 border-t border-neutral-200/70 flex items-center justify-between">
+            <div>
+              <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider block">Total a pagar</span>
+              <span className="text-[11px] text-neutral-400 font-normal">En el salón tras tu servicio</span>
+            </div>
+            <div className="text-right">
+              {hasDiscount ? (
+                <div className="flex items-baseline gap-2 justify-end">
+                  <span className="text-sm text-neutral-400 line-through tabular-nums">{formatPrice(totalPrice)}</span>
+                  <span className="text-2xl font-bold text-primary tabular-nums">{formatPrice(discountedPrice!)}</span>
+                </div>
+              ) : (
+                <span className="text-2xl font-bold text-neutral-900 tabular-nums">{formatPrice(totalPrice)}</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* A nombre de — línea sutil */}
-      <div className="px-1 flex items-center justify-between text-[12px]">
-        <span className="text-muted-foreground">A nombre de</span>
-        <span className="font-medium text-foreground truncate ml-2">{userProfile.full_name}</span>
-      </div>
+      {/* Hidden button for modal footer trigger */}
+      <button
+        id="booking-confirm-submit-btn"
+        type="button"
+        className="hidden"
+        onClick={handleConfirm}
+        disabled={loading}
+      />
 
-      {/* CTAs Sticky Bottom */}
-      <div className="sticky bottom-0 -mx-6 sm:-mx-8 -mb-5 mt-6 px-6 sm:px-8 py-3.5 bg-white/95 backdrop-blur-md border-t border-neutral-200/80 shadow-[0_-8px_24px_rgba(0,0,0,0.07)] z-20 flex flex-col-reverse sm:flex-row justify-between gap-2 sm:gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onBack}
-          disabled={loading}
-          className="w-full sm:w-auto h-11 px-5 rounded-xl font-medium touch-manipulation text-neutral-700"
-        >
-          Volver
-        </Button>
-        <Button
-          onClick={handleConfirm}
-          disabled={loading}
-          className="w-full sm:flex-1 h-11 px-6 rounded-xl font-semibold touch-manipulation shadow-sm"
-          data-guided-cta="true"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Confirmando...
-            </>
-          ) : (
-            "Confirmar reserva"
-          )}
-        </Button>
-      </div>
+      {/* Fallback CTAs only if footer is not handled by modal */}
+      {!hideFooter && (
+        <div className="pt-4 border-t border-neutral-200 flex flex-col-reverse sm:flex-row justify-between gap-2 sm:gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onBack}
+            disabled={loading}
+            className="w-full sm:w-auto h-11 px-5 rounded-xl font-medium touch-manipulation text-neutral-700"
+          >
+            Volver
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            disabled={loading}
+            className="w-full sm:flex-1 h-11 px-6 rounded-xl font-semibold touch-manipulation shadow-sm"
+            data-guided-cta="true"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Confirmando...
+              </>
+            ) : (
+              "Confirmar reserva"
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

@@ -11,7 +11,7 @@ import { GuestBookingForm } from "@/components/booking/GuestBookingForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
-import { User, CalendarCheck, CalendarPlus, X } from "lucide-react";
+import { User, CalendarCheck, CalendarPlus, X, Loader2 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { ClientCoachmark } from "@/components/coachmark/ClientCoachmark";
 import { SmoothTitle } from "@/components/animations/SmoothTitle";
@@ -130,6 +130,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     appliedPromotion: null,
     packageId: null,
   });
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   // Load services, packages, and stylist count from database
   useEffect(() => {
@@ -514,6 +515,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                         tenantId={tenantId}
                         totalPrice={totalPrice}
                         discountedPrice={discountedPrice}
+                        hideFooter={true}
+                        onLoadingChange={setConfirmLoading}
                       />
                     </div>
                   )}
@@ -535,8 +538,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
           </div>
                 </div>
 
-                {/* Permanent Fixed Modal Footer for Steps 1 & 2 */}
-                {!bookingConfirmed && step <= 2 && (
+                {/* Permanent Fixed Modal Footer for Steps 1, 2, and Step 3 */}
+                {!bookingConfirmed && (step <= 2 || (step === 3 && user)) && (
                   <footer className="shrink-0 border-t border-neutral-200/90 bg-white/95 backdrop-blur-md px-6 sm:px-8 py-3.5 z-30 flex items-center justify-between gap-4">
                     {step === 1 && (
                       <>
@@ -597,6 +600,37 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                           className="h-11 px-6 sm:px-7 rounded-xl font-semibold transition-transform duration-200 hover:scale-105 disabled:scale-100 shadow-sm shrink-0"
                         >
                           {t("booking.continue")}
+                        </Button>
+                      </>
+                    )}
+
+                    {step === 3 && user && (
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={handleBack}
+                          disabled={confirmLoading}
+                          className="h-11 px-5 rounded-xl font-medium transition-transform duration-200 hover:scale-105"
+                        >
+                          {t("booking.back")}
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            const btn = document.getElementById("booking-confirm-submit-btn") as HTMLButtonElement | null;
+                            btn?.click();
+                          }}
+                          disabled={confirmLoading}
+                          className="h-11 px-6 sm:px-8 rounded-xl font-semibold transition-transform duration-200 hover:scale-105 active:scale-95 touch-manipulation shadow-sm shrink-0"
+                          data-guided-cta="true"
+                        >
+                          {confirmLoading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Confirmando...
+                            </>
+                          ) : (
+                            `Confirmar reserva (${formatPrice(discountedPrice || totalPrice)})`
+                          )}
                         </Button>
                       </>
                     )}
