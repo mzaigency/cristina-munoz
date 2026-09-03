@@ -18,9 +18,16 @@ import { SmoothTitle } from "@/components/animations/SmoothTitle";
 import { cn } from "@/lib/utils";
 import { AnimatePresence } from "motion/react";
 import { Service, Stylist, BookingData, Promotion, ServicePackage } from "@/types/booking";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useHaptic } from "@/hooks/useHaptic";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/tenantI18n";
+
+const formatPrice = (price: number | null | undefined): string => {
+  if (price === null || price === undefined) return "";
+  return `${price.toFixed(2).replace('.', ',')} €`;
+};
 
 interface TenantBookingFlowProps {
   tenantId: string;
@@ -44,14 +51,53 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
     progressRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   // El flujo de reserva vive en un overlay aparte. Se abre al pulsar "Reserva
-  // ara" o cualquier CTA de reserva de la web (vía el evento global).
+  // ahora" o cualquier CTA de reserva de la web (vía el evento global).
   const openFlow = () => setFlowOpen(true);
   const closeFlow = () => setFlowOpen(false);
+  const [pendingServiceId, setPendingServiceId] = useState<string | null>(null);
+
   useEffect(() => {
-    const handler = () => setFlowOpen(true);
+    const handler = (e: Event) => {
+      const customEvent = e as CustomEvent<{ serviceId?: string }>;
+      const targetServiceId = customEvent.detail?.serviceId;
+
+      if (targetServiceId) {
+        if (services.length > 0) {
+          const target = services.find((s) => s.id === targetServiceId);
+          if (target) {
+            setBookingData((prev) => ({
+              ...prev,
+              services: [target],
+              packageId: null,
+            }));
+            setStep(1);
+          }
+        } else {
+          setPendingServiceId(targetServiceId);
+        }
+      }
+      setFlowOpen(true);
+    };
+
     window.addEventListener("glow:open-booking", handler);
     return () => window.removeEventListener("glow:open-booking", handler);
-  }, []);
+  }, [services]);
+
+  // Handle pending service when services finish loading
+  useEffect(() => {
+    if (pendingServiceId && services.length > 0) {
+      const target = services.find((s) => s.id === pendingServiceId);
+      if (target) {
+        setBookingData((prev) => ({
+          ...prev,
+          services: [target],
+          packageId: null,
+        }));
+        setStep(1);
+      }
+      setPendingServiceId(null);
+    }
+  }, [pendingServiceId, services]);
   // Bloquea el scroll del fondo mientras el overlay está abierto
   useEffect(() => {
     if (!flowOpen) return;
@@ -249,7 +295,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   };
 
   return (
-    <section ref={bookingRef} className="py-16 md:py-20 relative overflow-hidden">
+    <section ref={bookingRef} className="tv-section tv-section--white relative overflow-hidden">
       <ClientCoachmark
         storageKey="booking-flow-intro"
         title={t("booking.title")}
@@ -257,25 +303,52 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
         icon={CalendarCheck}
         delay={1600}
       />
-      {/* Decorative background */}
-      <div className="absolute inset-0 gradient-radial pointer-events-none" />
-      <div className="absolute top-10 right-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-10 left-10 w-56 h-56 bg-accent/5 rounded-full blur-3xl" />
       
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="tv-book-band mx-auto max-w-3xl mb-8 md:mb-12">
-          <SmoothTitle>
-            <h2 className="font-body text-neutral-900 font-bold" style={{ fontSize: "clamp(1.6rem, 4.4vw, 2.2rem)" }}>
-              {t("booking.oneMinTitlePre")} <span className="font-editorial-italic">{t("booking.oneMinAccent")}</span>
+      <div className="container mx-auto px-5 md:px-8 max-w-5xl relative z-10">
+        <div
+          className="relative mx-auto max-w-2xl overflow-hidden rounded-[30px] p-8 sm:p-12 text-center transition-all duration-300"
+          style={{
+            background: "linear-gradient(135deg, #f0f3ff 0%, #faf5ff 45%, #fdf2f8 100%)",
+            border: "1px solid rgba(152, 50, 154, 0.14)",
+            boxShadow:
+              "0 20px 48px -12px rgba(84, 52, 160, 0.10), 0 0 0 1px rgba(255, 255, 255, 0.9) inset",
+          }}
+        >
+          {/* Subtle soft ambient glow from top */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-80"
+            style={{
+              background: "radial-gradient(500px circle at 50% 0%, rgba(152, 50, 154, 0.10), transparent 60%)",
+            }}
+          />
+          {/* Liquid glass light reflection on top edge */}
+          <div className="pointer-events-none absolute top-0 left-12 right-12 h-[1.5px] bg-gradient-to-r from-transparent via-white to-transparent opacity-90" />
+
+          <div className="relative z-10">
+            {/* Title */}
+            <h2 className="font-editorial text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900 tracking-tight leading-snug">
+              {t("booking.oneMinTitlePre")}{" "}
+              <span className="font-editorial-italic">
+                {t("booking.oneMinAccent")}
+              </span>
             </h2>
-          </SmoothTitle>
-          <p className="mt-2 text-[15px] sm:text-base text-neutral-600 font-body">
-            {t("booking.oneMinSub")}
-          </p>
-          <button className="tv-cta mt-5" onClick={openFlow}>
-            <CalendarPlus className="h-4 w-4" />
-            {t("hero.bookNow")}
-          </button>
+
+            {/* Subtitle */}
+            <p className="mt-3 text-[14.5px] sm:text-base text-neutral-600 font-body max-w-md mx-auto leading-relaxed">
+              {t("booking.oneMinSub")}
+            </p>
+
+            {/* CTA Button */}
+            <div className="mt-7 flex justify-center">
+              <button
+                onClick={openFlow}
+                className="tv-cta text-[14.5px] px-8 py-3.5 rounded-full shadow-[0_10px_28px_-6px_rgba(84,52,160,0.38)] hover:shadow-[0_16px_36px_-6px_rgba(152,50,154,0.48)] hover:scale-105 active:scale-95 transition-all duration-200"
+              >
+                <CalendarPlus className="h-4 w-4 mr-2" />
+                {t("hero.bookNow")}
+              </button>
+            </div>
+          </div>
         </div>
 
         {flowOpen &&
@@ -286,12 +359,12 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                 style={{ background: "rgba(12,14,24,.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
                 onClick={closeFlow}
               />
-              <div className="tv-book-panel relative z-10 flex w-full flex-col overflow-hidden bg-white shadow-2xl max-h-[100dvh] lg:h-auto lg:max-h-[90vh] lg:w-full lg:max-w-2xl lg:rounded-[24px]">
+              <div className="tv-book-panel relative z-10 flex w-full flex-col overflow-hidden bg-white shadow-2xl max-h-[100dvh] lg:h-auto lg:max-h-[92vh] lg:w-full lg:max-w-4xl lg:rounded-[28px]">
                 <header
-                  className="flex items-center justify-between px-5 py-4 border-b border-neutral-200 shrink-0"
+                  className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 shrink-0"
                   style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
                 >
-                  <span className="font-body text-[16px] font-bold text-neutral-900">{t("booking.reserveTitle")}</span>
+                  <span className="font-body text-[17px] font-bold text-neutral-900">{t("booking.reserveTitle")}</span>
                   <button
                     onClick={closeFlow}
                     aria-label="Cerrar"
@@ -301,18 +374,15 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                   </button>
                 </header>
                 <div
-                  className="tv-book-scroll flex-1 overflow-y-auto px-5 py-6"
-                  style={{
-                    // La barra-resumen (52px) solo aparece desde el paso 2.
-                    // Reservamos hueco solo cuando toca, para no dejar aire muerto.
-                    paddingBottom:
-                      bookingData.services.length > 0 && !bookingConfirmed && step >= 2
-                        ? "calc(4.5rem + env(safe-area-inset-bottom))"
-                        : "calc(1.5rem + env(safe-area-inset-bottom))",
-                  }}
+                  className={cn(
+                    "tv-book-scroll flex-1 overflow-y-auto px-6 sm:px-8 py-5",
+                    bookingData.services.length > 0 && !bookingConfirmed && step >= 2
+                      ? "pb-20 lg:pb-6"
+                      : "pb-6"
+                  )}
                 >
           {/* Enhanced Progress Bar */}
-          <div ref={progressRef} className="mb-6 md:mb-8 space-y-2 sm:space-y-3 max-w-3xl mx-auto scroll-mt-4">
+          <div ref={progressRef} className="mb-6 md:mb-8 space-y-2 sm:space-y-3 max-w-4xl mx-auto scroll-mt-4">
             <div className="flex justify-between items-center text-xs sm:text-sm text-muted-foreground px-1">
               <span className={cn("transition-colors duration-300", step >= 1 && "text-primary font-medium")}>{t("nav.services")}</span>
               <span className={cn("transition-colors duration-300", step >= 2 && "text-primary font-medium")}>{t("booking.dateTime")}</span>
@@ -340,15 +410,15 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
 
 
           {/* Main Form - Centered */}
-          <div className="max-w-3xl mx-auto w-full">
+          <div className="max-w-4xl mx-auto w-full">
             <Card className="border-none shadow-none bg-transparent">
-              <CardHeader>
-                <CardTitle className="animate-fade-in">
+              <CardHeader className="px-0 pt-0 pb-3 sm:pb-4">
+                <CardTitle className="animate-fade-in text-xl sm:text-2xl text-neutral-900 font-bold">
                   {step === 1 && t("booking.stepServices")}
                   {step === 2 && t("booking.stepDateTime")}
                   {step === 3 && t("booking.stepConfirm")}
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm text-neutral-500">
                   {step === 1 && (
                     <span>{t("services.multiHint")}</span>
                   )}
@@ -356,7 +426,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                   {step === 3 && t("booking.finalDetails")}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="overflow-hidden">
+              <CardContent className="px-0 py-0 overflow-hidden">
                 {/* Sin AnimatePresence mode="wait": el paso nuevo monta al
                     instante (no se congela si la pestaña pasa a segundo plano
                     a media transición); cada paso anima su entrada. */}
@@ -366,7 +436,15 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                         services={services}
                         selectedServices={bookingData.services}
                         onNext={handleServicesSelect}
+                        onSelectionChange={(selected, packageId) =>
+                          setBookingData((prev) => ({
+                            ...prev,
+                            services: selected,
+                            packageId: packageId || null,
+                          }))
+                        }
                         tenantId={tenantId}
+                        hideFooter={true}
                       />
                     </div>
                   )}
@@ -387,6 +465,15 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                         stylist="any"
                         onNext={handleDateTimeSelect}
                         onBack={handleBack}
+                        onChange={(date, time, resolvedStylist) =>
+                          setBookingData((prev) => ({
+                            ...prev,
+                            date,
+                            time,
+                            stylist: (resolvedStylist || prev.stylist) as Stylist,
+                          }))
+                        }
+                        hideFooter={true}
                       />
                     </div>
                   )}
@@ -446,21 +533,75 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
               </CardContent>
             </Card>
           </div>
-
-          {/* Mobile Bottom Sheet Summary */}
-          <AnimatePresence>
-            {bookingData.services.length > 0 && !bookingConfirmed && (
-              <BookingSummaryMobile
-                bookingData={bookingData}
-                totalDuration={totalDuration}
-                step={step}
-                onRemoveService={step === 1 ? handleRemoveService : undefined}
-                totalPrice={totalPrice}
-                discountedPrice={bookingData.appliedPromotion ? discountedPrice : undefined}
-              />
-            )}
-          </AnimatePresence>
                 </div>
+
+                {/* Permanent Fixed Modal Footer for Steps 1 & 2 */}
+                {!bookingConfirmed && step <= 2 && (
+                  <footer className="shrink-0 border-t border-neutral-200/90 bg-white/95 backdrop-blur-md px-6 sm:px-8 py-3.5 z-30 flex items-center justify-between gap-4">
+                    {step === 1 && (
+                      <>
+                        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                          <div className="min-w-0">
+                            <p className={cn(
+                              "text-xs sm:text-sm font-semibold transition-colors duration-200 truncate",
+                              bookingData.services.length > 0 ? 'text-neutral-900' : 'text-muted-foreground'
+                            )}>
+                              {bookingData.services.length} {bookingData.services.length === 1 ? "servicio" : "servicios"}
+                              {bookingData.services.length > 0 && (
+                                <span className="text-neutral-500 font-normal ml-1">
+                                  ({totalDuration} min)
+                                </span>
+                              )}
+                            </p>
+                            {totalPrice > 0 && (
+                              <p className="font-bold text-base sm:text-lg text-primary tabular-nums leading-tight">
+                                {formatPrice(totalPrice)}
+                                {bookingData.packageId && (
+                                  <Badge variant="secondary" className="text-[10px] ml-1.5 align-middle">Pack</Badge>
+                                )}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => {
+                            haptic.selection();
+                            setStep(2);
+                            scrollToProgress();
+                          }}
+                          disabled={bookingData.services.length === 0}
+                          data-guided-cta="true"
+                          className="h-11 px-6 sm:px-7 rounded-xl font-semibold transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:scale-[1.03] active:scale-[0.97] disabled:scale-100 touch-manipulation shadow-sm shrink-0"
+                        >
+                          Continuar
+                        </Button>
+                      </>
+                    )}
+
+                    {step === 2 && (
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={handleBack}
+                          className="h-11 px-5 rounded-xl font-medium transition-transform duration-200 hover:scale-105"
+                        >
+                          {t("booking.back")}
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            haptic.selection();
+                            setStep(3);
+                            scrollToProgress();
+                          }}
+                          disabled={!bookingData.date || !bookingData.time}
+                          className="h-11 px-6 sm:px-7 rounded-xl font-semibold transition-transform duration-200 hover:scale-105 disabled:scale-100 shadow-sm shrink-0"
+                        >
+                          {t("booking.continue")}
+                        </Button>
+                      </>
+                    )}
+                  </footer>
+                )}
               </div>
             </div>,
             document.body,

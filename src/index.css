@@ -5727,6 +5727,20 @@ details[open] .glow-neg-past-summary::before { transform: rotate(90deg); }
 .tenant-theme-container {
   --tv-brand-grad: linear-gradient(100deg, #22408C, #98329A);
   --tv-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --tv-section-tint: #f5f6fb;
+  --tv-section-py: 4rem;
+  --tv-section-py-md: 6rem;
+}
+
+/* Firma de sección unificada: padding + container coherentes */
+.tv-section {
+  padding-top: var(--tv-section-py);
+  padding-bottom: var(--tv-section-py);
+}
+.tv-section--tint { background-color: var(--tv-section-tint); }
+.tv-section--white { background-color: #fff; }
+@media (min-width: 768px) {
+  .tv-section { padding-top: var(--tv-section-py-md); padding-bottom: var(--tv-section-py-md); }
 }
 
 /* Una sola fuente en las secciones (fuera la combinación editorial de

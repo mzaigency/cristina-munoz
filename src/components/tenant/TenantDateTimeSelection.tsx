@@ -36,6 +36,8 @@ interface TenantDateTimeSelectionProps {
   stylist: string; // stylist slug or "any"
   onNext: (date: Date, time: string, resolvedStylist?: string) => void;
   onBack: () => void;
+  onChange?: (date: Date | null, time: string | null, resolvedStylist?: string) => void;
+  hideFooter?: boolean;
 }
 
 // Utility functions
@@ -93,6 +95,8 @@ export const TenantDateTimeSelection = ({
   stylist,
   onNext,
   onBack,
+  onChange,
+  hideFooter = false,
 }: TenantDateTimeSelectionProps) => {
   const [date, setDate] = useState<Date | undefined>(selectedDate || undefined);
   const [time, setTime] = useState<string | null>(selectedTime);
@@ -103,6 +107,11 @@ export const TenantDateTimeSelection = ({
   const [fusedAvailableSlots, setFusedAvailableSlots] = useState<string[]>([]);
   const [slotToStylists, setSlotToStylists] = useState<Record<string, TenantStylist[]>>({});
   const [selectedSlotStylist, setSelectedSlotStylist] = useState<string | null>(null);
+
+  // Synchronize selection changes with parent
+  useEffect(() => {
+    onChange?.(date || null, time || null, selectedSlotStylist || undefined);
+  }, [date, time, selectedSlotStylist]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [retryTick, setRetryTick] = useState(0);
@@ -401,22 +410,22 @@ export const TenantDateTimeSelection = ({
 
   const handleTimeSelect = (slot: string) => {
     setTime(slot);
-    setSelectedSlotStylist(null);
 
-    // If "any" and only 1 stylist available at this slot, auto-assign
-    if (stylist === "any" && slotToStylists[slot]?.length === 1) {
-      setSelectedSlotStylist(slotToStylists[slot][0].slug);
+    // Auto-assign the first available stylist so the user is never blocked!
+    if (stylist === "any") {
+      const available = slotToStylists[slot] || [];
+      if (available.length > 0) {
+        setSelectedSlotStylist(available[0].slug);
+      }
     }
-    // Autoscroll: al elegir hora, lleva al usuario al botón de continuar
-    setTimeout(() => footerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 90);
   };
 
-  // Autoscroll: al elegir fecha, lleva a las horas disponibles
+  // Autoscroll: al elegir fecha, acompaña suavemente a las horas disponibles
   useEffect(() => {
     if (!date) return;
     const id = setTimeout(
       () => timesRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }),
-      140,
+      120,
     );
     return () => clearTimeout(id);
   }, [date]);
@@ -426,11 +435,8 @@ export const TenantDateTimeSelection = ({
 
     if (stylist === "any") {
       const available = slotToStylists[time] || [];
-      if (available.length === 1) {
-        onNext(date, time, available[0].slug);
-      } else if (selectedSlotStylist) {
-        onNext(date, time, selectedSlotStylist);
-      }
+      const resolved = selectedSlotStylist || available[0]?.slug;
+      onNext(date, time, resolved);
     } else {
       onNext(date, time);
     }
@@ -538,9 +544,11 @@ export const TenantDateTimeSelection = ({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
-        <div>
-          <h3 className="mb-4 font-semibold text-foreground">{t("booking.selectDate")}</h3>
+      <div className="grid gap-6 lg:gap-8 md:grid-cols-[1fr_1.25fr] items-start">
+        <div className="bg-neutral-50/60 p-4 sm:p-5 rounded-2xl border border-neutral-200/80">
+          <h3 className="mb-3 font-semibold text-sm font-body text-neutral-600">
+            {t("booking.selectDate")}
+          </h3>
           <Calendar
             mode="single"
             selected={date}
@@ -548,17 +556,19 @@ export const TenantDateTimeSelection = ({
             disabled={disabledDays}
             weekStartsOn={1}
             locale={dfLocale}
-            className={cn("rounded-md border pointer-events-auto")}
+            className={cn("w-full bg-white rounded-xl border border-neutral-200/80 shadow-xs p-3")}
           />
         </div>
 
-        <div ref={timesRef} className="scroll-mt-4">
-          <h3 className="mb-4 font-semibold text-foreground">{t("booking.selectTime")}</h3>
+        <div ref={timesRef} className="scroll-mt-4 bg-neutral-50/60 p-4 sm:p-5 rounded-2xl border border-neutral-200/80">
+          <h3 className="mb-3 font-semibold text-sm font-body text-neutral-600">
+            {t("booking.selectTime")}
+          </h3>
           {!date ? (
-            <p className="text-sm text-muted-foreground">{t("booking.firstSelectDate")}</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">{t("booking.firstSelectDate")}</p>
           ) : loading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
               {t("booking.loadingAvailable")}
             </div>
           ) : loadError ? (
@@ -606,11 +616,12 @@ export const TenantDateTimeSelection = ({
               });
 
               return (
-                <div className="space-y-4 max-h-[300px] overflow-y-auto">
+                <div className="space-y-4 max-h-[340px] md:max-h-none md:overflow-visible overflow-y-auto pr-1">
                   {morningSlots.length > 0 && (
                     <div>
-                      <p className="text-xs text-muted-foreground mb-2 font-medium">
-                        ☀️ {t("booking.morning")} ({minutesToTimeString(hours.morningStart)} - {minutesToTimeString(hours.morningEnd)})
+                      <p className="text-xs text-neutral-600 mb-2 font-semibold flex items-center gap-1.5">
+                        ☀️ <span>{t("booking.morning")}</span>
+                        <span className="text-neutral-400 font-normal">({minutesToTimeString(hours.morningStart)} - {minutesToTimeString(hours.morningEnd)})</span>
                       </p>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {morningSlots.map((slot) => {
@@ -622,22 +633,19 @@ export const TenantDateTimeSelection = ({
                               size="default"
                               onClick={() => handleTimeSelect(slot)}
                               className={cn(
-                                "h-auto min-h-[2.75rem] text-sm font-medium transition-all duration-200 hover:shadow-md touch-manipulation flex-col gap-0.5 py-1.5",
-                                time === slot && "shadow-glow",
+                                "h-auto min-h-[48px] py-1.5 px-2 text-center flex flex-col items-center justify-center transition-all duration-150 touch-manipulation rounded-xl",
+                                time === slot
+                                  ? "shadow-md ring-2 ring-primary ring-offset-1 font-bold"
+                                  : "border-neutral-200/90 text-neutral-800 hover:border-primary/50 hover:bg-neutral-50",
                               )}
                             >
-                              <span>{slot}</span>
+                              <span className="text-[14.5px] font-bold leading-tight">{slot}</span>
                               {stylist === "any" && available.length > 0 && (
-                                <span className="flex -space-x-1.5 mt-0.5">
-                                  {available.slice(0, 3).map((s) => (
-                                    s.avatar_url ? (
-                                      <img key={s.slug} src={s.avatar_url} alt={s.name} className="h-4 w-4 rounded-full border border-background object-cover" />
-                                    ) : (
-                                      <span key={s.slug} className="flex h-4 w-4 items-center justify-center rounded-full border border-background text-[8px] text-white" style={{ backgroundColor: s.color || 'hsl(var(--primary))' }}>
-                                        {s.name[0]}
-                                      </span>
-                                    )
-                                  ))}
+                                <span className={cn(
+                                  "text-[11px] font-medium leading-tight truncate max-w-full mt-0.5",
+                                  time === slot ? "text-primary-foreground/95 font-semibold" : "text-neutral-500"
+                                )}>
+                                  {available.length === 1 ? available[0].name : "2 disponibles"}
                                 </span>
                               )}
                             </Button>
@@ -650,7 +658,7 @@ export const TenantDateTimeSelection = ({
                   {hasAfternoon && morningSlots.length > 0 && afternoonSlots.length > 0 && (
                     <div className="flex items-center gap-2 py-1">
                       <div className="flex-1 h-px bg-border" />
-                      <span className="text-xs text-muted-foreground px-2">
+                      <span className="text-xs text-muted-foreground px-2 font-medium">
                         {t("booking.breakLabel")} ({minutesToTimeString(hours.morningEnd)} - {minutesToTimeString(hours.afternoonStart)})
                       </span>
                       <div className="flex-1 h-px bg-border" />
@@ -659,9 +667,9 @@ export const TenantDateTimeSelection = ({
 
                   {afternoonSlots.length > 0 && hasAfternoon && (
                     <div>
-                      <p className="text-xs text-muted-foreground mb-2 font-medium">
-                        🌙 {t("booking.afternoon")} ({minutesToTimeString(hours.afternoonStart)} -{" "}
-                        {minutesToTimeString(hours.afternoonEnd)})
+                      <p className="text-xs text-neutral-600 mb-2 font-semibold flex items-center gap-1.5">
+                        🌙 <span>{t("booking.afternoon")}</span>
+                        <span className="text-neutral-400 font-normal">({minutesToTimeString(hours.afternoonStart)} - {minutesToTimeString(hours.afternoonEnd)})</span>
                       </p>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {afternoonSlots.map((slot) => {
@@ -673,22 +681,19 @@ export const TenantDateTimeSelection = ({
                               size="default"
                               onClick={() => handleTimeSelect(slot)}
                               className={cn(
-                                "h-auto min-h-[2.75rem] text-sm font-medium transition-all duration-200 hover:shadow-md touch-manipulation flex-col gap-0.5 py-1.5",
-                                time === slot && "shadow-glow",
+                                "h-auto min-h-[48px] py-1.5 px-2 text-center flex flex-col items-center justify-center transition-all duration-150 touch-manipulation rounded-xl",
+                                time === slot
+                                  ? "shadow-md ring-2 ring-primary ring-offset-1 font-bold"
+                                  : "border-neutral-200/90 text-neutral-800 hover:border-primary/50 hover:bg-neutral-50",
                               )}
                             >
-                              <span>{slot}</span>
+                              <span className="text-[14.5px] font-bold leading-tight">{slot}</span>
                               {stylist === "any" && available.length > 0 && (
-                                <span className="flex -space-x-1.5 mt-0.5">
-                                  {available.slice(0, 3).map((s) => (
-                                    s.avatar_url ? (
-                                      <img key={s.slug} src={s.avatar_url} alt={s.name} className="h-4 w-4 rounded-full border border-background object-cover" />
-                                    ) : (
-                                      <span key={s.slug} className="flex h-4 w-4 items-center justify-center rounded-full border border-background text-[8px] text-white" style={{ backgroundColor: s.color || 'hsl(var(--primary))' }}>
-                                        {s.name[0]}
-                                      </span>
-                                    )
-                                  ))}
+                                <span className={cn(
+                                  "text-[11px] font-medium leading-tight truncate max-w-full mt-0.5",
+                                  time === slot ? "text-primary-foreground/95 font-semibold" : "text-neutral-500"
+                                )}>
+                                  {available.length === 1 ? available[0].name : "2 disponibles"}
                                 </span>
                               )}
                             </Button>
@@ -701,19 +706,26 @@ export const TenantDateTimeSelection = ({
               );
             })()
           )}
-          {/* Stylist picker when multiple are available for selected slot */}
-          {stylist === "any" && time && (slotToStylists[time]?.length || 0) > 1 && (
-            <div className="mt-4 space-y-2">
-              <p className="text-sm font-medium text-foreground">{t("booking.whoPrefer")}</p>
-              <div className="grid grid-cols-2 gap-2">
+          {/* Stylist card when time is selected */}
+          {stylist === "any" && time && (slotToStylists[time]?.length || 0) >= 1 && (
+            <div className="mt-4 space-y-2.5 p-3.5 rounded-2xl bg-neutral-50/80 border border-neutral-200/70">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-neutral-900">
+                  {slotToStylists[time].length > 1 ? t("booking.whoPrefer") : "Profesional para este horario"}
+                </p>
+                <span className="text-xs text-neutral-500 font-medium">
+                  {slotToStylists[time].length > 1 ? "(Toca para elegir estilista)" : "Asignada a esta hora"}
+                </span>
+              </div>
+              <div className={cn("grid gap-2.5", slotToStylists[time].length > 1 ? "grid-cols-2" : "grid-cols-1")}>
                 {slotToStylists[time].map((s) => (
                   <Card
                     key={s.slug}
                     className={cn(
-                      "cursor-pointer border-2 p-3 flex items-center gap-3 transition-all touch-manipulation",
+                      "cursor-pointer border-2 p-3 flex items-center gap-3 transition-all touch-manipulation rounded-xl shadow-xs",
                       selectedSlotStylist === s.slug
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50"
+                        ? "border-primary bg-primary/10 shadow-sm"
+                        : "border-neutral-200 bg-white hover:border-primary/40"
                     )}
                     onClick={() => setSelectedSlotStylist(s.slug)}
                   >
@@ -724,7 +736,14 @@ export const TenantDateTimeSelection = ({
                         <User className="h-4 w-4" />
                       </span>
                     )}
-                    <span className="text-sm font-medium text-foreground truncate">{s.name}</span>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[13.5px] font-semibold text-neutral-900 truncate block">{s.name}</span>
+                      <span className="text-[11px] font-medium text-primary block leading-tight">
+                        {slotToStylists[time].length > 1
+                          ? (selectedSlotStylist === s.slug ? "Seleccionada" : "Tocar para elegir")
+                          : "Profesional asignada"}
+                      </span>
+                    </div>
                   </Card>
                 ))}
               </div>
@@ -738,18 +757,20 @@ export const TenantDateTimeSelection = ({
         </div>
       </div>
 
-      <div ref={footerRef} className="flex justify-between pt-4 scroll-mt-4">
-        <Button variant="outline" onClick={onBack} className="transition-transform duration-200 hover:scale-105">
-          {t("booking.back")}
-        </Button>
-        <Button
-          onClick={handleNext}
-          disabled={!date || !time || (stylist === "any" && time && (slotToStylists[time]?.length || 0) > 1 && !selectedSlotStylist)}
-          className="transition-transform duration-200 hover:scale-105 disabled:scale-100"
-        >
-          {t("booking.continue")}
-        </Button>
-      </div>
+      {!hideFooter && (
+        <div ref={footerRef} className="mt-6 pt-4 border-t border-neutral-200 flex justify-between items-center scroll-mt-4">
+          <Button variant="outline" onClick={onBack} className="h-11 px-5 rounded-xl font-medium transition-transform duration-200 hover:scale-105">
+            {t("booking.back")}
+          </Button>
+          <Button
+            onClick={handleNext}
+            disabled={!date || !time}
+            className="h-11 px-6 rounded-xl font-semibold transition-transform duration-200 hover:scale-105 disabled:scale-100 shadow-sm"
+          >
+            {t("booking.continue")}
+          </Button>
+        </div>
+      )}
 
       {/* Waitlist Dialog */}
       <Dialog open={showWaitlistDialog} onOpenChange={setShowWaitlistDialog}>

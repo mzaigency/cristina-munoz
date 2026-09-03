@@ -19,7 +19,7 @@ import { TenantBookBar } from "@/components/tenant/TenantBookBar";
 import { TenantAdminBar } from "@/components/tenant/TenantAdminBar";
 import { TenantEditPanel } from "@/components/tenant/TenantEditPanel";
 import { useTenantAccess } from "@/hooks/useTenantAccess";
-import TenantContactSection from "@/components/tenant/TenantContactSection";
+// Contact form merged into TenantLocationSection
 import { TenantShopSection } from "@/components/tenant/TenantShopSection";
 import { QrWelcomeBanner } from "@/components/tenant/QrWelcomeBanner";
 import { PostVisitCard } from "@/components/tenant/PostVisitCard";
@@ -458,12 +458,7 @@ const TenantLanding = () => {
             />
           </div>
 
-          {/* Contact Section - Direct messaging */}
-          <TenantContactSection
-            tenantId={tenant.id}
-            tenantName={tenant.name}
-            primaryColor={primaryColor}
-          />
+
 
           {/* Reviews Section - Tenant specific */}
           <div id="resenas">
@@ -482,6 +477,7 @@ const TenantLanding = () => {
             onReviewSubmitted={handleReviewSubmitted}
           />
           <TenantLocationSection
+            tenantId={tenant.id}
             tenantName={tenant.name}
             address={tenant.address}
             city={tenant.city}
@@ -496,9 +492,7 @@ const TenantLanding = () => {
           />
 
           {/* Footer - Tenant specific */}
-          <div id="contacto">
-            <TenantFooter tenant={tenant} />
-          </div>
+          <TenantFooter tenant={tenant} />
         </main>
 
         {/* Barra de reserva fija (móvil, solo visitantes) */}

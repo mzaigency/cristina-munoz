@@ -15,8 +15,10 @@ import { supabase } from "@/integrations/supabase/client";
 interface ServiceSelectionProps {
   services: Service[];
   selectedServices: Service[];
-  onNext: (services: Service[], packageId?: string) => void;
+  onNext: (selectedServices: Service[], packageId?: string) => void;
+  onSelectionChange?: (selectedServices: Service[], packageId?: string | null) => void;
   tenantId?: string;
+  hideFooter?: boolean;
 }
 
 const formatPrice = (price: number | null | undefined): string => {
@@ -24,11 +26,35 @@ const formatPrice = (price: number | null | undefined): string => {
   return `${price.toFixed(2).replace('.', ',')} €`;
 };
 
-export const ServiceSelection = ({ services, selectedServices, onNext, tenantId }: ServiceSelectionProps) => {
+export const ServiceSelection = ({
+  services,
+  selectedServices,
+  onNext,
+  onSelectionChange,
+  tenantId,
+  hideFooter = false,
+}: ServiceSelectionProps) => {
   const [selected, setSelected] = useState<Service[]>(selectedServices);
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [loadingPackages, setLoadingPackages] = useState(false);
+  const [openCategories, setOpenCategories] = useState<string[]>(() =>
+    selectedServices.map((s) => s.category || "General")
+  );
+
+  // Sync internal selection when selectedServices prop changes
+  useEffect(() => {
+    setSelected(selectedServices);
+    if (selectedServices.length > 0) {
+      const activeCats = selectedServices.map((s) => s.category || "General");
+      setOpenCategories((prev) => Array.from(new Set([...prev, ...activeCats])));
+    }
+  }, [selectedServices]);
+
+  // Notify parent of selection changes in real-time
+  useEffect(() => {
+    onSelectionChange?.(selected, selectedPackage);
+  }, [selected, selectedPackage]);
 
   // Fetch service packages
   useEffect(() => {
@@ -150,23 +176,23 @@ export const ServiceSelection = ({ services, selectedServices, onNext, tenantId 
             {isSelected && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="font-medium text-foreground text-sm sm:text-base">{service.name}</p>
+            <p className="font-semibold text-foreground text-[15px] sm:text-base leading-snug">{service.name}</p>
             {service.type === 'Compuesto' ? (
               <>
-                <p className="text-xs sm:text-sm text-muted-foreground">
+                <p className="text-[13px] text-neutral-600 font-medium mt-0.5">
                   {service.duration_part1_active + service.duration_part2_active} min activos + {service.duration_exposure_pause} min pausa
                 </p>
-                <p className="text-xs text-muted-foreground italic mt-0.5">
+                <p className="text-[12px] text-primary font-medium italic mt-0.5">
                   ✓ Incluye corte y peinado
                 </p>
               </>
             ) : (
-              <p className="text-xs sm:text-sm text-muted-foreground">{service.duration} min</p>
+              <p className="text-[13px] text-neutral-600 font-medium mt-0.5">{service.duration} min</p>
             )}
           </div>
         </div>
         {service.price !== null && service.price !== undefined && service.price > 0 && (
-          <span className="text-sm sm:text-base font-semibold text-primary whitespace-nowrap">
+          <span className="text-[15px] sm:text-base font-bold text-primary whitespace-nowrap tabular-nums">
             {formatPrice(service.price)}
           </span>
         )}
@@ -264,7 +290,12 @@ export const ServiceSelection = ({ services, selectedServices, onNext, tenantId 
           {services.map((service) => renderServiceItem(service, !!selectedPackage))}
         </div>
       ) : (
-        <Accordion type="multiple" className="w-full">
+        <Accordion
+          type="multiple"
+          value={openCategories}
+          onValueChange={setOpenCategories}
+          className="w-full"
+        >
           {categories.map((category) => {
             const categoryServices = groupedServices[category];
             if (!categoryServices || categoryServices.length === 0) return null;
@@ -290,35 +321,42 @@ export const ServiceSelection = ({ services, selectedServices, onNext, tenantId 
         </Accordion>
       )}
 
-      {/* Footer with total and continue button */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-border">
-        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-          <p className={cn(
-            "text-sm transition-colors duration-200",
-            selected.length > 0 ? 'font-semibold text-primary' : 'text-muted-foreground'
-          )}>
-            {selected.length} servicio{selected.length !== 1 ? "s" : ""} seleccionado
-            {selected.length !== 1 ? "s" : ""}
-          </p>
-          {totalPrice > 0 && (
-            <div className="flex items-center gap-1 text-sm">
-              <Tag className="h-4 w-4 text-primary" />
-              <span className="font-bold text-lg text-primary">{formatPrice(totalPrice)}</span>
-              {selectedPackage && (
-                <Badge variant="secondary" className="text-xs ml-1">Pack</Badge>
+      {/* Footer with total and continue button (only if not handled by modal container) */}
+      {!hideFooter && (
+        <div className="mt-6 pt-4 border-t border-neutral-200 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="min-w-0">
+              <p className={cn(
+                "text-xs sm:text-sm transition-colors duration-200 truncate",
+                selected.length > 0 ? 'font-semibold text-neutral-900' : 'text-muted-foreground'
+              )}>
+                {selected.length} {selected.length === 1 ? "servicio" : "servicios"}
+                {selected.length > 0 && (
+                  <span className="text-neutral-500 font-normal ml-1">
+                    ({selected.reduce((acc, s) => acc + (s.type === 'Compuesto' ? s.duration_part1_active + s.duration_exposure_pause + s.duration_part2_active : s.duration), 0)} min)
+                  </span>
+                )}
+              </p>
+              {totalPrice > 0 && (
+                <p className="font-bold text-base sm:text-lg text-primary tabular-nums leading-tight">
+                  {formatPrice(totalPrice)}
+                  {selectedPackage && (
+                    <Badge variant="secondary" className="text-[10px] ml-1.5 align-middle">Pack</Badge>
+                  )}
+                </p>
               )}
             </div>
-          )}
+          </div>
+          <Button 
+            onClick={handleNext} 
+            disabled={selected.length === 0}
+            data-guided-cta="true"
+            className="h-11 px-6 sm:px-7 rounded-xl font-semibold transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:scale-[1.03] active:scale-[0.97] disabled:scale-100 touch-manipulation shadow-sm shrink-0"
+          >
+            Continuar
+          </Button>
         </div>
-        <Button 
-          onClick={handleNext} 
-          disabled={selected.length === 0}
-          data-guided-cta="true"
-          className="w-full sm:w-auto h-11 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:scale-[1.03] active:scale-[0.97] disabled:scale-100 touch-manipulation"
-        >
-          Continuar
-        </Button>
-      </div>
+      )}
     </div>
   );
 };
