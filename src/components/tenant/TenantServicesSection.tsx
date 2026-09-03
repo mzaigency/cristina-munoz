@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronUp } from "lucide-react";
+import { Clock, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { SectionHeader } from "./_shared/SectionHeader";
 import { useT } from "@/lib/tenantI18n";
 
@@ -27,30 +27,31 @@ interface TenantServicesSectionProps {
   primaryColor?: string | null;
 }
 
-const BRAND_GRAD = "linear-gradient(100deg, #22408C, #98329A)";
+const INITIAL_LIMIT = 6;
 
 const formatDuration = (minutes: number): string => {
+  if (minutes <= 0) return "Consultar";
   if (minutes < 60) return `${minutes} min`;
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   if (mins === 0) return `${hours} h`;
-  return `${hours} h ${mins}`;
+  return `${hours} h ${mins} min`;
 };
 
 const formatPrice = (price: number | null): string | null => {
-  if (price === null || price === undefined) return null;
+  if (price === null || price === undefined || price <= 0) return null;
   return `${price.toFixed(2).replace(".", ",")} €`;
 };
 
 const totalDurationOf = (s: Service) =>
-  s.duration_part1_active + s.duration_exposure_pause + s.duration_part2_active;
+  (s.duration_part1_active || 0) + (s.duration_exposure_pause || 0) + (s.duration_part2_active || 0);
 
 export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: TenantServicesSectionProps) => {
   const [services, setServices] = useState<Service[]>([]);
   const [categoryImages, setCategoryImages] = useState<CategoryImage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [showFull, setShowFull] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [isExpanded, setIsExpanded] = useState(false);
   const t = useT();
 
   useEffect(() => {
@@ -85,8 +86,9 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
   const getCategoryImage = (category: string): string | null =>
     categoryImages.find((ci) => ci.category === category)?.image_url || null;
 
+  // Group services by category
   const groupedServices = useMemo(() => {
-    const other = t("services.otherCategory");
+    const other = t("services.otherCategory") || "Otros";
     return services.reduce((acc, service) => {
       const category = service.category || other;
       if (!acc[category]) acc[category] = [];
@@ -95,22 +97,32 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
     }, {} as Record<string, Service[]>);
   }, [services, t]);
 
-  const categories = Object.keys(groupedServices);
-  const current = activeCategory && groupedServices[activeCategory] ? activeCategory : categories[0];
+  const categories = useMemo(() => Object.keys(groupedServices), [groupedServices]);
+
+  const handleBookService = (service: Service) => {
+    window.dispatchEvent(new CustomEvent("glow:open-booking", { detail: { serviceId: service.id } }));
+  };
+
+  // Reset expansion when switching categories
+  const handleCategoryChange = (cat: string) => {
+    setActiveCategory(cat);
+    setIsExpanded(false);
+  };
 
   if (loading) {
     return (
-      <section className="py-20 md:py-28 bg-[#f5f6fb]">
-        <div className="container mx-auto px-5 md:px-8 max-w-3xl">
-          <Skeleton className="h-10 w-64 mb-6" />
-          <div className="flex gap-2 mb-8">
-            <Skeleton className="h-9 w-24 rounded-full" />
-            <Skeleton className="h-9 w-20 rounded-full" />
-            <Skeleton className="h-9 w-24 rounded-full" />
+      <section className="tv-section tv-section--tint">
+        <div className="container mx-auto px-5 md:px-8 max-w-5xl">
+          <Skeleton className="h-10 w-64 mb-3" />
+          <Skeleton className="h-4 w-96 mb-8" />
+          <div className="flex gap-2.5 mb-8 overflow-hidden">
+            <Skeleton className="h-10 w-28 rounded-full" />
+            <Skeleton className="h-10 w-24 rounded-full" />
+            <Skeleton className="h-10 w-32 rounded-full" />
           </div>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-12 w-full" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-32 rounded-[20px]" />
             ))}
           </div>
         </div>
@@ -118,120 +130,173 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
     );
   }
 
-  if (categories.length === 0) return null;
+  if (services.length === 0) return null;
 
-  const ServiceRow = ({ service }: { service: Service; last?: boolean }) => {
+  const ServiceCard = ({ service }: { service: Service }) => {
     const price = formatPrice(service.price);
+    const duration = totalDurationOf(service);
+
     return (
-      <li className="flex items-center justify-between gap-4 rounded-[20px] border border-neutral-100 bg-white p-4 shadow-[0_4px_14px_-10px_rgba(16,20,40,0.35)]">
-        <div className="min-w-0">
-          <h3 className="font-body text-[14.5px] md:text-[15.5px] font-semibold text-neutral-800 leading-snug">
+      <div
+        onClick={() => handleBookService(service)}
+        className="group relative rounded-[20px] bg-white border border-neutral-200/80 hover:border-neutral-300/90 p-4 md:p-5 shadow-[0_2px_8px_-2px_rgba(16,20,40,0.04)] hover:shadow-[0_10px_24px_-6px_rgba(16,20,40,0.10)] transition-all duration-200 flex flex-col justify-between cursor-pointer active:scale-[0.99]"
+      >
+        <div>
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-[11px] font-semibold tracking-wider text-neutral-400 uppercase font-body">
+              {service.category || "Servicio"}
+            </span>
+            {duration > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs text-neutral-400 font-body tabular-nums">
+                <Clock className="w-3 h-3 text-neutral-400 shrink-0" />
+                {formatDuration(duration)}
+              </span>
+            )}
+          </div>
+
+          <h4 className="font-editorial text-[16px] md:text-[17px] font-bold text-neutral-900 group-hover:text-primary transition-colors leading-snug">
             {service.name}
-          </h3>
-          <p className="mt-0.5 text-[12px] text-neutral-400 font-body tabular-nums">
-            {formatDuration(totalDurationOf(service))}
-          </p>
+          </h4>
         </div>
-        {price && (
-          <span className="text-[15px] md:text-[17px] font-bold tabular-nums whitespace-nowrap text-neutral-900 font-body">
-            {price}
-          </span>
-        )}
-      </li>
+
+        <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between">
+          <div>
+            {price ? (
+              <span className="text-[16px] md:text-[18px] font-bold text-neutral-900 font-body tabular-nums tracking-tight">
+                {price}
+              </span>
+            ) : (
+              <span className="text-[12.5px] font-medium text-neutral-400 font-body italic">
+                Consultar en salón
+              </span>
+            )}
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 text-xs font-semibold font-body text-primary group-hover:translate-x-0.5 transition-transform">
+            <span>Reservar</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </div>
+        </div>
+      </div>
     );
   };
 
+  // Determine which items to display
+  const currentCategoryServices = activeCategory === "all" ? services : (groupedServices[activeCategory] || []);
+  const needsExpansion = currentCategoryServices.length > INITIAL_LIMIT;
+  const displayedServices = isExpanded || !needsExpansion
+    ? currentCategoryServices
+    : currentCategoryServices.slice(0, INITIAL_LIMIT);
+
   return (
-    <section id="servicios" className="py-12 md:py-20 bg-[#f5f6fb]">
-      <div className="container mx-auto px-5 md:px-8 max-w-3xl">
+    <section id="servicios" className="tv-section tv-section--tint scroll-mt-20">
+      <div className="container mx-auto px-5 md:px-8 max-w-5xl">
         <SectionHeader
-          eyebrow={t("services.menuKicker")}
-          title={t("services.menuTitle")}
-          divider={false}
+          title={
+            <>
+              Servicios y <span className="font-editorial-italic">precios</span>
+            </>
+          }
+          divider={true}
+          description="Carta de tratamientos y servicios profesionales. Elige tu servicio para reservar tu cita online."
           accentColor={primaryColor}
         />
 
-        {/* Pestañas de categoría */}
-        <div className="-mx-5 mb-5 flex gap-2.5 overflow-x-auto pl-5 pr-10 pb-1 md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
+        {/* Category Filter Pills */}
+        <div
+          className="-mx-5 mb-8 flex gap-2 overflow-x-auto pl-5 pr-10 pb-2 md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {/* "Todos" Tab */}
+          <button
+            onClick={() => handleCategoryChange("all")}
+            className={`shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold font-body transition-all duration-200 active:scale-[0.97] ${
+              activeCategory === "all"
+                ? "bg-neutral-900 text-white shadow-sm"
+                : "bg-white text-neutral-600 hover:text-neutral-900 border border-neutral-200/80 hover:bg-neutral-50"
+            }`}
+          >
+            <span>Todos</span>
+            <span
+              className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold tabular-nums ${
+                activeCategory === "all" ? "bg-white/20 text-white" : "bg-neutral-100 text-neutral-500"
+              }`}
+            >
+              {services.length}
+            </span>
+          </button>
+
+          {/* Individual Category Tabs */}
           {categories.map((cat) => {
-            const on = cat === current;
+            const count = groupedServices[cat]?.length || 0;
+            const on = cat === activeCategory;
             return (
               <button
                 key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 whitespace-nowrap rounded-full px-5 py-2.5 text-[13px] font-semibold font-body transition-all duration-200 active:scale-[0.97] ${
-                  on ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-500"
+                onClick={() => handleCategoryChange(cat)}
+                className={`shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold font-body transition-all duration-200 active:scale-[0.97] ${
+                  on
+                    ? "bg-neutral-900 text-white shadow-sm"
+                    : "bg-white text-neutral-600 hover:text-neutral-900 border border-neutral-200/80 hover:bg-neutral-50"
                 }`}
               >
-                {cat}
+                <span>{cat}</span>
+                <span
+                  className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold tabular-nums ${
+                    on ? "bg-white/20 text-white" : "bg-neutral-100 text-neutral-500"
+                  }`}
+                >
+                  {count}
+                </span>
               </button>
             );
           })}
         </div>
 
-        {/* Vista compacta: lista de la categoría activa */}
-        {!showFull && (
-          <>
-            <ul className="space-y-3">
-              {(groupedServices[current] || []).map((s) => (
-                <ServiceRow key={s.id} service={s} />
-              ))}
-            </ul>
-            <button
-              onClick={() => setShowFull(true)}
-              className="mt-4 w-full rounded-[20px] border border-neutral-200 bg-white py-3.5 text-[14px] font-semibold text-[#22408C] transition-colors hover:bg-neutral-50 active:scale-[0.99]"
-            >
-              {t("services.seeFullMenu")}
-            </button>
-          </>
+        {/* Category Header Banner if a single category with image is active */}
+        {activeCategory !== "all" && getCategoryImage(activeCategory) && (
+          <div className="relative aspect-[21/9] max-h-44 w-full rounded-[20px] overflow-hidden shadow-sm mb-6">
+            <img
+              src={getCategoryImage(activeCategory)!}
+              alt={activeCategory}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+            <div className="absolute bottom-4 left-4 text-white">
+              <p className="text-xs font-medium uppercase tracking-wider text-white/80">Categoría</p>
+              <h3 className="font-editorial text-2xl font-bold text-white leading-tight">{activeCategory}</h3>
+            </div>
+          </div>
         )}
 
-        {/* Vista completa: todas las categorías con foto */}
-        {showFull && (
-          <div className="grid gap-8 lg:gap-10">
-            {categories.map((category) => {
-              const catServices = groupedServices[category];
-              const image = getCategoryImage(category);
-              return (
-                <article key={category}>
-                  {image && (
-                    <div className="relative aspect-[16/9] rounded-[24px] overflow-hidden bg-neutral-100 shadow-[0_14px_32px_-20px_rgba(20,22,40,0.28)] mb-4 group">
-                      <img
-                        src={image}
-                        alt={category}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-                      />
-                      <div className="absolute top-3.5 left-3.5 px-3.5 py-1.5 bg-white rounded-full text-[12px] font-semibold" style={{ color: "#22408C" }}>
-                        {catServices.length} {t("services.countLabel")}
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex items-baseline justify-between gap-4 mb-2">
-                    <h3 className="font-body text-neutral-900 font-bold tracking-[-0.02em]" style={{ fontSize: "clamp(1.15rem, 2vw, 1.5rem)" }}>
-                      {category}
-                    </h3>
-                    {!image && (
-                      <span className="text-[13px] font-semibold font-body whitespace-nowrap" style={{ color: "#22408C" }}>
-                        {catServices.length} {t("services.countLabel")}
-                      </span>
-                    )}
-                  </div>
-                  <div className="h-[3px] w-9 rounded-full mb-4" style={{ background: BRAND_GRAD }} />
-                  <ul className="space-y-3">
-                    {catServices.map((s) => (
-                      <ServiceRow key={s.id} service={s} />
-                    ))}
-                  </ul>
-                </article>
-              );
-            })}
+        {/* 2-Column Responsive Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 md:gap-4">
+          {displayedServices.map((service) => (
+            <ServiceCard key={service.id} service={service} />
+          ))}
+        </div>
+
+        {/* Desplegable / Pestaña para ver carta completa */}
+        {needsExpansion && (
+          <div className="mt-8 flex justify-center">
             <button
-              onClick={() => setShowFull(false)}
-              className="w-full rounded-[20px] border border-neutral-200 bg-white py-3.5 text-[14px] font-semibold text-[#22408C] transition-colors hover:bg-neutral-50 active:scale-[0.99] inline-flex items-center justify-center gap-2"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white border border-neutral-200/90 text-neutral-800 font-semibold text-sm shadow-sm hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200 active:scale-[0.98] group"
             >
-              <ChevronUp className="h-4 w-4" />
-              {t("services.seeLess")}
+              {isExpanded ? (
+                <>
+                  <span>Mostrar menos</span>
+                  <ChevronUp className="w-4 h-4 text-neutral-500 group-hover:-translate-y-0.5 transition-transform" />
+                </>
+              ) : (
+                <>
+                  <span>
+                    Ver toda la carta{" "}
+                    {activeCategory === "all" ? `(${services.length} servicios)` : `(${currentCategoryServices.length})`}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-neutral-500 group-hover:translate-y-0.5 transition-transform" />
+                </>
+              )}
             </button>
           </div>
         )}

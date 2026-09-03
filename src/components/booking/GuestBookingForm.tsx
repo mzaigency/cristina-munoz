@@ -138,14 +138,17 @@ export function GuestBookingForm({
         <button onClick={() => setStage("form")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Cambiar email
         </button>
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-2.5">
           <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
             <ShieldCheck className="h-6 w-6 text-primary" />
           </div>
-          <h3 className="text-lg font-bold">Introduce el código</h3>
-          <p className="text-sm text-muted-foreground">
-            Te enviamos un código de 6 dígitos a <strong>{email}</strong>
+          <h3 className="text-xl font-bold text-neutral-900">Introduce el código</h3>
+          <p className="text-[14.5px] text-neutral-600">
+            Hemos enviado un código de 6 dígitos a <strong className="text-neutral-900">{email}</strong>
           </p>
+          <div className="text-xs text-neutral-500 bg-neutral-100/90 p-2.5 rounded-xl leading-relaxed">
+            💡 <strong>Consejo:</strong> Si no lo ves en unos segundos, revisa tu carpeta de <em>Correo no deseado</em> o <em>Spam</em>.
+          </div>
         </div>
         <Input
           value={code}
@@ -153,18 +156,23 @@ export function GuestBookingForm({
           placeholder="000000"
           inputMode="numeric"
           autoComplete="one-time-code"
-          className="h-14 text-center text-3xl font-bold tracking-[0.4em] rounded-xl"
+          className="h-14 text-center text-3xl font-bold tracking-[0.4em] rounded-xl border-neutral-300 focus:border-primary"
         />
         <Button
           onClick={verifyAndBook}
           disabled={loading || code.length !== 6}
-          className="w-full h-12 rounded-xl text-white font-medium"
+          className="w-full h-12 rounded-xl text-white font-semibold text-base shadow-sm"
           style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
         >
           {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirmar reserva"}
         </Button>
-        <button onClick={sendOtp} disabled={loading} className="w-full text-sm text-muted-foreground underline">
-          Reenviar código
+        <button
+          type="button"
+          onClick={sendOtp}
+          disabled={loading}
+          className="w-full py-2 text-sm text-primary font-medium hover:underline text-center"
+        >
+          ¿No has recibido el código? Pulsa aquí para reenviar
         </button>
       </div>
     );

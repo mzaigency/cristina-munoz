@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ScrollReveal } from "@/components/animations/ScrollReveal";
-import { SmoothTitle } from "@/components/animations/SmoothTitle";
+import { SectionHeader } from "@/components/tenant/_shared/SectionHeader";
 
 interface TenantReviewFormProps {
   tenantId: string;
@@ -105,20 +105,17 @@ export const TenantReviewForm = ({ tenantId, tenantName, onReviewSubmitted }: Te
   if (loading) return null;
 
   return (
-    <section id="review-form" className="py-16 bg-background scroll-mt-24">
-      <div className="container mx-auto px-4">
-        <div className="max-w-xl mx-auto">
-          <SmoothTitle>
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">
-              ¿Cómo fue tu experiencia?
-            </h2>
-          </SmoothTitle>
-          <p className="text-center text-muted-foreground mb-8">
-            Tu opinión sobre {tenantName} nos ayuda a mejorar
-          </p>
+    <section id="review-form" className="tv-section tv-section--tint scroll-mt-24">
+      <div className="container mx-auto px-5 md:px-8">
+        <div className="max-w-3xl mx-auto">
+          <SectionHeader
+            title={<>¿Cómo fue tu <span className="font-editorial-italic">experiencia</span>?</>}
+            description={`Tu opinión sobre ${tenantName} nos ayuda a mejorar`}
+            align="center"
+          />
 
           <ScrollReveal>
-            <div className="bg-card rounded-2xl p-6 md:p-8 shadow-lg border">
+            <div className="rounded-[20px] border border-neutral-100 bg-white p-6 md:p-8 shadow-[0_8px_24px_-16px_rgba(20,22,40,0.12)]">
               {!user ? (
                 <div className="text-center py-6">
                   <p className="text-muted-foreground mb-4">

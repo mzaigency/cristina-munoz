@@ -530,21 +530,21 @@ export const BookingConfirmation = ({
         <span className="font-medium text-foreground truncate ml-2">{userProfile.full_name}</span>
       </div>
 
-      {/* CTAs */}
-      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+      {/* CTAs Sticky Bottom */}
+      <div className="sticky bottom-0 -mx-6 sm:-mx-8 -mb-5 mt-6 px-6 sm:px-8 py-3.5 bg-white/95 backdrop-blur-md border-t border-neutral-200/80 shadow-[0_-8px_24px_rgba(0,0,0,0.07)] z-20 flex flex-col-reverse sm:flex-row justify-between gap-2 sm:gap-3">
         <Button
           type="button"
-          variant="ghost"
+          variant="outline"
           onClick={onBack}
           disabled={loading}
-          className="w-full sm:w-auto h-12 text-[14px] touch-manipulation text-muted-foreground"
+          className="w-full sm:w-auto h-11 px-5 rounded-xl font-medium touch-manipulation text-neutral-700"
         >
           Volver
         </Button>
         <Button
           onClick={handleConfirm}
           disabled={loading}
-          className="w-full sm:flex-1 h-12 text-[15px] font-semibold touch-manipulation shadow-sm"
+          className="w-full sm:flex-1 h-11 px-6 rounded-xl font-semibold touch-manipulation shadow-sm"
           data-guided-cta="true"
         >
           {loading ? (

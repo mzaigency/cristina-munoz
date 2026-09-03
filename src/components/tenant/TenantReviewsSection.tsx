@@ -110,7 +110,7 @@ export const TenantReviewsSection = ({ tenantId, primaryColor }: TenantReviewsSe
 
   if (loading) {
     return (
-      <section className="py-20 md:py-28 bg-[#f5f6fb]">
+      <section className="tv-section tv-section--white">
         <div className="container mx-auto px-5 md:px-8 max-w-6xl">
           <Skeleton className="h-12 w-72 mb-4" />
           <Skeleton className="h-px w-16 mb-12" />
@@ -128,11 +128,10 @@ export const TenantReviewsSection = ({ tenantId, primaryColor }: TenantReviewsSe
 
   return (
     <>
-      <section id="resenas" className="py-20 md:py-28 bg-[#f5f6fb]">
+      <section id="resenas" className="tv-section tv-section--white">
         <div className="container mx-auto px-5 md:px-8 max-w-6xl">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 md:mb-16">
             <SectionHeader
-              eyebrow={t("reviews.eyebrow")}
               title={
                 <>
                   {t("reviews.titlePre")}<span className="font-editorial-italic">{t("reviews.titleAccent")}</span>

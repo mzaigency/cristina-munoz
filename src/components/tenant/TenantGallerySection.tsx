@@ -19,7 +19,7 @@ export const TenantGallerySection = ({ tenantId, tenantName, primaryColor }: Ten
 
   if (isLoadingTenantPosts) {
     return (
-      <section className="py-20 md:py-28 bg-white">
+      <section className="tv-section tv-section--tint">
         <div className="container mx-auto px-5 md:px-8 max-w-6xl">
           <Skeleton className="h-12 w-72 mb-4" />
           <Skeleton className="h-px w-16 mb-12" />
@@ -35,10 +35,9 @@ export const TenantGallerySection = ({ tenantId, tenantName, primaryColor }: Ten
 
   if (tenantPosts.length === 0) {
     return (
-      <section id="galeria" className="py-20 md:py-28 bg-white">
+      <section id="galeria" className="tv-section tv-section--tint">
         <div className="container mx-auto px-5 md:px-8 max-w-6xl">
           <SectionHeader
-            eyebrow={t("gallery.eyebrow")}
             title={
               <>
                 {t("gallery.titlePre")}<span className="font-editorial-italic">{t("gallery.titleAccent")}</span>
@@ -56,11 +55,10 @@ export const TenantGallerySection = ({ tenantId, tenantName, primaryColor }: Ten
   }
 
   return (
-    <section id="galeria" className="py-20 md:py-28 bg-white">
+    <section id="galeria" className="tv-section tv-section--tint">
       <div className="container mx-auto px-5 md:px-8 max-w-6xl">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 md:mb-16">
           <SectionHeader
-            eyebrow={t("gallery.eyebrow")}
             title={
               <>
                 {t("gallery.titlePre")}<span className="font-editorial-italic">{t("gallery.titleAccent")}</span>

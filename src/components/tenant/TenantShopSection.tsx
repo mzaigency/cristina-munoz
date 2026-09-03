@@ -7,6 +7,7 @@ import { ShopCart } from "./ShopCart";
 import { cn } from "@/lib/utils";
 import { supabaseImage } from "@/lib/supabaseImage";
 import { useT } from "@/lib/tenantI18n";
+import { SectionHeader } from "./_shared/SectionHeader";
 
 interface TenantShopSectionProps {
   tenantId: string;
@@ -40,24 +41,12 @@ export const TenantShopSection = ({ tenantId, tenantSlug }: TenantShopSectionPro
 
   return (
     <>
-      <section id="tienda" className="py-16 md:py-20 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none opacity-50">
-          <div className="absolute top-10 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-1/4 w-72 h-72 bg-accent/10 rounded-full blur-3xl" />
-        </div>
-
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-3 backdrop-blur-sm">
-              <ShoppingBag className="h-4 w-4" />
-              <span>Nuestra tienda</span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">Productos exclusivos</h2>
-            <div className="h-[2px] w-16 bg-gradient-to-r from-primary to-accent mx-auto rounded-full" />
-            <p className="mt-4 text-muted-foreground max-w-md mx-auto text-sm md:text-base">
-              Llévate a casa nuestros favoritos o reserva con tu próxima cita
-            </p>
-          </div>
+      <section id="tienda" className="tv-section tv-section--white">
+        <div className="container mx-auto px-5 md:px-8 max-w-6xl relative z-10">
+          <SectionHeader
+            title={<>Productos <span className="font-editorial-italic">exclusivos</span></>}
+            description="Llévate a casa nuestros favoritos o reserva con tu próxima cita"
+          />
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 max-w-6xl mx-auto">
             {products.map((p, idx) => (
