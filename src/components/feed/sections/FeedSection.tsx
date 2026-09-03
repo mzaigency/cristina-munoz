@@ -127,8 +127,8 @@ export function FeedSection({
       ) : (
         <div
           className={cn(
-            "flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory",
-            "-mx-4 pl-4 pr-8 pb-2",
+            "flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-pl-6",
+            "-mx-4 pl-6 pr-10 pb-2",
           )}
         >
           {children}
