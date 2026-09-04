@@ -141,7 +141,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       // 1. Transactions Current Period
       const { data: currentTx } = await supabase
         .from("transactions")
-        .select("id, total, created_at, payment_method, tip_amount, discount_amount, stylist_id, client_id, voided")
+        .select("id, total, created_at, payment_method, tip_amount, discount, stylist_id, stylist, customer_name, voided")
         .eq("tenant_id", tenantId)
         .eq("voided", false)
         .gte("created_at", startDate.toISOString())
@@ -160,18 +160,19 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       // 3. Bookings Current Period
       const { data: currentBookings } = await supabase
         .from("bookings")
-        .select("id, date, start_time, status, service_name, stylist_id, created_at, client_id")
+        .select('id, "Fecha", "Hora", status, services, stylist, created_at, customer_name, canal')
         .eq("tenant_id", tenantId)
-        .gte("date", format(startDate, "yyyy-MM-dd"))
-        .lte("date", format(endDate, "yyyy-MM-dd"));
+        .gte("Fecha", format(startDate, "yyyy-MM-dd"))
+        .lte("Fecha", format(endDate, "yyyy-MM-dd"));
 
       // 4. Bookings Previous Period
       const { data: previousBookings } = await supabase
         .from("bookings")
         .select("id, status")
         .eq("tenant_id", tenantId)
-        .gte("date", format(prevStartDate, "yyyy-MM-dd"))
-        .lte("date", format(prevEndDate, "yyyy-MM-dd"));
+        .gte("Fecha", format(prevStartDate, "yyyy-MM-dd"))
+        .lte("Fecha", format(prevEndDate, "yyyy-MM-dd"));
+
 
       // 5. Stylists
       const { data: stylists } = await supabase
