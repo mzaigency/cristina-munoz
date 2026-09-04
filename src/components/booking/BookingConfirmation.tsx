@@ -304,7 +304,18 @@ export const BookingConfirmation = ({
           </p>
         </div>
 
-        <form onSubmit={handleSavePhone} className="space-y-4 max-w-sm mx-auto">
+        {/* Hidden trigger so the modal footer button (booking-confirm-submit-btn) works in this branch too */}
+        <button
+          id="booking-confirm-submit-btn"
+          type="button"
+          className="hidden"
+          onClick={() => {
+            const form = document.getElementById("booking-phone-form") as HTMLFormElement | null;
+            form?.requestSubmit();
+          }}
+          disabled={savingPhone}
+        />
+        <form id="booking-phone-form" onSubmit={handleSavePhone} className="space-y-4 max-w-sm mx-auto">
           <div className="space-y-1.5">
             <Label htmlFor="phone-input" className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
               Teléfono móvil
