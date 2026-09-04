@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Loader2, Mail, User, Phone, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Loader2, ArrowLeft, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useHaptic } from "@/hooks/useHaptic";
 import type { BookingData } from "@/types/booking";
+import { SalonAppointmentCard } from "./SalonAppointmentCard";
 
 interface GuestBookingFormProps {
   bookingData: BookingData;
@@ -135,19 +136,17 @@ export function GuestBookingForm({
   if (stage === "otp") {
     return (
       <div className="space-y-5">
-        <button onClick={() => setStage("form")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <button onClick={() => setStage("form")} className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900 transition-colors">
           <ArrowLeft className="h-4 w-4" /> Cambiar email
         </button>
-        <div className="text-center space-y-2.5">
-          <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <ShieldCheck className="h-6 w-6 text-primary" />
-          </div>
-          <h3 className="text-xl font-bold text-neutral-900">Introduce el código</h3>
-          <p className="text-[14.5px] text-neutral-600">
+        <div className="text-center space-y-2">
+          <span className="text-2xl block">✦</span>
+          <h3 className="font-editorial text-2xl font-medium text-neutral-900">Introduce el código</h3>
+          <p className="text-sm text-neutral-600">
             Hemos enviado un código de 6 dígitos a <strong className="text-neutral-900">{email}</strong>
           </p>
-          <div className="text-xs text-neutral-500 bg-neutral-100/90 p-2.5 rounded-xl leading-relaxed">
-            💡 <strong>Consejo:</strong> Si no lo ves en unos segundos, revisa tu carpeta de <em>Correo no deseado</em> o <em>Spam</em>.
+          <div className="text-xs text-neutral-500 bg-[#FAF8F5] border border-[#E7DFD5] p-3 rounded-2xl leading-relaxed max-w-sm mx-auto">
+            💡 Revisa también tu carpeta de <em>Correo no deseado</em> o <em>Spam</em> si no lo ves de inmediato.
           </div>
         </div>
         <Input
@@ -156,21 +155,21 @@ export function GuestBookingForm({
           placeholder="000000"
           inputMode="numeric"
           autoComplete="one-time-code"
-          className="h-14 text-center text-3xl font-bold tracking-[0.4em] rounded-xl border-neutral-300 focus:border-primary"
+          className="h-14 text-center text-3xl font-bold tracking-[0.4em] rounded-2xl border-neutral-300 focus:border-primary max-w-xs mx-auto"
         />
         <Button
           onClick={verifyAndBook}
           disabled={loading || code.length !== 6}
-          className="w-full h-12 rounded-xl text-white font-semibold text-base shadow-sm"
+          className="w-full h-12 rounded-xl text-white font-semibold text-base shadow-sm max-w-xs mx-auto block"
           style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
         >
-          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirmar reserva"}
+          {loading ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : "Confirmar reserva"}
         </Button>
         <button
           type="button"
           onClick={sendOtp}
           disabled={loading}
-          className="w-full py-2 text-sm text-primary font-medium hover:underline text-center"
+          className="w-full py-2 text-xs text-primary font-medium hover:underline text-center"
         >
           ¿No has recibido el código? Pulsa aquí para reenviar
         </button>
@@ -179,45 +178,86 @@ export function GuestBookingForm({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="text-center space-y-1">
-        <h3 className="text-lg font-bold">Reserva en 10 segundos</h3>
-        <p className="text-sm text-muted-foreground">Sin contraseñas. Te enviamos un código al email.</p>
-      </div>
-      <div className="space-y-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="g-name">Nombre</Label>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input id="g-name" value={name} onChange={(e) => setName(e.target.value)} className="pl-10 h-12 rounded-xl" placeholder="Tu nombre" />
+    <div className="space-y-6">
+      {/* Resumen de Cita — Estilo Salón Exclusivo */}
+      <SalonAppointmentCard
+        bookingData={bookingData}
+        totalDuration={totalDuration}
+        totalPrice={totalPrice}
+        discountedPrice={discountedPrice}
+        clientName={name.trim() || null}
+        clientPhone={phone.trim() || null}
+        tenantName={tenantName}
+        tenantId={tenantId}
+        showHospitalityNote={false}
+      />
+
+      {/* Formulario de Contacto Directo */}
+      <div className="rounded-3xl border border-[#E7DFD5] bg-[#FAF8F5] p-5 sm:p-6 space-y-4">
+        <div>
+          <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-[0.2em] block mb-1">
+            Tus datos para la cita
+          </span>
+          <h4 className="font-editorial text-lg sm:text-xl font-medium text-neutral-900">
+            ¿A nombre de quién preparamos el tocador?
+          </h4>
+          <p className="text-xs text-neutral-500 mt-0.5">
+            Sin contraseña previa. Te enviaremos un código de confirmación a tu email.
+          </p>
+        </div>
+
+        <div className="space-y-3.5">
+          <div className="space-y-1.5">
+            <Label htmlFor="g-name" className="text-xs font-semibold text-neutral-700">Nombre completo</Label>
+            <Input
+              id="g-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="h-11 rounded-xl bg-white border-neutral-300"
+              placeholder="Ej: Marta García"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="g-email" className="text-xs font-semibold text-neutral-700">Email (para tu confirmación)</Label>
+            <Input
+              id="g-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-11 rounded-xl bg-white border-neutral-300"
+              placeholder="tu@email.com"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="g-phone" className="text-xs font-semibold text-neutral-700">Teléfono móvil</Label>
+            <Input
+              id="g-phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="h-11 rounded-xl bg-white border-neutral-300"
+              placeholder="600 123 456"
+            />
           </div>
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="g-email">Email</Label>
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input id="g-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-12 rounded-xl" placeholder="tu@email.com" />
-          </div>
+
+        <Button
+          onClick={sendOtp}
+          disabled={loading}
+          className="w-full h-12 rounded-xl text-white font-semibold text-base shadow-sm"
+          style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
+        >
+          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Enviar código y reservar cita"}
+        </Button>
+
+        <div className="flex items-center justify-between text-xs pt-1">
+          <button onClick={onBack} className="text-neutral-500 hover:text-neutral-900 underline">
+            Volver atrás
+          </button>
+          <button onClick={onSwitchToLogin} className="text-primary font-medium hover:underline">
+            ¿Ya tienes cuenta? Inicia sesión
+          </button>
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="g-phone">Teléfono</Label>
-          <div className="relative">
-            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input id="g-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10 h-12 rounded-xl" placeholder="600 123 456" />
-          </div>
-        </div>
-      </div>
-      <Button
-        onClick={sendOtp}
-        disabled={loading}
-        className="w-full h-12 rounded-xl text-white font-medium"
-        style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
-      >
-        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Enviar código y reservar"}
-      </Button>
-      <div className="flex items-center justify-between text-sm">
-        <button onClick={onBack} className="text-muted-foreground underline">Volver</button>
-        <button onClick={onSwitchToLogin} className="text-primary font-medium underline">Ya tengo cuenta</button>
       </div>
     </div>
   );

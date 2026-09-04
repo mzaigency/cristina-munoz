@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Promotion } from "@/types/booking";
-import { Tag, X, Check, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PromoCodeInputProps {
@@ -95,26 +94,26 @@ export const PromoCodeInput = ({
   if (appliedPromotion) {
     const discount = calculateDiscount(appliedPromotion);
     return (
-      <div className="rounded-xl border border-green-200 bg-green-50/70 p-3 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-            <Check className="h-3.5 w-3.5 text-green-600" />
-          </div>
-          <div className="min-w-0">
-            <span className="font-semibold text-green-900 block truncate">{appliedPromotion.name}</span>
-            <span className="text-[11px] text-green-700 font-mono">({appliedPromotion.code})</span>
-          </div>
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3.5 flex items-center justify-between text-xs">
+        <div className="min-w-0">
+          <span className="font-semibold text-emerald-950 block truncate">
+            Cortesía: {appliedPromotion.name}
+          </span>
+          <span className="text-[11px] text-emerald-700 font-mono">
+            {appliedPromotion.code}
+          </span>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="font-bold text-green-700 tabular-nums">-{discount.toFixed(2)} €</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0 rounded-full hover:bg-green-200/50 text-green-700"
+        <div className="flex items-center gap-2.5 shrink-0">
+          <span className="font-bold text-emerald-800 tabular-nums text-sm">
+            -{discount.toFixed(2).replace(".", ",")} €
+          </span>
+          <button
+            type="button"
+            className="text-xs text-emerald-700 hover:text-emerald-950 underline underline-offset-2 ml-1"
             onClick={removePromotion}
           >
-            <X className="h-3.5 w-3.5" />
-          </Button>
+            Quitar
+          </button>
         </div>
       </div>
     );
@@ -125,27 +124,31 @@ export const PromoCodeInput = ({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 text-xs font-semibold text-neutral-500 hover:text-primary transition-colors py-0.5 px-0.5 group"
+        className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-900 transition-colors font-medium py-1 group"
       >
-        <Tag className="h-3.5 w-3.5 text-neutral-400 group-hover:text-primary transition-colors" />
-        <span className="underline-offset-2 hover:underline">¿Tienes un código de descuento?</span>
+        <span className="text-neutral-400 group-hover:text-neutral-700">✦</span>
+        <span className="underline underline-offset-4 decoration-neutral-300 group-hover:decoration-neutral-700">
+          ¿Tienes un código de cortesía o descuento?
+        </span>
       </button>
     );
   }
 
   return (
-    <div className="p-3 rounded-xl bg-neutral-50 border border-neutral-200/80 space-y-2">
-      <div className="flex items-center justify-between text-xs text-neutral-600 font-medium">
-        <span className="flex items-center gap-1.5">
-          <Tag className="h-3.5 w-3.5 text-primary" />
-          Código promocional
+    <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E7DFD5] space-y-2.5">
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-semibold text-neutral-800">
+          Código de cortesía o promoción
         </span>
         <button
           type="button"
-          onClick={() => { setIsOpen(false); setError(null); }}
-          className="text-neutral-400 hover:text-neutral-600 text-xs"
+          onClick={() => {
+            setIsOpen(false);
+            setError(null);
+          }}
+          className="text-neutral-400 hover:text-neutral-600 text-[11px]"
         >
-          Cancelar
+          Cerrar
         </button>
       </div>
       <div className="flex gap-2">
@@ -156,12 +159,12 @@ export const PromoCodeInput = ({
               setCode(e.target.value.toUpperCase());
               if (error) setError(null);
             }}
-            placeholder="Ej: BIENVENIDA10"
+            placeholder="Ej: BIENVENIDA"
             className={cn(
-              "h-10 uppercase text-xs sm:text-sm rounded-lg tracking-wider",
+              "h-10 uppercase text-xs rounded-xl tracking-wider bg-white border-neutral-300",
               error && "border-destructive"
             )}
-            onKeyDown={(e) => e.key === 'Enter' && validatePromoCode()}
+            onKeyDown={(e) => e.key === "Enter" && validatePromoCode()}
           />
           {error && (
             <p className="text-[11px] text-destructive mt-1 font-medium">{error}</p>
@@ -171,10 +174,10 @@ export const PromoCodeInput = ({
           variant="default"
           onClick={validatePromoCode}
           disabled={!code.trim() || loading}
-          className="h-10 px-4 rounded-lg text-xs font-semibold shrink-0"
+          className="h-10 px-4 rounded-xl text-xs font-semibold shrink-0 bg-neutral-900 hover:bg-neutral-800 text-white"
         >
           {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
             "Aplicar"
           )}

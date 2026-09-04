@@ -498,25 +498,19 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                     </div>
                   )}
                   {step === 3 && !bookingConfirmed && user && (
-                    <div key="step-3" className="tv-step-in space-y-6">
-                      {/* Promo Code Input */}
-                      <PromoCodeInput
-                        tenantId={tenantId}
-                        subtotal={totalPrice}
-                        appliedPromotion={bookingData.appliedPromotion || null}
-                        onApplyPromotion={handleApplyPromotion}
-                      />
-                      
+                    <div key="step-3" className="tv-step-in">
                       <BookingConfirmation
                         bookingData={bookingData}
                         totalDuration={totalDuration}
                         onConfirm={handleConfirmBooking}
                         onBack={handleBack}
                         tenantId={tenantId}
+                        tenantName={tenantName}
                         totalPrice={totalPrice}
                         discountedPrice={discountedPrice}
                         hideFooter={true}
                         onLoadingChange={setConfirmLoading}
+                        onApplyPromotion={handleApplyPromotion}
                       />
                     </div>
                   )}

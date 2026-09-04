@@ -1,19 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { CheckCircle2, Loader2, Tag, Package, Phone, Clock, User as UserIcon, Scissors, Calendar } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Confetti, type ConfettiRef } from "@/components/ui/confetti";
-import { BookingData } from "@/types/booking";
+import { BookingData, Promotion } from "@/types/booking";
 import { PushPermissionPrompt } from "@/components/notifications/PushPermissionPrompt";
 import { SelectedAddon } from "./BookingProductsAddon";
 import { consumeSectionClickFor, trackEvent } from "@/lib/telemetry";
 import { phoneSchema, cleanPhoneNumber } from "@/lib/phoneValidation";
+import { SalonAppointmentCard } from "./SalonAppointmentCard";
 
 interface BookingConfirmationProps {
   bookingData: BookingData;
@@ -21,11 +19,13 @@ interface BookingConfirmationProps {
   onConfirm: (name: string, phone: string) => void;
   onBack: () => void;
   tenantId?: string;
+  tenantName?: string;
   totalPrice?: number;
   discountedPrice?: number;
   addonProducts?: SelectedAddon[];
   hideFooter?: boolean;
   onLoadingChange?: (loading: boolean) => void;
+  onApplyPromotion?: (promotion: Promotion | null) => void;
 }
 
 interface UserProfile {
@@ -34,29 +34,19 @@ interface UserProfile {
   phone: string;
 }
 
-const formatPrice = (price: number): string => {
-  return `${price.toFixed(2).replace('.', ',')} €`;
-};
-
-const getStylistDisplayName = (stylist: string | null | undefined): string => {
-  if (!stylist || stylist === "any") return "Cualquiera disponible";
-  const s = stylist.toLowerCase();
-  if (s === "cris" || s.includes("cristina")) return "Cristina Muñoz";
-  if (s === "desi" || s.includes("desiree") || s.includes("desirée")) return "Desiree";
-  return stylist.charAt(0).toUpperCase() + stylist.slice(1).toLowerCase();
-};
-
 export const BookingConfirmation = ({
   bookingData,
   totalDuration,
   onConfirm,
   onBack,
   tenantId,
+  tenantName = "Cristina Muñoz",
   totalPrice = 0,
   discountedPrice,
   addonProducts = [],
   hideFooter = false,
   onLoadingChange,
+  onApplyPromotion,
 }: BookingConfirmationProps) => {
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -301,24 +291,22 @@ export const BookingConfirmation = ({
     };
 
     return (
-      <div className="space-y-5 py-2">
-        <div className="text-center space-y-2">
-          <div className="flex justify-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-              <Phone className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <h3 className="text-lg sm:text-xl font-semibold text-foreground">
-            Solo falta tu teléfono
+      <div className="space-y-6 py-4">
+        <div className="text-center space-y-2 max-w-sm mx-auto">
+          <span className="text-2xl block">✦</span>
+          <h3 className="font-editorial text-xl sm:text-2xl font-medium text-neutral-900">
+            Un último detalle para tu cita
           </h3>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            Lo necesitamos para que el salón pueda contactarte si hay cualquier cambio en tu cita.
+          <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
+            Indícanos tu teléfono de contacto para que el salón pueda enviarte el recordatorio y confirmar cualquier novedad.
           </p>
         </div>
 
-        <form onSubmit={handleSavePhone} className="space-y-3 max-w-sm mx-auto">
+        <form onSubmit={handleSavePhone} className="space-y-4 max-w-sm mx-auto">
           <div className="space-y-1.5">
-            <Label htmlFor="phone-input" className="text-sm">Teléfono móvil</Label>
+            <Label htmlFor="phone-input" className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+              Teléfono móvil
+            </Label>
             <Input
               id="phone-input"
               type="tel"
@@ -331,26 +319,26 @@ export const BookingConfirmation = ({
                 if (phoneError) setPhoneError(null);
               }}
               disabled={savingPhone}
-              className="h-11"
+              className="h-12 rounded-xl text-base"
             />
             {phoneError && (
-              <p className="text-xs text-destructive">{phoneError}</p>
+              <p className="text-xs text-destructive font-medium">{phoneError}</p>
             )}
           </div>
-          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row gap-2.5 pt-2">
             <Button
               type="button"
               variant="outline"
               onClick={onBack}
               disabled={savingPhone}
-              className="w-full sm:w-auto h-11"
+              className="w-full sm:w-auto h-11 rounded-xl"
             >
               Volver
             </Button>
             <Button
               type="submit"
               disabled={savingPhone}
-              className="w-full sm:flex-1 h-11"
+              className="w-full sm:flex-1 h-11 rounded-xl font-semibold shadow-sm"
             >
               {savingPhone ? (
                 <>
@@ -358,7 +346,7 @@ export const BookingConfirmation = ({
                   Guardando...
                 </>
               ) : (
-                "Guardar y continuar"
+                "Continuar"
               )}
             </Button>
           </div>
@@ -369,73 +357,35 @@ export const BookingConfirmation = ({
 
   if (confirmed) {
     return (
-      <div className="relative space-y-6 sm:space-y-8 text-center py-6 sm:py-8">
+      <div className="relative space-y-6 text-center py-4">
         <Confetti
           ref={confettiRef}
           className="absolute top-0 left-0 w-full h-full pointer-events-none z-50"
         />
-        <div className="flex justify-center">
-          <div className="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-green-100 animate-in zoom-in duration-500">
-            <CheckCircle2 className="h-10 w-10 sm:h-12 sm:w-12 text-green-600" />
-          </div>
-        </div>
-        <div className="space-y-2 sm:space-y-3">
-          <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">¡Cita Confirmada!</h3>
-          <p className="text-sm sm:text-lg text-muted-foreground max-w-md mx-auto px-2">
-            Recibirás un mensaje de confirmación con todos los detalles de tu reserva.
+        <div className="space-y-2">
+          <span className="text-3xl block animate-bounce">✨</span>
+          <h3 className="font-editorial text-2xl sm:text-3xl md:text-4xl font-medium text-neutral-900">
+            ¡Cita Confirmada!
+          </h3>
+          <p className="text-sm text-neutral-500 max-w-md mx-auto">
+            Te esperamos con ilusión en el salón. Hemos preparado todos los detalles de tu cita.
           </p>
         </div>
-        <div className="rounded-xl border-2 border-green-200 bg-green-50/50 p-4 sm:p-6 text-left max-w-lg mx-auto">
-          <h4 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 flex-shrink-0" />
-            Resumen de tu cita
-          </h4>
-          <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
-            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
-              <span className="font-medium text-muted-foreground sm:col-span-1">Nombre:</span>
-              <span className="sm:col-span-2">{userProfile.full_name}</span>
-            </div>
-            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
-              <span className="font-medium text-muted-foreground sm:col-span-1">Email:</span>
-              <span className="sm:col-span-2 break-all">{userProfile.email}</span>
-            </div>
-            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
-              <span className="font-medium text-muted-foreground sm:col-span-1">Teléfono:</span>
-              <span className="sm:col-span-2">{userProfile.phone}</span>
-            </div>
-            <div className="h-px bg-border my-1.5 sm:my-2" />
-            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
-              <span className="font-medium text-muted-foreground sm:col-span-1">Fecha:</span>
-              <span className="sm:col-span-2">{bookingData.date && format(bookingData.date, "dd-MM-yyyy")}</span>
-            </div>
-            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
-              <span className="font-medium text-muted-foreground sm:col-span-1">Hora:</span>
-              <span className="sm:col-span-2">{bookingData.time}</span>
-            </div>
-            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
-              <span className="font-medium text-muted-foreground sm:col-span-1">Profesional:</span>
-              <span className="sm:col-span-2">{bookingData.stylist === "any" ? "Cualquiera" : bookingData.stylist?.toUpperCase()}</span>
-            </div>
-            <div className="h-px bg-border my-1.5 sm:my-2" />
-            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
-              <span className="font-medium text-muted-foreground sm:col-span-1">Servicios:</span>
-              <span className="sm:col-span-2">{bookingData.services.map((s) => s.name).join(", ")}</span>
-            </div>
-            <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
-              <span className="font-medium text-muted-foreground sm:col-span-1">Duración:</span>
-              <span className="sm:col-span-2">{totalDuration} minutos</span>
-            </div>
-            {finalPrice > 0 && (
-              <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-3 sm:gap-2">
-                <span className="font-medium text-muted-foreground sm:col-span-1">Total:</span>
-                <span className="sm:col-span-2 font-bold text-primary">{formatPrice(finalPrice)}</span>
-              </div>
-            )}
-          </div>
+
+        <div className="text-left max-w-lg mx-auto">
+          <SalonAppointmentCard
+            bookingData={bookingData}
+            totalDuration={totalDuration}
+            totalPrice={totalPrice}
+            discountedPrice={discountedPrice}
+            clientName={userProfile.full_name}
+            clientPhone={userProfile.phone}
+            tenantName={tenantName}
+            tenantId={tenantId}
+            showHospitalityNote={true}
+          />
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground">
-          Nos vemos pronto en el salón ✨
-        </p>
+
         <PushPermissionPrompt
           show={showPushPrompt}
           onDismiss={() => setShowPushPrompt(false)}
@@ -444,131 +394,21 @@ export const BookingConfirmation = ({
     );
   }
 
-  const stylistDisplayName = getStylistDisplayName(bookingData.stylist);
-
   return (
     <div className="space-y-4">
-      {/* Tarjeta de Cita — Estilo Salón Exclusivo */}
-      <div className="rounded-2xl border border-neutral-200/90 bg-white shadow-xs overflow-hidden">
-        {/* Cabecera: Fecha y Hora destacada */}
-        <div className="p-4 sm:p-5 bg-gradient-to-r from-neutral-50 via-white to-neutral-50/70 border-b border-neutral-200/70 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
-              <Calendar className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[15px] font-bold text-neutral-900 capitalize truncate">
-                {bookingData.date && format(bookingData.date, "EEEE, d 'de' MMMM", { locale: es })}
-              </p>
-              <div className="flex items-center gap-2 mt-0.5 text-xs sm:text-[13px] text-neutral-500 font-medium">
-                <span className="font-bold text-primary tabular-nums">{bookingData.time} h</span>
-                <span className="text-neutral-300">·</span>
-                <span>{totalDuration} min de duración</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bloque central: Servicios, Profesional y Cliente */}
-        <div className="p-4 sm:p-5 space-y-3.5">
-          {/* Servicios */}
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0 text-neutral-600 mt-0.5">
-              <Scissors className="h-4 w-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">
-                {bookingData.services.length === 1 ? "Servicio" : "Servicios"}
-              </p>
-              <div className="mt-1 space-y-1">
-                {bookingData.services.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between gap-2 text-[13.5px]">
-                    <span className="font-semibold text-neutral-800 truncate">{s.name}</span>
-                    {s.price !== undefined && s.price !== null && (
-                      <span className="text-neutral-600 font-medium tabular-nums shrink-0">
-                        {formatPrice(s.price)}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-              {bookingData.packageId && (
-                <Badge variant="secondary" className="mt-1 text-[10px] h-4 px-1.5">
-                  <Package className="h-2.5 w-2.5 mr-0.5" />
-                  Pack
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Profesional asignada */}
-          <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-primary font-bold text-xs">
-                {stylistDisplayName.charAt(0)}
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Profesional</p>
-                <p className="text-[13.5px] font-semibold text-neutral-900 truncate">
-                  {stylistDisplayName}
-                </p>
-              </div>
-            </div>
-            <Badge variant="outline" className="text-[11px] font-medium border-neutral-200 text-neutral-600 shrink-0">
-              Asignada
-            </Badge>
-          </div>
-
-          {/* Cliente titular */}
-          <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center shrink-0 text-neutral-600 font-semibold text-xs">
-                {userProfile.full_name?.charAt(0) || "C"}
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">A nombre de</p>
-                <p className="text-[13.5px] font-semibold text-neutral-900 truncate">{userProfile.full_name}</p>
-              </div>
-            </div>
-            {userProfile.phone && (
-              <span className="text-xs text-neutral-500 tabular-nums shrink-0">{userProfile.phone}</span>
-            )}
-          </div>
-        </div>
-
-        {/* Descuentos aplicados (si existen) */}
-        {bookingData.appliedPromotion && (
-          <div className="px-5 py-2.5 bg-green-50/80 border-t border-green-200/60 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 text-green-800 font-medium truncate">
-              <Tag className="h-3.5 w-3.5 text-green-600 shrink-0" />
-              <span className="truncate">{bookingData.appliedPromotion.name}</span>
-            </div>
-            <Badge variant="secondary" className="bg-white border-green-200 text-green-700 font-mono text-[10px] shrink-0">
-              {bookingData.appliedPromotion.code}
-            </Badge>
-          </div>
-        )}
-
-        {/* Pie de precio: Total destacado */}
-        {finalPrice > 0 && (
-          <div className="p-4 sm:p-5 bg-neutral-50/80 border-t border-neutral-200/70 flex items-center justify-between">
-            <div>
-              <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider block">Total a pagar</span>
-              <span className="text-[11px] text-neutral-400 font-normal">En el salón tras tu servicio</span>
-            </div>
-            <div className="text-right">
-              {hasDiscount ? (
-                <div className="flex items-baseline gap-2 justify-end">
-                  <span className="text-sm text-neutral-400 line-through tabular-nums">{formatPrice(totalPrice)}</span>
-                  <span className="text-2xl font-bold text-primary tabular-nums">{formatPrice(discountedPrice!)}</span>
-                </div>
-              ) : (
-                <span className="text-2xl font-bold text-neutral-900 tabular-nums">{formatPrice(totalPrice)}</span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Tarjeta de Cita — Estilo Exclusivo de Salón de Belleza */}
+      <SalonAppointmentCard
+        bookingData={bookingData}
+        totalDuration={totalDuration}
+        totalPrice={totalPrice}
+        discountedPrice={discountedPrice}
+        clientName={userProfile.full_name}
+        clientPhone={userProfile.phone}
+        tenantName={tenantName}
+        tenantId={tenantId}
+        onApplyPromotion={onApplyPromotion}
+        showHospitalityNote={true}
+      />
 
       {/* Hidden button for modal footer trigger */}
       <button
@@ -581,7 +421,7 @@ export const BookingConfirmation = ({
 
       {/* Fallback CTAs only if footer is not handled by modal */}
       {!hideFooter && (
-        <div className="pt-4 border-t border-neutral-200 flex flex-col-reverse sm:flex-row justify-between gap-2 sm:gap-3">
+        <div className="pt-4 border-t border-[#EFE9E0] flex flex-col-reverse sm:flex-row justify-between gap-2 sm:gap-3">
           <Button
             type="button"
             variant="outline"
@@ -603,7 +443,7 @@ export const BookingConfirmation = ({
                 Confirmando...
               </>
             ) : (
-              "Confirmar reserva"
+              "Confirmar cita"
             )}
           </Button>
         </div>
