@@ -140,12 +140,11 @@ export function GuestBookingForm({
           <ArrowLeft className="h-4 w-4" /> Cambiar email
         </button>
         <div className="text-center space-y-2">
-          <span className="text-2xl block">✦</span>
-          <h3 className="font-editorial text-2xl font-medium text-neutral-900">Introduce el código</h3>
+          <h3 className="text-xl sm:text-2xl font-bold text-neutral-900">Introduce el código</h3>
           <p className="text-sm text-neutral-600">
             Hemos enviado un código de 6 dígitos a <strong className="text-neutral-900">{email}</strong>
           </p>
-          <div className="text-xs text-neutral-500 bg-[#FAF8F5] border border-[#E7DFD5] p-3 rounded-2xl leading-relaxed max-w-sm mx-auto">
+          <div className="text-xs text-neutral-500 bg-neutral-50 border border-neutral-200/80 p-3 rounded-xl leading-relaxed max-w-sm mx-auto">
             💡 Revisa también tu carpeta de <em>Correo no deseado</em> o <em>Spam</em> si no lo ves de inmediato.
           </div>
         </div>
@@ -155,7 +154,7 @@ export function GuestBookingForm({
           placeholder="000000"
           inputMode="numeric"
           autoComplete="one-time-code"
-          className="h-14 text-center text-3xl font-bold tracking-[0.4em] rounded-2xl border-neutral-300 focus:border-primary max-w-xs mx-auto"
+          className="h-14 text-center text-3xl font-bold tracking-[0.4em] rounded-xl border-neutral-300 focus:border-primary max-w-xs mx-auto"
         />
         <Button
           onClick={verifyAndBook}
@@ -179,7 +178,7 @@ export function GuestBookingForm({
 
   return (
     <div className="space-y-6">
-      {/* Resumen de Cita — Estilo Salón Exclusivo */}
+      {/* Resumen de Cita */}
       <SalonAppointmentCard
         bookingData={bookingData}
         totalDuration={totalDuration}
@@ -189,17 +188,13 @@ export function GuestBookingForm({
         clientPhone={phone.trim() || null}
         tenantName={tenantName}
         tenantId={tenantId}
-        showHospitalityNote={false}
       />
 
-      {/* Formulario de Contacto Directo */}
-      <div className="rounded-3xl border border-[#E7DFD5] bg-[#FAF8F5] p-5 sm:p-6 space-y-4">
+      {/* Formulario de Contacto */}
+      <div className="rounded-2xl border border-neutral-200/90 bg-white p-5 sm:p-6 space-y-4">
         <div>
-          <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-[0.2em] block mb-1">
-            Tus datos para la cita
-          </span>
-          <h4 className="font-editorial text-lg sm:text-xl font-medium text-neutral-900">
-            ¿A nombre de quién preparamos el tocador?
+          <h4 className="text-base sm:text-lg font-bold text-neutral-900">
+            Tus datos de reserva
           </h4>
           <p className="text-xs text-neutral-500 mt-0.5">
             Sin contraseña previa. Te enviaremos un código de confirmación a tu email.

@@ -382,7 +382,6 @@ export const BookingConfirmation = ({
             clientPhone={userProfile.phone}
             tenantName={tenantName}
             tenantId={tenantId}
-            showHospitalityNote={true}
           />
         </div>
 
@@ -396,7 +395,7 @@ export const BookingConfirmation = ({
 
   return (
     <div className="space-y-4">
-      {/* Tarjeta de Cita — Estilo Exclusivo de Salón de Belleza */}
+      {/* Resumen de Cita */}
       <SalonAppointmentCard
         bookingData={bookingData}
         totalDuration={totalDuration}
@@ -407,7 +406,6 @@ export const BookingConfirmation = ({
         tenantName={tenantName}
         tenantId={tenantId}
         onApplyPromotion={onApplyPromotion}
-        showHospitalityNote={true}
       />
 
       {/* Hidden button for modal footer trigger */}
@@ -421,7 +419,7 @@ export const BookingConfirmation = ({
 
       {/* Fallback CTAs only if footer is not handled by modal */}
       {!hideFooter && (
-        <div className="pt-4 border-t border-[#EFE9E0] flex flex-col-reverse sm:flex-row justify-between gap-2 sm:gap-3">
+        <div className="pt-4 border-t border-neutral-200 flex flex-col-reverse sm:flex-row justify-between gap-2 sm:gap-3">
           <Button
             type="button"
             variant="outline"

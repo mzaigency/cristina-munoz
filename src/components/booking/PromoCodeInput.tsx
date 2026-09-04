@@ -94,22 +94,19 @@ export const PromoCodeInput = ({
   if (appliedPromotion) {
     const discount = calculateDiscount(appliedPromotion);
     return (
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3.5 flex items-center justify-between text-xs">
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 flex items-center justify-between text-xs">
         <div className="min-w-0">
           <span className="font-semibold text-emerald-950 block truncate">
-            Cortesía: {appliedPromotion.name}
-          </span>
-          <span className="text-[11px] text-emerald-700 font-mono">
-            {appliedPromotion.code}
+            Descuento ({appliedPromotion.code}): {appliedPromotion.name}
           </span>
         </div>
-        <div className="flex items-center gap-2.5 shrink-0">
-          <span className="font-bold text-emerald-800 tabular-nums text-sm">
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="font-bold text-emerald-800 tabular-nums">
             -{discount.toFixed(2).replace(".", ",")} €
           </span>
           <button
             type="button"
-            className="text-xs text-emerald-700 hover:text-emerald-950 underline underline-offset-2 ml-1"
+            className="text-xs text-emerald-700 hover:text-emerald-950 underline"
             onClick={removePromotion}
           >
             Quitar
@@ -124,22 +121,17 @@ export const PromoCodeInput = ({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-900 transition-colors font-medium py-1 group"
+        className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors font-medium underline underline-offset-2 py-0.5"
       >
-        <span className="text-neutral-400 group-hover:text-neutral-700">✦</span>
-        <span className="underline underline-offset-4 decoration-neutral-300 group-hover:decoration-neutral-700">
-          ¿Tienes un código de cortesía o descuento?
-        </span>
+        ¿Tienes un código de descuento?
       </button>
     );
   }
 
   return (
-    <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E7DFD5] space-y-2.5">
-      <div className="flex items-center justify-between text-xs">
-        <span className="font-semibold text-neutral-800">
-          Código de cortesía o promoción
-        </span>
+    <div className="p-3.5 rounded-xl bg-neutral-50/70 border border-neutral-200/90 space-y-2">
+      <div className="flex items-center justify-between text-xs text-neutral-600 font-medium">
+        <span>Código de descuento</span>
         <button
           type="button"
           onClick={() => {
@@ -148,7 +140,7 @@ export const PromoCodeInput = ({
           }}
           className="text-neutral-400 hover:text-neutral-600 text-[11px]"
         >
-          Cerrar
+          Cancelar
         </button>
       </div>
       <div className="flex gap-2">
