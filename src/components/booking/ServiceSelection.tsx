@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/accordion";
 import { Service, ServicePackage } from "@/types/booking";
 import { Badge } from "@/components/ui/badge";
-import { Check, Package, Sparkles, Tag } from "lucide-react";
+import { Check, Package, Sparkles, Tag, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ServiceSelectionProps {
@@ -200,6 +200,18 @@ export const ServiceSelection = ({
     );
   };
 
+  /* ── Category pill click: open that accordion + scroll into view ── */
+  const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const handleCategoryPill = useCallback((cat: string) => {
+    // Toggle: if only this category is open, close it (show all); otherwise open just this one
+    setOpenCategories((prev) =>
+      prev.length === 1 && prev[0] === cat ? [...categories] : [cat]
+    );
+    // Scroll into view after accordion animates
+    setTimeout(() => {
+      categoryRefs.current[cat]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 150);
+  }, [categories]);
 
   return (
     <div className="space-y-6">
@@ -284,6 +296,61 @@ export const ServiceSelection = ({
         </div>
       )}
 
+      {/* ── Horizontal Category Pills ── */}
+      {categories.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+          {categories.map((cat) => {
+            const isActive = openCategories.length === 1 && openCategories[0] === cat;
+            const count = (groupedServices[cat] || []).filter(s => selected.some(sel => sel.id === s.id)).length;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => handleCategoryPill(cat)}
+                className={cn(
+                  "shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-semibold border transition-all duration-150 touch-manipulation",
+                  isActive
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-white text-neutral-700 border-neutral-200/90 hover:border-primary/40 hover:bg-primary/5"
+                )}
+              >
+                {cat}
+                {count > 0 && (
+                  <span className={cn(
+                    "ml-1.5 inline-flex items-center justify-center w-4.5 h-4.5 rounded-full text-[10px] font-bold",
+                    isActive ? "bg-white/25 text-primary-foreground" : "bg-primary/15 text-primary"
+                  )}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Selected Services Chips ── */}
+      {selected.length > 0 && !selectedPackage && (
+        <div className="flex flex-wrap gap-1.5">
+          {selected.map((s) => (
+            <span
+              key={s.id}
+              className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-lg bg-primary/10 text-primary text-[12px] font-semibold border border-primary/15 transition-all duration-150"
+            >
+              {s.name}
+              <button
+                type="button"
+                onClick={() => toggleService(s)}
+                className="ml-0.5 p-0.5 rounded-full hover:bg-primary/20 transition-colors touch-manipulation"
+                aria-label={`Quitar ${s.name}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Individual Services */}
       {categories.length === 1 ? (
         <div className="space-y-2">
@@ -302,6 +369,7 @@ export const ServiceSelection = ({
 
             return (
               <AccordionItem key={category} value={category}>
+                <div ref={(el) => { categoryRefs.current[category] = el; }}>
                 <AccordionTrigger className="text-lg font-semibold hover:no-underline">
                   <div className="flex items-center justify-between w-full pr-2">
                     <span>{category}</span>
@@ -315,6 +383,7 @@ export const ServiceSelection = ({
                     {categoryServices.map((service) => renderServiceItem(service, !!selectedPackage))}
                   </div>
                 </AccordionContent>
+                </div>
               </AccordionItem>
             );
           })}

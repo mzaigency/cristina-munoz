@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Loader2, ArrowLeft, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useHaptic } from "@/hooks/useHaptic";
-import type { BookingData } from "@/types/booking";
+import type { BookingData, Promotion } from "@/types/booking";
 import { SalonAppointmentCard } from "./SalonAppointmentCard";
 
 interface GuestBookingFormProps {
@@ -20,6 +20,10 @@ interface GuestBookingFormProps {
   onSuccess: (name: string, phone: string) => void;
   onSwitchToLogin: () => void;
   onBack: () => void;
+  onApplyPromotion?: (promotion: Promotion | null) => void;
+  hideFooter?: boolean;
+  onLoadingChange?: (loading: boolean) => void;
+  onStageChange?: (stage: "form" | "otp") => void;
 }
 
 type Stage = "form" | "otp";
@@ -35,6 +39,10 @@ export function GuestBookingForm({
   onSuccess,
   onSwitchToLogin,
   onBack,
+  onApplyPromotion,
+  hideFooter = false,
+  onLoadingChange,
+  onStageChange,
 }: GuestBookingFormProps) {
   const [stage, setStage] = useState<Stage>("form");
   const [name, setName] = useState("");
@@ -46,6 +54,10 @@ export function GuestBookingForm({
   const haptic = useHaptic();
 
   const finalPrice = discountedPrice ?? totalPrice;
+
+  // Notify parent of loading / stage changes
+  useEffect(() => { onLoadingChange?.(loading); }, [loading, onLoadingChange]);
+  useEffect(() => { onStageChange?.(stage); }, [stage, onStageChange]);
 
   const sendOtp = async () => {
     if (!name.trim() || !email.trim() || !phone.trim()) {
@@ -138,9 +150,11 @@ export function GuestBookingForm({
   if (stage === "otp") {
     return (
       <div className="space-y-5">
-        <button onClick={() => setStage("form")} className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900 transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Cambiar email
-        </button>
+        {!hideFooter && (
+          <button onClick={() => setStage("form")} className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900 transition-colors">
+            <ArrowLeft className="h-4 w-4" /> Cambiar email
+          </button>
+        )}
         <div className="text-center space-y-2">
           <h3 className="text-xl sm:text-2xl font-bold text-neutral-900">Introduce el código</h3>
           <p className="text-sm text-neutral-600">
@@ -158,14 +172,24 @@ export function GuestBookingForm({
           autoComplete="one-time-code"
           className="h-14 text-center text-3xl font-bold tracking-[0.4em] rounded-xl border-neutral-300 focus:border-primary max-w-xs mx-auto"
         />
-        <Button
+        {/* Hidden button for modal footer trigger (OTP stage) */}
+        <button
+          id="guest-otp-submit-btn"
+          type="button"
+          className="hidden"
           onClick={verifyAndBook}
           disabled={loading || code.length !== 6}
-          className="w-full h-12 rounded-xl text-white font-semibold text-base shadow-sm max-w-xs mx-auto block"
-          style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
-        >
-          {loading ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : "Confirmar reserva"}
-        </Button>
+        />
+        {!hideFooter && (
+          <Button
+            onClick={verifyAndBook}
+            disabled={loading || code.length !== 6}
+            className="w-full h-12 rounded-xl text-white font-semibold text-base shadow-sm max-w-xs mx-auto block"
+            style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
+          >
+            {loading ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : "Confirmar reserva"}
+          </Button>
+        )}
         <button
           type="button"
           onClick={sendOtp}
@@ -191,6 +215,7 @@ export function GuestBookingForm({
         tenantName={tenantName}
         tenantId={tenantId}
         logoUrl={logoUrl}
+        onApplyPromotion={onApplyPromotion}
       />
 
       {/* Formulario de Contacto */}
@@ -239,18 +264,29 @@ export function GuestBookingForm({
           </div>
         </div>
 
-        <Button
+        {/* Hidden button for modal footer trigger (form stage) */}
+        <button
+          id="guest-form-submit-btn"
+          type="button"
+          className="hidden"
           onClick={sendOtp}
           disabled={loading}
-          className="w-full h-12 rounded-xl text-white font-semibold text-base shadow-sm"
-          style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
-        >
-          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Enviar código y reservar cita"}
-        </Button>
+        />
+
+        {!hideFooter && (
+          <Button
+            onClick={sendOtp}
+            disabled={loading}
+            className="w-full h-12 rounded-xl text-white font-semibold text-base shadow-sm"
+            style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
+          >
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Enviar código y reservar cita"}
+          </Button>
+        )}
 
         <div className="flex items-center justify-between text-xs pt-1">
           <button onClick={onBack} className="text-neutral-500 hover:text-neutral-900 underline">
-            Volver atrás
+            {hideFooter ? null : "Volver atrás"}
           </button>
           <button onClick={onSwitchToLogin} className="text-primary font-medium hover:underline">
             ¿Ya tienes cuenta? Inicia sesión

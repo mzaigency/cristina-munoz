@@ -4,7 +4,6 @@ import { ServiceSelection } from "@/components/booking/ServiceSelection";
 import { TenantDateTimeSelection } from "./TenantDateTimeSelection";
 import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
 import { BookingSummaryMobile } from "@/components/booking/BookingSummaryMobile";
-import { PromoCodeInput } from "@/components/booking/PromoCodeInput";
 import { SuccessCelebration } from "@/components/booking/SuccessCelebration";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { GuestBookingForm } from "@/components/booking/GuestBookingForm";
@@ -149,6 +148,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName, logoUrl }: TenantBooki
     packageId: null,
   });
   const [confirmLoading, setConfirmLoading] = useState(false);
+  const [guestStage, setGuestStage] = useState<"form" | "otp">("form");
+  const [guestLoading, setGuestLoading] = useState(false);
 
   // Load services, packages, and stylist count from database
   useEffect(() => {
@@ -513,6 +514,10 @@ export const TenantBookingFlow = ({ tenantId, tenantName, logoUrl }: TenantBooki
                         }}
                         onSwitchToLogin={() => { haptic.selection(); setShowAuthModal(true); }}
                         onBack={handleBack}
+                        onApplyPromotion={handleApplyPromotion}
+                        hideFooter={true}
+                        onLoadingChange={setGuestLoading}
+                        onStageChange={setGuestStage}
                       />
                     </div>
                   )}
@@ -553,7 +558,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName, logoUrl }: TenantBooki
                 </div>
 
                 {/* Permanent Fixed Modal Footer for Steps 1, 2, and Step 3 */}
-                {!bookingConfirmed && (step <= 2 || (step === 3 && user)) && (
+                {!bookingConfirmed && (step <= 2 || step === 3) && (
                   <footer className="shrink-0 border-t border-neutral-200/90 bg-white/95 backdrop-blur-md px-6 sm:px-8 py-3.5 z-30 flex items-center justify-between gap-4">
                     {step === 1 && (
                       <>
@@ -644,6 +649,50 @@ export const TenantBookingFlow = ({ tenantId, tenantName, logoUrl }: TenantBooki
                             </>
                           ) : (
                             `Confirmar reserva (${formatPrice(discountedPrice || totalPrice)})`
+                          )}
+                        </Button>
+                      </>
+                    )}
+
+                    {step === 3 && !user && (
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={guestStage === "otp" ? () => {
+                            // In OTP stage, "back" goes back to the form
+                            const backBtn = document.querySelector<HTMLButtonElement>('button[class*="Cambiar email"]');
+                            // Simply dispatch a click on the stage-change button
+                            setGuestStage("form");
+                            // GuestBookingForm manages its own stage; we trigger its back-to-form via its own button
+                            const changeBtn = document.querySelector<HTMLButtonElement>('[class*="Cambiar"]');
+                            if (changeBtn) changeBtn.click();
+                            else handleBack();
+                          } : handleBack}
+                          disabled={guestLoading}
+                          className="h-11 px-5 rounded-xl font-medium transition-transform duration-200 hover:scale-105"
+                        >
+                          {guestStage === "otp" ? "Cambiar email" : t("booking.back")}
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            const btnId = guestStage === "otp" ? "guest-otp-submit-btn" : "guest-form-submit-btn";
+                            const btn = document.getElementById(btnId) as HTMLButtonElement | null;
+                            btn?.click();
+                          }}
+                          disabled={guestLoading}
+                          className="h-11 px-6 sm:px-8 rounded-xl font-semibold transition-transform duration-200 hover:scale-105 active:scale-95 touch-manipulation shadow-sm shrink-0"
+                          style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
+                          data-guided-cta="true"
+                        >
+                          {guestLoading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              {guestStage === "otp" ? "Verificando..." : "Enviando..."}
+                            </>
+                          ) : (
+                            guestStage === "otp"
+                              ? `Confirmar reserva (${formatPrice(discountedPrice || totalPrice)})`
+                              : "Enviar código y reservar"
                           )}
                         </Button>
                       </>

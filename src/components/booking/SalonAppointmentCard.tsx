@@ -307,34 +307,58 @@ export const SalonAppointmentCard = ({
 
       {/* ── Total a abonar ── */}
       {finalPrice > 0 && (
-        <div className="p-4 sm:p-5 bg-gradient-to-b from-neutral-50/60 to-neutral-100/40 border-t border-neutral-200/80 flex items-center justify-between gap-3">
-          <div>
-            <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider block">
-              Total a pagar
-            </span>
-            <span className="text-[11px] text-neutral-400 font-normal">
-              En el salón tras tu servicio
-            </span>
-          </div>
+        <div className="p-4 sm:p-5 bg-gradient-to-b from-neutral-50/60 to-neutral-100/40 border-t border-neutral-200/80">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider block">
+                Total a pagar
+              </span>
+              <span className="text-[11px] text-neutral-400 font-normal">
+                En el salón tras tu servicio
+              </span>
+            </div>
 
-          <div className="text-right">
-            {hasDiscount ? (
-              <div className="flex items-baseline gap-2 justify-end">
-                <span className="text-sm text-neutral-400 line-through tabular-nums">
+            <div className="text-right">
+              {hasDiscount ? (
+                <div className="flex items-baseline gap-2 justify-end">
+                  <span className="text-sm text-neutral-400 line-through tabular-nums">
+                    {formatPrice(totalPrice)}
+                  </span>
+                  <span className="text-2xl font-black text-primary tabular-nums">
+                    {formatPrice(discountedPrice!)}
+                  </span>
+                </div>
+              ) : (
+                <span className="text-2xl font-black text-neutral-900 tabular-nums">
                   {formatPrice(totalPrice)}
                 </span>
-                <span className="text-2xl font-black text-primary tabular-nums">
-                  {formatPrice(discountedPrice!)}
-                </span>
-              </div>
-            ) : (
-              <span className="text-2xl font-black text-neutral-900 tabular-nums">
-                {formatPrice(totalPrice)}
-              </span>
-            )}
+              )}
+            </div>
           </div>
+
+          {/* Savings badge */}
+          {hasDiscount && (
+            <div className="mt-2 flex justify-end">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-semibold text-emerald-700 tabular-nums">
+                Ahorras {formatPrice(totalPrice - (discountedPrice ?? totalPrice))}
+                {bookingData.appliedPromotion?.discount_type === "percentage" && (
+                  <> ({Math.round(bookingData.appliedPromotion.discount_value)}%)</>
+                )}
+              </span>
+            </div>
+          )}
         </div>
       )}
+
+      {/* ── Trust micro-messages ── */}
+      <div className="px-4 sm:px-5 py-3 flex flex-col gap-1.5 text-[11px] text-neutral-400">
+        <span className="flex items-center gap-1.5">
+          <span>🛡️</span> Sin cargos en tarjeta — pagas en el salón tras tu servicio
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span>⏱️</span> Cancelación gratuita hasta 24 h antes de tu cita
+        </span>
+      </div>
     </div>
   );
 };
