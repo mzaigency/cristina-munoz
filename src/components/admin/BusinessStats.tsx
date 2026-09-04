@@ -141,7 +141,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       // 1. Transactions Current Period
       const { data: currentTx } = await supabase
         .from("transactions")
-        .select("id, total, created_at, payment_method, tip_amount, discount_amount, stylist_id, client_id, voided")
+        .select("id, total, created_at, payment_method, tip_amount, discount, stylist_id, stylist, customer_name, voided")
         .eq("tenant_id", tenantId)
         .eq("voided", false)
         .gte("created_at", startDate.toISOString())
@@ -160,18 +160,19 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       // 3. Bookings Current Period
       const { data: currentBookings } = await supabase
         .from("bookings")
-        .select("id, date, start_time, status, service_name, stylist_id, created_at, client_id")
+        .select('id, "Fecha", "Hora", status, services, stylist, created_at, customer_name, canal')
         .eq("tenant_id", tenantId)
-        .gte("date", format(startDate, "yyyy-MM-dd"))
-        .lte("date", format(endDate, "yyyy-MM-dd"));
+        .gte("Fecha", format(startDate, "yyyy-MM-dd"))
+        .lte("Fecha", format(endDate, "yyyy-MM-dd"));
 
       // 4. Bookings Previous Period
       const { data: previousBookings } = await supabase
         .from("bookings")
         .select("id, status")
         .eq("tenant_id", tenantId)
-        .gte("date", format(prevStartDate, "yyyy-MM-dd"))
-        .lte("date", format(prevEndDate, "yyyy-MM-dd"));
+        .gte("Fecha", format(prevStartDate, "yyyy-MM-dd"))
+        .lte("Fecha", format(prevEndDate, "yyyy-MM-dd"));
+
 
       // 5. Stylists
       const { data: stylists } = await supabase
@@ -191,23 +192,29 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       const stylistRevMap: Record<string, { revenue: number; count: number }> = {};
       const uniqueClientsSet = new Set<string>();
 
-      (currentTx || []).forEach((tx) => {
+      const stylistIdByName: Record<string, string> = {};
+      (stylists || []).forEach((s) => {
+        if (s.name) stylistIdByName[s.name.toLowerCase().trim()] = s.id;
+      });
+
+      (currentTx || []).forEach((tx: any) => {
         const amt = Number(tx.total) || 0;
         curRev += amt;
         curTips += Number(tx.tip_amount) || 0;
-        curDiscounts += Number(tx.discount_amount) || 0;
+        curDiscounts += Number(tx.discount) || 0;
 
         const pm = (tx.payment_method || "").toLowerCase();
         if (pm === "cash" || pm === "efectivo") cashTotal += amt;
         else if (pm === "card" || pm === "tarjeta") cardTotal += amt;
         else mixedTotal += amt;
 
-        if (tx.client_id) uniqueClientsSet.add(tx.client_id);
+        if (tx.customer_name) uniqueClientsSet.add(String(tx.customer_name).toLowerCase().trim());
 
-        if (tx.stylist_id) {
-          if (!stylistRevMap[tx.stylist_id]) stylistRevMap[tx.stylist_id] = { revenue: 0, count: 0 };
-          stylistRevMap[tx.stylist_id].revenue += amt;
-          stylistRevMap[tx.stylist_id].count += 1;
+        const sid = tx.stylist_id || stylistIdByName[String(tx.stylist || "").toLowerCase().trim()];
+        if (sid) {
+          if (!stylistRevMap[sid]) stylistRevMap[sid] = { revenue: 0, count: 0 };
+          stylistRevMap[sid].revenue += amt;
+          stylistRevMap[sid].count += 1;
         }
 
         const dateKey = format(parseISO(tx.created_at), "yyyy-MM-dd");
@@ -230,15 +237,18 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       const serviceCountMap: Record<string, { name: string; count: number; revenue: number }> = {};
       const hourDistribution: Record<number, number> = {};
 
-      (currentBookings || []).forEach((b) => {
-        if (b.status === "cancelled") {
+      (currentBookings || []).forEach((b: any) => {
+        if (b.status === "cancelled" || b.status === "cancelada") {
           cancelledCount += 1;
         } else {
           confirmedCount += 1;
         }
 
-        const dateKey = b.date;
-        if (!dailyMap[dateKey]) {
+        if (b.canal === "crm") crmCount += 1;
+        else webCount += 1;
+
+        const dateKey = b.Fecha;
+        if (dateKey && !dailyMap[dateKey]) {
           try {
             dailyMap[dateKey] = {
               date: dateKey,
@@ -250,26 +260,29 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
             // ignore
           }
         }
-        if (dailyMap[dateKey] && b.status !== "cancelled") {
+        if (dateKey && dailyMap[dateKey] && b.status !== "cancelled" && b.status !== "cancelada") {
           dailyMap[dateKey].bookings += 1;
         }
 
-        if (b.client_id) uniqueClientsSet.add(b.client_id);
+        if (b.customer_name) uniqueClientsSet.add(String(b.customer_name).toLowerCase().trim());
 
-        if (b.service_name) {
-          if (!serviceCountMap[b.service_name]) {
-            serviceCountMap[b.service_name] = { name: b.service_name, count: 0, revenue: 0 };
-          }
-          serviceCountMap[b.service_name].count += 1;
-        }
+        const svcs = Array.isArray(b.services) ? b.services : [];
+        svcs.forEach((s: any) => {
+          const name = typeof s === "string" ? s : s?.name;
+          if (!name) return;
+          if (!serviceCountMap[name]) serviceCountMap[name] = { name, count: 0, revenue: 0 };
+          serviceCountMap[name].count += 1;
+          serviceCountMap[name].revenue += Number(s?.price) || 0;
+        });
 
-        if (b.start_time) {
-          const hr = parseInt(b.start_time.split(":")[0], 10);
+        if (b.Hora) {
+          const hr = parseInt(String(b.Hora).split(":")[0], 10);
           if (!isNaN(hr) && hr >= 8 && hr <= 22) {
             hourDistribution[hr] = (hourDistribution[hr] || 0) + 1;
           }
         }
       });
+
 
       // Previous period metrics
       const prevRev = (previousTx || []).reduce((acc, t) => acc + (Number(t.total) || 0), 0);

@@ -23,7 +23,11 @@ import glowappWordmark from "@/assets/glowapp-wordmark.png";
 export function ClientSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
   const { tenant, isAdmin, isStylist } = useCurrentUserTenant();
   const { unreadCount } = useUnreadMessages();
 

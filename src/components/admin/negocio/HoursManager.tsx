@@ -38,6 +38,8 @@ import {
   addMonths,
   differenceInCalendarDays,
   endOfMonth,
+  endOfWeek,
+
   format,
   isWithinInterval,
   parseISO,
