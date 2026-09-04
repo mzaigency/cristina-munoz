@@ -192,23 +192,29 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       const stylistRevMap: Record<string, { revenue: number; count: number }> = {};
       const uniqueClientsSet = new Set<string>();
 
-      (currentTx || []).forEach((tx) => {
+      const stylistIdByName: Record<string, string> = {};
+      (stylists || []).forEach((s) => {
+        if (s.name) stylistIdByName[s.name.toLowerCase().trim()] = s.id;
+      });
+
+      (currentTx || []).forEach((tx: any) => {
         const amt = Number(tx.total) || 0;
         curRev += amt;
         curTips += Number(tx.tip_amount) || 0;
-        curDiscounts += Number(tx.discount_amount) || 0;
+        curDiscounts += Number(tx.discount) || 0;
 
         const pm = (tx.payment_method || "").toLowerCase();
         if (pm === "cash" || pm === "efectivo") cashTotal += amt;
         else if (pm === "card" || pm === "tarjeta") cardTotal += amt;
         else mixedTotal += amt;
 
-        if (tx.client_id) uniqueClientsSet.add(tx.client_id);
+        if (tx.customer_name) uniqueClientsSet.add(String(tx.customer_name).toLowerCase().trim());
 
-        if (tx.stylist_id) {
-          if (!stylistRevMap[tx.stylist_id]) stylistRevMap[tx.stylist_id] = { revenue: 0, count: 0 };
-          stylistRevMap[tx.stylist_id].revenue += amt;
-          stylistRevMap[tx.stylist_id].count += 1;
+        const sid = tx.stylist_id || stylistIdByName[String(tx.stylist || "").toLowerCase().trim()];
+        if (sid) {
+          if (!stylistRevMap[sid]) stylistRevMap[sid] = { revenue: 0, count: 0 };
+          stylistRevMap[sid].revenue += amt;
+          stylistRevMap[sid].count += 1;
         }
 
         const dateKey = format(parseISO(tx.created_at), "yyyy-MM-dd");
@@ -231,15 +237,18 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       const serviceCountMap: Record<string, { name: string; count: number; revenue: number }> = {};
       const hourDistribution: Record<number, number> = {};
 
-      (currentBookings || []).forEach((b) => {
-        if (b.status === "cancelled") {
+      (currentBookings || []).forEach((b: any) => {
+        if (b.status === "cancelled" || b.status === "cancelada") {
           cancelledCount += 1;
         } else {
           confirmedCount += 1;
         }
 
-        const dateKey = b.date;
-        if (!dailyMap[dateKey]) {
+        if (b.canal === "crm") crmCount += 1;
+        else webCount += 1;
+
+        const dateKey = b.Fecha;
+        if (dateKey && !dailyMap[dateKey]) {
           try {
             dailyMap[dateKey] = {
               date: dateKey,
@@ -251,26 +260,29 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
             // ignore
           }
         }
-        if (dailyMap[dateKey] && b.status !== "cancelled") {
+        if (dateKey && dailyMap[dateKey] && b.status !== "cancelled" && b.status !== "cancelada") {
           dailyMap[dateKey].bookings += 1;
         }
 
-        if (b.client_id) uniqueClientsSet.add(b.client_id);
+        if (b.customer_name) uniqueClientsSet.add(String(b.customer_name).toLowerCase().trim());
 
-        if (b.service_name) {
-          if (!serviceCountMap[b.service_name]) {
-            serviceCountMap[b.service_name] = { name: b.service_name, count: 0, revenue: 0 };
-          }
-          serviceCountMap[b.service_name].count += 1;
-        }
+        const svcs = Array.isArray(b.services) ? b.services : [];
+        svcs.forEach((s: any) => {
+          const name = typeof s === "string" ? s : s?.name;
+          if (!name) return;
+          if (!serviceCountMap[name]) serviceCountMap[name] = { name, count: 0, revenue: 0 };
+          serviceCountMap[name].count += 1;
+          serviceCountMap[name].revenue += Number(s?.price) || 0;
+        });
 
-        if (b.start_time) {
-          const hr = parseInt(b.start_time.split(":")[0], 10);
+        if (b.Hora) {
+          const hr = parseInt(String(b.Hora).split(":")[0], 10);
           if (!isNaN(hr) && hr >= 8 && hr <= 22) {
             hourDistribution[hr] = (hourDistribution[hr] || 0) + 1;
           }
         }
       });
+
 
       // Previous period metrics
       const prevRev = (previousTx || []).reduce((acc, t) => acc + (Number(t.total) || 0), 0);
