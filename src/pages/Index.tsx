@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { TrendingUp, Sparkles } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { SmartSearchHeader } from "@/components/feed/SmartSearchHeader";
 import { AISearchBar } from "@/components/feed/AISearchBar";
@@ -285,7 +285,7 @@ const Index = () => {
   return (
     <>
       <AppLayout>
-        <div className="font-poppins">
+        <div className="font-poppins min-h-screen bg-[var(--glow-bg)]">
         <SEO
           title="GlowApp | Reserva Cita en Salones de Belleza Cerca de Ti"
           description="Descubre peluquerías, spas y centros de estética cerca de ti. Reserva cita online al instante. La app de belleza #1 en España con +500 salones."
@@ -293,14 +293,11 @@ const Index = () => {
           canonicalUrl="/"
         />
 
-        {/* Fondo plano de la familia glow (mismo gris azulado del panel) */}
-        <div className="fixed inset-0 -z-10" style={{ background: "var(--glow-bg)" }} />
-
         {/* Header Bar */}
         <SmartSearchHeader />
 
         {/* AI Search Bar */}
-        <div className="py-3">
+        <div className="max-w-2xl sm:max-w-3xl mx-auto px-4 sm:px-6 py-3 lg:py-5">
           <AISearchBar
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
@@ -311,10 +308,12 @@ const Index = () => {
         </div>
 
         {/* Feed Toggle */}
-        <FeedToggle mode={feedMode} onChange={setFeedMode} followingCount={followingCount} />
+        <div className="flex justify-center mb-3">
+          <FeedToggle mode={feedMode} onChange={setFeedMode} followingCount={followingCount} />
+        </div>
 
         {/* Main Content */}
-        <div className="px-4 pt-1 pb-28">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-1 pb-20 md:pb-12">
           <AnimatePresence mode="wait">
             {feedMode === "following" ? (
               <motion.div
@@ -342,31 +341,21 @@ const Index = () => {
                   className="mb-4"
                 >
                   {/* Top row: Title (solo en modo grid filtrado) + Actions */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      {searchQuery || selectedCategory || showFavoritesOnly || sortByDistance ? (
-                        <>
-                          {hasRecommendations && scoresMap.size > 0 ? (
-                            <Sparkles className="h-5 w-5 text-primary shrink-0" />
-                          ) : (
-                            <TrendingUp className="h-5 w-5 text-primary shrink-0" />
-                          )}
-                          <h2 className="text-lg font-bold text-foreground truncate">
-                            {searchQuery ? "Resultados" : "Filtrados"}
-                          </h2>
-                          <span className="text-xs text-muted-foreground bg-secondary/60 px-2 py-0.5 rounded-full shrink-0">
-                            {filteredSalons?.length || 0}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          Filtros rápidos
+                  {(searchQuery || selectedCategory || showFavoritesOnly || sortByDistance) && (
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="h-7 w-7 rounded-lg bg-[var(--glow-brand-soft)] text-[var(--glow-brand)] border border-[var(--glow-brand)]/20 flex items-center justify-center shrink-0">
+                          <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={2.2} />
+                        </div>
+                        <h2 className="text-[16px] font-bold text-foreground truncate">
+                          {searchQuery ? "Resultados" : "Filtrados"}
+                        </h2>
+                        <span className="text-[11px] font-semibold text-muted-foreground bg-surface-container px-2 py-0.5 rounded-full shrink-0">
+                          {filteredSalons?.length || 0}
                         </span>
-                      )}
+                      </div>
                     </div>
-
-                    <div className="flex items-center gap-1.5" />
-                  </div>
+                  )}
 
                   {/* Category Pills - more compact */}
                   <CategoryPills
@@ -380,7 +369,9 @@ const Index = () => {
                 </motion.div>
 
                 {/* Modo SECCIONES (sin búsqueda ni filtro) o GRID (con filtros activos) */}
-                {!searchQuery &&
+                {isLoading ? (
+                  <PremiumSkeleton />
+                ) : !searchQuery &&
                 !selectedCategory &&
                 !showFavoritesOnly &&
                 !sortByDistance &&

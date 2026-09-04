@@ -59,20 +59,20 @@ export function useGlowConfirm() {
       <AlertDialogPrimitive.Portal>
         <AlertDialogPrimitive.Overlay
           className={cn(
-            "fixed inset-0 z-50 bg-on-surface/45 backdrop-blur-[2px]",
+            "fixed inset-0 z-[90] bg-on-surface/45 backdrop-blur-[2px]",
             "data-[state=open]:animate-in data-[state=open]:fade-in-0",
             "data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
           )}
         />
         <AlertDialogPrimitive.Content
           className={cn(
-            "fixed z-50 flex flex-col overflow-hidden bg-surface font-poppins",
+            "fixed z-[91] flex flex-col overflow-hidden bg-surface font-poppins",
             "ease-[cubic-bezier(0.32,0.72,0,1)]",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=open]:duration-300 data-[state=closed]:duration-200",
             isMobile
               ? [
-                  "inset-x-0 bottom-0 rounded-t-[24px] pb-[env(safe-area-inset-bottom)]",
+                  "inset-x-0 bottom-0 rounded-t-[24px] pb-[calc(env(safe-area-inset-bottom)+1rem)]",
                   "shadow-[0_-8px_40px_-12px_rgba(19,21,32,.28)]",
                   "data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom",
                 ]

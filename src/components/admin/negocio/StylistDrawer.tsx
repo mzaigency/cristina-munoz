@@ -16,6 +16,9 @@ import {
   History,
   UserCog,
   Store,
+  CalendarOff,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import { startOfMonth, endOfMonth, format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -34,17 +37,13 @@ import {
 import { InlineScheduleEditor } from "./InlineScheduleEditor";
 import { StylistAbsences } from "./StylistAbsences";
 
-/**
- * Ficha del profesional — una sola página scrolleable, sin pestañas.
- * Orden: lo que consultas a diario arriba (mes, horario, comisión),
- * lo que tocas una vez al final (perfil, eliminar).
- */
-
-interface Props {
+export interface StylistDrawerProps {
   tenantId: string;
   stylistId: string;
   onClose: () => void;
   onChanged: () => void;
+  initialTab?: "schedule" | "performance" | "profile";
+  autoOpenAddAbsence?: boolean;
 }
 
 interface Stylist {
@@ -79,17 +78,17 @@ interface DaySchedule {
   end_time: string | null;
 }
 
-const PRESET_COLORS = CHART_COLORS;  // misma paleta que las gráficas
+const PRESET_COLORS = CHART_COLORS;
 const COMMISSION_PRESETS = [30, 40, 50, 60];
-/** Lunes primero, como InlineScheduleEditor. */
+
 const WEEK_DAYS = [
-  { value: 1, label: "Lun" },
-  { value: 2, label: "Mar" },
-  { value: 3, label: "Mié" },
-  { value: 4, label: "Jue" },
-  { value: 5, label: "Vie" },
-  { value: 6, label: "Sáb" },
-  { value: 0, label: "Dom" },
+  { value: 1, label: "Lunes" },
+  { value: 2, label: "Martes" },
+  { value: 3, label: "Miércoles" },
+  { value: 4, label: "Jueves" },
+  { value: 5, label: "Viernes" },
+  { value: 6, label: "Sábado" },
+  { value: 0, label: "Domingo" },
 ];
 
 const firstServiceName = (services: unknown): string | null => {
@@ -101,8 +100,18 @@ const firstServiceName = (services: unknown): string | null => {
 
 const hhmm = (t: string | null) => (t ? t.slice(0, 5) : "");
 
-export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props) {
+type DrawerTab = "schedule" | "performance" | "profile";
+
+export function StylistDrawer({
+  tenantId,
+  stylistId,
+  onClose,
+  onChanged,
+  initialTab = "schedule",
+  autoOpenAddAbsence = false,
+}: StylistDrawerProps) {
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<DrawerTab>(initialTab);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [stylist, setStylist] = useState<Stylist | null>(null);
@@ -120,12 +129,24 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
   const [recentBookings, setRecentBookings] = useState<BookingRow[]>([]);
   const [schedule, setSchedule] = useState<DaySchedule[] | null>(null);
   const [usesSalonHours, setUsesSalonHours] = useState(false);
-  /** true mientras se edita el horario propio inline. */
   const [editingSchedule, setEditingSchedule] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmSalonHours, setConfirmSalonHours] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (autoOpenAddAbsence) {
+      setActiveTab("schedule");
+      const timer = setTimeout(() => {
+        const el = document.getElementById("stylist-absences-section");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 180);
+      return () => clearTimeout(timer);
+    }
+  }, [autoOpenAddAbsence]);
 
   const loadSchedule = async () => {
     const { data: own } = await supabase
@@ -138,6 +159,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
       setSchedule(own as DaySchedule[]);
       return;
     }
+
     const { data: salon } = await supabase
       .from("tenant_business_hours")
       .select("day_of_week, is_open, open_time, close_time")
@@ -163,8 +185,12 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
       const monthStart = startOfMonth(now);
       const monthEnd = endOfMonth(now);
 
-      // El nombre hace falta para filtrar bookings (guardan el nombre, no el id)
-      const { data: st } = await supabase.from("tenant_stylists").select("*").eq("id", stylistId).single();
+      const { data: st } = await supabase
+        .from("tenant_stylists")
+        .select("*")
+        .eq("id", stylistId)
+        .single();
+
       if (cancelled || !st) {
         setLoading(false);
         return;
@@ -172,7 +198,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
       setStylist(st as Stylist);
       const name = (st as Stylist).name;
 
-      const [commRes, txRes, countRes, reviewsRes, recentRes] = await Promise.all([
+      const [commRes, txRes, countRes, recentRes] = await Promise.all([
         supabase.from("stylist_commissions").select("*").eq("stylist_id", stylistId).maybeSingle(),
         supabase
           .from("transactions")
@@ -189,8 +215,6 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
           .eq("stylist", name)
           .gte("Fecha", format(monthStart, "yyyy-MM-dd"))
           .lte("Fecha", format(monthEnd, "yyyy-MM-dd")),
-        // Per-stylist reviews not tracked (reviews table has no stylist_id column)
-        Promise.resolve({ data: [] as Array<{ rating: number }> }),
         supabase
           .from("bookings")
           .select("id, Fecha, Hora, customer_name, services")
@@ -218,18 +242,14 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
       setBookingsMonth(countRes.count ?? 0);
       setRecentBookings((recentRes.data ?? []) as BookingRow[]);
 
-      const reviews = (reviewsRes.data ?? []) as Array<{ rating: number }>;
-      setReviewsCount(reviews.length);
-      setRatingAvg(reviews.length > 0 ? reviews.reduce((a, r) => a + r.rating, 0) / reviews.length : 0);
-
       setLoading(false);
       loadSchedule();
     };
+
     load();
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId, stylistId]);
 
   const earnings = useMemo(() => {
@@ -307,7 +327,6 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
     onChanged();
   };
 
-  /** Borra el horario propio y vuelve al del salón (con confirmación previa). */
   const revertToSalonHours = async () => {
     setSaving(true);
     const { error } = await supabase.from("stylist_business_hours").delete().eq("stylist_id", stylistId);
@@ -316,7 +335,7 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
       toast({ title: "Error", description: "No se pudo restaurar el horario", variant: "destructive" });
       return;
     }
-    toast({ title: "Horario del salón", description: `${stylist?.name} vuelve a seguir el horario del negocio.` });
+    toast({ title: "Horario del salón", description: `${stylist?.name} vuelve a seguir el horario general.` });
     setSchedule(null);
     loadSchedule();
     onChanged();
@@ -355,31 +374,50 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
 
   return (
     <div className="glow-neg-drawer-backdrop" onClick={onClose}>
-      <div className="glow-neg-drawer" onClick={(e) => e.stopPropagation()}>
-        {/* ── Cabecera fija ── */}
-        <div className="glow-neg-drawer-h">
-          <div className="glow-neg-drawer-h-left">
+      <div
+        className="glow-neg-drawer"
+        onClick={(e) => e.stopPropagation()}
+        style={{ display: "flex", flexDirection: "column" }}
+      >
+        {/* Cabecera Fija */}
+        <div
+          className="glow-neg-drawer-h"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "16px 20px",
+            borderBottom: "1px solid var(--glow-line)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button
               className="glow-neg-avatar-edit"
               onClick={() => fileRef.current?.click()}
               type="button"
               title="Cambiar foto"
               aria-label="Cambiar foto"
+              style={{ position: "relative" }}
             >
               <div
                 className="glow-neg-stylist-avatar"
-                style={{ background: stylist.color || "var(--glow-brand)", width: 48, height: 48 }}
+                style={{
+                  background: stylist.color || "var(--glow-brand)",
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                }}
               >
                 {uploadingAvatar ? (
                   <Loader2 className="glow-spinner-sm" style={{ color: "#fff" }} />
                 ) : stylist.avatar_url ? (
                   <img src={stylist.avatar_url} alt={stylist.name} />
                 ) : (
-                  <span>{stylist.name.charAt(0).toUpperCase()}</span>
+                  <span style={{ fontSize: 18, fontWeight: 700 }}>{stylist.name.charAt(0).toUpperCase()}</span>
                 )}
               </div>
               <span className="glow-neg-avatar-edit-ic">
-                <Camera style={{ width: 11, height: 11 }} />
+                <Camera style={{ width: 10, height: 10 }} />
               </span>
             </button>
             <input
@@ -390,358 +428,736 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
               onChange={(e) => handleAvatarFile(e.target.files?.[0])}
             />
             <div>
-              <strong>{stylist.name}</strong>
-              <span className="glow-neg-drawer-sub">
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <strong style={{ fontSize: 16, fontWeight: 700, color: "var(--glow-ink)" }}>
+                  {stylist.name}
+                </strong>
                 {stylist.is_active ? (
-                  <span className="glow-badge glow-badge--ok">
-                    <span className="pip" style={{ background: "currentColor" }} />
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: "var(--glow-ok-ink)",
+                      background: "rgba(34, 197, 94, 0.1)",
+                      padding: "2px 7px",
+                      borderRadius: 999,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 5,
+                        height: 5,
+                        borderRadius: "50%",
+                        background: "currentColor",
+                      }}
+                    />
                     Activo
                   </span>
                 ) : (
-                  <span className="glow-badge">Inactivo</span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "var(--glow-ink-3)",
+                      background: "var(--glow-sunk)",
+                      padding: "2px 7px",
+                      borderRadius: 999,
+                    }}
+                  >
+                    Inactivo
+                  </span>
                 )}
+              </div>
+              <span style={{ fontSize: 12, color: "var(--glow-ink-3)" }}>
+                Ficha de gestión del profesional
               </span>
             </div>
           </div>
+
           <button className="glow-icon-btn" onClick={onClose} type="button" aria-label="Cerrar">
             <X style={{ width: 18, height: 18 }} />
           </button>
         </div>
 
-        {/* ── Contenido: un solo scroll ── */}
-        <div className="glow-neg-drawer-body glow-team-detail">
-          {/* Este mes */}
-          <section>
-            <div className="glow-neg-mini-kpis">
-              <div className="glow-neg-mini-kpi">
-                <Calendar />
-                <strong>{bookingsMonth}</strong>
-                <span>Citas mes</span>
-              </div>
-              <div className="glow-neg-mini-kpi">
-                <Euro />
-                <strong>{Math.round(revenueMonth).toLocaleString("es-ES")}€</strong>
-                <span>Facturado</span>
-              </div>
-              <div className="glow-neg-mini-kpi">
-                <Star />
-                <strong>{ratingAvg > 0 ? ratingAvg.toFixed(1) : "—"}</strong>
-                <span>{reviewsCount} reseñas</span>
-              </div>
-              <div className="glow-neg-mini-kpi">
-                <Percent />
-                <strong>{earnings}€</strong>
-                <span>A pagar</span>
-              </div>
-            </div>
-          </section>
+        {/* Barra de Pestañas Fijas Superiores */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 2,
+            padding: "8px 16px",
+            background: "var(--glow-sunk)",
+            borderBottom: "1px solid var(--glow-line)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setActiveTab("schedule")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              padding: "8px 10px",
+              borderRadius: 8,
+              border: "none",
+              background: activeTab === "schedule" ? "var(--glow-surface)" : "transparent",
+              color: activeTab === "schedule" ? "var(--glow-ink)" : "var(--glow-ink-3)",
+              fontWeight: activeTab === "schedule" ? 700 : 500,
+              fontSize: 12.5,
+              cursor: "pointer",
+              boxShadow: activeTab === "schedule" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <Clock style={{ width: 14, height: 14 }} />
+            <span>Horario y Ausencias</span>
+          </button>
 
-          {/* Horario */}
-          <section>
-            <div className="glow-team-sec-h">
-              <h4 className="glow-neg-section-h">
-                <Clock /> Horario semanal
-              </h4>
-              {!usesSalonHours && !editingSchedule && (
-                <button className="glow-btn glow-btn--sm" onClick={() => setEditingSchedule(true)} type="button">
-                  <Pencil style={{ width: 12, height: 12 }} /> Editar
-                </button>
-              )}
-            </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab("performance")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              padding: "8px 10px",
+              borderRadius: 8,
+              border: "none",
+              background: activeTab === "performance" ? "var(--glow-surface)" : "transparent",
+              color: activeTab === "performance" ? "var(--glow-ink)" : "var(--glow-ink-3)",
+              fontWeight: activeTab === "performance" ? 700 : 500,
+              fontSize: 12.5,
+              cursor: "pointer",
+              boxShadow: activeTab === "performance" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <TrendingUp style={{ width: 14, height: 14 }} />
+            <span>Rendimiento</span>
+          </button>
 
-            {/* De dónde sale el horario: del salón o propio */}
-            <div className="glow-team-seg" role="radiogroup" aria-label="Origen del horario">
-              <button
-                className={`glow-team-seg-opt${usesSalonHours && !editingSchedule ? " on" : ""}`}
-                onClick={() => {
-                  if (editingSchedule && usesSalonHours) {
-                    // Estaba creando uno propio sin guardar: basta con descartar
-                    setEditingSchedule(false);
-                  } else if (!usesSalonHours) {
-                    setConfirmSalonHours(true);
-                  }
-                }}
-                role="radio"
-                aria-checked={usesSalonHours && !editingSchedule}
-                type="button"
-              >
-                <Store style={{ width: 13, height: 13 }} />
-                Del salón
-              </button>
-              <button
-                className={`glow-team-seg-opt${!usesSalonHours || editingSchedule ? " on" : ""}`}
-                onClick={() => {
-                  if (usesSalonHours && !editingSchedule) setEditingSchedule(true);
-                }}
-                role="radio"
-                aria-checked={!usesSalonHours || editingSchedule}
-                type="button"
-              >
-                <UserCog style={{ width: 13, height: 13 }} />
-                Propio
-              </button>
-            </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab("profile")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              padding: "8px 10px",
+              borderRadius: 8,
+              border: "none",
+              background: activeTab === "profile" ? "var(--glow-surface)" : "transparent",
+              color: activeTab === "profile" ? "var(--glow-ink)" : "var(--glow-ink-3)",
+              fontWeight: activeTab === "profile" ? 700 : 500,
+              fontSize: 12.5,
+              cursor: "pointer",
+              boxShadow: activeTab === "profile" ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <UserCog style={{ width: 14, height: 14 }} />
+            <span>Perfil</span>
+          </button>
+        </div>
 
-            {editingSchedule ? (
-              <InlineScheduleEditor
-                tenantId={tenantId}
-                stylistId={stylistId}
-                onSaved={() => {
-                  setEditingSchedule(false);
-                  setSchedule(null);
-                  loadSchedule();
-                  onChanged();
-                }}
-                onDiscard={() => setEditingSchedule(false)}
-              />
-            ) : (
-              <>
-                {usesSalonHours && (
-                  <p className="glow-neg-help" style={{ margin: 0 }}>
-                    Sigue el horario del negocio: si cambias el del salón, el suyo cambia también. Toca
-                    «Propio» para personalizarlo.
-                  </p>
-                )}
-                {schedule === null ? (
-                  <div style={{ display: "flex", justifyContent: "center", padding: 24 }}>
-                    <Loader2 className="glow-spinner-sm" />
+        {/* Cuerpo del Drawer (Scrollable por pestaña) */}
+        <div
+          className="glow-neg-drawer-body"
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 22,
+          }}
+        >
+          {/* ═════════ TAB 1: HORARIOS Y AUSENCIAS ═════════ */}
+          {activeTab === "schedule" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              {/* Sección Horario Semanal */}
+              <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 28,
+                        height: 28,
+                        borderRadius: 8,
+                        background: "rgba(34, 64, 139, 0.08)",
+                        color: "var(--glow-brand)",
+                      }}
+                    >
+                      <Clock style={{ width: 15, height: 15 }} />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--glow-ink)" }}>
+                        Jornada Semanal
+                      </h4>
+                      <span style={{ fontSize: 12, color: "var(--glow-ink-3)" }}>
+                        Horas en las que {stylist.name} recibe reservas
+                      </span>
+                    </div>
+                  </div>
+
+                  {!usesSalonHours && !editingSchedule && (
+                    <button
+                      className="glow-btn glow-btn--sm"
+                      onClick={() => setEditingSchedule(true)}
+                      type="button"
+                      style={{ gap: 5, fontSize: 12 }}
+                    >
+                      <Pencil style={{ width: 12, height: 12 }} /> Editar turnos
+                    </button>
+                  )}
+                </div>
+
+                {/* Selector de origen del horario: Salón vs Propio */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 4,
+                    background: "var(--glow-sunk)",
+                    padding: 4,
+                    borderRadius: 10,
+                    border: "1px solid var(--glow-line)",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editingSchedule && usesSalonHours) {
+                        setEditingSchedule(false);
+                      } else if (!usesSalonHours) {
+                        setConfirmSalonHours(true);
+                      }
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      border: "none",
+                      background: usesSalonHours && !editingSchedule ? "var(--glow-surface)" : "transparent",
+                      color: usesSalonHours && !editingSchedule ? "var(--glow-ink)" : "var(--glow-ink-3)",
+                      fontWeight: usesSalonHours && !editingSchedule ? 700 : 500,
+                      fontSize: 12.5,
+                      cursor: "pointer",
+                      boxShadow: usesSalonHours && !editingSchedule ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+                    }}
+                  >
+                    <Store style={{ width: 13, height: 13 }} />
+                    <span>Sigue horario del salón</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (usesSalonHours && !editingSchedule) setEditingSchedule(true);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 6,
+                      padding: "8px 12px",
+                      borderRadius: 8,
+                      border: "none",
+                      background: !usesSalonHours || editingSchedule ? "var(--glow-surface)" : "transparent",
+                      color: !usesSalonHours || editingSchedule ? "var(--glow-ink)" : "var(--glow-ink-3)",
+                      fontWeight: !usesSalonHours || editingSchedule ? 700 : 500,
+                      fontSize: 12.5,
+                      cursor: "pointer",
+                      boxShadow: !usesSalonHours || editingSchedule ? "0 1px 3px rgba(0,0,0,0.06)" : "none",
+                    }}
+                  >
+                    <UserCog style={{ width: 13, height: 13 }} />
+                    <span>Horario personalizado</span>
+                  </button>
+                </div>
+
+                {editingSchedule ? (
+                  <div
+                    style={{
+                      padding: 16,
+                      borderRadius: 14,
+                      border: "1px solid var(--glow-line)",
+                      background: "var(--glow-surface)",
+                    }}
+                  >
+                    <InlineScheduleEditor
+                      tenantId={tenantId}
+                      stylistId={stylistId}
+                      onSaved={() => {
+                        setEditingSchedule(false);
+                        setSchedule(null);
+                        loadSchedule();
+                        onChanged();
+                      }}
+                      onDiscard={() => setEditingSchedule(false)}
+                    />
                   </div>
                 ) : (
-                  <div className="glow-neg-sched">
-                    {orderedSchedule.map(({ value, label, row }) => {
-                      const working = row?.is_working && row.start_time && row.end_time;
+                  <>
+                    {usesSalonHours && (
+                      <div
+                        style={{
+                          padding: "10px 14px",
+                          borderRadius: 10,
+                          background: "rgba(34, 64, 139, 0.04)",
+                          border: "1px solid rgba(34, 64, 139, 0.1)",
+                          fontSize: 12.5,
+                          color: "var(--glow-brand)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 8,
+                        }}
+                      >
+                        <span>Este profesional hereda el horario general del local.</span>
+                        <button
+                          type="button"
+                          onClick={() => setEditingSchedule(true)}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "var(--glow-brand)",
+                            fontWeight: 700,
+                            textDecoration: "underline",
+                            cursor: "pointer",
+                            fontSize: 12,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Personalizar turnos →
+                        </button>
+                      </div>
+                    )}
+
+                    {schedule === null ? (
+                      <div style={{ display: "flex", justifyContent: "center", padding: 20 }}>
+                        <Loader2 className="glow-spinner-sm" />
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          border: "1px solid var(--glow-line)",
+                          borderRadius: 12,
+                          overflow: "hidden",
+                        }}
+                      >
+                        {orderedSchedule.map(({ value, label, row }) => {
+                          const working = row?.is_working && row.start_time && row.end_time;
+                          return (
+                            <div
+                              key={value}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "9px 14px",
+                                borderTop: value !== 1 ? "1px solid var(--glow-line)" : "none",
+                                background: working ? "var(--glow-surface)" : "var(--glow-sunk)",
+                                fontSize: 13,
+                              }}
+                            >
+                              <span style={{ fontWeight: 600, color: "var(--glow-ink)" }}>
+                                {label}
+                              </span>
+                              {working ? (
+                                <span
+                                  style={{
+                                    fontVariantNumeric: "tabular-nums",
+                                    color: "var(--glow-ink)",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {hhmm(row!.start_time)} – {hhmm(row!.end_time)}
+                                </span>
+                              ) : (
+                                <span
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 5,
+                                    fontSize: 12,
+                                    color: "var(--glow-ink-3)",
+                                  }}
+                                >
+                                  <Moon style={{ width: 11, height: 11 }} /> Descansa
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+              </section>
+
+              {/* Separador sutil */}
+              <div style={{ height: 1, background: "var(--glow-line)" }} />
+
+              {/* Sección Ausencias y Vacaciones */}
+              <section id="stylist-absences-section">
+                <StylistAbsences
+                  tenantId={tenantId}
+                  stylistId={stylistId}
+                  initialAdding={autoOpenAddAbsence}
+                  onChanged={onChanged}
+                />
+              </section>
+            </div>
+          )}
+
+          {/* ═════════ TAB 2: RENDIMIENTO Y COMISIONES ═════════ */}
+          {activeTab === "performance" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              {/* KPIs del mes */}
+              <section>
+                <h4 style={{ fontSize: 13, fontWeight: 700, color: "var(--glow-ink)", marginBottom: 10 }}>
+                  Actividad este mes
+                </h4>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 10,
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "12px 14px",
+                      borderRadius: 12,
+                      border: "1px solid var(--glow-line)",
+                      background: "var(--glow-surface)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 4,
+                    }}
+                  >
+                    <span style={{ fontSize: 11.5, color: "var(--glow-ink-3)" }}>Citas atendidas</span>
+                    <strong style={{ fontSize: 20, fontWeight: 700, color: "var(--glow-ink)" }}>
+                      {bookingsMonth}
+                    </strong>
+                  </div>
+
+                  <div
+                    style={{
+                      padding: "12px 14px",
+                      borderRadius: 12,
+                      border: "1px solid var(--glow-line)",
+                      background: "var(--glow-surface)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 4,
+                    }}
+                  >
+                    <span style={{ fontSize: 11.5, color: "var(--glow-ink-3)" }}>Facturación generada</span>
+                    <strong style={{ fontSize: 20, fontWeight: 700, color: "var(--glow-ink)" }}>
+                      {Math.round(revenueMonth).toLocaleString("es-ES")}€
+                    </strong>
+                  </div>
+
+                  <div
+                    style={{
+                      padding: "12px 14px",
+                      borderRadius: 12,
+                      border: "1px solid var(--glow-line)",
+                      background: "var(--glow-surface)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 4,
+                      gridColumn: "1 / -1",
+                    }}
+                  >
+                    <span style={{ fontSize: 11.5, color: "var(--glow-ink-3)" }}>Comisión a pagar este mes</span>
+                    <strong
+                      style={{
+                        fontSize: 24,
+                        fontWeight: 800,
+                        color: "var(--glow-ok-ink)",
+                      }}
+                    >
+                      {earnings}€
+                    </strong>
+                  </div>
+                </div>
+              </section>
+
+              {/* Configuración de Comisión */}
+              <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      background: "rgba(34, 64, 139, 0.08)",
+                      color: "var(--glow-brand)",
+                    }}
+                  >
+                    <Percent style={{ width: 14, height: 14 }} />
+                  </div>
+                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--glow-ink)" }}>
+                    Regla de Comisión
+                  </h4>
+                </div>
+
+                <div className="glow-neg-form-row">
+                  <div className="glow-mkt-chip-row">
+                    <button
+                      className={`glow-mkt-chip${commission.commission_type === "percentage" ? " on" : ""}`}
+                      onClick={() => {
+                        setCommission({ ...commission, commission_type: "percentage" });
+                        setCommissionDirty(true);
+                      }}
+                      type="button"
+                    >
+                      % de lo facturado
+                    </button>
+                    <button
+                      className={`glow-mkt-chip${commission.commission_type === "fixed" ? " on" : ""}`}
+                      onClick={() => {
+                        setCommission({ ...commission, commission_type: "fixed" });
+                        setCommissionDirty(true);
+                      }}
+                      type="button"
+                    >
+                      € fijo por cita
+                    </button>
+                  </div>
+                </div>
+
+                {commission.commission_type === "percentage" ? (
+                  <div className="glow-neg-form-row">
+                    <div className="glow-mkt-chip-row">
+                      {COMMISSION_PRESETS.map((p) => (
+                        <button
+                          key={p}
+                          className={`glow-mkt-chip${commission.commission_percentage === p ? " on" : ""}`}
+                          onClick={() => {
+                            setCommission({ ...commission, commission_percentage: p });
+                            setCommissionDirty(true);
+                          }}
+                          type="button"
+                        >
+                          {p}%
+                        </button>
+                      ))}
+                      <div className="glow-neg-input-suffix sm">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={commission.commission_percentage}
+                          onChange={(e) => {
+                            setCommission({
+                              ...commission,
+                              commission_percentage: Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)),
+                            });
+                            setCommissionDirty(true);
+                          }}
+                        />
+                        <span>%</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="glow-neg-form-row">
+                    <div className="glow-neg-input-suffix">
+                      <input
+                        type="number"
+                        min="0"
+                        value={commission.commission_fixed}
+                        onChange={(e) => {
+                          setCommission({
+                            ...commission,
+                            commission_fixed: Math.max(0, parseFloat(e.target.value) || 0),
+                          });
+                          setCommissionDirty(true);
+                        }}
+                      />
+                      <span>€</span>
+                    </div>
+                  </div>
+                )}
+
+                {commissionDirty && (
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <button
+                      className="glow-btn glow-btn--primary"
+                      onClick={saveCommission}
+                      disabled={saving}
+                      type="button"
+                    >
+                      {saving && <Loader2 className="glow-spinner-sm" />}
+                      Guardar comisión
+                    </button>
+                  </div>
+                )}
+              </section>
+
+              {/* Últimas Citas */}
+              <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <History style={{ width: 15, height: 15, color: "var(--glow-ink-3)" }} />
+                  <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "var(--glow-ink)" }}>
+                    Últimas citas registradas
+                  </h4>
+                </div>
+
+                {recentBookings.length === 0 ? (
+                  <p style={{ fontSize: 12.5, color: "var(--glow-ink-3)", margin: 0 }}>
+                    Sin citas recientes para este profesional.
+                  </p>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      border: "1px solid var(--glow-line)",
+                      borderRadius: 12,
+                      overflow: "hidden",
+                    }}
+                  >
+                    {recentBookings.map((b) => {
+                      const svc = firstServiceName(b.services);
+                      let dateLabel = b.Fecha;
+                      try {
+                        dateLabel = format(parseISO(b.Fecha), "d MMM", { locale: es });
+                      } catch {
+                        // ignore
+                      }
                       return (
-                        <div key={value} className={`glow-neg-sched-row${working ? "" : " off"}`}>
-                          <span className="glow-neg-sched-day">{label}</span>
-                          {working ? (
-                            <span className="glow-neg-sched-hours">
-                              {hhmm(row!.start_time)} – {hhmm(row!.end_time)}
+                        <div
+                          key={b.id}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "10px 14px",
+                            borderBottom: "1px solid var(--glow-line)",
+                            background: "var(--glow-surface)",
+                          }}
+                        >
+                          <div>
+                            <strong style={{ fontSize: 13, color: "var(--glow-ink)", display: "block" }}>
+                              {b.customer_name ?? "Cliente"}
+                            </strong>
+                            {svc && <span style={{ fontSize: 12, color: "var(--glow-ink-3)" }}>{svc}</span>}
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--glow-ink)" }}>
+                              {dateLabel}
                             </span>
-                          ) : (
-                            <span className="glow-neg-sched-rest">
-                              <Moon style={{ width: 11, height: 11 }} /> Descansa
+                            <span style={{ fontSize: 11, color: "var(--glow-ink-3)", display: "block" }}>
+                              {hhmm(b.Hora)}
                             </span>
-                          )}
+                          </div>
                         </div>
                       );
                     })}
                   </div>
                 )}
-              </>
-            )}
-
-            {/* Vacaciones y festivos, inline */}
-            <StylistAbsences tenantId={tenantId} stylistId={stylistId} />
-          </section>
-
-          {/* Comisión */}
-          <section>
-            <div className="glow-team-sec-h">
-              <h4 className="glow-neg-section-h">
-                <Percent /> Comisión
-              </h4>
+              </section>
             </div>
-            <div className="glow-neg-form-row">
-              <div className="glow-mkt-chip-row">
-                <button
-                  className={`glow-mkt-chip${commission.commission_type === "percentage" ? " on" : ""}`}
-                  onClick={() => {
-                    setCommission({ ...commission, commission_type: "percentage" });
-                    setCommissionDirty(true);
-                  }}
-                  type="button"
-                >
-                  % de lo facturado
-                </button>
-                <button
-                  className={`glow-mkt-chip${commission.commission_type === "fixed" ? " on" : ""}`}
-                  onClick={() => {
-                    setCommission({ ...commission, commission_type: "fixed" });
-                    setCommissionDirty(true);
-                  }}
-                  type="button"
-                >
-                  € fijo por cita
-                </button>
-              </div>
-            </div>
+          )}
 
-            {commission.commission_type === "percentage" ? (
+          {/* ═════════ TAB 3: PERFIL Y AJUSTES ═════════ */}
+          {activeTab === "profile" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               <div className="glow-neg-form-row">
-                <div className="glow-mkt-chip-row">
-                  {COMMISSION_PRESETS.map((p) => (
+                <label style={{ fontSize: 12.5, fontWeight: 600, color: "var(--glow-ink)" }}>Nombre</label>
+                <input
+                  type="text"
+                  value={stylist.name}
+                  onChange={(e) => setStylist({ ...stylist, name: e.target.value })}
+                  onBlur={(e) => {
+                    const v = e.target.value.trim();
+                    if (v && v !== stylist.name) updateStylist({ name: v });
+                  }}
+                  style={{
+                    height: 38,
+                    padding: "0 12px",
+                    borderRadius: 8,
+                    border: "1px solid var(--glow-line)",
+                    fontSize: 13,
+                  }}
+                />
+              </div>
+
+              <div className="glow-neg-form-row">
+                <label style={{ fontSize: 12.5, fontWeight: 600, color: "var(--glow-ink)" }}>
+                  Color identificativo en la agenda
+                </label>
+                <div className="glow-neg-color-row">
+                  {PRESET_COLORS.map((c) => (
                     <button
-                      key={p}
-                      className={`glow-mkt-chip${commission.commission_percentage === p ? " on" : ""}`}
-                      onClick={() => {
-                        setCommission({ ...commission, commission_percentage: p });
-                        setCommissionDirty(true);
-                      }}
+                      key={c}
+                      className={`glow-neg-color-dot${stylist.color === c ? " on" : ""}`}
+                      style={{ background: c }}
+                      onClick={() => updateStylist({ color: c })}
                       type="button"
-                    >
-                      {p}%
-                    </button>
-                  ))}
-                  <div className="glow-neg-input-suffix sm">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={commission.commission_percentage}
-                      onChange={(e) => {
-                        setCommission({
-                          ...commission,
-                          commission_percentage: Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)),
-                        });
-                        setCommissionDirty(true);
-                      }}
+                      aria-label={`Color ${c}`}
                     />
-                    <span>%</span>
-                  </div>
+                  ))}
                 </div>
               </div>
-            ) : (
-              <div className="glow-neg-form-row">
-                <div className="glow-neg-input-suffix">
-                  <input
-                    type="number"
-                    min="0"
-                    value={commission.commission_fixed}
-                    onChange={(e) => {
-                      setCommission({
-                        ...commission,
-                        commission_fixed: Math.max(0, parseFloat(e.target.value) || 0),
-                      });
-                      setCommissionDirty(true);
-                    }}
-                  />
-                  <span>€</span>
+
+              <div className="glow-neg-form-row glow-neg-form-toggle">
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "var(--glow-ink)" }}>
+                    Profesional activo
+                  </label>
+                  <p className="glow-neg-help" style={{ margin: 0, fontSize: 12 }}>
+                    Si lo desactivas, deja de estar disponible para citas online.
+                  </p>
                 </div>
+                <Switch checked={stylist.is_active} onCheckedChange={(v) => updateStylist({ is_active: v })} />
               </div>
-            )}
 
-            <div className="glow-neg-earn-preview">
-              <div>
-                <span>{commission.commission_type === "percentage" ? "Facturado este mes" : "Citas este mes"}</span>
-                <strong>
-                  {commission.commission_type === "percentage"
-                    ? `${Math.round(revenueMonth).toLocaleString("es-ES")}€`
-                    : bookingsMonth}
-                </strong>
-              </div>
-              <div>
-                <span>A pagar</span>
-                <strong className="glow-neg-earn-big">{earnings}€</strong>
-              </div>
-            </div>
-
-            {commissionDirty && (
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button className="glow-btn glow-btn--primary" onClick={saveCommission} disabled={saving} type="button">
-                  {saving && <Loader2 className="glow-spinner-sm" />}
-                  Guardar comisión
+              <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--glow-line)" }}>
+                <button
+                  className="glow-btn glow-btn--danger"
+                  onClick={() => setConfirmDelete(true)}
+                  disabled={saving}
+                  type="button"
+                  style={{ width: "100%", justifyContent: "center" }}
+                >
+                  <Trash2 style={{ width: 14, height: 14 }} /> Eliminar profesional del equipo
                 </button>
               </div>
-            )}
-          </section>
-
-          {/* Últimas citas */}
-          <section>
-            <div className="glow-team-sec-h">
-              <h4 className="glow-neg-section-h">
-                <History /> Últimas citas
-              </h4>
             </div>
-            {recentBookings.length === 0 ? (
-              <p className="glow-neg-empty-text">Sin citas todavía.</p>
-            ) : (
-              <div className="glow-neg-recent">
-                {recentBookings.map((b) => {
-                  const svc = firstServiceName(b.services);
-                  let dateLabel = "";
-                  try {
-                    dateLabel = format(parseISO(b.Fecha), "d MMM", { locale: es });
-                  } catch {
-                    dateLabel = b.Fecha;
-                  }
-                  return (
-                    <div key={b.id} className="glow-neg-recent-row">
-                      <div className="glow-neg-recent-date">
-                        <strong>{dateLabel}</strong>
-                        <span>{hhmm(b.Hora)}</span>
-                      </div>
-                      <div className="glow-neg-recent-info">
-                        <strong>{b.customer_name ?? "Cliente"}</strong>
-                        {svc && <span>{svc}</span>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          {/* Perfil */}
-          <section>
-            <div className="glow-team-sec-h">
-              <h4 className="glow-neg-section-h">
-                <UserCog /> Perfil
-              </h4>
-            </div>
-            <div className="glow-neg-form-row">
-              <label>Nombre</label>
-              <input
-                type="text"
-                value={stylist.name}
-                onChange={(e) => setStylist({ ...stylist, name: e.target.value })}
-                onBlur={(e) => {
-                  const v = e.target.value.trim();
-                  if (v && v !== stylist.name) updateStylist({ name: v });
-                }}
-              />
-            </div>
-            <div className="glow-neg-form-row">
-              <label>Color en la agenda</label>
-              <div className="glow-neg-color-row">
-                {PRESET_COLORS.map((c) => (
-                  <button
-                    key={c}
-                    className={`glow-neg-color-dot${stylist.color === c ? " on" : ""}`}
-                    style={{ background: c }}
-                    onClick={() => updateStylist({ color: c })}
-                    type="button"
-                    aria-label={`Color ${c}`}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="glow-neg-form-row glow-neg-form-toggle">
-              <div>
-                <label>Activo</label>
-                <p className="glow-neg-help" style={{ margin: 0 }}>
-                  Los inactivos no aparecen al reservar.
-                </p>
-              </div>
-              <Switch checked={stylist.is_active} onCheckedChange={(v) => updateStylist({ is_active: v })} />
-            </div>
-
-            <div className="glow-neg-danger-zone">
-              <button className="glow-btn glow-btn--danger" onClick={() => setConfirmDelete(true)} disabled={saving} type="button">
-                <Trash2 style={{ width: 14, height: 14 }} /> Eliminar del equipo
-              </button>
-            </div>
-          </section>
+          )}
         </div>
       </div>
-
 
       <AlertDialog open={confirmSalonHours} onOpenChange={setConfirmSalonHours}>
         <AlertDialogContent onClick={(e) => e.stopPropagation()}>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Volver al horario del salón?</AlertDialogTitle>
+            <AlertDialogTitle>¿Volver al horario general del salón?</AlertDialogTitle>
             <AlertDialogDescription>
-              Se borrará el horario propio de {stylist.name} y pasará a seguir el horario general del
-              negocio. Las citas ya reservadas no se tocan.
+              Se borrará el horario propio de {stylist.name} y pasará a seguir los mismos días y horas
+              que el negocio. Las citas ya reservadas no se verán afectadas.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -756,8 +1172,8 @@ export function StylistDrawer({ tenantId, stylistId, onClose, onChanged }: Props
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar a {stylist.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Se borra del equipo y deja de aparecer al reservar. Sus citas e historial no se borran. Esta acción
-              no se puede deshacer.
+              Se borrará del equipo y dejará de aparecer en la agenda y reservas online. Su historial de
+              citas y cobros pasados se conservará.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

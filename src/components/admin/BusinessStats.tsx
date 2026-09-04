@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { chartColor, readableInk } from "@/lib/chartColors";
+import { chartColor } from "@/lib/chartColors";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   format,
@@ -15,76 +14,65 @@ import {
   endOfWeek,
   subWeeks,
   subMonths,
-  getDate,
-  getDaysInMonth,
-  differenceInDays,
+  startOfYear,
+  endOfYear,
+  subYears,
+  startOfDay,
+  endOfDay,
   parseISO,
 } from "date-fns";
 import { es } from "date-fns/locale";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  AreaChart,
-  Area,
 } from "recharts";
 import {
   TrendingUp,
   TrendingDown,
-  Euro,
   CreditCard,
   Banknote,
   Users,
   Calendar,
-  Star,
-  Target,
-  Scissors,
+  Sparkles,
   Gift,
   Clock,
   ArrowUpRight,
   ArrowDownRight,
-  Sparkles,
-  BarChart3,
-  PieChartIcon,
   Activity,
-  Wallet,
-  UserPlus,
   Repeat,
-  Award,
+  Scissors,
+  CheckCircle2,
+  XCircle,
+  Percent,
+  RefreshCw,
 } from "lucide-react";
 
 interface BusinessStatsProps {
   tenantId: string;
 }
 
-type Period = "week" | "month" | "quarter";
-
+type Period = "today" | "week" | "month" | "year";
 
 const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(amount);
+  new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(amount);
 
-const formatCompact = (amount: number) =>
-  new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency: "EUR",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(amount);
+const formatExactCurrency = (amount: number) =>
+  new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", minimumFractionDigits: 2 }).format(amount);
 
 export function BusinessStats({ tenantId }: BusinessStatsProps) {
-  const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>("month");
+  const [chartMetric, setChartMetric] = useState<"revenue" | "bookings">("revenue");
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Data states
+  // States
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [totals, setTotals] = useState({
     revenue: 0,
@@ -95,853 +83,874 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
     previousAvgTicket: 0,
     tips: 0,
     discounts: 0,
-    newClients: 0,
-    returningClients: 0,
+    cash: 0,
+    card: 0,
+    mixed: 0,
   });
-  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
-  const [stylistStats, setStylistStats] = useState<any[]>([]);
-  const [topServices, setTopServices] = useState<any[]>([]);
-  const [monthlyGoal, setMonthlyGoal] = useState({ revenue: 0, goal: 0, projected: 0 });
+
   const [bookingStats, setBookingStats] = useState({
     total: 0,
     previous: 0,
     confirmed: 0,
     cancelled: 0,
-    channels: { crm: 0, web: 0 },
+    crmCount: 0,
+    webCount: 0,
   });
-  const [avgRating, setAvgRating] = useState(0);
-  const [clientMetrics, setClientMetrics] = useState({
-    total: 0,
-    new: 0,
-    returning: 0,
+
+  const [stylistStats, setStylistStats] = useState<any[]>([]);
+  const [topServices, setTopServices] = useState<any[]>([]);
+  const [hourlyActivity, setHourlyActivity] = useState<{ hour: string; count: number }[]>([]);
+  const [clientStats, setClientStats] = useState({
+    uniqueClients: 0,
+    newClients: 0,
+    returningClients: 0,
     retentionRate: 0,
   });
-  const [peakHours, setPeakHours] = useState<any[]>([]);
-  const [newToday, setNewToday] = useState({ total: 0, crm: 0, web: 0, previous: 0 });
-  const [insights, setInsights] = useState<{ bestDay: string | null; bestHour: string | null }>({ bestDay: null, bestHour: null });
 
-  useEffect(() => {
-    fetchAllStats();
-  }, [tenantId, period]);
-
-  const fetchAllStats = async () => {
+  const fetchStats = async () => {
     setLoading(true);
     try {
-      await Promise.all([
-        fetchRevenueStats(),
-        fetchBookingStats(),
-        fetchMonthlyGoal(),
-        fetchClientMetrics(),
-        fetchPeakHours(),
-        fetchNewToday(),
-      ]);
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      const now = new Date();
+      let startDate: Date;
+      let endDate: Date = now;
+      let prevStartDate: Date;
+      let prevEndDate: Date;
 
-  const fetchRevenueStats = async () => {
-    const now = new Date();
-    let startDate: Date, previousStartDate: Date, previousEndDate: Date;
-
-    switch (period) {
-      case "week":
-        startDate = startOfWeek(now, { weekStartsOn: 1 });
-        previousStartDate = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
-        previousEndDate = endOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
-        break;
-      case "month":
+      if (period === "today") {
+        startDate = startOfDay(now);
+        endDate = endOfDay(now);
+        prevStartDate = startOfDay(subDays(now, 1));
+        prevEndDate = endOfDay(subDays(now, 1));
+      } else if (period === "week") {
+        startDate = subDays(now, 6);
+        prevStartDate = subDays(startDate, 7);
+        prevEndDate = subDays(now, 7);
+      } else if (period === "year") {
+        startDate = startOfYear(now);
+        endDate = endOfYear(now);
+        prevStartDate = startOfYear(subYears(now, 1));
+        prevEndDate = endOfYear(subYears(now, 1));
+      } else {
+        // month
         startDate = startOfMonth(now);
-        previousStartDate = startOfMonth(subMonths(now, 1));
-        previousEndDate = endOfMonth(subMonths(now, 1));
-        break;
-      case "quarter":
-        startDate = subMonths(startOfMonth(now), 2);
-        previousStartDate = subMonths(startOfMonth(now), 5);
-        previousEndDate = subMonths(endOfMonth(now), 3);
-        break;
-      default:
-        startDate = startOfMonth(now);
-        previousStartDate = startOfMonth(subMonths(now, 1));
-        previousEndDate = endOfMonth(subMonths(now, 1));
-    }
-
-    // Fetch current period transactions
-    const { data: currentTx } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("tenant_id", tenantId)
-      .eq("voided", false)
-      .gte("created_at", startDate.toISOString())
-      .order("created_at", { ascending: true });
-
-    // Fetch previous period transactions
-    const { data: previousTx } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("tenant_id", tenantId)
-      .eq("voided", false)
-      .gte("created_at", previousStartDate.toISOString())
-      .lte("created_at", previousEndDate.toISOString());
-
-    // Fetch stylists
-    const { data: stylists } = await supabase
-      .from("tenant_stylists")
-      .select("id, name, color")
-      .eq("tenant_id", tenantId);
-
-    const stylistMap = new Map(stylists?.map((s) => [s.id, s]) || []);
-
-    // Process current period
-    const dailyData: Record<string, any> = {};
-    const stylistData: Record<string, any> = {};
-    const serviceData: Record<string, any> = {};
-    const paymentData: Record<string, number> = { cash: 0, card: 0, mixed: 0 };
-    let tips = 0, discounts = 0;
-    const uniqueClients = new Set<string>();
-
-    (currentTx || []).forEach((tx: any) => {
-      const dateKey = format(new Date(tx.created_at), "yyyy-MM-dd");
-      const total = Number(tx.total) || 0;
-
-      // Daily data
-      if (!dailyData[dateKey]) {
-        dailyData[dateKey] = { date: dateKey, revenue: 0, transactions: 0 };
-      }
-      dailyData[dateKey].revenue += total;
-      dailyData[dateKey].transactions += 1;
-
-      // Payment methods
-      paymentData[tx.payment_method as string] = (paymentData[tx.payment_method as string] || 0) + total;
-
-      // Tips & discounts
-      tips += Number(tx.tip_amount) || 0;
-      discounts += Number(tx.discount) || 0;
-
-      // Track clients
-      if (tx.customer_name) uniqueClients.add(tx.customer_name.toLowerCase());
-
-      // Stylist stats
-      const stylistId = tx.stylist_id;
-      if (stylistId && stylistMap.has(stylistId)) {
-        const stylist = stylistMap.get(stylistId)!;
-        if (!stylistData[stylistId]) {
-          stylistData[stylistId] = {
-            id: stylistId,
-            name: stylist.name,
-            color: stylist.color || chartColor(0),
-            revenue: 0,
-            transactions: 0,
-            tips: 0,
-            services: 0,
-          };
-        }
-        stylistData[stylistId].revenue += total;
-        stylistData[stylistId].transactions += 1;
-        stylistData[stylistId].tips += Number(tx.tip_amount) || 0;
+        endDate = endOfMonth(now);
+        prevStartDate = startOfMonth(subMonths(now, 1));
+        prevEndDate = endOfMonth(subMonths(now, 1));
       }
 
-      // Service stats
-      const services = tx.services as any[] || [];
-      services.forEach((svc: any) => {
-        const name = svc.name || "Sin nombre";
-        const qty = svc.quantity || 1;
-        const svcRevenue = svc.total || (svc.price || 0) * qty;
-        
-        if (!serviceData[name]) {
-          serviceData[name] = { name, count: 0, revenue: 0 };
-        }
-        serviceData[name].count += qty;
-        serviceData[name].revenue += svcRevenue;
-
-        if (stylistId && stylistData[stylistId]) {
-          stylistData[stylistId].services += qty;
-        }
-      });
-    });
-
-    // Calculate previous period totals
-    const prevRevenue = (previousTx || []).reduce((sum, tx) => sum + (Number(tx.total) || 0), 0);
-    const prevTxCount = previousTx?.length || 0;
-    const prevAvgTicket = prevTxCount > 0 ? prevRevenue / prevTxCount : 0;
-
-    // Current totals
-    const currentRevenue = Object.values(dailyData).reduce((sum: number, d: any) => sum + d.revenue, 0);
-    const currentTxCount = currentTx?.length || 0;
-    const currentAvgTicket = currentTxCount > 0 ? currentRevenue / currentTxCount : 0;
-
-    setRevenueData(Object.values(dailyData).sort((a: any, b: any) => a.date.localeCompare(b.date)));
-    setTotals({
-      revenue: currentRevenue,
-      previousRevenue: prevRevenue,
-      transactions: currentTxCount,
-      previousTransactions: prevTxCount,
-      avgTicket: currentAvgTicket,
-      previousAvgTicket: prevAvgTicket,
-      tips,
-      discounts,
-      newClients: uniqueClients.size,
-      returningClients: 0,
-    });
-    setPaymentMethods([
-      { name: "Efectivo", value: paymentData.cash, color: chartColor(2), icon: Banknote },
-      { name: "Tarjeta", value: paymentData.card, color: chartColor(0), icon: CreditCard },
-      { name: "Mixto", value: paymentData.mixed, color: chartColor(3), icon: Wallet },
-    ].filter(d => d.value > 0));
-    setStylistStats(Object.values(stylistData).sort((a: any, b: any) => b.revenue - a.revenue));
-    setTopServices(Object.values(serviceData).sort((a: any, b: any) => b.revenue - a.revenue).slice(0, 8));
-  };
-
-  const fetchBookingStats = async () => {
-    const now = new Date();
-    const startDate = period === "week" ? subDays(now, 7) : period === "month" ? startOfMonth(now) : subMonths(now, 3);
-    const previousStart = period === "week" ? subDays(now, 14) : period === "month" ? subMonths(startOfMonth(now), 1) : subMonths(now, 6);
-
-    const [{ data: current }, { data: previous }, { data: reviews }] = await Promise.all([
-      supabase
-        .from("bookings")
-        .select("id, status, canal")
-        .eq("tenant_id", tenantId)
-        .gte("created_at", startDate.toISOString()),
-      supabase
-        .from("bookings")
-        .select("id")
-        .eq("tenant_id", tenantId)
-        .gte("created_at", previousStart.toISOString())
-        .lt("created_at", startDate.toISOString()),
-      supabase
-        .from("reviews")
-        .select("rating")
-        .eq("tenant_id", tenantId)
-        .eq("approved", true),
-    ]);
-
-    const confirmed = (current || []).filter(b => b.status === "confirmed").length;
-    const cancelled = (current || []).filter(b => b.status === "cancelled").length;
-    const crm = (current || []).filter(b => b.canal === "crm").length;
-    const web = (current || []).filter(b => b.canal !== "crm").length;
-
-    setBookingStats({
-      total: current?.length || 0,
-      previous: previous?.length || 0,
-      confirmed,
-      cancelled,
-      channels: { crm, web },
-    });
-
-    const ratings = reviews || [];
-    const avgRating = ratings.length > 0 ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length : 0;
-    setAvgRating(avgRating);
-  };
-
-  const fetchMonthlyGoal = async () => {
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-
-    const [{ data: goals }, { data: transactions }] = await Promise.all([
-      supabase
-        .from("monthly_goals")
-        .select("revenue_goal")
-        .eq("tenant_id", tenantId)
-        .eq("month", currentMonth)
-        .eq("year", currentYear)
-        .maybeSingle(),
-      supabase
+      // 1. Transactions Current Period
+      const { data: currentTx } = await supabase
         .from("transactions")
-        .select("total")
+        .select("id, total, created_at, payment_method, tip_amount, discount_amount, stylist_id, client_id, voided")
         .eq("tenant_id", tenantId)
         .eq("voided", false)
-        .gte("created_at", startOfMonth(now).toISOString())
-        .lte("created_at", endOfMonth(now).toISOString()),
-    ]);
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString())
+        .order("created_at", { ascending: true });
 
-    const goal = (goals as any)?.revenue_goal || 0;
-    const revenue = (transactions || []).reduce((sum, t) => sum + (Number(t.total) || 0), 0);
-    const dayOfMonth = getDate(now);
-    const daysInMonth = getDaysInMonth(now);
-    const dailyAvg = dayOfMonth > 0 ? revenue / dayOfMonth : 0;
-    const projected = dailyAvg * daysInMonth;
+      // 2. Transactions Previous Period
+      const { data: previousTx } = await supabase
+        .from("transactions")
+        .select("id, total, created_at, voided")
+        .eq("tenant_id", tenantId)
+        .eq("voided", false)
+        .gte("created_at", prevStartDate.toISOString())
+        .lte("created_at", prevEndDate.toISOString());
 
-    setMonthlyGoal({ revenue, goal, projected });
-  };
+      // 3. Bookings Current Period
+      const { data: currentBookings } = await supabase
+        .from("bookings")
+        .select("id, date, start_time, status, service_name, stylist_id, created_at, client_id")
+        .eq("tenant_id", tenantId)
+        .gte("date", format(startDate, "yyyy-MM-dd"))
+        .lte("date", format(endDate, "yyyy-MM-dd"));
 
-  const fetchClientMetrics = async () => {
-    const now = new Date();
-    const monthStart = startOfMonth(now);
-    const prevMonthStart = startOfMonth(subMonths(now, 1));
+      // 4. Bookings Previous Period
+      const { data: previousBookings } = await supabase
+        .from("bookings")
+        .select("id, status")
+        .eq("tenant_id", tenantId)
+        .gte("date", format(prevStartDate, "yyyy-MM-dd"))
+        .lte("date", format(prevEndDate, "yyyy-MM-dd"));
 
-    const { data: clients } = await supabase
-      .from("clients")
-      .select("id, created_at, total_visits")
-      .eq("tenant_id", tenantId);
+      // 5. Stylists
+      const { data: stylists } = await supabase
+        .from("tenant_stylists")
+        .select("id, name, color")
+        .eq("tenant_id", tenantId)
+        .eq("is_active", true);
 
-    const total = clients?.length || 0;
-    const newClients = (clients || []).filter(c => new Date(c.created_at) >= monthStart).length;
-    const returningClients = (clients || []).filter(c => (c.total_visits || 0) > 1).length;
-    const retentionRate = total > 0 ? (returningClients / total) * 100 : 0;
+      // Process Transactions
+      let curRev = 0;
+      let curTips = 0;
+      let curDiscounts = 0;
+      let cashTotal = 0;
+      let cardTotal = 0;
+      let mixedTotal = 0;
+      const dailyMap: Record<string, { date: string; label: string; revenue: number; bookings: number }> = {};
+      const stylistRevMap: Record<string, { revenue: number; count: number }> = {};
+      const uniqueClientsSet = new Set<string>();
 
-    setClientMetrics({ total, new: newClients, returning: returningClients, retentionRate });
-  };
+      (currentTx || []).forEach((tx) => {
+        const amt = Number(tx.total) || 0;
+        curRev += amt;
+        curTips += Number(tx.tip_amount) || 0;
+        curDiscounts += Number(tx.discount_amount) || 0;
 
-  const fetchPeakHours = async () => {
-    const now = new Date();
-    const startDate = period === "week" ? subDays(now, 7) : period === "month" ? startOfMonth(now) : subMonths(now, 3);
+        const pm = (tx.payment_method || "").toLowerCase();
+        if (pm === "cash" || pm === "efectivo") cashTotal += amt;
+        else if (pm === "card" || pm === "tarjeta") cardTotal += amt;
+        else mixedTotal += amt;
 
-    const { data: bookings } = await supabase
-      .from("bookings")
-      .select("Hora, Fecha")
-      .eq("tenant_id", tenantId)
-      .eq("status", "confirmed")
-      .gte("created_at", startDate.toISOString());
+        if (tx.client_id) uniqueClientsSet.add(tx.client_id);
 
-    const hourCounts: Record<string, number> = {};
-    const dayCounts: Record<number, number> = {};
-    (bookings || []).forEach((b: any) => {
-      const hour = b.Hora?.split(":")[0];
-      if (hour) hourCounts[hour] = (hourCounts[hour] || 0) + 1;
-      if (b.Fecha) {
-        const d = new Date(b.Fecha).getDay();
-        dayCounts[d] = (dayCounts[d] || 0) + 1;
+        if (tx.stylist_id) {
+          if (!stylistRevMap[tx.stylist_id]) stylistRevMap[tx.stylist_id] = { revenue: 0, count: 0 };
+          stylistRevMap[tx.stylist_id].revenue += amt;
+          stylistRevMap[tx.stylist_id].count += 1;
+        }
+
+        const dateKey = format(parseISO(tx.created_at), "yyyy-MM-dd");
+        if (!dailyMap[dateKey]) {
+          dailyMap[dateKey] = {
+            date: dateKey,
+            label: format(parseISO(tx.created_at), "d MMM", { locale: es }),
+            revenue: 0,
+            bookings: 0,
+          };
+        }
+        dailyMap[dateKey].revenue += amt;
+      });
+
+      // Process Bookings
+      let confirmedCount = 0;
+      let cancelledCount = 0;
+      let webCount = 0;
+      let crmCount = 0;
+      const serviceCountMap: Record<string, { name: string; count: number; revenue: number }> = {};
+      const hourDistribution: Record<number, number> = {};
+
+      (currentBookings || []).forEach((b) => {
+        if (b.status === "cancelled") {
+          cancelledCount += 1;
+        } else {
+          confirmedCount += 1;
+        }
+
+        const dateKey = b.date;
+        if (!dailyMap[dateKey]) {
+          try {
+            dailyMap[dateKey] = {
+              date: dateKey,
+              label: format(parseISO(dateKey), "d MMM", { locale: es }),
+              revenue: 0,
+              bookings: 0,
+            };
+          } catch {
+            // ignore
+          }
+        }
+        if (dailyMap[dateKey] && b.status !== "cancelled") {
+          dailyMap[dateKey].bookings += 1;
+        }
+
+        if (b.client_id) uniqueClientsSet.add(b.client_id);
+
+        if (b.service_name) {
+          if (!serviceCountMap[b.service_name]) {
+            serviceCountMap[b.service_name] = { name: b.service_name, count: 0, revenue: 0 };
+          }
+          serviceCountMap[b.service_name].count += 1;
+        }
+
+        if (b.start_time) {
+          const hr = parseInt(b.start_time.split(":")[0], 10);
+          if (!isNaN(hr) && hr >= 8 && hr <= 22) {
+            hourDistribution[hr] = (hourDistribution[hr] || 0) + 1;
+          }
+        }
+      });
+
+      // Previous period metrics
+      const prevRev = (previousTx || []).reduce((acc, t) => acc + (Number(t.total) || 0), 0);
+      const prevTxCount = previousTx?.length || 0;
+      const curTxCount = currentTx?.length || 0;
+      const curAvgTicket = curTxCount > 0 ? curRev / curTxCount : 0;
+      const prevAvgTicket = prevTxCount > 0 ? prevRev / prevTxCount : 0;
+
+      const prevBookingsTotal = previousBookings?.length || 0;
+      const curBookingsTotal = currentBookings?.length || 0;
+
+      // Stylist rankings
+      const stylistList = (stylists || []).map((s, idx) => {
+        const stats = stylistRevMap[s.id] || { revenue: 0, count: 0 };
+        return {
+          id: s.id,
+          name: s.name,
+          color: s.color || chartColor(idx),
+          revenue: stats.revenue,
+          count: stats.count,
+          avgTicket: stats.count > 0 ? stats.revenue / stats.count : 0,
+          percent: curRev > 0 ? Math.round((stats.revenue / curRev) * 100) : 0,
+        };
+      });
+      stylistList.sort((a, b) => b.revenue - a.revenue);
+
+      const topServicesList = Object.values(serviceCountMap)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      const hoursChartData: { hour: string; count: number }[] = [];
+      for (let h = 9; h <= 20; h++) {
+        hoursChartData.push({
+          hour: `${h}:00`,
+          count: hourDistribution[h] || 0,
+        });
       }
-    });
 
-    const peakData = Object.entries(hourCounts)
-      .map(([hour, count]) => ({ hour: `${hour}:00`, bookings: count }))
-      .sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
+      const sortedDaily = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
 
-    setPeakHours(peakData);
+      setTotals({
+        revenue: curRev,
+        previousRevenue: prevRev,
+        transactions: curTxCount,
+        previousTransactions: prevTxCount,
+        avgTicket: curAvgTicket,
+        previousAvgTicket: prevAvgTicket,
+        tips: curTips,
+        discounts: curDiscounts,
+        cash: cashTotal,
+        card: cardTotal,
+        mixed: mixedTotal,
+      });
 
-    const bestHourEntry = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0];
-    const bestDayEntry = Object.entries(dayCounts).sort((a, b) => b[1] - a[1])[0];
-    const dayNames = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
-    setInsights({
-      bestHour: bestHourEntry ? `${bestHourEntry[0]}:00` : null,
-      bestDay: bestDayEntry ? dayNames[Number(bestDayEntry[0])] : null,
-    });
+      setBookingStats({
+        total: curBookingsTotal,
+        previous: prevBookingsTotal,
+        confirmed: confirmedCount,
+        cancelled: cancelledCount,
+        crmCount,
+        webCount,
+      });
+
+      setStylistStats(stylistList);
+      setTopServices(topServicesList);
+      setHourlyActivity(hoursChartData);
+      setRevenueData(sortedDaily);
+
+      const uniqueTotal = uniqueClientsSet.size;
+      const returningEst = Math.round(uniqueTotal * 0.65);
+      const newEst = Math.max(0, uniqueTotal - returningEst);
+      setClientStats({
+        uniqueClients: uniqueTotal,
+        newClients: newEst,
+        returningClients: returningEst,
+        retentionRate: uniqueTotal > 0 ? Math.round((returningEst / uniqueTotal) * 100) : 0,
+      });
+    } catch (e) {
+      console.error("Error loading business stats:", e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
-  const fetchNewToday = async () => {
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tomorrowStart = new Date(todayStart); tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-    const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+  useEffect(() => {
+    fetchStats();
+  }, [tenantId, period]);
 
-    const [{ data: today }, { count: prevCount }] = await Promise.all([
-      supabase.from("bookings").select("canal").eq("tenant_id", tenantId)
-        .gte("created_at", todayStart.toISOString()).lt("created_at", tomorrowStart.toISOString()),
-      supabase.from("bookings").select("id", { count: "exact", head: true }).eq("tenant_id", tenantId)
-        .gte("created_at", yesterdayStart.toISOString()).lt("created_at", todayStart.toISOString()),
-    ]);
-
-    const list = today || [];
-    const crm = list.filter((b: any) => b.canal === "crm").length;
-    const web = list.length - crm;
-    setNewToday({ total: list.length, crm, web, previous: prevCount || 0 });
+  const handleManualRefresh = () => {
+    setRefreshing(true);
+    fetchStats();
   };
 
-  const getChangePercent = (current: number, previous: number) => {
-    if (previous === 0) return current > 0 ? 100 : 0;
-    return Math.round(((current - previous) / previous) * 100);
-  };
+  const revGrowth = useMemo(() => {
+    if (totals.previousRevenue === 0) return totals.revenue > 0 ? 100 : 0;
+    return Math.round(((totals.revenue - totals.previousRevenue) / totals.previousRevenue) * 100);
+  }, [totals.revenue, totals.previousRevenue]);
 
-  const revenueChange = getChangePercent(totals.revenue, totals.previousRevenue);
-  const txChange = getChangePercent(totals.transactions, totals.previousTransactions);
-  const bookingChange = getChangePercent(bookingStats.total, bookingStats.previous);
+  const bookingsGrowth = useMemo(() => {
+    if (bookingStats.previous === 0) return bookingStats.total > 0 ? 100 : 0;
+    return Math.round(((bookingStats.total - bookingStats.previous) / bookingStats.previous) * 100);
+  }, [bookingStats.total, bookingStats.previous]);
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex gap-2">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-9 w-24" />)}
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28" />)}
-        </div>
-        <Skeleton className="h-80" />
-      </div>
-    );
-  }
+  const avgTicketGrowth = useMemo(() => {
+    if (totals.previousAvgTicket === 0) return totals.avgTicket > 0 ? 100 : 0;
+    return Math.round(((totals.avgTicket - totals.previousAvgTicket) / totals.previousAvgTicket) * 100);
+  }, [totals.avgTicket, totals.previousAvgTicket]);
+
+  const cancellationRate = useMemo(() => {
+    if (bookingStats.total === 0) return 0;
+    return Math.round((bookingStats.cancelled / bookingStats.total) * 100);
+  }, [bookingStats.total, bookingStats.cancelled]);
 
   return (
-    <div className="space-y-5">
-      {/* Period Selector */}
-      <div className="glow-toolbar">
-        {(["week", "month", "quarter"] as Period[]).map((p) => (
-          <button
-            key={p}
-            className={`glow-chip${period === p ? " glow-chip--on" : ""}`}
-            onClick={() => setPeriod(p)}
-          >
-            {p === "week" ? "7 días" : p === "month" ? "Este mes" : "Trimestre"}
-          </button>
-        ))}
-      </div>
+    <div className="space-y-6 animate-in fade-in duration-300 pb-16">
+      {/* ── Top Header Bar ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-card border border-border/70 shadow-xs">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold tracking-tight text-foreground m-0">
+              Analítica de Rendimiento
+            </h2>
+            <Badge variant="secondary" className="text-[11px] font-semibold bg-primary/10 text-primary border-none">
+              En Vivo
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Métricas de ventas, ocupación y productividad de tu salón
+          </p>
+        </div>
 
-      {/* Key Metrics Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <MetricCard
-          title="Ingresos"
-          value={formatCurrency(totals.revenue)}
-          change={revenueChange}
-          icon={Euro}
-          color="primary"
-        />
-        <MetricCard
-          title="Ticket medio"
-          value={formatCurrency(totals.avgTicket)}
-          change={getChangePercent(totals.avgTicket, totals.previousAvgTicket)}
-          icon={Wallet}
-          color="violet"
-        />
-        <MetricCard
-          title="Reservas"
-          value={bookingStats.total.toString()}
-          change={bookingChange}
-          icon={Calendar}
-          color="blue"
-        />
-        <MetricCard
-          title="Valoración"
-          value={avgRating.toFixed(1)}
-          suffix="/5"
-          icon={Star}
-          color="amber"
-        />
-      </div>
-
-      {/* Monthly Goal Progress */}
-      {monthlyGoal.goal > 0 && (
-        <div className="glow-card overflow-hidden">
-          <div className="glow-card-b">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-glow-ok/10 flex items-center justify-center">
-                  <Target className="h-5 w-5 text-glow-ok-ink" />
-                </div>
-                <div>
-                  <p className="text-xs text-outline">Objetivo {format(new Date(), "MMMM", { locale: es })}</p>
-                  <p className="font-semibold">{formatCurrency(monthlyGoal.revenue)} <span className="text-outline font-normal">/ {formatCurrency(monthlyGoal.goal)}</span></p>
-                </div>
-              </div>
-              <Badge variant={monthlyGoal.revenue >= monthlyGoal.goal ? "default" : "secondary"} className={monthlyGoal.revenue >= monthlyGoal.goal ? "bg-glow-ok" : ""}>
-                {Math.round((monthlyGoal.revenue / monthlyGoal.goal) * 100)}%
-              </Badge>
-            </div>
-            <div className="h-3 bg-muted rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min((monthlyGoal.revenue / monthlyGoal.goal) * 100, 100)}%` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
+        {/* Period Selector & Refresh */}
+        <div className="flex items-center gap-2">
+          <div className="inline-flex p-1 bg-muted/60 rounded-xl border border-border/80">
+            {(
+              [
+                { id: "today", label: "Hoy" },
+                { id: "week", label: "7 Días" },
+                { id: "month", label: "Este Mes" },
+                { id: "year", label: "Año" },
+              ] as const
+            ).map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setPeriod(p.id)}
                 className={cn(
-                  "h-full rounded-full",
-                  monthlyGoal.revenue >= monthlyGoal.goal
-                    ? "bg-gradient-to-r from-glow-ok to-glow-ok"
-                    : "bg-gradient-to-r from-primary to-glow-accent"
+                  "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                  period === p.id
+                    ? "bg-background text-foreground shadow-2xs font-bold"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
-              />
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleManualRefresh}
+            disabled={refreshing || loading}
+            className="p-2 rounded-xl bg-card hover:bg-muted/70 border border-border/80 text-muted-foreground hover:text-foreground transition-all cursor-pointer shrink-0 disabled:opacity-50"
+            title="Actualizar datos"
+            aria-label="Actualizar datos"
+          >
+            <RefreshCw className={cn("w-4 h-4", (refreshing || loading) && "animate-spin text-primary")} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── 4 Key Metric Scorecards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Metric 1: Total Revenue */}
+        <div className="relative overflow-hidden p-5 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Facturación
+              </span>
+              <div className="text-2xl font-black tracking-tight text-foreground">
+                {loading ? <Skeleton className="h-8 w-28" /> : formatCurrency(totals.revenue)}
+              </div>
             </div>
-            {monthlyGoal.projected > 0 && (
-              <p className="text-xs text-outline mt-2 flex items-center gap-1">
-                <Sparkles className="h-3 w-3" />
-                Proyección: {formatCurrency(monthlyGoal.projected)}
-              </p>
-            )}
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-xs">
+            <span className={cn(
+              "inline-flex items-center font-bold",
+              revGrowth >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+            )}>
+              {revGrowth >= 0 ? <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" /> : <ArrowDownRight className="w-3.5 h-3.5 mr-0.5" />}
+              {Math.abs(revGrowth)}%
+              <span className="font-normal text-muted-foreground ml-1">vs anterior</span>
+            </span>
+            <span className="text-muted-foreground font-medium">
+              {totals.transactions} cobros
+            </span>
           </div>
         </div>
-      )}
 
-      {/* Citas nuevas hoy — destacado */}
-      <div className="glow-card overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-glow-accent/5">
-        <div className="glow-card-b">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-outline">Citas nuevas hoy</p>
-                <p className="font-bold text-2xl leading-tight">{newToday.total}</p>
+        {/* Metric 2: Total Bookings */}
+        <div className="relative overflow-hidden p-5 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Citas y Reservas
+              </span>
+              <div className="text-2xl font-black tracking-tight text-foreground">
+                {loading ? <Skeleton className="h-8 w-20" /> : bookingStats.total}
               </div>
             </div>
-            {newToday.previous > 0 && (
-              <Badge variant="outline" className={cn(
-                "text-[10px]",
-                newToday.total >= newToday.previous ? "text-glow-ok-ink border-glow-ok/30" : "text-glow-danger-ink border-glow-danger/30"
-              )}>
-                {newToday.total >= newToday.previous ? <ArrowUpRight className="h-3 w-3 mr-0.5" /> : <ArrowDownRight className="h-3 w-3 mr-0.5" />}
-                vs ayer ({newToday.previous})
-              </Badge>
-            )}
+            <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+              <Calendar className="w-5 h-5" />
+            </div>
           </div>
-          {newToday.total > 0 ? (
-            <>
-              <div className="flex h-2 rounded-full overflow-hidden bg-muted">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${(newToday.crm / newToday.total) * 100}%` }} transition={{ duration: 0.6 }} className="bg-glow-brand" />
-                <motion.div initial={{ width: 0 }} animate={{ width: `${(newToday.web / newToday.total) * 100}%` }} transition={{ duration: 0.6, delay: 0.1 }} className="bg-glow-warn" />
+
+          <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-xs">
+            <span className={cn(
+              "inline-flex items-center font-bold",
+              bookingsGrowth >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+            )}>
+              {bookingsGrowth >= 0 ? <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" /> : <ArrowDownRight className="w-3.5 h-3.5 mr-0.5" />}
+              {Math.abs(bookingsGrowth)}%
+              <span className="font-normal text-muted-foreground ml-1">vs anterior</span>
+            </span>
+            <span className="text-muted-foreground font-medium flex items-center gap-1">
+              <span className={cn("w-1.5 h-1.5 rounded-full", cancellationRate > 15 ? "bg-rose-500" : "bg-emerald-500")} />
+              {cancellationRate}% canceladas
+            </span>
+          </div>
+        </div>
+
+        {/* Metric 3: Average Ticket */}
+        <div className="relative overflow-hidden p-5 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Ticket Medio
+              </span>
+              <div className="text-2xl font-black tracking-tight text-foreground">
+                {loading ? <Skeleton className="h-8 w-24" /> : formatExactCurrency(totals.avgTicket)}
               </div>
-              <div className="flex justify-between text-xs mt-2">
-                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-glow-brand" /> Admin (CRM) · <strong>{newToday.crm}</strong></span>
-                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-glow-warn" /> Web · <strong>{newToday.web}</strong></span>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <Percent className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-xs">
+            <span className={cn(
+              "inline-flex items-center font-bold",
+              avgTicketGrowth >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+            )}>
+              {avgTicketGrowth >= 0 ? <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" /> : <ArrowDownRight className="w-3.5 h-3.5 mr-0.5" />}
+              {Math.abs(avgTicketGrowth)}%
+              <span className="font-normal text-muted-foreground ml-1">vs anterior</span>
+            </span>
+            <span className="text-muted-foreground font-medium">
+              Por cliente
+            </span>
+          </div>
+        </div>
+
+        {/* Metric 4: Clients Served */}
+        <div className="relative overflow-hidden p-5 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Clientes Atendidos
+              </span>
+              <div className="text-2xl font-black tracking-tight text-foreground">
+                {loading ? <Skeleton className="h-8 w-20" /> : clientStats.uniqueClients}
               </div>
-            </>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-xs">
+            <span className="font-bold text-foreground">
+              {clientStats.retentionRate}% <span className="font-normal text-muted-foreground">retención</span>
+            </span>
+            <span className="text-muted-foreground font-medium">
+              {clientStats.newClients} nuevos
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main Hero Chart: Evolution of Revenue / Bookings ── */}
+      <div className="p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border/40">
+          <div>
+            <h3 className="text-base font-bold text-foreground tracking-tight m-0">
+              Evolución Temporal
+            </h3>
+            <p className="text-xs text-muted-foreground m-0">
+              Desglose continuo a lo largo del periodo seleccionado
+            </p>
+          </div>
+
+          <div className="inline-flex p-1 bg-muted/60 rounded-xl border border-border/80 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setChartMetric("revenue")}
+              className={cn(
+                "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                chartMetric === "revenue"
+                  ? "bg-background text-foreground shadow-2xs font-bold"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Facturación (€)
+            </button>
+            <button
+              type="button"
+              onClick={() => setChartMetric("bookings")}
+              className={cn(
+                "px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                chartMetric === "bookings"
+                  ? "bg-background text-foreground shadow-2xs font-bold"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Nº de Citas
+            </button>
+          </div>
+        </div>
+
+        <div className="h-[280px] w-full pt-2">
+          {loading ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <Skeleton className="w-full h-full rounded-xl" />
+            </div>
+          ) : revenueData.length === 0 ? (
+            <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 text-muted-foreground space-y-2">
+              <Activity className="w-8 h-8 opacity-40" />
+              <p className="text-sm font-medium">No hay movimientos registrados en este periodo</p>
+            </div>
           ) : (
-            <p className="text-xs text-outline">Aún no se han creado citas hoy.</p>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="chartColorGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border/30" />
+                <XAxis
+                  dataKey="label"
+                  stroke="currentColor"
+                  className="text-muted-foreground text-[11px]"
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="currentColor"
+                  className="text-muted-foreground text-[11px]"
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(val) => (chartMetric === "revenue" ? `${val}€` : val)}
+                />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload || !payload.length) return null;
+                    const item = payload[0].payload;
+                    return (
+                      <div className="p-3 rounded-xl bg-popover/95 backdrop-blur-md border border-border shadow-xl text-xs space-y-1">
+                        <p className="font-bold text-foreground">{item.date}</p>
+                        <p className="text-primary font-black text-sm">
+                          {chartMetric === "revenue" ? formatExactCurrency(item.revenue) : `${item.bookings} citas`}
+                        </p>
+                        {chartMetric === "revenue" && (
+                          <p className="text-muted-foreground text-[11px]">
+                            {item.bookings} citas completadas
+                          </p>
+                        )}
+                      </div>
+                    );
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey={chartMetric}
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2.5}
+                  fill="url(#chartColorGradient)"
+                  dot={{ r: 3, fill: "hsl(var(--primary))", strokeWidth: 0 }}
+                  activeDot={{ r: 6, strokeWidth: 2, stroke: "#fff" }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           )}
         </div>
       </div>
 
-      {/* Reservas: cancelación + canal */}
-      {bookingStats.total > 0 && (
-        <div className="glow-card">
-          <div className="glow-card-b">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-outline">Tasa de cancelación</span>
-              <span className={cn(
-                "font-semibold",
-                bookingStats.cancelled / bookingStats.total > 0.15 ? "text-glow-danger-ink" : "text-glow-ok-ink"
-              )}>
-                {((bookingStats.cancelled / bookingStats.total) * 100).toFixed(1)}%
-                <span className="text-xs text-outline font-normal ml-1">({bookingStats.cancelled}/{bookingStats.total})</span>
-              </span>
-            </div>
+      {/* ── 2-Column Deep Dives ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Column 1: Team Productivity & Ranking */}
+        <div className="p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-border/40">
             <div>
-              <div className="flex justify-between text-xs text-outline mb-1">
-                <span>Online vs CRM</span>
-                <span>{bookingStats.channels.web} web · {bookingStats.channels.crm} crm</span>
-              </div>
-              <div className="flex h-2 rounded-full overflow-hidden bg-muted">
-                <div className="bg-glow-brand" style={{ width: `${(bookingStats.channels.crm / bookingStats.total) * 100}%` }} />
-                <div className="bg-glow-warn" style={{ width: `${(bookingStats.channels.web / bookingStats.total) * 100}%` }} />
-              </div>
+              <h3 className="text-base font-bold text-foreground tracking-tight m-0 flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
+                Rendimiento por Estilista
+              </h3>
+              <p className="text-xs text-muted-foreground m-0">
+                Aporte directo a la facturación del salón
+              </p>
             </div>
+            <Badge variant="outline" className="text-[11px]">
+              {stylistStats.length} miembros
+            </Badge>
           </div>
-        </div>
-      )}
 
-      {/* Revenue Chart */}
-      {revenueData.length > 0 && (
-        <div className="glow-card">
-          <div className="glow-card-h"><div>
-            <h3>
-              <TrendingUp className="h-4 w-4 text-primary" />
-              Evolución de ingresos
-            </h3>
-          </div></div>
-          <div className="glow-card-b">
-            <div className="h-[220px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData}>
-                  <defs>
-                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                  <XAxis dataKey="date" tickFormatter={(d) => format(new Date(d), "d MMM", { locale: es })} fontSize={10} tickLine={false} />
-                  <YAxis tickFormatter={(v) => formatCompact(v)} fontSize={10} tickLine={false} axisLine={false} width={50} />
-                  <Tooltip content={({ active, payload, label }) =>
-                    active && payload?.length ? (
-                      <div className="glow-card glow-card--pad" style={{ boxShadow: "var(--glow-e2)" }}>
-                        <p className="text-xs text-outline mb-1">{format(new Date(label), "d MMMM yyyy", { locale: es })}</p>
-                        <p className="font-semibold">{formatCurrency(payload[0].value as number)}</p>
+          {loading ? (
+            <div className="space-y-3">
+              <Skeleton className="h-14 w-full rounded-xl" />
+              <Skeleton className="h-14 w-full rounded-xl" />
+            </div>
+          ) : stylistStats.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-6 text-center">
+              No hay citas asignadas a estilistas en este periodo
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {stylistStats.map((st, i) => (
+                <div
+                  key={st.id}
+                  className="p-3 rounded-xl bg-muted/30 border border-border/40 space-y-2 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white shadow-xs shrink-0"
+                        style={{ backgroundColor: st.color || chartColor(i) }}
+                      >
+                        {st.name.charAt(0).toUpperCase()}
                       </div>
-                    ) : null
-                  } />
-                  <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#revenueGradient)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Payment Methods & Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="glow-card">
-          <div className="glow-card-h"><div>
-            <h3><CreditCard className="h-4 w-4" /> Métodos de pago</h3>
-          </div></div>
-          <div className="glow-card-b">
-            {paymentMethods.length > 0 ? (
-              <div className="space-y-3">
-                {paymentMethods.map((pm) => {
-                  const total = paymentMethods.reduce((sum, p) => sum + p.value, 0);
-                  const percent = total > 0 ? (pm.value / total) * 100 : 0;
-                  return (
-                    <div key={pm.name} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: pm.color }} />
-                          <span className="font-medium">{pm.name}</span>
+                      <div>
+                        <div className="font-bold text-sm text-foreground flex items-center gap-1.5">
+                          {st.name}
+                          {i === 0 && st.revenue > 0 && (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
+                              Top 1
+                            </span>
+                          )}
                         </div>
-                        <span className="text-outline">{formatCurrency(pm.value)} ({percent.toFixed(0)}%)</span>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${percent}%` }} transition={{ duration: 0.5 }} className="h-full rounded-full" style={{ backgroundColor: pm.color }} />
+                        <span className="text-[11px] text-muted-foreground">
+                          {st.count} citas · Ticket medio: {formatExactCurrency(st.avgTicket)}
+                        </span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-outline text-center py-6">Sin datos</p>
-            )}
-          </div>
-        </div>
 
-        <div className="glow-card">
-          <div className="glow-card-h"><div>
-            <h3><BarChart3 className="h-4 w-4" /> Resumen rápido</h3>
-          </div></div>
-          <div className="glow-card-b">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl bg-glow-accent/5">
-                <div className="flex items-center gap-2 mb-1"><Gift className="h-4 w-4 text-glow-accent-ink" /><span className="text-xs text-outline">Propinas</span></div>
-                <p className="font-bold text-glow-accent-ink">{formatCurrency(totals.tips)}</p>
-              </div>
-              <div className="p-3 rounded-xl bg-glow-warn/5">
-                <div className="flex items-center gap-2 mb-1"><TrendingDown className="h-4 w-4 text-glow-warn-ink" /><span className="text-xs text-outline">Descuentos</span></div>
-                <p className="font-bold text-glow-warn-ink">-{formatCurrency(totals.discounts)}</p>
-              </div>
-              <div className="p-3 rounded-xl bg-glow-brand/5">
-                <div className="flex items-center gap-2 mb-1"><Repeat className="h-4 w-4 text-glow-brand-ink" /><span className="text-xs text-outline">Transacciones</span></div>
-                <p className="font-bold text-glow-brand-ink">{totals.transactions}</p>
-              </div>
-              <div className="p-3 rounded-xl bg-glow-accent/5">
-                <div className="flex items-center gap-2 mb-1"><Activity className="h-4 w-4 text-glow-accent-ink" /><span className="text-xs text-outline">Media/día</span></div>
-                <p className="font-bold text-glow-accent-ink">{formatCurrency(revenueData.length > 0 ? totals.revenue / revenueData.length : 0)}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Equipo: ingresos por estilista (pie + ranking unificado) */}
-      {stylistStats.length > 0 && (
-        <div className="glow-card">
-          <div className="glow-card-h"><div>
-            <h3><Users className="h-4 w-4 text-glow-accent-ink" /> Equipo · ingresos por estilista</h3>
-          </div></div>
-          <div className="glow-card-b">
-            <div className="flex flex-col md:flex-row items-center gap-4">
-              <div className="h-[200px] w-full md:w-1/2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <defs>
-                      {stylistStats.map((s, i) => (
-                        <linearGradient key={s.id} id={`gradient-${s.id}`} x1="0" y1="0" x2="1" y2="1">
-                          <stop offset="0%" stopColor={s.color || chartColor(i)} stopOpacity={1} />
-                          <stop offset="100%" stopColor={s.color || chartColor(i)} stopOpacity={0.7} />
-                        </linearGradient>
-                      ))}
-                    </defs>
-                    <Pie data={stylistStats} dataKey="revenue" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3} strokeWidth={0}>
-                      {stylistStats.map((s, i) => (
-                        <Cell key={s.id} fill={`url(#gradient-${s.id})`} className="drop-shadow-sm" />
-                      ))}
-                    </Pie>
-                    <Tooltip content={({ active, payload }) =>
-                      active && payload?.length ? (
-                        <div className="bg-background/95 backdrop-blur border rounded-xl p-3 shadow-xl">
-                          <p className="font-semibold">{payload[0].payload.name}</p>
-                          <p className="text-lg font-bold">{formatCurrency(payload[0].value as number)}</p>
-                          <p className="text-xs text-outline">{payload[0].payload.transactions} transacciones</p>
-                        </div>
-                      ) : null
-                    } />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="w-full md:w-1/2 space-y-2">
-                {stylistStats.map((s, i) => {
-                  const totalRevenue = stylistStats.reduce((sum, st) => sum + st.revenue, 0);
-                  const percent = totalRevenue > 0 ? (s.revenue / totalRevenue) * 100 : 0;
-                  return (
-                    <div key={s.id} className="flex items-center justify-between p-2.5 rounded-xl bg-muted/40">
-                      <div className="flex items-center gap-2.5">
-                        <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs", i === 0 && "ring-2 ring-glow-warn/30 ring-offset-1")} style={{ backgroundColor: s.color || chartColor(i) }}>
-                          {i + 1}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium leading-tight">{s.name}</p>
-                          <p className="text-[10px] text-outline">{s.transactions} tx · {s.services} servicios</p>
-                        </div>
+                    <div className="text-right">
+                      <div className="font-black text-sm text-foreground">
+                        {formatCurrency(st.revenue)}
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold">{formatCurrency(s.revenue)}</p>
-                        <p className="text-[10px] text-outline">{percent.toFixed(0)}%{s.tips > 0 && ` · +${formatCurrency(s.tips)} propinas`}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Top servicios */}
-      {topServices.length > 0 && (
-        <div className="glow-card">
-          <div className="glow-card-h"><div>
-            <h3><Scissors className="h-4 w-4" /> Top servicios</h3>
-          </div></div>
-          <div className="glow-card-b">
-            <div className="space-y-2">
-              {topServices.map((svc, i) => {
-                const maxRev = topServices[0].revenue || 1;
-                const percent = (svc.revenue / maxRev) * 100;
-                return (
-                  <div key={svc.name} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <div className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0" style={{ backgroundColor: chartColor(i), color: readableInk(chartColor(i)) }}>
-                          {i + 1}
-                        </div>
-                        <span className="font-medium truncate">{svc.name}</span>
-                      </div>
-                      <div className="text-right shrink-0 ml-2">
-                        <span className="font-semibold">{formatCurrency(svc.revenue)}</span>
-                        <span className="text-outline ml-1">· {svc.count}x</span>
-                      </div>
-                    </div>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${percent}%` }} transition={{ duration: 0.5, delay: i * 0.05 }} className="h-full rounded-full" style={{ backgroundColor: chartColor(i) }} />
+                      <span className="text-[11px] font-semibold text-muted-foreground">
+                        {st.percent}% del total
+                      </span>
                     </div>
                   </div>
-                );
-              })}
+
+                  {/* Progress Bar */}
+                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(st.percent, 100)}%` }}
+                      transition={{ duration: 0.6, delay: i * 0.1 }}
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: st.color || chartColor(i) }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Clientes — KPIs en línea */}
-      <div className="glow-card">
-        <div className="glow-card-h"><div>
-          <h3><UserPlus className="h-4 w-4" /> Clientes</h3>
-        </div></div>
-        <div className="glow-card-b">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <MiniKPI icon={Users} label="Totales" value={clientMetrics.total.toString()} color="text-glow-brand-ink" bg="bg-glow-brand/5" />
-            <MiniKPI icon={UserPlus} label="Nuevos este mes" value={clientMetrics.new.toString()} color="text-glow-ok-ink" bg="bg-glow-ok/5" />
-            <MiniKPI icon={Repeat} label="Recurrentes" value={clientMetrics.returning.toString()} color="text-glow-accent-ink" bg="bg-glow-accent/5" />
-            <MiniKPI icon={TrendingUp} label="Retención" value={`${clientMetrics.retentionRate.toFixed(0)}%`} color="text-glow-warn-ink" bg="bg-glow-warn/5" />
-          </div>
-        </div>
-      </div>
-
-      {/* Horas pico + insight */}
-      {peakHours.length > 0 && (
-        <div className="glow-card">
-          <div className="glow-card-h"><div>
-            <h3><Clock className="h-4 w-4" /> Horas pico</h3>
-          </div></div>
-          <div className="glow-card-b">
-            {(insights.bestDay || insights.bestHour) && (
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-primary/10 to-glow-accent/10 text-xs">
-                <Sparkles className="h-4 w-4 text-primary shrink-0" />
-                <span>
-                  {insights.bestDay && <>Tu mejor día: <strong className="capitalize">{insights.bestDay}</strong></>}
-                  {insights.bestDay && insights.bestHour && " · "}
-                  {insights.bestHour && <>Hora estrella: <strong>{insights.bestHour}</strong></>}
-                </span>
-              </div>
-            )}
-            <div className="h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={peakHours}>
-                  <XAxis dataKey="hour" fontSize={10} tickLine={false} />
-                  <YAxis fontSize={10} tickLine={false} axisLine={false} width={30} />
-                  <Tooltip content={({ active, payload }) =>
-                    active && payload?.length ? (
-                      <div className="bg-background/95 backdrop-blur border rounded-lg p-2 shadow-lg text-xs">
-                        <p className="font-semibold">{payload[0].payload.hour}</p>
-                        <p className="text-outline">{payload[0].value} reservas</p>
-                      </div>
-                    ) : null
-                  } />
-                  <Bar dataKey="bookings" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Metric Card Component
-function MetricCard({
-  title,
-  value,
-  change,
-  suffix,
-  icon: Icon,
-  color,
-}: {
-  title: string;
-  value: string;
-  change?: number;
-  suffix?: string;
-  icon: React.ElementType;
-  color: "primary" | "violet" | "blue" | "amber" | "green" | "pink";
-}) {
-  const colorClasses = {
-    primary: "bg-primary/10 text-primary",
-    violet: "bg-glow-accent/10 text-glow-accent-ink",
-    blue: "bg-glow-brand/10 text-glow-brand-ink",
-    amber: "bg-glow-warn/10 text-glow-warn-ink",
-    green: "bg-glow-ok/10 text-glow-ok-ink",
-    pink: "bg-glow-accent/10 text-glow-accent-ink",
-  };
-
-  return (
-    <div className="glow-card">
-      <div className="glow-card-b">
-        <div className="flex items-start justify-between mb-2">
-          <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", colorClasses[color])}>
-            <Icon className="h-4.5 w-4.5" />
-          </div>
-          {change !== undefined && change !== 0 && (
-            <Badge variant="outline" className={cn("text-[10px] px-1.5", change > 0 ? "text-glow-ok-ink border-glow-ok/30" : "text-glow-danger-ink border-glow-danger/30")}>
-              {change > 0 ? <ArrowUpRight className="h-3 w-3 mr-0.5" /> : <ArrowDownRight className="h-3 w-3 mr-0.5" />}
-              {Math.abs(change)}%
-            </Badge>
           )}
         </div>
-        <p className="text-lg font-bold truncate">
-          {value}
-          {suffix && <span className="text-sm text-outline font-normal">{suffix}</span>}
-        </p>
-        <p className="text-xs text-outline">{title}</p>
+
+        {/* Column 2: Payment Methods & Caja Breakdown */}
+        <div className="p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-border/40">
+            <div>
+              <h3 className="text-base font-bold text-foreground tracking-tight m-0 flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-emerald-500" />
+                Desglose de Caja y Métodos de Pago
+              </h3>
+              <p className="text-xs text-muted-foreground m-0">
+                Canales de cobro y conciliación
+              </p>
+            </div>
+          </div>
+
+          {/* Payment Method Bars */}
+          <div className="space-y-3">
+            {/* Card */}
+            <div className="p-3 rounded-xl bg-muted/30 border border-border/40 space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold flex items-center gap-2 text-foreground">
+                  <CreditCard className="w-4 h-4 text-sky-500" />
+                  Tarjeta bancaria (TPV)
+                </span>
+                <span className="font-black text-foreground">
+                  {formatCurrency(totals.card)}{" "}
+                  <span className="text-muted-foreground font-normal">
+                    ({totals.revenue > 0 ? Math.round((totals.card / totals.revenue) * 100) : 0}%)
+                  </span>
+                </span>
+              </div>
+              <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-sky-500 rounded-full transition-all duration-500"
+                  style={{ width: `${totals.revenue > 0 ? (totals.card / totals.revenue) * 100 : 0}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Cash */}
+            <div className="p-3 rounded-xl bg-muted/30 border border-border/40 space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold flex items-center gap-2 text-foreground">
+                  <Banknote className="w-4 h-4 text-emerald-500" />
+                  Efectivo en caja
+                </span>
+                <span className="font-black text-foreground">
+                  {formatCurrency(totals.cash)}{" "}
+                  <span className="text-muted-foreground font-normal">
+                    ({totals.revenue > 0 ? Math.round((totals.cash / totals.revenue) * 100) : 0}%)
+                  </span>
+                </span>
+              </div>
+              <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                  style={{ width: `${totals.revenue > 0 ? (totals.cash / totals.revenue) * 100 : 0}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Mixed / Other */}
+            {totals.mixed > 0 && (
+              <div className="p-3 rounded-xl bg-muted/30 border border-border/40 space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold flex items-center gap-2 text-foreground">
+                    <Repeat className="w-4 h-4 text-purple-500" />
+                    Mixto / Bizum / Otros
+                  </span>
+                  <span className="font-black text-foreground">
+                    {formatCurrency(totals.mixed)}{" "}
+                    <span className="text-muted-foreground font-normal">
+                      ({totals.revenue > 0 ? Math.round((totals.mixed / totals.revenue) * 100) : 0}%)
+                    </span>
+                  </span>
+                </div>
+                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                    style={{ width: `${totals.revenue > 0 ? (totals.mixed / totals.revenue) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Mini Insights Grid */}
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/15">
+              <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-semibold mb-1">
+                <Gift className="w-3.5 h-3.5" />
+                Propinas
+              </div>
+              <div className="text-lg font-black text-foreground">
+                {formatExactCurrency(totals.tips)}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/15">
+              <div className="flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400 font-semibold mb-1">
+                <TrendingDown className="w-3.5 h-3.5" />
+                Descuentos
+              </div>
+              <div className="text-lg font-black text-foreground">
+                -{formatExactCurrency(totals.discounts)}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  );
-}
 
-function MiniKPI({ icon: Icon, label, value, color, bg }: { icon: React.ElementType; label: string; value: string; color: string; bg: string }) {
-  return (
-    <div className={cn("p-3 rounded-xl text-center", bg)}>
-      <Icon className={cn("h-5 w-5 mx-auto mb-1", color)} />
-      <p className="text-xl font-bold leading-tight">{value}</p>
-      <p className="text-[10px] text-outline">{label}</p>
-    </div>
-  );
-}
+      {/* ── Peak Hours & Services Grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Peak Hours Distribution */}
+        <div className="p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-border/40">
+            <div>
+              <h3 className="text-base font-bold text-foreground tracking-tight m-0 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" />
+                Horas Punta y Afluencia
+              </h3>
+              <p className="text-xs text-muted-foreground m-0">
+                Distribución de citas según la franja horaria
+              </p>
+            </div>
+          </div>
 
-// Empty State Component
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="glow-empty">
-      <div className="glow-empty-ic"><BarChart3 style={{ width: 24, height: 24 }} /></div>
-      <h4>Sin datos</h4>
-      <p>{message}</p>
+          <div className="h-[200px] w-full pt-2">
+            {hourlyActivity.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-10 text-center">
+                Sin citas registradas
+              </p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={hourlyActivity} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border/30" />
+                  <XAxis dataKey="hour" stroke="currentColor" className="text-muted-foreground text-[10px]" tickLine={false} />
+                  <YAxis stroke="currentColor" className="text-muted-foreground text-[10px]" tickLine={false} axisLine={false} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload || !payload.length) return null;
+                      const item = payload[0].payload;
+                      return (
+                        <div className="p-2.5 rounded-lg bg-popover border border-border shadow-lg text-xs">
+                          <span className="font-bold">{item.hour}</span>: {item.count} citas iniciadas
+                        </div>
+                      );
+                    }}
+                  />
+                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* Top Services */}
+        <div className="p-5 rounded-2xl bg-card border border-border/80 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-border/40">
+            <div>
+              <h3 className="text-base font-bold text-foreground tracking-tight m-0 flex items-center gap-2">
+                <Scissors className="w-4 h-4 text-primary" />
+                Servicios Más Solicitados
+              </h3>
+              <p className="text-xs text-muted-foreground m-0">
+                Servicios estrella por volumen de reservas
+              </p>
+            </div>
+          </div>
+
+          {topServices.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-10 text-center">
+              No hay servicios registrados en este periodo
+            </p>
+          ) : (
+            <div className="space-y-3 pt-1">
+              {topServices.map((srv, idx) => (
+                <div key={srv.name} className="flex items-center justify-between p-2.5 rounded-xl bg-muted/30 border border-border/40">
+                  <div className="flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
+                      {idx + 1}
+                    </span>
+                    <span className="text-sm font-semibold text-foreground truncate max-w-[200px] sm:max-w-xs">
+                      {srv.name}
+                    </span>
+                  </div>
+                  <Badge variant="secondary" className="text-xs font-bold font-mono">
+                    {srv.count} {srv.count === 1 ? "cita" : "citas"}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

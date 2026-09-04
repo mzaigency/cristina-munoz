@@ -1,7 +1,19 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Plus, X, CalendarOff, Clock, CalendarIcon } from "lucide-react";
-import { format, parseISO, isSameDay } from "date-fns";
+import {
+  Loader2,
+  Plus,
+  Trash2,
+  CalendarOff,
+  Calendar as CalendarIcon,
+  Palmtree,
+  Activity,
+  Coffee,
+  GraduationCap,
+  Sparkles,
+  PenLine,
+} from "lucide-react";
+import { format, parseISO, isSameDay, isWithinInterval, startOfDay, addDays, startOfWeek, endOfWeek } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
@@ -10,18 +22,18 @@ import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
 
 /**
- * Ausencias del profesional (vacaciones, bajas, festivos propios), inline en
- * su ficha. Lee y borra cualquier override; el alta inline crea periodos de
- * cierre (is_closed). Las reservas online ya los respetan: check-availability
- * y create-booking consultan stylist_hours_overrides.
+ * Ausencias del profesional (vacaciones, bajas, festivos propios).
+ * Rediseñado con estética premium Glow, badges de estado y selector fluido.
  */
 
-interface Props {
+export interface StylistAbsencesProps {
   tenantId: string;
   stylistId: string;
+  initialAdding?: boolean;
+  onChanged?: () => void;
 }
 
-interface Override {
+export interface StylistOverride {
   id: string;
   date_from: string;
   date_to: string;
@@ -39,17 +51,29 @@ const fmtDay = (iso: string) => {
   }
 };
 
-const REASONS = ["Vacaciones", "Baja", "Libre", "Personal", "Formación"];
+const REASONS = [
+  { label: "Vacaciones", icon: Palmtree },
+  { label: "Baja médica", icon: Activity },
+  { label: "Día libre", icon: Coffee },
+  { label: "Asuntos propios", icon: Sparkles },
+  { label: "Formación", icon: GraduationCap },
+];
 
 const toIso = (d: Date) => format(d, "yyyy-MM-dd");
 
-export function StylistAbsences({ tenantId, stylistId }: Props) {
+export function StylistAbsences({
+  tenantId,
+  stylistId,
+  initialAdding = false,
+  onChanged,
+}: StylistAbsencesProps) {
   const { toast } = useToast();
-  const [rows, setRows] = useState<Override[] | null>(null);
-  const [adding, setAdding] = useState(false);
+  const [rows, setRows] = useState<StylistOverride[] | null>(null);
+  const [adding, setAdding] = useState(initialAdding);
   const [saving, setSaving] = useState(false);
   const [range, setRange] = useState<DateRange | undefined>(undefined);
   const [label, setLabel] = useState("Vacaciones");
+  const [customLabel, setCustomLabel] = useState("");
   const [calOpen, setCalOpen] = useState(false);
 
   const load = async () => {
@@ -60,7 +84,7 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
       .eq("stylist_id", stylistId)
       .gte("date_to", today)
       .order("date_from");
-    setRows((data ?? []) as Override[]);
+    setRows((data ?? []) as StylistOverride[]);
   };
 
   useEffect(() => {
@@ -68,15 +92,20 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stylistId]);
 
+  useEffect(() => {
+    if (initialAdding) setAdding(true);
+  }, [initialAdding]);
+
   const openAdd = () => {
-    setRange(undefined); // Empieza vacío para que el usuario elija
+    setRange(undefined);
     setLabel("Vacaciones");
+    setCustomLabel("");
     setAdding(true);
   };
 
   const add = async () => {
     if (!range?.from) {
-      toast({ title: "Elige al menos un día", variant: "destructive" });
+      toast({ title: "Selecciona al menos un día", variant: "destructive" });
       return;
     }
     const from = range.from;
@@ -85,6 +114,9 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
       toast({ title: "La fecha de fin es anterior al inicio", variant: "destructive" });
       return;
     }
+
+    const finalLabel = customLabel.trim() || label.trim() || "Vacaciones";
+
     setSaving(true);
     const { error } = await supabase.from("stylist_hours_overrides").insert({
       tenant_id: tenantId,
@@ -92,16 +124,22 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
       date_from: toIso(from),
       date_to: toIso(to),
       is_closed: true,
-      label: label.trim() || "Vacaciones",
+      label: finalLabel,
     });
     setSaving(false);
+
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Ausencia añadida", description: "Esos días no se ofrecerán reservas." });
+
+    toast({
+      title: "Ausencia registrada",
+      description: `Se bloquearán las reservas entre el ${fmtDay(toIso(from))} y el ${fmtDay(toIso(to))}.`,
+    });
     setAdding(false);
     load();
+    if (onChanged) onChanged();
   };
 
   const remove = async (id: string) => {
@@ -112,183 +150,411 @@ export function StylistAbsences({ tenantId, stylistId }: Props) {
     }
     toast({ title: "Ausencia eliminada" });
     load();
+    if (onChanged) onChanged();
   };
 
   const rangeLabel = (() => {
-    if (!range?.from) return "Selecciona un día o rango de fechas";
+    if (!range?.from) return "Elegir fechas de inicio y fin";
     const f = range.from;
     const t = range.to ?? range.from;
-    if (isSameDay(f, t)) return format(f, "EEE d MMM", { locale: es });
-    return `${format(f, "d MMM", { locale: es })} – ${format(t, "d MMM", { locale: es })}`;
+    if (isSameDay(f, t)) return format(f, "EEE d 'de' MMMM", { locale: es });
+    return `${format(f, "d MMM", { locale: es })} – ${format(t, "d MMM yyyy", { locale: es })}`;
   })();
 
   const dayCount = range?.from
     ? Math.round(((range.to ?? range.from).getTime() - range.from.getTime()) / (1000 * 60 * 60 * 24)) + 1
     : 0;
 
+  const todayDate = startOfDay(new Date());
+
+  const getAbsenceStatus = (dateFromStr: string, dateToStr: string) => {
+    try {
+      const from = startOfDay(parseISO(dateFromStr));
+      const to = startOfDay(parseISO(dateToStr));
+      if (isWithinInterval(todayDate, { start: from, end: to })) {
+        return { label: "En curso", isCurrent: true };
+      }
+      if (todayDate < from) {
+        return { label: "Próxima", isCurrent: false };
+      }
+      return { label: "Pasada", isCurrent: false };
+    } catch {
+      return { label: "Programada", isCurrent: false };
+    }
+  };
+
   return (
-    <div className="glow-absences">
-      <div className="glow-team-sec-h" style={{ marginTop: 4 }}>
-        <h4 className="glow-neg-section-h">
-          <CalendarOff /> Ausencias
-        </h4>
+    <div className="glow-absences-wrap" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* Cabecera de sección */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              background: "rgba(153, 50, 154, 0.1)",
+              color: "var(--glow-accent, #99329a)",
+            }}
+          >
+            <CalendarOff style={{ width: 15, height: 15 }} />
+          </div>
+          <div>
+            <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--glow-ink)" }}>
+              Vacaciones y Ausencias
+            </h4>
+            <span style={{ fontSize: 12, color: "var(--glow-ink-3)" }}>
+              Días bloqueados sin reservas online
+            </span>
+          </div>
+        </div>
+
         {!adding && (
-          <button className="glow-btn glow-btn--sm" onClick={openAdd} type="button">
-            <Plus style={{ width: 12, height: 12 }} /> Añadir
+          <button
+            type="button"
+            className="glow-btn glow-btn--sm glow-btn--primary"
+            onClick={openAdd}
+            style={{ gap: 5, padding: "5px 12px", fontSize: 12.5 }}
+          >
+            <Plus style={{ width: 13, height: 13 }} />
+            <span>Añadir</span>
           </button>
         )}
       </div>
 
-      {rows === null ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: 16 }}>
-          <Loader2 className="glow-spinner-sm" />
-        </div>
-      ) : rows.length === 0 && !adding ? (
-        <p className="glow-neg-help" style={{ margin: 0 }}>
-          Sin ausencias próximas. Añade vacaciones o festivos y esos días no entrarán reservas.
-        </p>
-      ) : (
-        <div className="glow-absences-list">
-          {rows.map((r) => (
-            <div key={r.id} className="glow-absences-row">
-              <span className="glow-absences-dates">
-                {r.date_from === r.date_to ? fmtDay(r.date_from) : `${fmtDay(r.date_from)} – ${fmtDay(r.date_to)}`}
-              </span>
-              <span className="glow-absences-label">
-                {r.is_closed ? (
-                  r.label || "Vacaciones"
-                ) : (
-                  <>
-                    <Clock style={{ width: 11, height: 11 }} /> Horario especial {r.open_time?.slice(0, 5)}–
-                    {r.close_time?.slice(0, 5)}
-                  </>
-                )}
-              </span>
-              <button
-                className="glow-sched-edit-ic"
-                onClick={() => remove(r.id)}
-                title="Eliminar"
-                aria-label="Eliminar ausencia"
-                type="button"
-              >
-                <X />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
+      {/* Formulario desplegable */}
       {adding && (
         <div
           style={{
-            marginTop: 12,
-            padding: 14,
+            padding: 16,
             borderRadius: 14,
-            border: "1px solid oklch(0.925 0.007 265)",
-            background: "linear-gradient(180deg, rgba(34,64,139,0.04), rgba(153,50,154,0.03))",
-            backdropFilter: "blur(8px)",
+            border: "1px solid var(--glow-line)",
+            background: "var(--glow-surface)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
             display: "flex",
             flexDirection: "column",
-            gap: 12,
+            gap: 14,
           }}
         >
-          {/* Selector de rango simplificado */}
-          <Popover open={calOpen} onOpenChange={setCalOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--glow-ink)" }}>
+              Nueva ausencia o periodo vacacional
+            </span>
+            {dayCount > 0 && (
+              <span
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "10px 14px",
-                  borderRadius: 12,
-                  border: "1px solid var(--glow-line)",
-                  background: "#fff",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  width: "100%",
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  color: "var(--glow-brand)",
+                  background: "rgba(34,64,139,0.08)",
+                  padding: "3px 10px",
+                  borderRadius: 999,
                 }}
               >
-                <CalendarIcon style={{ width: 16, height: 16, color: "var(--glow-brand)" }} />
-                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--glow-ink)", flex: 1 }}>{rangeLabel}</span>
-                {dayCount > 0 && (
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: "var(--glow-brand)",
-                      background: "rgba(34,64,139,0.1)",
-                      padding: "3px 8px",
-                      borderRadius: 999,
-                    }}
-                  >
-                    {dayCount} {dayCount === 1 ? "día" : "días"}
-                  </span>
-                )}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
-              <Calendar
-                mode="range"
-                selected={range}
-                onSelect={(r) => setRange(r)}
-                numberOfMonths={1}
-                locale={es}
-                weekStartsOn={1}
-                initialFocus
-                className={cn("p-3 pointer-events-auto")}
-              />
-            </PopoverContent>
-          </Popover>
+                {dayCount} {dayCount === 1 ? "día seleccionado" : "días seleccionados"}
+              </span>
+            )}
+          </div>
 
-          {/* Motivo */}
+          {/* Presets Rápidos de 1 Clic */}
+          <div className="flex flex-wrap gap-1.5 mb-1">
+            {[
+              { label: "Hoy", getRange: () => ({ from: new Date(), to: new Date() }) },
+              { label: "Mañana", getRange: () => ({ from: addDays(new Date(), 1), to: addDays(new Date(), 1) }) },
+              { label: "Esta semana", getRange: () => ({ from: new Date(), to: endOfWeek(new Date(), { weekStartsOn: 1 }) }) },
+              {
+                label: "Próxima semana",
+                getRange: () => {
+                  const nextMon = addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), 7);
+                  return { from: nextMon, to: addDays(nextMon, 6) };
+                },
+              },
+              { label: "15 días", getRange: () => ({ from: new Date(), to: addDays(new Date(), 14) }) },
+            ].map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => setRange(p.getRange())}
+                className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Fechas Desde / Hasta Limpias */}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <span className="text-[10.5px] font-medium text-muted-foreground mb-1 block">Desde</span>
+              <input
+                type="date"
+                value={range?.from ? format(range.from, "yyyy-MM-dd") : ""}
+                onChange={(e) => {
+                  const d = e.target.value ? parseISO(e.target.value) : undefined;
+                  setRange((prev) => ({ from: d, to: prev?.to && d && prev.to < d ? d : prev?.to ?? d }));
+                }}
+                className="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-background border border-border focus:border-ring outline-none text-foreground transition-all shadow-2xs"
+              />
+            </div>
+            <div>
+              <span className="text-[10.5px] font-medium text-muted-foreground mb-1 block">Hasta</span>
+              <input
+                type="date"
+                value={range?.to ? format(range.to, "yyyy-MM-dd") : (range?.from ? format(range.from, "yyyy-MM-dd") : "")}
+                min={range?.from ? format(range.from, "yyyy-MM-dd") : undefined}
+                onChange={(e) => {
+                  const d = e.target.value ? parseISO(e.target.value) : undefined;
+                  setRange((prev) => ({ from: prev?.from, to: d }));
+                }}
+                className="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-background border border-border focus:border-ring outline-none text-foreground transition-all shadow-2xs"
+              />
+            </div>
+          </div>
+
+          {/* Selector de Motivo con Chips */}
           <div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+            <label className="text-xs font-semibold text-foreground mb-1.5 block">
+              Tipo de ausencia
+            </label>
+            <div className="flex flex-wrap gap-1.5">
               {REASONS.map((r) => {
-                const on = label === r;
+                const Icon = r.icon;
+                const active = label === r.label && !customLabel;
                 return (
                   <button
-                    key={r}
+                    key={r.label}
                     type="button"
-                    onClick={() => setLabel(r)}
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      padding: "5px 11px",
-                      borderRadius: 999,
-                      border: on ? "1px solid var(--glow-accent)" : "1px solid var(--glow-line)",
-                      background: on ? "rgba(153,50,154,0.1)" : "#fff",
-                      color: on ? "var(--glow-accent)" : "var(--glow-ink-3)",
-                      cursor: "pointer",
+                    onClick={() => {
+                      setLabel(r.label);
+                      setCustomLabel("");
                     }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      active
+                        ? "bg-primary text-primary-foreground border-primary shadow-2xs font-semibold"
+                        : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
                   >
-                    {r}
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{r.label}</span>
                   </button>
                 );
               })}
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!customLabel) setCustomLabel(" ");
+                }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                  customLabel
+                    ? "bg-primary text-primary-foreground border-primary shadow-2xs font-semibold"
+                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <PenLine className="w-3.5 h-3.5" />
+                <span>Otro motivo...</span>
+              </button>
             </div>
-            <input
-              type="text"
-              className="glow-absences-form-label"
-              placeholder="O escribe otro motivo…"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !saving) add();
-              }}
-            />
+
+            {customLabel !== "" && (
+              <input
+                type="text"
+                autoFocus
+                placeholder="Escribe el motivo (ej: Cita médica, examen...)"
+                value={customLabel.trimStart()}
+                onChange={(e) => setCustomLabel(e.target.value)}
+                className="w-full mt-2 px-3 py-2 text-xs rounded-xl bg-background border border-border focus:border-ring outline-none text-foreground transition-all shadow-2xs"
+              />
+            )}
           </div>
 
-          <div className="glow-absences-form-actions">
-            <button className="glow-btn glow-btn--sm" onClick={() => setAdding(false)} disabled={saving} type="button">
+          {/* Acciones */}
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, paddingTop: 4 }}>
+            <button
+              type="button"
+              className="glow-btn glow-btn--sm"
+              onClick={() => setAdding(false)}
+              disabled={saving}
+              style={{ fontSize: 12.5 }}
+            >
               Cancelar
             </button>
-            <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={add} disabled={saving} type="button">
+            <button
+              type="button"
+              className="glow-btn glow-btn--primary glow-btn--sm"
+              onClick={add}
+              disabled={saving || !range?.from}
+              style={{ fontSize: 12.5, gap: 6 }}
+            >
               {saving && <Loader2 className="glow-spinner-sm" />}
-              Guardar ausencia
+              <span>Confirmar ausencia</span>
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Lista de Ausencias Activas/Futuras */}
+      {rows === null ? (
+        <div style={{ display: "flex", justifyContent: "center", padding: 20 }}>
+          <Loader2 className="glow-spinner-sm" />
+        </div>
+      ) : rows.length === 0 && !adding ? (
+        <div
+          style={{
+            padding: "16px 14px",
+            borderRadius: 12,
+            border: "1px dashed var(--glow-line)",
+            background: "var(--glow-sunk, #f8fafc)",
+            textAlign: "center",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: 12.5, color: "var(--glow-ink-3)" }}>
+            Sin ausencias ni vacaciones programadas.
+          </p>
+          <button
+            type="button"
+            onClick={openAdd}
+            style={{
+              marginTop: 6,
+              background: "none",
+              border: "none",
+              padding: 0,
+              fontSize: 12.5,
+              fontWeight: 600,
+              color: "var(--glow-brand)",
+              cursor: "pointer",
+            }}
+          >
+            + Programar vacaciones o días libres
+          </button>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          {rows.map((r) => {
+            const status = getAbsenceStatus(r.date_from, r.date_to);
+            const isSingle = r.date_from === r.date_to;
+            const datesText = isSingle
+              ? fmtDay(r.date_from)
+              : `${fmtDay(r.date_from)} – ${fmtDay(r.date_to)}`;
+
+            return (
+              <div
+                key={r.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  padding: "10px 14px",
+                  borderRadius: 12,
+                  border: status.isCurrent
+                    ? "1.5px solid color-mix(in oklab, var(--glow-ok-ink) 40%, transparent)"
+                    : "1px solid var(--glow-line)",
+                  background: status.isCurrent
+                    ? "color-mix(in oklab, var(--glow-ok-ink) 5%, var(--glow-surface))"
+                    : "var(--glow-surface)",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 32,
+                      height: 32,
+                      borderRadius: 9,
+                      background: status.isCurrent
+                        ? "color-mix(in oklab, var(--glow-ok-ink) 12%, transparent)"
+                        : "var(--glow-sunk)",
+                      color: status.isCurrent ? "var(--glow-ok-ink)" : "var(--glow-ink-2)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {r.label?.toLowerCase().includes("baja") ? (
+                      <Activity style={{ width: 15, height: 15 }} />
+                    ) : (
+                      <Palmtree style={{ width: 15, height: 15 }} />
+                    )}
+                  </div>
+
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <strong style={{ fontSize: 13, fontWeight: 700, color: "var(--glow-ink)" }}>
+                        {r.label || "Vacaciones"}
+                      </strong>
+                      <span
+                        style={{
+                          fontSize: 10.5,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                          padding: "1px 6px",
+                          borderRadius: 999,
+                          background: status.isCurrent
+                            ? "color-mix(in oklab, var(--glow-ok-ink) 14%, transparent)"
+                            : "rgba(34,64,139,0.08)",
+                          color: status.isCurrent ? "var(--glow-ok-ink)" : "var(--glow-brand)",
+                        }}
+                      >
+                        {status.label}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "var(--glow-ink-3)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 5,
+                        marginTop: 2,
+                      }}
+                    >
+                      <span>{datesText}</span>
+                      {!r.is_closed && r.open_time && (
+                        <span>
+                          · Horario especial {r.open_time.slice(0, 5)}–{r.close_time?.slice(0, 5)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => remove(r.id)}
+                  title="Eliminar ausencia"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 28,
+                    height: 28,
+                    borderRadius: 7,
+                    border: "none",
+                    background: "transparent",
+                    color: "var(--glow-ink-3)",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Trash2 style={{ width: 14, height: 14 }} />
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

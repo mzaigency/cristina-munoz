@@ -27,6 +27,7 @@ import {
   Users,
   Clock,
   BarChart3,
+  TrendingUp,
   Settings,
   ExternalLink,
   LogOut,
@@ -143,27 +144,36 @@ export function AdminCommandPalette({
           </CommandItem>
         </CommandGroup>
 
-        <CommandGroup heading="Marketing">
-          <CommandItem onSelect={() => go("/marketing/posts")}>
-            <ImagePlus className="mr-2 h-4 w-4" /> Posts
+        <CommandGroup heading="Equipo">
+          <CommandItem onSelect={() => go("/equipo/personal")}>
+            <Users className="mr-2 h-4 w-4" /> Miembros
           </CommandItem>
-          <CommandItem onSelect={() => go("/marketing/qr")}>
-            <QrCode className="mr-2 h-4 w-4" /> Tarjetas QR
+          <CommandItem onSelect={() => go("/equipo/horarios")}>
+            <Calendar className="mr-2 h-4 w-4" /> Horarios y Turnos
           </CommandItem>
-          <CommandItem onSelect={() => go("/marketing/whatsapp")}>
-            <MessageSquare className="mr-2 h-4 w-4" /> Kit WhatsApp
+          <CommandItem onSelect={() => go("/equipo/ausencias")}>
+            <Clock className="mr-2 h-4 w-4" /> Vacaciones y Ausencias
           </CommandItem>
         </CommandGroup>
 
         <CommandGroup heading="Negocio">
-          <CommandItem onSelect={() => go("/negocio/equipo")}>
-            <Users className="mr-2 h-4 w-4" /> Equipo
+          <CommandItem onSelect={() => go("/negocio/estadisticas")}>
+            <BarChart3 className="mr-2 h-4 w-4" /> Estadísticas
           </CommandItem>
-          <CommandItem onSelect={() => go("/negocio/informes")}>
-            <BarChart3 className="mr-2 h-4 w-4" /> Informes
+          <CommandItem onSelect={() => go("/negocio/objetivos")}>
+            <TrendingUp className="mr-2 h-4 w-4" /> Objetivos
           </CommandItem>
-          <CommandItem onSelect={() => go("/negocio/ajustes")}>
-            <Settings className="mr-2 h-4 w-4" /> Ajustes
+          <CommandItem onSelect={() => go("/negocio/posts")}>
+            <ImagePlus className="mr-2 h-4 w-4" /> Feed / Posts
+          </CommandItem>
+          <CommandItem onSelect={() => go("/negocio/qr")}>
+            <QrCode className="mr-2 h-4 w-4" /> Tarjetas QR
+          </CommandItem>
+        </CommandGroup>
+
+        <CommandGroup heading="Ajustes">
+          <CommandItem onSelect={() => go("/ajustes/general")}>
+            <Settings className="mr-2 h-4 w-4" /> Configuración
           </CommandItem>
         </CommandGroup>
 

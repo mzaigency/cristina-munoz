@@ -22,36 +22,45 @@ export function FeedToggle({ mode, onChange, followingCount = 0, className }: Fe
   };
 
   return (
-    <div className={cn("flex justify-center gap-6 py-2 px-4", className)}>
-      {(["discover", "following"] as const).map((tab) => {
-        const isActive = mode === tab;
-        return (
-          <button
-            key={tab}
-            onClick={() => handleChange(tab)}
-            className={cn(
-              "relative pb-1.5 text-sm transition-colors duration-200",
-              isActive
-                ? "text-foreground font-semibold"
-                : "text-muted-foreground font-medium hover:text-foreground/70"
-            )}
-          >
-            {tab === "discover" ? "Descubrir" : "Siguiendo"}
-            {tab === "following" && followingCount > 0 && (
-              <span className="ml-1 text-xs text-muted-foreground">
-                {followingCount}
-              </span>
-            )}
-            {isActive && (
-              <motion.div
-                layoutId="feed-underline"
-                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full gradient-primary"
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              />
-            )}
-          </button>
-        );
-      })}
+    <div className={cn("flex justify-center py-2 px-4", className)}>
+      <div className="inline-flex p-1 rounded-full bg-surface border border-line shadow-xs">
+        {(["discover", "following"] as const).map((tab) => {
+          const isActive = mode === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => handleChange(tab)}
+              className={cn(
+                "relative px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 z-10 flex items-center gap-1.5",
+                isActive
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="feed-segmented-pill"
+                  className="absolute inset-0 rounded-full bg-primary/10 border border-primary/20 shadow-xs -z-10"
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                />
+              )}
+              <span>{tab === "discover" ? "Descubrir" : "Siguiendo"}</span>
+              {tab === "following" && followingCount > 0 && (
+                <span
+                  className={cn(
+                    "px-1.5 py-0.5 rounded-full text-[10px] font-extrabold leading-none",
+                    isActive
+                      ? "bg-primary text-white"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {followingCount}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

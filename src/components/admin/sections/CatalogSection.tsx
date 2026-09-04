@@ -4,6 +4,7 @@ import { Sparkles } from "lucide-react";
 import { ServicesManager } from "../ServicesManager";
 import { ProductsManager } from "../ProductsManager";
 import { ServicePackagesManager } from "../ServicePackagesManager";
+import { PromotionsManager } from "../PromotionsManager";
 import { LockedFeature } from "../LockedFeature";
 import { AgendaImporter } from "../import/AgendaImporter";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
@@ -13,7 +14,7 @@ interface CatalogSectionProps {
   subTab?: string;
 }
 
-type CatalogTab = "services" | "products" | "packages";
+type CatalogTab = "services" | "products" | "packages" | "promos";
 
 /** Las pestañas las pinta AdminSubNav; aquí solo se despacha por subTab. */
 const CatalogSection = ({ tenantId, subTab }: CatalogSectionProps) => {
@@ -24,8 +25,13 @@ const CatalogSection = ({ tenantId, subTab }: CatalogSectionProps) => {
   useEffect(() => {
     if (subTab) return;
     const legacy = sessionStorage.getItem("openCatalogSubTab");
-    if (legacy === "services" || legacy === "products" || legacy === "packages") {
-      setLegacyTab(legacy);
+    if (
+      legacy === "services" ||
+      legacy === "products" ||
+      legacy === "packages" ||
+      legacy === "promos"
+    ) {
+      setLegacyTab(legacy as CatalogTab);
       sessionStorage.removeItem("openCatalogSubTab");
     }
   }, [subTab]);
@@ -38,6 +44,20 @@ const CatalogSection = ({ tenantId, subTab }: CatalogSectionProps) => {
     ) : (
       <LockedFeature
         featureName="Paquetes"
+        currentPlan={planSlug}
+        requiredPlan="pro"
+        tenantId={tenantId}
+        variant="inline"
+      />
+    );
+  }
+
+  if (activeTab === "promos") {
+    return hasFeature("promotions") ? (
+      <PromotionsManager tenantId={tenantId} />
+    ) : (
+      <LockedFeature
+        featureName="Promociones y Cupones"
         currentPlan={planSlug}
         requiredPlan="pro"
         tenantId={tenantId}

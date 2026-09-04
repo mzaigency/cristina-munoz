@@ -103,9 +103,11 @@ export default function Messages() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
+      <AppLayout hideNavigation={false}>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      </AppLayout>
     );
   }
 
@@ -187,64 +189,71 @@ export default function Messages() {
 
   // ── Desktop ───────────────────────────────────────────────
   return (
-    <div className="min-h-screen" style={{ background: 'var(--glow-bg)' }}>
-      <div className="sticky top-0 z-10 liquid-glass-solid border-b border-border/30">
-        <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-            className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
-          >
-            <ChevronLeft className="h-6 w-6" />
-            <span>Atrás</span>
-          </Button>
-          <h1 className="text-lg font-semibold">Mensajes</h1>
-          <span className="w-[72px]" />
+    <AppLayout hideNavigation={false}>
+      <div className="min-h-screen" style={{ background: 'var(--glow-bg)' }}>
+        <div className="sticky top-0 z-10 bg-surface/85 backdrop-blur-xl border-b border-line/60">
+          <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight">
+                  Mensajes
+                </h1>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-tight hidden sm:block mt-0.5">
+                  Conversaciones directas con tus salones y estilistas
+                </p>
+              </div>
+              {totalUnread > 0 && (
+                <span className="text-xs font-bold text-rose-500 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20">
+                  {totalUnread} sin leer
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
 
-      <main className="container mx-auto py-6 px-4">
-        <div className="msg-shell-desktop">
-          <aside className="msg-sidebar">
-            <header className="msg-sidebar-header">
-              <span className="msg-sidebar-title">
-                Chats
-                {totalUnread > 0 && (
-                  <span className="msg-unread-badge">
-                    {totalUnread > 99 ? '99+' : totalUnread}
-                  </span>
-                )}
-              </span>
-            </header>
-            <ConversationList
-              conversations={conversations}
-              loading={loadingConversations}
-              selectedId={selectedConversation?.id || null}
-              onSelect={handleSelectConversation}
+        <div className="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+          <div className="msg-shell-desktop">
+            <aside className="msg-sidebar">
+              <header className="msg-sidebar-header">
+                <span className="msg-sidebar-title">
+                  Chats
+                  {totalUnread > 0 && (
+                    <span className="msg-unread-badge">
+                      {totalUnread > 99 ? '99+' : totalUnread}
+                    </span>
+                  )}
+                </span>
+              </header>
+              <ConversationList
+                conversations={conversations}
+                loading={loadingConversations}
+                selectedId={selectedConversation?.id || null}
+                onSelect={handleSelectConversation}
+                role="user"
+              />
+              <div className="msg-sidebar-hint">
+                <span>
+                  <kbd>↑↓</kbd> Navegar
+                </span>
+                <span>
+                  <kbd>Enter</kbd> Abrir
+                </span>
+                <span>
+                  <kbd>Esc</kbd> Cerrar
+                </span>
+              </div>
+            </aside>
+            <ChatWindow
+              conversation={selectedConversation}
+              messages={messages}
+              loading={loadingMessages}
+              onSendMessage={handleSendMessage}
+              currentUserId={user.id}
               role="user"
             />
-            <div className="msg-sidebar-hint">
-              <span>
-                <kbd>↑↓</kbd> Navegar
-              </span>
-              <span>
-                <kbd>Enter</kbd> Abrir
-              </span>
-              <span>
-                <kbd>Esc</kbd> Cerrar
-              </span>
-            </div>
-          </aside>
-          <ChatWindow
-            conversation={selectedConversation}
-            messages={messages}
-            loading={loadingMessages}
-            onSendMessage={handleSendMessage}
-            currentUserId={user.id}
-            role="user"
-          />
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

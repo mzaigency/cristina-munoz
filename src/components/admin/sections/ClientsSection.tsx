@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ClientsCRM } from "../ClientsCRM";
 import { MessagesManager } from "../MessagesManager";
+import { ReviewsManager } from "../ReviewsManager";
 
 interface ClientsSectionProps {
   tenantId: string;
@@ -8,14 +9,16 @@ interface ClientsSectionProps {
   subTab?: string;
 }
 
-type ClientsTab = "directory" | "messages";
+type ClientsTab = "directory" | "messages" | "reviews";
 
-const SLUG_TO_ID: Record<string, ClientsTab> = { directorio: "directory", mensajes: "messages" };
+const SLUG_TO_ID: Record<string, ClientsTab> = {
+  directorio: "directory",
+  mensajes: "messages",
+  resenas: "reviews",
+};
 
 /**
- * Clientes. Las pestañas las pinta AdminSubNav (fila única del shell), así que
- * aquí solo se despacha por subTab. Reseñas vive en Marketing › Reseñas; las
- * URLs antiguas las redirige TenantAdmin.
+ * Clientes: Directorio, Mensajes y Reseñas de clientes.
  */
 const ClientsSection = ({ tenantId, initialClientId, subTab }: ClientsSectionProps) => {
   const [legacyTab, setLegacyTab] = useState<ClientsTab>("directory");
@@ -24,13 +27,14 @@ const ClientsSection = ({ tenantId, initialClientId, subTab }: ClientsSectionPro
   useEffect(() => {
     if (subTab) return;
     const legacy = sessionStorage.getItem("openClientsSubTab");
-    if (legacy && (legacy === "directory" || legacy === "messages")) {
-      setLegacyTab(legacy);
+    if (legacy && (legacy === "directory" || legacy === "messages" || legacy === "reviews")) {
+      setLegacyTab(legacy as ClientsTab);
       sessionStorage.removeItem("openClientsSubTab");
     }
   }, [subTab]);
 
   if (activeTab === "messages") return <MessagesManager tenantId={tenantId} />;
+  if (activeTab === "reviews") return <ReviewsManager tenantId={tenantId} />;
 
   return (
     <div data-tour-target="clientes-directorio">

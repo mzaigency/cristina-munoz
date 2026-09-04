@@ -363,16 +363,12 @@
   /* La marca de selección es la línea, no una tarjeta: se dibuja siempre y
      solo se revela en el activo, así el texto nunca se mueve al cambiar. */
   .glow-subtab::after {
-    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
-    border-radius: 2px; background: var(--glow-gradient);
-    opacity: 0; transform: scaleX(.4);
-    transition: opacity var(--glow-fast) var(--glow-ease),
-                transform var(--glow-base) var(--glow-ease);
+    display: none !important;
   }
   .glow-subtab:hover { color: var(--glow-ink); }
   .glow-subtab:focus-visible { outline: none; box-shadow: var(--glow-focus); border-radius: var(--glow-r-sm); }
   .glow-subtab--on { color: var(--glow-brand-ink); font-weight: 800; }
-  .glow-subtab--on::after { opacity: 1; transform: none; }
+  .glow-subtab--has-notif { color: var(--glow-brand) !important; font-weight: 700 !important; }
   .glow-subtab--locked { opacity: .5; cursor: not-allowed; }
   .glow-subtab--locked:hover { color: var(--glow-ink-3); }
 

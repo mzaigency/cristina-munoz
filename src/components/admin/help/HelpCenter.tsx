@@ -22,12 +22,13 @@ import {
   LayoutDashboard,
   Calendar,
   Wallet,
+  UserCircle,
   Users,
   ShoppingBag,
-  Megaphone,
   Briefcase,
   Settings,
   HelpCircle,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -42,7 +43,7 @@ interface HelpBullet {
 interface HelpSection {
   id: string;
   label: string;
-  icon: React.ElementType;
+  icon: typeof LayoutDashboard;
   hint: string;
   bullets: HelpBullet[];
 }
@@ -52,48 +53,59 @@ const HELP_SECTIONS: HelpSection[] = [
     id: "inicio",
     label: "Inicio",
     icon: LayoutDashboard,
-    hint: "Resumen del día, KPIs y checklist inicial",
+    hint: "Tu panel de mando diario",
     bullets: [
-      { text: "Métricas en vivo: citas, ingresos, ocupación" },
-      { text: "Acciones rápidas: crear cita, cobrar" },
-      { text: "Checklist de configuración del salón" },
-      { text: "Próximas citas y alertas" },
+      { text: "KPIs del día y facturación en vivo" },
+      { text: "Próximas citas en tiempo real" },
+      { text: "Resumen de actividad reciente" },
     ],
   },
   {
     id: "agenda",
     label: "Agenda",
     icon: Calendar,
-    hint: "Calendario por día/semana + lista de espera",
+    hint: "Calendario y reservas",
     bullets: [
-      { text: "Crea citas tocando un hueco vacío" },
-      { text: "Arrastra para mover, color por estilista" },
-      { text: "Confirmaciones por WhatsApp con 1 toque" },
-      { text: "Lista de espera con aviso automático" },
+      { text: "Vista día, semana y mes con drag & drop" },
+      { text: "Color por estilista" },
+      { text: "Bloqueos de tiempo para pausas" },
+      { text: "Lista de espera automática", requiredFeature: "waitlist", requiredPlan: "pro" },
     ],
   },
   {
     id: "caja",
     label: "Caja",
     icon: Wallet,
-    hint: "Cobros, pedidos y cierre diario",
+    hint: "Cobros, tickets y cierres",
     bullets: [
-      { text: "Cobra al finalizar cita", requiredFeature: "cash_register", requiredPlan: "pro" },
-      { text: "Efectivo, tarjeta o mixto", requiredFeature: "cash_register", requiredPlan: "pro" },
-      { text: "Pedidos online de tu tienda" },
-      { text: "Cierre diario + Excel", requiredFeature: "cash_register", requiredPlan: "pro" },
+      { text: "Cobro rápido efectivo / tarjeta / mixto" },
+      { text: "Cierre diario (Z) con arqueo" },
+      { text: "Historial de transacciones descargable" },
     ],
   },
   {
     id: "clientes",
     label: "Clientes",
-    icon: Users,
+    icon: UserCircle,
     hint: "CRM, mensajes y notas",
     bullets: [
       { text: "Directorio con historial completo" },
       { text: "Etiquetas VIP automáticas" },
       { text: "Notas privadas por cliente" },
       { text: "Chat en tiempo real", requiredFeature: "messages", requiredPlan: "pro" },
+      { text: "Modera y responde reseñas públicas" },
+    ],
+  },
+  {
+    id: "equipo",
+    label: "Equipo",
+    icon: Users,
+    hint: "Miembros, turnos y vacaciones",
+    bullets: [
+      { text: "Estilistas con color propio y especialidades" },
+      { text: "Horarios y cuadrante de turnos" },
+      { text: "Gestión de vacaciones y ausencias" },
+      { text: "Comisiones automáticas", requiredFeature: "commissions", requiredPlan: "business" },
     ],
   },
   {
@@ -105,32 +117,19 @@ const HELP_SECTIONS: HelpSection[] = [
       { text: "Servicios con precio y duración" },
       { text: "Inventario de productos" },
       { text: "Paquetes con descuento auto", requiredFeature: "packages", requiredPlan: "pro" },
-    ],
-  },
-  {
-    id: "marketing",
-    label: "Marketing",
-    icon: Megaphone,
-    hint: "Posts, QR, promos y reseñas",
-    bullets: [
-      { text: "Posts de tu portafolio visual" },
-      { text: "Tarjetas QR + cartel A4 para imprimir" },
-      { text: "Difusión por WhatsApp" },
-      { text: "Cupones de descuento", requiredFeature: "promotions", requiredPlan: "pro" },
-      { text: "Modera reseñas públicas" },
+      { text: "Cupones y promociones", requiredFeature: "promotions", requiredPlan: "pro" },
     ],
   },
   {
     id: "negocio",
     label: "Negocio",
     icon: Briefcase,
-    hint: "Equipo, horarios, estadísticas y objetivos",
+    hint: "Estadísticas, objetivos y posts",
     bullets: [
-      { text: "Estilistas con color propio" },
-      { text: "Horarios y pausas" },
-      { text: "Comisiones automáticas", requiredFeature: "commissions", requiredPlan: "business" },
       { text: "Estadísticas avanzadas", requiredFeature: "advanced_analytics", requiredPlan: "pro" },
       { text: "Objetivos mensuales", requiredFeature: "monthly_goals", requiredPlan: "business" },
+      { text: "Publicaciones para el feed de tu perfil" },
+      { text: "Tarjetas QR y carteles para imprimir" },
     ],
   },
   {

@@ -1,85 +1,69 @@
-import { Building2, Crown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Building2, Compass } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import glowappLogo from "@/assets/glowapp-logo.png";
 import { NotificationBadge } from "@/components/notifications/NotificationBadge";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 export function SmartSearchHeader() {
-  const { user } = useAuth();
-  const [isSuperadmin, setIsSuperadmin] = useState(false);
-
-  useEffect(() => {
-    if (!user) {
-      setIsSuperadmin(false);
-      return;
-    }
-    const checkSuperadmin = async () => {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "superadmin")
-        .maybeSingle();
-      setIsSuperadmin(!!data);
-    };
-    checkSuperadmin();
-  }, [user?.id]);
 
   return (
-    <div className="sticky top-0 z-50">
-      <div className="relative bg-surface border-b border-line">
+    <header className="sticky top-0 z-50">
+      <div className="relative bg-surface/85 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/75 border-b border-line/60">
         <div className="h-[env(safe-area-inset-top)]" />
 
-        <div className="px-4 pt-3 pb-3">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <motion.div
-            initial={{ opacity: 0, y: -12 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="flex items-center justify-between"
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full flex items-center justify-between gap-4"
           >
-            <Link to="/">
-              <motion.img
-                src={glowappLogo}
-                alt="GlowApp"
-                width={85}
-                height={32}
-                className="h-8 w-auto"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-              />
-            </Link>
+            {/* Mobile Logo */}
+            <div className="flex items-center md:hidden">
+              <Link to="/" className="flex items-center shrink-0">
+                <motion.img
+                  src={glowappLogo}
+                  alt="GlowApp"
+                  width={85}
+                  height={32}
+                  className="h-8 w-auto"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                />
+              </Link>
+            </div>
 
+            {/* Desktop Consistent Heading */}
+            <div className="hidden md:flex flex-col min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight">
+                Explorar Salones
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-tight hidden sm:block mt-0.5">
+                Peluquería, barbería, estética y bienestar cerca de ti
+              </p>
+            </div>
+
+            {/* Right Actions */}
             <div className="flex items-center gap-2">
-              {isSuperadmin && (
-              <Link to="/superadmin" className="p-2 rounded-full bg-muted text-amber-500">
-                  <Crown className="h-5 w-5" />
-                </Link>
-              )}
-
               <NotificationBadge />
 
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                  size="sm"
-                  className="rounded-full bg-primary text-primary-foreground border-0 shadow-lg shadow-black/10"
-                  asChild
-                >
-                  <Link to="/negocios" className="flex items-center gap-1.5">
-                    <Building2 className="h-4 w-4" />
-                    <span className="hidden sm:inline">Para negocios</span>
-                    <span className="sm:hidden">Negocios</span>
+              {/* Mobile-only "Negocios" button (in desktop it's in the sidebar) */}
+              <div className="md:hidden">
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
+                  <Link
+                    to="/negocios"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-[var(--glow-brand)] to-[#98329A] text-white shadow-md shadow-[var(--glow-brand)]/25 hover:shadow-lg transition-all h-8.5"
+                  >
+                    <Building2 className="h-3.5 w-3.5 shrink-0" />
+                    <span>Negocios</span>
                   </Link>
-                </Button>
-              </motion.div>
+                </motion.div>
+              </div>
             </div>
           </motion.div>
         </div>
       </div>
-    </div>
+    </header>
   );
 }

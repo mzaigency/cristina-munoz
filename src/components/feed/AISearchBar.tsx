@@ -129,18 +129,18 @@ export function AISearchBar({
       {/* Search container — estilo glow: tarjeta blanca, borde fino, foco de marca */}
       <div
         className={cn(
-          "relative flex items-center rounded-[18px] bg-surface border transition-all duration-300",
+          "relative flex items-center rounded-2xl bg-surface/90 backdrop-blur-md border transition-all duration-300",
           isFocused
-            ? "border-glow-brand/40 shadow-[var(--glow-focus)]"
-            : "border-line shadow-[var(--glow-e1)]"
+            ? "border-[var(--glow-brand)]/50 shadow-[0_0_22px_rgba(var(--glow-brand-rgb)/0.15)] bg-surface"
+            : "border-line shadow-[var(--glow-e1)] hover:border-[var(--glow-line)]"
         )}
       >
         {/* AI/Search Icon */}
-        <div className="absolute left-3.5 flex items-center">
+        <div className="absolute left-3.5 flex items-center pointer-events-none">
           {isAISearching ? (
-            <Loader2 className="h-4 w-4 text-primary animate-spin" />
+            <Loader2 className="h-4 w-4 text-[var(--glow-brand)] animate-spin" />
           ) : aiMode ? (
-            <Sparkles className="h-4 w-4 text-primary" />
+            <Sparkles className="h-4 w-4 text-[var(--glow-brand)]" />
           ) : (
             <Search className="h-4 w-4 text-muted-foreground" />
           )}
@@ -161,7 +161,7 @@ export function AISearchBar({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 300)}
           onKeyDown={handleKeyDown}
-          className="h-12 pl-11 pr-28 text-sm border-0 bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/50"
+          className="h-12 pl-11 pr-28 text-sm border-0 bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/60 font-medium"
         />
 
         {/* Right side actions */}
@@ -173,7 +173,7 @@ export function AISearchBar({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.5 }}
               >
-                <Button variant="ghost" size="icon" onClick={handleClear} className="h-8 w-8 rounded-full">
+                <Button variant="ghost" size="icon" onClick={handleClear} className="h-8 w-8 rounded-full hover:bg-[var(--glow-sunk)]">
                   <X className="h-4 w-4" />
                 </Button>
               </motion.div>
@@ -185,19 +185,19 @@ export function AISearchBar({
               variant="ghost"
               size="icon"
               onClick={handleVoiceSearch}
-              className={cn("h-8 w-8 rounded-full", isListening && "bg-primary text-primary-foreground animate-pulse")}
+              className={cn("h-8 w-8 rounded-full hover:bg-[var(--glow-sunk)]", isListening && "bg-[var(--glow-brand)] text-white animate-pulse")}
             >
               <Mic className="h-4 w-4" />
             </Button>
           )}
 
-          {/* AI Search button — liquid drop */}
-          <motion.div whileTap={{ scale: 0.88 }}>
+          {/* AI Search button */}
+          <motion.div whileTap={{ scale: 0.9 }}>
             <Button
               size="icon"
               onClick={() => handleAISearch()}
               disabled={!searchQuery.trim() || isAISearching}
-              className="h-9 w-9 rounded-xl bg-primary text-primary-foreground border-0 shadow-md shadow-black/10 disabled:opacity-40"
+              className="h-9 w-9 rounded-xl bg-gradient-to-tr from-[var(--glow-brand)] to-[#98329A] text-white border-0 shadow-md shadow-[var(--glow-brand)]/20 hover:shadow-lg hover:shadow-[var(--glow-brand)]/30 disabled:opacity-40 transition-all"
             >
               {isAISearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>

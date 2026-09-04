@@ -714,7 +714,7 @@ export function AgendaDayTimeline({
                           colId: stylist.slug,
                         });
                       }}
-                      className={`absolute z-10 text-left rounded-2xl flex overflow-hidden select-none active:scale-[.98] transition-transform ease-brand group/card min-[920px]:hover:-translate-y-px min-[920px]:hover:outline min-[920px]:hover:outline-1 min-[920px]:hover:outline-primary/25 ${
+                      className={`absolute z-10 text-left rounded-2xl flex overflow-hidden select-none active:scale-[.98] transition-all duration-150 ease-out group/card min-[920px]:hover:-translate-y-0.5 min-[920px]:hover:shadow-md min-[920px]:hover:outline min-[920px]:hover:outline-1 min-[920px]:hover:outline-primary/25 ${
                         canDrag ? "cursor-grab active:cursor-grabbing" : ""
                       }`}
                       style={{
@@ -896,10 +896,13 @@ export function AgendaDayTimeline({
             <div className="absolute left-0 right-0 z-50 pointer-events-none" style={{ top: nowTop }}>
               <div className="flex items-center">
                 <div className="w-11 h-0.5 bg-gradient-brand" />
-                <div
-                  className="w-2.5 h-2.5 rounded-full bg-accent -ml-1 border-2 border-white flex-none"
-                  style={{ boxShadow: "0 0 8px rgba(152,50,154,0.6)" }}
-                />
+                <div className="relative flex items-center justify-center -ml-1 flex-none">
+                  <span className="absolute w-3.5 h-3.5 rounded-full bg-accent/40 animate-ping pointer-events-none" />
+                  <div
+                    className="w-2.5 h-2.5 rounded-full bg-accent border-2 border-white relative z-10"
+                    style={{ boxShadow: "0 0 8px rgba(152,50,154,0.6)" }}
+                  />
+                </div>
                 <div className="flex-1 h-0.5 bg-gradient-brand opacity-40" />
                 <div className="bg-gradient-brand text-white text-[9px] font-bold px-2 py-0.5 rounded-l flex-none">
                   AHORA{" "}

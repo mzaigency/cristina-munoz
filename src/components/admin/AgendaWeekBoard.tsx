@@ -696,7 +696,7 @@ export function AgendaWeekBoard({
                                         colId: lane.id,
                                       });
                                     }}
-                                    className={`absolute z-10 text-left rounded-lg flex overflow-hidden select-none active:scale-[.98] transition-transform ease-brand group/card min-[920px]:hover:-translate-y-px min-[920px]:hover:outline min-[920px]:hover:outline-1 min-[920px]:hover:outline-primary/25 ${
+                                    className={`absolute z-10 text-left rounded-lg flex overflow-hidden select-none active:scale-[.98] transition-all duration-150 ease-out group/card min-[920px]:hover:-translate-y-0.5 min-[920px]:hover:shadow-md min-[920px]:hover:outline min-[920px]:hover:outline-1 min-[920px]:hover:outline-primary/25 ${
                                       onMove ? "cursor-grab active:cursor-grabbing" : ""
                                     }`}
                                     style={{
@@ -871,9 +871,12 @@ export function AgendaWeekBoard({
                                   className="absolute left-0 right-0 z-40 pointer-events-none flex items-center"
                                   style={{ top: (nowMinutes - dayStart) * PPM }}
                                 >
-                                  {first && (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-accent flex-none -ml-px" />
-                                  )}
+                                   {first && (
+                                     <span className="relative flex items-center justify-center -ml-px flex-none mr-0.5">
+                                       <span className="absolute w-2.5 h-2.5 rounded-full bg-accent/40 animate-ping pointer-events-none" />
+                                       <span className="w-1.5 h-1.5 rounded-full bg-accent relative z-10" />
+                                     </span>
+                                   )}
                                   <span className="flex-1 h-0.5 bg-gradient-brand" />
                                 </div>
                               )}

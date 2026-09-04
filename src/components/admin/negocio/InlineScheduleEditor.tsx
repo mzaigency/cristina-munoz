@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Coffee, X, CopyCheck } from "lucide-react";
+import { Loader2, Coffee, X, CopyCheck, Undo2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 
@@ -45,6 +45,7 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
   const { toast } = useToast();
   const [rows, setRows] = useState<DayRow[] | null>(null);
   const [initialJson, setInitialJson] = useState("");
+  const [undoStack, setUndoStack] = useState<DayRow[][]>([]);
   const [hadOwn, setHadOwn] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -103,7 +104,22 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
     };
   }, [tenantId, stylistId]);
 
+  const undo = () => {
+    if (undoStack.length > 0) {
+      const prev = undoStack[undoStack.length - 1];
+      setUndoStack((s) => s.slice(0, -1));
+      setRows(prev);
+      toast({ title: "Deshecho (Ctrl+Z)", description: "Horario anterior restaurado." });
+    } else if (initialJson) {
+      try {
+        setRows(JSON.parse(initialJson));
+        toast({ title: "Horario restablecido", description: "Se ha vuelto al horario original." });
+      } catch {}
+    }
+  };
+
   const update = (day: number, patch: Partial<DayRow>) => {
+    if (rows) setUndoStack((s) => [...s, rows]);
     setRows((prev) => (prev ? prev.map((r) => (r.day_of_week === day ? { ...r, ...patch } : r)) : prev));
   };
 
@@ -112,6 +128,7 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
       if (!prev) return prev;
       const src = prev.find((r) => r.day_of_week === day);
       if (!src) return prev;
+      setUndoStack((s) => [...s, prev]);
       return prev.map((r) =>
         r.is_working
           ? {
@@ -124,8 +141,24 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
           : r,
       );
     });
-    toast({ title: "Horas copiadas al resto de días" });
+    toast({
+      title: "Horas copiadas al resto de días",
+      description: "Pulsa Ctrl+Z o Deshacer para revertir en cualquier momento.",
+    });
   };
+
+  // Keyboard shortcut Ctrl+Z / Cmd+Z
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+      if (isCmdOrCtrl && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        undo();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undoStack, rows, initialJson]);
 
   const save = async () => {
     if (!rows) return;
@@ -261,6 +294,16 @@ export function InlineScheduleEditor({ tenantId, stylistId, onSaved, onDiscard }
       {/* Barra de acciones: visible si hay cambios o si aún no existe horario propio */}
       {(dirty || !hadOwn) && (
         <div className="glow-sched-edit-bar">
+          <button
+            className="glow-btn glow-btn--sm"
+            onClick={undo}
+            disabled={undoStack.length === 0 && !dirty}
+            type="button"
+            title="Deshacer último cambio (Ctrl+Z)"
+          >
+            <Undo2 style={{ width: 13, height: 13 }} />
+            Deshacer
+          </button>
           <button className="glow-btn glow-btn--sm" onClick={onDiscard} disabled={saving} type="button">
             {hadOwn ? "Descartar" : "Cancelar"}
           </button>

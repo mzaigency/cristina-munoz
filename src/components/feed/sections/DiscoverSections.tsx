@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Navigation, Zap, Sparkles, Heart, History } from "lucide-react";
+import { Compass, Clock, Heart, History, Award } from "lucide-react";
 import { PremiumSalonCard } from "@/components/feed/PremiumSalonCard";
 import { FeedSection, FeedCarouselItem } from "./FeedSection";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -185,7 +185,7 @@ export function DiscoverSections({
       {/* 1. DISPONIBLES HOY (siempre visible si hay) */}
       {today.length > 0 && (
         <FeedSection
-          icon={Zap}
+          icon={Clock}
           title="Disponibles hoy"
           subtitle="Reserva ahora, atiende hoy mismo"
           count={today.length}
@@ -201,7 +201,7 @@ export function DiscoverSections({
       {/* 2. CERCA DE TI — siempre visible */}
       {hasLocation && nearby.length > 0 ? (
         <FeedSection
-          icon={Navigation}
+          icon={Compass}
           title="Cerca de ti"
           subtitle="Lo más próximo a tu ubicación"
           count={nearby.length}
@@ -214,7 +214,7 @@ export function DiscoverSections({
         </FeedSection>
       ) : (
         <FeedSection
-          icon={Navigation}
+          icon={Compass}
           title="Cerca de ti"
           subtitle={
             hasLocation
@@ -228,10 +228,10 @@ export function DiscoverSections({
             <button
               onClick={hasLocation ? undefined : onRequestLocation}
               disabled={geoLoading || hasLocation}
-              className="w-full h-full min-h-[260px] liquid-glass-card flex flex-col items-center justify-center gap-3 p-6 text-center hover:scale-[1.02] transition-transform disabled:hover:scale-100"
+              className="w-full h-full min-h-[320px] rounded-[20px] bg-white dark:bg-surface border border-line shadow-sm flex flex-col items-center justify-center gap-3 p-6 text-center hover:shadow-md transition-all disabled:hover:shadow-sm"
             >
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-[#98329A] flex items-center justify-center shadow-lg">
-                <Navigation className="h-7 w-7 text-white" />
+              <div className="h-12 w-12 rounded-2xl bg-[var(--glow-brand-soft)] text-[var(--glow-brand)] border border-[var(--glow-brand)]/20 flex items-center justify-center shadow-xs">
+                <Compass className="h-6 w-6" strokeWidth={2} />
               </div>
               <div>
                 <p className="font-bold text-foreground text-base mb-1">
@@ -244,7 +244,7 @@ export function DiscoverSections({
                 </p>
               </div>
               {!hasLocation && (
-                <span className="mt-1 px-4 py-2 rounded-full gradient-primary text-primary-foreground text-xs font-semibold shadow-md">
+                <span className="mt-1 px-4 py-2 rounded-full bg-gradient-to-r from-[var(--glow-brand)] to-[#98329A] text-white text-xs font-bold shadow-sm">
                   {geoLoading ? "Buscando…" : "Permitir"}
                 </span>
               )}
@@ -288,7 +288,7 @@ export function DiscoverSections({
       {/* 5. RECOMENDADOS PARA TI (carrusel también) */}
       {forYou.length > 0 && (
         <FeedSection
-          icon={Sparkles}
+          icon={Award}
           title={hasRecommendations && scoresMap.size > 0 ? "Recomendados para ti" : "Destacados"}
           subtitle="Los mejores de la comunidad"
           count={forYou.length}

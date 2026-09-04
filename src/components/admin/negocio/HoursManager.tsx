@@ -19,7 +19,19 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertCircle,
+  Store,
+  Users,
+  Clock,
+  X,
+  Undo2,
+  Redo2,
+  RotateCcw,
+  Palmtree,
+  PenLine,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { TeamScheduleTab } from "./TeamScheduleTab";
+import { AllAbsencesTab } from "./AllAbsencesTab";
 import { useToast } from "@/hooks/use-toast";
 import {
   addDays,
@@ -35,6 +47,8 @@ import { es } from "date-fns/locale";
 
 interface HoursManagerProps {
   tenantId: string;
+  initialMainTab?: "salon" | "equipo" | "vacaciones";
+  viewMode?: "horarios" | "ausencias" | "all";
 }
 
 interface BusinessHour {
@@ -182,13 +196,32 @@ const initialForm = (mode: "day" | "week" | "range", base?: Partial<FormState>):
 
 const formatHM = (t?: string | null) => (t ? t.slice(0, 5) : "");
 
-export function HoursManager({ tenantId }: HoursManagerProps) {
+export function HoursManager({ tenantId, initialMainTab, viewMode = "all" }: HoursManagerProps) {
   const { toast } = useToast();
   const { confirm, confirmDialog } = useGlowConfirm();
+  const [mainTab, setMainTab] = useState<"salon" | "equipo" | "vacaciones">(
+    viewMode === "horarios" && initialMainTab === "vacaciones"
+      ? "salon"
+      : initialMainTab || "salon"
+  );
+
+  useEffect(() => {
+    if (initialMainTab) {
+      if (viewMode === "horarios" && initialMainTab === "vacaciones") {
+        setMainTab("salon");
+      } else {
+        setMainTab(initialMainTab);
+      }
+    }
+  }, [initialMainTab, viewMode]);
+
   const [tab, setTab] = useState<"semana" | "especiales">("semana");
 
   // Weekly hours
   const [hours, setHours] = useState<BusinessHour[]>(DEFAULT_HOURS);
+  const [initialHours, setInitialHours] = useState<BusinessHour[] | null>(null);
+  const [undoStack, setUndoStack] = useState<BusinessHour[][]>([]);
+  const [redoStack, setRedoStack] = useState<BusinessHour[][]>([]);
   const [savingWeekly, setSavingWeekly] = useState(false);
 
   // Overrides
@@ -206,6 +239,11 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
   // Calendar
   const [calMonth, setCalMonth] = useState<Date>(startOfMonth(new Date()));
 
+  const hasChanges = useMemo(() => {
+    if (!initialHours) return false;
+    return JSON.stringify(hours) !== JSON.stringify(initialHours);
+  }, [hours, initialHours]);
+
   const load = async () => {
     setLoading(true);
     const [hRes, oRes] = await Promise.all([
@@ -222,7 +260,12 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
         return existing ? fromDbHour(existing) : DEFAULT_HOURS.find((h) => h.day_of_week === day.value)!;
       });
       setHours(merged);
+      setInitialHours(merged);
+    } else {
+      setInitialHours(DEFAULT_HOURS);
     }
+    setUndoStack([]);
+    setRedoStack([]);
     setOverrides((oRes.data as Override[]) ?? []);
     setLoading(false);
   };
@@ -244,16 +287,76 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
       return;
     }
     toast({ title: "Horario guardado" });
-    load();
+    setInitialHours(hours);
+    setUndoStack([]);
+    setRedoStack([]);
+  };
+
+  // Undo (Ctrl+Z / Cmd+Z)
+  const undo = () => {
+    if (undoStack.length > 0) {
+      const previous = undoStack[undoStack.length - 1];
+      setUndoStack((prev) => prev.slice(0, -1));
+      setRedoStack((prev) => [...prev, hours]);
+      setHours(previous);
+      toast({
+        title: "Deshecho (Ctrl+Z)",
+        description: "Se ha recuperado el estado previo del horario.",
+      });
+    } else if (initialHours && hasChanges) {
+      setRedoStack((prev) => [...prev, hours]);
+      setHours(initialHours);
+      toast({
+        title: "Horario restaurado",
+        description: "Se han recuperado los horarios originales guardados en el servidor.",
+      });
+    } else {
+      load();
+      toast({
+        title: "Horario recargado",
+        description: "Se ha sincronizado con los horarios guardados en base de datos.",
+      });
+    }
+  };
+
+  // Redo (Ctrl+Y / Cmd+Shift+Z)
+  const redo = () => {
+    if (redoStack.length === 0) return;
+    const next = redoStack[redoStack.length - 1];
+    setRedoStack((prev) => prev.slice(0, -1));
+    setUndoStack((prev) => [...prev, hours]);
+    setHours(next);
+    toast({
+      title: "Rehecho",
+      description: "Se ha vuelto a aplicar el cambio.",
+    });
+  };
+
+  // Discard changes
+  const discardChanges = () => {
+    if (initialHours) {
+      setUndoStack((prev) => [...prev, hours]);
+      setHours(initialHours);
+      toast({
+        title: "Cambios descartados",
+        description: "Se ha recuperado el horario guardado.",
+      });
+    } else {
+      load();
+    }
   };
 
   const updateHour = (dow: number, patch: Partial<BusinessHour>) => {
+    setUndoStack((prev) => [...prev, hours]);
+    setRedoStack([]);
     setHours((prev) => prev.map((h) => (h.day_of_week === dow ? { ...h, ...patch } : h)));
   };
 
   const copyToAll = (sourceDow: number) => {
     const src = hours.find((h) => h.day_of_week === sourceDow);
     if (!src) return;
+    setUndoStack((prev) => [...prev, hours]);
+    setRedoStack([]);
     setHours((prev) =>
       prev.map((h) => ({
         ...h,
@@ -265,8 +368,40 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
         has_afternoon: src.has_afternoon,
       }))
     );
-    toast({ title: "Copiado a todos los días" });
+    toast({
+      title: `Horario copiado a todos los días`,
+      description: "Pulsa Ctrl+Z o haz clic en 'Deshacer' para revertir en cualquier momento.",
+    });
   };
+
+  // Keyboard shortcut Ctrl+Z / Cmd+Z / Ctrl+Y
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "TEXTAREA" ||
+          (target.tagName === "INPUT" && (target as HTMLInputElement).type === "text"))
+      ) {
+        return;
+      }
+      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+      if (isCmdOrCtrl && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      } else if (isCmdOrCtrl && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        redo();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undoStack, redoStack, hours, initialHours, hasChanges]);
 
   // Quick actions for special hours
   const openVacaciones = () => {
@@ -376,9 +511,21 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
       toast({ title: "Rango inválido", variant: "destructive" });
       return;
     }
-    if (!form.is_closed && form.close_time <= form.open_time) {
-      toast({ title: "Horario inválido", description: "Cierre debe ser posterior a apertura", variant: "destructive" });
-      return;
+    if (!form.is_closed) {
+      if (form.close_time <= form.open_time) {
+        toast({ title: "Horario inválido", description: "Cierre debe ser posterior a apertura", variant: "destructive" });
+        return;
+      }
+      if (form.has_break) {
+        if (form.break_start <= form.open_time || form.break_end <= form.break_start || form.close_time <= form.break_end) {
+          toast({
+            title: "Horario de turnos inválido",
+            description: "Comprueba las horas: Apertura < Fin mañana < Apertura tarde < Cierre.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
     }
 
     // Conflict check (skip self when editing)
@@ -492,123 +639,346 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
     <div className="glow-fade glow-neg-hours">
       <div className="glow-page-h">
         <div>
-          <h2>Horarios</h2>
-          <p>
-            {active.length > 0
-              ? `${active.length} horario${active.length === 1 ? "" : "s"} especial${active.length === 1 ? "" : "es"} activo${active.length === 1 ? "" : "s"} ahora`
-              : `${upcoming.length} próximo${upcoming.length === 1 ? "" : "s"} cambio${upcoming.length === 1 ? "" : "s"}`}
-          </p>
+          <h2>Horarios y Disponibilidad</h2>
+          <p>Gestiona el horario de apertura del salón, los turnos del equipo y las vacaciones.</p>
         </div>
-        {tab === "semana" && (
-          <div className="glow-page-actions">
+        {mainTab === "salon" && tab === "semana" && (
+          <div className="glow-page-actions flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <button
-              className="glow-btn glow-btn--primary glow-btn--sm"
+              className="flex-1 sm:flex-none glow-btn glow-btn--sm justify-center"
+              onClick={openVacaciones}
+              type="button"
+              title="Registrar vacaciones, festivos o cierres del salón"
+            >
+              <CalendarOff style={{ width: 13, height: 13 }} />
+              <span>Vacaciones / Festivo</span>
+            </button>
+            <button
+              className="glow-btn glow-btn--sm justify-center"
+              onClick={undo}
+              disabled={undoStack.length === 0 && !hasChanges}
+              type="button"
+              title="Deshacer último cambio (Ctrl+Z o Cmd+Z)"
+            >
+              <Undo2 style={{ width: 13, height: 13 }} />
+              <span>Deshacer</span>
+            </button>
+            {hasChanges && (
+              <button
+                className="glow-btn glow-btn--sm justify-center"
+                onClick={discardChanges}
+                type="button"
+                title="Descartar cambios no guardados y volver al horario original"
+                style={{ color: "var(--glow-destructive, #ef4444)" }}
+              >
+                <RotateCcw style={{ width: 13, height: 13 }} />
+                <span>Descartar</span>
+              </button>
+            )}
+            <button
+              className="w-full sm:w-auto glow-btn glow-btn--primary glow-btn--sm justify-center"
               onClick={saveWeekly}
               disabled={savingWeekly}
               type="button"
             >
               {savingWeekly ? <Loader2 className="glow-spinner-sm" /> : <Save style={{ width: 13, height: 13 }} />}
-              Guardar
+              <span>Guardar horario del salón</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Sub-tabs */}
-      <div className="glow-neg-hours-tabs">
+      {/* Pestañas Maestras (100% responsive en móvil) */}
+      <div className="flex items-center gap-1.5 p-1 bg-muted/60 rounded-xl border border-border overflow-x-auto no-scrollbar mb-4">
         <button
-          className={`glow-mkt-chip${tab === "semana" ? " on" : ""}`}
-          onClick={() => setTab("semana")}
           type="button"
+          onClick={() => setMainTab("salon")}
+          className={`flex-1 min-w-[130px] sm:min-w-0 inline-flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+            mainTab === "salon"
+              ? "bg-background text-foreground shadow-2xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+          }`}
         >
-          <Calendar style={{ width: 13, height: 13 }} /> Semanal
+          <Store className="w-3.5 h-3.5" />
+          <span>Horario del Salón</span>
         </button>
+
         <button
-          className={`glow-mkt-chip${tab === "especiales" ? " on" : ""}`}
-          onClick={() => setTab("especiales")}
           type="button"
+          onClick={() => setMainTab("equipo")}
+          className={`flex-1 min-w-[130px] sm:min-w-0 inline-flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+            mainTab === "equipo"
+              ? "bg-background text-foreground shadow-2xs"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+          }`}
         >
-          <Sparkles style={{ width: 13, height: 13 }} /> Especiales ({overrides.length})
+          <Users className="w-3.5 h-3.5" />
+          <span>Turnos del Equipo</span>
         </button>
+
+        {viewMode !== "horarios" && (
+          <button
+            type="button"
+            onClick={() => setMainTab("vacaciones")}
+            className={`flex-1 min-w-[140px] sm:min-w-0 inline-flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+              mainTab === "vacaciones"
+                ? "bg-background text-foreground shadow-2xs"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            }`}
+          >
+            <CalendarOff className="w-3.5 h-3.5" />
+            <span>Vacaciones y Ausencias</span>
+          </button>
+        )}
       </div>
 
-      {tab === "semana" && (
-        <div className="glow-neg-week">
-          {DAYS_OF_WEEK.map((day, idx) => {
-            const h = hours.find((x) => x.day_of_week === day.value)!;
-            return (
-              <div key={day.value} className={`glow-card pad glow-neg-week-day${!h.is_open ? " is-off" : ""}`}>
-                <div className="glow-neg-week-h">
-                  <div className="glow-neg-week-title">
-                    <input
-                      type="checkbox"
-                      checked={h.is_open}
-                      onChange={(e) => updateHour(day.value, { is_open: e.target.checked })}
-                    />
-                    <strong>{DAYS_LONG[day.value]}</strong>
-                    {!h.is_open && <span className="glow-badge">Cerrado</span>}
-                  </div>
-                  {idx === 0 && h.is_open && (
-                    <button className="glow-btn glow-btn--sm" onClick={() => copyToAll(day.value)} type="button">
-                      <Copy style={{ width: 12, height: 12 }} /> A todos
+      {/* ── Vista 2: Turnos del Equipo ── */}
+      {mainTab === "equipo" && <TeamScheduleTab tenantId={tenantId} />}
+
+      {/* ── Vista 3: Vacaciones y Ausencias Unificadas ── */}
+      {mainTab === "vacaciones" && <AllAbsencesTab tenantId={tenantId} />}
+
+      {/* ── Vista 1: Horario del Salón ── */}
+      {mainTab === "salon" && (
+        <>
+          {/* Sub-tabs del Salón */}
+          <div className="glow-neg-hours-tabs">
+            <button
+              className={`glow-mkt-chip${tab === "semana" ? " on" : ""}`}
+              onClick={() => setTab("semana")}
+              type="button"
+            >
+              <Calendar style={{ width: 13, height: 13 }} /> Semanal
+            </button>
+            <button
+              className={`glow-mkt-chip${tab === "especiales" ? " on" : ""}`}
+              onClick={() => setTab("especiales")}
+              type="button"
+            >
+              <Sparkles style={{ width: 13, height: 13 }} /> Festivos y Cierres ({overrides.length})
+            </button>
+          </div>
+
+          {tab === "semana" && (
+            <div className="bg-card rounded-2xl border border-border shadow-xs overflow-hidden mt-3">
+              {/* Table Header / Subtitle Toolbar */}
+              <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-border/70 bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Horario habitual de la semana</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Configura los días en que abre el salón y los tramos de apertura para atención a clientes.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={openVacaciones}
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/15 border border-primary/25 transition-all shadow-2xs"
+                    title="Añadir vacaciones o festivos donde el salón cerrará"
+                  >
+                    <CalendarOff className="w-3.5 h-3.5" />
+                    <span>Añadir vacaciones / festivo</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={undo}
+                    disabled={undoStack.length === 0 && !hasChanges}
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground bg-background hover:bg-muted border border-border hover:text-foreground transition-all shadow-2xs disabled:opacity-40 disabled:cursor-not-allowed"
+                    title="Deshacer cambios (Ctrl+Z o Cmd+Z)"
+                  >
+                    <Undo2 className="w-3.5 h-3.5" />
+                    <span>Deshacer (Ctrl+Z)</span>
+                  </button>
+                  {hasChanges && (
+                    <button
+                      type="button"
+                      onClick={discardChanges}
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-600 dark:text-rose-400 bg-background hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 transition-all shadow-2xs"
+                      title="Restablecer al horario original guardado"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Descartar</span>
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => copyToAll(1)}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground bg-background hover:bg-muted border border-border hover:text-foreground transition-all shadow-2xs"
+                    title="Copiar horario del Lunes a toda la semana"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copiar Lunes a toda la semana</span>
+                  </button>
                 </div>
-                {h.is_open && (
-                  <div className="glow-neg-week-shifts">
-                    <div className="glow-neg-shift glow-neg-shift-morning">
-                      <div className="glow-neg-shift-h">
-                        <Sun style={{ width: 13, height: 13 }} /> Mañana
-                      </div>
-                      <div className="glow-neg-shift-inputs">
-                        <input
-                          type="time"
-                          value={h.morning_start}
-                          onChange={(e) => updateHour(day.value, { morning_start: e.target.value })}
-                        />
-                        <span>→</span>
-                        <input
-                          type="time"
-                          value={h.morning_end}
-                          onChange={(e) => updateHour(day.value, { morning_end: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div className={`glow-neg-shift glow-neg-shift-afternoon${!h.has_afternoon ? " is-off" : ""}`}>
-                      <div className="glow-neg-shift-h">
-                        <Moon style={{ width: 13, height: 13 }} /> Tarde
-                        <input
-                          type="checkbox"
-                          checked={h.has_afternoon}
-                          onChange={(e) => updateHour(day.value, { has_afternoon: e.target.checked })}
-                          style={{ marginLeft: "auto" }}
-                        />
-                      </div>
-                      {h.has_afternoon ? (
-                        <div className="glow-neg-shift-inputs">
-                          <input
-                            type="time"
-                            value={h.afternoon_start}
-                            onChange={(e) => updateHour(day.value, { afternoon_start: e.target.value })}
+              </div>
+
+              {/* Rows Monday to Sunday */}
+              <div className="divide-y divide-border/50">
+                {DAYS_OF_WEEK.map((day) => {
+                  const h = hours.find((x) => x.day_of_week === day.value)!;
+                  return (
+                    <div
+                      key={day.value}
+                      className={`px-4 py-3 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
+                        !h.is_open ? "bg-muted/10 opacity-75 hover:opacity-100" : "hover:bg-muted/15"
+                      }`}
+                    >
+                      {/* Day & Switch */}
+                      <div className="flex items-center justify-between sm:justify-start gap-3 min-w-[180px]">
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            id={`salon-switch-${day.value}`}
+                            checked={h.is_open}
+                            onCheckedChange={(checked) => updateHour(day.value, { is_open: checked })}
                           />
-                          <span>→</span>
-                          <input
-                            type="time"
-                            value={h.afternoon_end}
-                            onChange={(e) => updateHour(day.value, { afternoon_end: e.target.value })}
-                          />
+                          <label
+                            htmlFor={`salon-switch-${day.value}`}
+                            className="cursor-pointer select-none flex flex-col"
+                          >
+                            <span className={`text-sm font-semibold ${h.is_open ? "text-foreground" : "text-muted-foreground"}`}>
+                              {DAYS_LONG[day.value]}
+                            </span>
+                            <span className="text-[11px] font-medium text-muted-foreground">
+                              {h.is_open ? "Abierto" : "Cerrado"}
+                            </span>
+                          </label>
                         </div>
-                      ) : (
-                        <p className="glow-neg-shift-off">Sin turno</p>
+                      </div>
+
+                      {/* Time Inputs / Shifts */}
+                      <div className="flex-1 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
+                        {!h.is_open ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium text-muted-foreground bg-muted/40 border border-dashed border-border/80 w-fit">
+                            Cerrado todo el día
+                          </span>
+                        ) : (
+                          <>
+                            {/* Turno Mañana / Continuo */}
+                            <div className="w-full sm:w-auto inline-flex items-center justify-between sm:justify-start gap-2 px-3 py-1.5 rounded-xl bg-background border border-border shadow-2xs">
+                              <div className="flex items-center gap-1.5">
+                                <Sun className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                <span className="text-xs font-medium text-muted-foreground">
+                                  {h.has_afternoon ? "Mañana:" : "Continuo:"}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <input
+                                  type="time"
+                                  value={h.morning_start}
+                                  onChange={(e) => updateHour(day.value, { morning_start: e.target.value })}
+                                  className="w-[72px] px-1 py-0.5 text-xs font-semibold rounded bg-muted/30 border border-transparent focus:border-ring focus:bg-background outline-none text-foreground transition-all"
+                                />
+                                <span className="text-xs text-muted-foreground">→</span>
+                                <input
+                                  type="time"
+                                  value={h.morning_end}
+                                  onChange={(e) => updateHour(day.value, { morning_end: e.target.value })}
+                                  className="w-[72px] px-1 py-0.5 text-xs font-semibold rounded bg-muted/30 border border-transparent focus:border-ring focus:bg-background outline-none text-foreground transition-all"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Turno Tarde (si tiene) o botón para añadirlo */}
+                            {h.has_afternoon ? (
+                              <div className="w-full sm:w-auto inline-flex items-center justify-between sm:justify-start gap-2 px-3 py-1.5 rounded-xl bg-background border border-border shadow-2xs">
+                                <div className="flex items-center gap-1.5">
+                                  <Moon className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                  <span className="text-xs font-medium text-muted-foreground">Tarde:</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <input
+                                    type="time"
+                                    value={h.afternoon_start}
+                                    onChange={(e) => updateHour(day.value, { afternoon_start: e.target.value })}
+                                    className="w-[72px] px-1 py-0.5 text-xs font-semibold rounded bg-muted/30 border border-transparent focus:border-ring focus:bg-background outline-none text-foreground transition-all"
+                                  />
+                                  <span className="text-xs text-muted-foreground">→</span>
+                                  <input
+                                    type="time"
+                                    value={h.afternoon_end}
+                                    onChange={(e) => updateHour(day.value, { afternoon_end: e.target.value })}
+                                    className="w-[72px] px-1 py-0.5 text-xs font-semibold rounded bg-muted/30 border border-transparent focus:border-ring focus:bg-background outline-none text-foreground transition-all"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => updateHour(day.value, { has_afternoon: false })}
+                                    className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors ml-0.5"
+                                    title="Quitar turno de tarde (jornada continua)"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateHour(day.value, {
+                                    has_afternoon: true,
+                                    afternoon_start: "16:00",
+                                    afternoon_end: "20:00",
+                                  })
+                                }
+                                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground border border-dashed border-border hover:border-foreground/30 hover:bg-muted/30 transition-all"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Añadir turno de tarde</span>
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Quick copy row to all */}
+                      {h.is_open && (
+                        <div className="shrink-0 flex items-center justify-end">
+                          <button
+                            type="button"
+                            onClick={() => copyToAll(day.value)}
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors text-xs inline-flex items-center gap-1"
+                            title={`Copiar horario de ${DAYS_LONG[day.value]} a todos los días`}
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                            <span className="text-[11px] font-medium hidden md:inline">Copiar</span>
+                          </button>
+                        </div>
                       )}
                     </div>
-                  </div>
-                )}
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              {/* Card Footer with Save CTA */}
+              <div className="px-5 py-3.5 bg-muted/20 border-t border-border/70 flex flex-wrap items-center justify-between gap-3">
+                <span className="text-xs text-muted-foreground">
+                  {hasChanges
+                    ? "Tienes cambios sin guardar. Puedes usar Deshacer (Ctrl+Z) o Descartar antes de guardar."
+                    : "Los cambios guardados aplicarán a las futuras reservas y al horario público del salón."}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={undo}
+                    disabled={undoStack.length === 0 && !hasChanges}
+                    className="glow-btn glow-btn--sm"
+                    title="Deshacer (Ctrl+Z)"
+                  >
+                    <Undo2 style={{ width: 13, height: 13 }} />
+                    Deshacer
+                  </button>
+                  <button
+                    className="glow-btn glow-btn--primary glow-btn--sm"
+                    onClick={saveWeekly}
+                    disabled={savingWeekly}
+                    type="button"
+                  >
+                    {savingWeekly ? <Loader2 className="glow-spinner-sm" /> : <Save style={{ width: 13, height: 13 }} />}
+                    Guardar horario del salón
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
       {tab === "especiales" && (
         <div className="glow-neg-special">
@@ -652,8 +1022,8 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
               <span className="glow-mkt-quick-ic" style={{ background: "var(--glow-accent-soft)", color: "var(--glow-accent)" }}>
                 <Plane />
               </span>
-              <strong>Vacaciones</strong>
-              <span>Rango cerrado</span>
+              <strong>Cierre por vacaciones</strong>
+              <span>Todo el local cerrado</span>
             </button>
             <button className="glow-neg-quick-action tone-warn" onClick={openFestivo} type="button">
               <span className="glow-mkt-quick-ic" style={{ background: "var(--glow-warn-soft)", color: "var(--glow-warn-ink)" }}>
@@ -886,118 +1256,134 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
           )}
         </div>
       )}
+        </>
+      )}
 
-      {/* Alta / edición de horario especial */}
+      {/* Modal intuitivo de Vacaciones / Festivos / Horario Especial */}
       <GlowModal
         open={showForm}
         onOpenChange={(o) => !saving && setShowForm(o)}
-        title={editingId ? "Editar horario especial" : "Nuevo horario especial"}
-        description="Vacaciones, festivos o una jornada distinta a la habitual."
+        title={editingId ? "Editar fecha especial" : "Registrar vacaciones o festivo"}
+        description="Bloquea días completos para vacaciones/festivos o define una jornada especial."
         icon={<CalendarOff />}
         footer={
-          <>
-            <button className="glow-btn" onClick={() => setShowForm(false)} disabled={saving}>
+          <div className="flex items-center justify-end gap-2 w-full">
+            <button className="glow-btn glow-btn--sm" onClick={() => setShowForm(false)} disabled={saving} type="button">
               Cancelar
             </button>
-            <button className="glow-btn glow-btn--primary" onClick={saveForm} disabled={saving}>
+            <button className="glow-btn glow-btn--primary glow-btn--sm" onClick={saveForm} disabled={saving} type="button">
               {saving && <Loader2 className="glow-spinner-sm" />}
-              {editingId ? "Guardar" : "Crear"}
+              {editingId ? "Guardar cambios" : form.is_closed ? "Confirmar cierre del salón" : "Guardar horario especial"}
             </button>
-          </>
+          </div>
         }
       >
-        <div className="glow-form">
-            <div className="glow-mkt-chip-row">
-              <button
-                className={`glow-mkt-chip${formMode === "day" ? " on" : ""}`}
-                onClick={() => {
-                  setFormMode("day");
-                  setForm({ ...form, date_to: form.date_from });
-                }}
-                type="button"
-              >
-                Día
-              </button>
-              <button
-                className={`glow-mkt-chip${formMode === "week" ? " on" : ""}`}
-                onClick={() => {
-                  setFormMode("week");
-                  setForm({ ...form, date_to: format(addDays(parseISO(form.date_from), 6), "yyyy-MM-dd") });
-                }}
-                type="button"
-              >
-                Semana
-              </button>
-              <button
-                className={`glow-mkt-chip${formMode === "range" ? " on" : ""}`}
-                onClick={() => setFormMode("range")}
-                type="button"
-              >
-                Rango
-              </button>
+        <div className="flex flex-col gap-4 py-1">
+          {/* 1. Selector de Tipo: Salón Cerrado vs Horario Especial */}
+          <div className="grid grid-cols-2 p-1 bg-muted/60 rounded-xl border border-border/60 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, is_closed: true })}
+              className={`flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${
+                form.is_closed
+                  ? "bg-background text-foreground shadow-2xs font-bold"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <CalendarOff className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+              <span>Salón cerrado</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, is_closed: false })}
+              className={`flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${
+                !form.is_closed
+                  ? "bg-background text-foreground shadow-2xs font-bold"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Sun className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>Horario especial</span>
+            </button>
+          </div>
+
+          {/* 2. Fechas de afectación con atajos a 1 clic */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-foreground">
+                Fechas afectadas
+              </label>
+              {(() => {
+                try {
+                  const days = differenceInCalendarDays(parseISO(form.date_to || form.date_from), parseISO(form.date_from)) + 1;
+                  return (
+                    <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                      {days} {days === 1 ? "día" : "días"}
+                    </span>
+                  );
+                } catch {
+                  return null;
+                }
+              })()}
             </div>
 
-            {form.date_from !== form.date_to && (
-              /* Solo tiene sentido en un rango: en un día suelto el día ya está
-                 decidido. Vacío = todos, que es como se comportaba siempre. */
-              <div className="glow-neg-form-row">
-                <label>Días a los que aplica</label>
-                <div className="ag-daypick">
-                  {DAYS_OF_WEEK.map((d) => {
-                    const on = form.days_of_week.includes(d.value);
-                    return (
-                      <button
-                        key={d.value}
-                        type="button"
-                        aria-pressed={on}
-                        className={`ag-daypick-b${on ? " on" : ""}`}
-                        onClick={() =>
-                          /* Updater funcional: con el objeto del closure, dos clics
-                             seguidos leían el mismo estado y el segundo pisaba al
-                             primero. Marcar cinco días dejaba solo uno. */
-                          setForm((f) => ({
-                            ...f,
-                            days_of_week: f.days_of_week.includes(d.value)
-                              ? f.days_of_week.filter((x) => x !== d.value)
-                              : [...f.days_of_week, d.value].sort((a, b) => a - b),
-                          }))
-                        }
-                      >
-                        {d.label}
-                      </button>
-                    );
-                  })}
-                  {form.days_of_week.length > 0 && (
-                    <button
-                      type="button"
-                      className="ag-daypick-clear"
-                      onClick={() => setForm((f) => ({ ...f, days_of_week: [] }))}
-                    >
-                      Todos
-                    </button>
-                  )}
-                </div>
-                <span className="glow-field-hint">
-                  {form.days_of_week.length === 0
-                    ? "Se aplica a todos los días del rango, también a los que el salón cierra."
-                    : `Solo ${DAYS_OF_WEEK.filter((d) => form.days_of_week.includes(d.value)).map((d) => d.label).join(", ")}.`}
-                </span>
-              </div>
-            )}
-
-            <div className="glow-neg-form-row">
-              <label>Etiqueta</label>
-              <input
-                type="text"
-                value={form.label}
-                onChange={(e) => setForm({ ...form, label: e.target.value })}
-                placeholder="Ej: Navidad, Vacaciones, Puente..."
-              />
+            {/* Atajos de 1 clic */}
+            <div className="flex flex-wrap gap-1 mb-2">
+              {[
+                {
+                  label: "Hoy",
+                  apply: () => {
+                    const t = todayISO();
+                    setForm({ ...form, date_from: t, date_to: t });
+                  },
+                },
+                {
+                  label: "Mañana",
+                  apply: () => {
+                    const m = format(addDays(new Date(), 1), "yyyy-MM-dd");
+                    setForm({ ...form, date_from: m, date_to: m });
+                  },
+                },
+                {
+                  label: "Esta semana",
+                  apply: () => {
+                    const start = todayISO();
+                    const end = format(endOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd");
+                    setForm({ ...form, date_from: start, date_to: end });
+                  },
+                },
+                {
+                  label: "1 semana",
+                  apply: () => {
+                    const start = form.date_from || todayISO();
+                    const end = format(addDays(parseISO(start), 6), "yyyy-MM-dd");
+                    setForm({ ...form, date_to: end });
+                  },
+                },
+                {
+                  label: "15 días",
+                  apply: () => {
+                    const start = form.date_from || todayISO();
+                    const end = format(addDays(parseISO(start), 14), "yyyy-MM-dd");
+                    setForm({ ...form, date_to: end });
+                  },
+                },
+              ].map((preset) => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={preset.apply}
+                  className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-border/70 bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                >
+                  {preset.label}
+                </button>
+              ))}
             </div>
 
-            <div className="glow-neg-form-grid">
-              <div className="glow-neg-form-row">
-                <label>Desde</label>
+            {/* Inputs de fecha directos y limpios */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-[10.5px] font-medium text-muted-foreground mb-1 block">Desde</span>
                 <input
                   type="date"
                   value={form.date_from}
@@ -1006,101 +1392,215 @@ export function HoursManager({ tenantId }: HoursManagerProps) {
                     setForm({
                       ...form,
                       date_from: v,
-                      date_to:
-                        formMode === "day"
-                          ? v
-                          : formMode === "week"
-                            ? format(addDays(parseISO(v), 6), "yyyy-MM-dd")
-                            : form.date_to < v
-                              ? v
-                              : form.date_to,
+                      date_to: form.date_to < v ? v : form.date_to,
                     });
                   }}
+                  className="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-background border border-border focus:border-ring outline-none text-foreground transition-all shadow-2xs"
                 />
               </div>
-              <div className="glow-neg-form-row">
-                <label>Hasta</label>
+              <div>
+                <span className="text-[10.5px] font-medium text-muted-foreground mb-1 block">Hasta</span>
                 <input
                   type="date"
                   value={form.date_to}
+                  min={form.date_from}
                   onChange={(e) => setForm({ ...form, date_to: e.target.value })}
-                  disabled={formMode === "day"}
+                  className="w-full px-3 py-2 text-xs font-semibold rounded-xl bg-background border border-border focus:border-ring outline-none text-foreground transition-all shadow-2xs"
                 />
               </div>
             </div>
+          </div>
 
-            <div className="glow-neg-form-row glow-neg-form-toggle">
-              <label>Cerrado</label>
-              <input
-                type="checkbox"
-                checked={form.is_closed}
-                onChange={(e) => setForm({ ...form, is_closed: e.target.checked })}
-              />
+          {/* 3. Motivo: pastillas directas y solo input si elige "Otro" */}
+          <div>
+            <label className="text-xs font-semibold text-foreground mb-1.5 block">
+              Motivo
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { label: "Vacaciones", icon: Plane, closed: true },
+                { label: "Festivo", icon: PartyPopper, closed: true },
+                { label: "Puente", icon: Calendar, closed: true },
+                { label: "Navidad", icon: Sparkles, closed: true },
+                { label: "Horario de verano", icon: Sun, closed: false, open: "09:00", close: "15:00" },
+                { label: "Reforma", icon: Store, closed: true },
+              ].map((preset) => {
+                const isSelected = form.label.toLowerCase() === preset.label.toLowerCase();
+                const Icon = preset.icon;
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => {
+                      setForm((f) => ({
+                        ...f,
+                        label: preset.label,
+                        is_closed: preset.closed,
+                        open_time: preset.open || f.open_time,
+                        close_time: preset.close || f.close_time,
+                      }));
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground border-primary shadow-2xs font-semibold"
+                        : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{preset.label}</span>
+                  </button>
+                );
+              })}
+
+              {/* Botón de motivo personalizado */}
+              <button
+                type="button"
+                onClick={() => {
+                  const isPreset = ["vacaciones", "festivo", "puente", "navidad", "horario de verano", "reforma"].includes(form.label.toLowerCase());
+                  if (isPreset) setForm({ ...form, label: "" });
+                }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                  !["vacaciones", "festivo", "puente", "navidad", "horario de verano", "reforma"].includes(form.label.toLowerCase()) && form.label !== ""
+                    ? "bg-primary text-primary-foreground border-primary shadow-2xs font-semibold"
+                    : "bg-background border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <PenLine className="w-3.5 h-3.5" />
+                <span>Otro motivo...</span>
+              </button>
             </div>
 
-            {!form.is_closed && (
-              <>
-                <div className="glow-neg-form-grid">
-                  <div className="glow-neg-form-row">
-                    <label>Apertura</label>
+            {/* Input solo visible si el motivo es personalizado o está vacío */}
+            {(!["vacaciones", "festivo", "puente", "navidad", "horario de verano", "reforma"].includes(form.label.toLowerCase()) || form.label === "") && (
+              <input
+                type="text"
+                autoFocus
+                value={form.label}
+                onChange={(e) => setForm({ ...form, label: e.target.value })}
+                placeholder="Escribe el motivo (ej. Fiestas patronales, mudanza...)"
+                className="w-full mt-2 px-3 py-2 text-xs rounded-xl bg-background border border-border focus:border-ring outline-none text-foreground transition-all shadow-2xs"
+              />
+            )}
+          </div>
+
+          {/* 4. Si es horario especial (abierto): Horario con soporte para Doble Turno (Partido) */}
+          {!form.is_closed && (
+            <div className="p-3.5 rounded-xl bg-muted/20 border border-border/70 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Sun className="w-3.5 h-3.5 text-amber-500" />
+                  <label className="text-xs font-semibold text-foreground">
+                    Horario de atención
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForm((f) => ({
+                      ...f,
+                      has_break: !f.has_break,
+                      break_start: f.break_start || "14:00",
+                      break_end: f.break_end || "16:30",
+                    }));
+                  }}
+                  className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
+                >
+                  {form.has_break ? (
+                    <>
+                      <X className="w-3 h-3" />
+                      <span>Quitar turno de tarde (Jornada continua)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-3 h-3" />
+                      <span>Añadir turno de tarde (Doble turno)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {!form.has_break ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[10.5px] font-medium text-muted-foreground mb-1 block">Apertura</span>
                     <input
                       type="time"
                       value={form.open_time}
                       onChange={(e) => setForm({ ...form, open_time: e.target.value })}
+                      className="w-full px-3 py-1.5 text-xs font-semibold rounded-lg bg-background border border-border outline-none text-foreground shadow-2xs"
                     />
                   </div>
-                  <div className="glow-neg-form-row">
-                    <label>Cierre</label>
+                  <div>
+                    <span className="text-[10.5px] font-medium text-muted-foreground mb-1 block">Cierre</span>
                     <input
                       type="time"
                       value={form.close_time}
                       onChange={(e) => setForm({ ...form, close_time: e.target.value })}
+                      className="w-full px-3 py-1.5 text-xs font-semibold rounded-lg bg-background border border-border outline-none text-foreground shadow-2xs"
                     />
                   </div>
                 </div>
-                <div className="glow-neg-form-row glow-neg-form-toggle">
-                  <label>Con pausa</label>
-                  <input
-                    type="checkbox"
-                    checked={form.has_break}
-                    onChange={(e) => setForm({ ...form, has_break: e.target.checked })}
-                  />
-                </div>
-                {form.has_break && (
-                  <div className="glow-neg-form-grid">
-                    <div className="glow-neg-form-row">
-                      <label>Pausa desde</label>
-                      <input
-                        type="time"
-                        value={form.break_start}
-                        onChange={(e) => setForm({ ...form, break_start: e.target.value })}
-                      />
-                    </div>
-                    <div className="glow-neg-form-row">
-                      <label>Pausa hasta</label>
-                      <input
-                        type="time"
-                        value={form.break_end}
-                        onChange={(e) => setForm({ ...form, break_end: e.target.value })}
-                      />
+              ) : (
+                <div className="space-y-2.5">
+                  {/* Turno de Mañana */}
+                  <div className="p-2.5 rounded-lg bg-background border border-border/60">
+                    <span className="text-[11px] font-semibold text-foreground flex items-center gap-1.5 mb-1.5">
+                      <Sun className="w-3.5 h-3.5 text-amber-500" />
+                      Turno de Mañana
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[10px] text-muted-foreground mb-1 block">Apertura</span>
+                        <input
+                          type="time"
+                          value={form.open_time}
+                          onChange={(e) => setForm({ ...form, open_time: e.target.value })}
+                          className="w-full px-2.5 py-1 text-xs font-semibold rounded-md bg-muted/30 border border-border outline-none text-foreground"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-muted-foreground mb-1 block">Cierre de mañana</span>
+                        <input
+                          type="time"
+                          value={form.break_start}
+                          onChange={(e) => setForm({ ...form, break_start: e.target.value })}
+                          className="w-full px-2.5 py-1 text-xs font-semibold rounded-md bg-muted/30 border border-border outline-none text-foreground"
+                        />
+                      </div>
                     </div>
                   </div>
-                )}
-              </>
-            )}
 
-            {!form.is_closed && (
-              <div className="glow-neg-bar-preview">
-                <HoursBar
-                  isClosed={false}
-                  openTime={form.open_time}
-                  closeTime={form.close_time}
-                  breakStart={form.has_break ? form.break_start : null}
-                  breakEnd={form.has_break ? form.break_end : null}
-                />
-              </div>
-            )}
-
+                  {/* Turno de Tarde */}
+                  <div className="p-2.5 rounded-lg bg-background border border-border/60">
+                    <span className="text-[11px] font-semibold text-foreground flex items-center gap-1.5 mb-1.5">
+                      <Moon className="w-3.5 h-3.5 text-indigo-500" />
+                      Turno de Tarde
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[10px] text-muted-foreground mb-1 block">Apertura de tarde</span>
+                        <input
+                          type="time"
+                          value={form.break_end}
+                          onChange={(e) => setForm({ ...form, break_end: e.target.value })}
+                          className="w-full px-2.5 py-1 text-xs font-semibold rounded-md bg-muted/30 border border-border outline-none text-foreground"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-muted-foreground mb-1 block">Cierre</span>
+                        <input
+                          type="time"
+                          value={form.close_time}
+                          onChange={(e) => setForm({ ...form, close_time: e.target.value })}
+                          className="w-full px-2.5 py-1 text-xs font-semibold rounded-md bg-muted/30 border border-border outline-none text-foreground"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </GlowModal>
       {confirmDialog}

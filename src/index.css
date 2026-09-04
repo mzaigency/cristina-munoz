@@ -1203,15 +1203,28 @@ body[data-glow-panel] [role="dialog"] {
   padding-left: 16px; margin-left: 16px;
   border-left: 1px solid var(--glow-line);
 }
+.ag-dayhead-acts .glow-btn,
+.ag-dayhead-acts .glow-icon-btn {
+  transition: transform .14s cubic-bezier(.2,.8,.2,1), background .15s ease, color .15s ease, border-color .15s ease;
+}
+.ag-dayhead-acts .glow-btn:hover,
+.ag-dayhead-acts .glow-icon-btn:hover {
+  transform: translateY(-0.5px);
+}
+.ag-dayhead-acts .glow-btn:active,
+.ag-dayhead-acts .glow-icon-btn:active {
+  transform: scale(0.95);
+}
 
 /* Flechas: navegan semanas, así que flanquean la tira de días */
 .ag-wk-arrow {
   width: 30px; height: 34px; flex: none; cursor: pointer; font-family: inherit;
   display: flex; align-items: center; justify-content: center;
   border: none; background: none; color: var(--glow-ink-3); border-radius: var(--glow-r-sm);
-  transition: background var(--glow-fast) var(--glow-ease), color var(--glow-fast) var(--glow-ease);
+  transition: background var(--glow-fast) var(--glow-ease), color var(--glow-fast) var(--glow-ease), transform .14s cubic-bezier(.2,.8,.2,1);
 }
-.ag-wk-arrow:hover { background: var(--glow-sunk); color: var(--glow-ink); }
+.ag-wk-arrow:hover:not(:disabled) { background: var(--glow-sunk); color: var(--glow-ink); transform: scale(1.1); }
+.ag-wk-arrow:active:not(:disabled) { transform: scale(0.92); }
 .ag-wk-arrow:disabled { opacity: .4; cursor: not-allowed; }
 
 /* Tira de días: plana, para que no compita con la fecha */
@@ -1221,26 +1234,50 @@ body[data-glow-panel] [role="dialog"] {
   border: 1px solid transparent; background: none;
   border-radius: var(--glow-r-sm); padding: 4px 3px; text-align: center;
   color: var(--glow-ink-2); line-height: 1.25;
-  transition: background var(--glow-fast) var(--glow-ease), color var(--glow-fast) var(--glow-ease);
+  transition: color var(--glow-fast) var(--glow-ease), transform .14s cubic-bezier(.2,.8,.2,1);
+  isolation: isolate;
 }
-.ag-wd:hover { background: var(--glow-sunk); }
-.ag-wd.on { background: var(--glow-brand-soft); color: var(--glow-brand-ink); }
+.ag-wd:hover:not(.on):not(.closed) { background: var(--glow-sunk); transform: translateY(-1px); }
+.ag-wd:active:not(.closed) { transform: scale(0.94); }
+.ag-wd.on {
+  background: transparent;
+  color: var(--glow-brand-ink);
+  box-shadow: none;
+}
+.ag-wd-pill {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--glow-r-sm);
+  background: var(--glow-brand-soft);
+  box-shadow: 0 1px 4px rgba(var(--glow-brand-rgb) / 0.16);
+  z-index: 0;
+  pointer-events: none;
+}
 .ag-wd.closed { color: var(--glow-ink-3); }
 .ag-wd.closed:hover { background: none; cursor: default; }
 .ag-wd-n {
+  position: relative; z-index: 1;
   display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .04em;
   text-transform: uppercase; color: var(--glow-ink-3);
+  transition: color var(--glow-fast) var(--glow-ease);
 }
 .ag-wd.on .ag-wd-n { color: inherit; }
-.ag-wd-d { display: block; font-size: var(--glow-t-sm); font-weight: 800; }
+.ag-wd-d {
+  position: relative; z-index: 1;
+  display: block; font-size: var(--glow-t-sm); font-weight: 800;
+  transition: color var(--glow-fast) var(--glow-ease);
+}
 .ag-wd-c {
+  position: relative; z-index: 1;
   display: block; font-size: 9.5px; font-weight: 700; color: var(--glow-ink-3);
   font-variant-numeric: tabular-nums;
+  transition: color var(--glow-fast) var(--glow-ease);
 }
 .ag-wd.on .ag-wd-c { color: inherit; }
 .ag-wd-today {
   position: absolute; top: 3px; right: 3px; width: 4px; height: 4px;
   border-radius: var(--glow-r-full); background: var(--glow-brand);
+  z-index: 2;
 }
 
 .ag-profs {
@@ -1248,11 +1285,31 @@ body[data-glow-panel] [role="dialog"] {
   padding-left: 16px; margin-left: 16px;
   border-left: 1px solid var(--glow-line);
 }
+.ag-profs .glow-chip {
+  transition: background var(--glow-fast) var(--glow-ease), color var(--glow-fast) var(--glow-ease), transform .14s cubic-bezier(.2,.8,.2,1), box-shadow .14s var(--glow-ease);
+}
+.ag-profs .glow-chip:hover { transform: translateY(-1px); }
+.ag-profs .glow-chip:active { transform: scale(0.95); }
+.ag-profs .glow-chip--on {
+  box-shadow: 0 2px 6px rgba(var(--glow-brand-rgb) / 0.18);
+  animation: agChipPop .16s cubic-bezier(.16,1,.3,1);
+}
+@keyframes agChipPop {
+  from { transform: scale(0.96); }
+  to { transform: scale(1); }
+}
 .ag-prof-dot { width: 7px; height: 7px; border-radius: var(--glow-r-full); flex: none; }
 .ag-prof-n { font-weight: 800; opacity: .6; }
 
 /* El buscador se despliega dentro de la propia barra */
-.ag-dayhead .ag-search { margin: 0; }
+.ag-dayhead .ag-search {
+  margin: 0;
+  animation: agSearchIn .18s cubic-bezier(.16,1,.3,1);
+}
+@keyframes agSearchIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
 
 @media (max-width: 920px) {
   .ag-dayhead { margin: -14px -12px 0; padding: 10px 12px; gap: 8px; }
@@ -1744,29 +1801,41 @@ body[data-glow-panel] [role="dialog"] {
 
 .glow-navitem {
   display: flex; align-items: center; gap: 11px; width: 100%;
-  border: none; background: none; color: var(--glow-ink-2); text-align: left;
+  border: none; background: transparent; color: var(--glow-ink-2); text-align: left;
   padding: 9px 12px; border-radius: 11px; font-size: 14px; font-weight: 600;
-  transition: .15s var(--glow-ease); cursor: pointer; font-family: inherit;
+  transition: color .15s var(--glow-ease), background .15s var(--glow-ease); cursor: pointer; font-family: inherit;
+  position: relative;
 }
-.glow-navitem:hover { background: var(--glow-sunk); color: var(--glow-ink); }
-.glow-navitem.on { background: var(--glow-brand-soft); color: var(--glow-brand-ink); font-weight: 700; }
-.glow-navitem-ic { display: flex; flex: none; color: var(--glow-ink-3); transition: .15s; }
+.glow-navitem:not(.on):hover { background: var(--glow-sunk); color: var(--glow-ink); }
+.glow-navitem.on { color: var(--glow-brand-ink); font-weight: 700; background: transparent; }
+.glow-navitem-ic { display: flex; flex: none; color: var(--glow-ink-3); transition: transform .2s var(--glow-ease), color .15s; }
 .glow-navitem.on .glow-navitem-ic { color: var(--glow-brand); }
-.glow-navitem-badge {
-  margin-left: auto; font-size: 11px; font-weight: 800; min-width: 20px; height: 20px; padding: 0 6px;
-  border-radius: 99px; background: var(--glow-notif-bg); color: var(--glow-notif-fg);
-  display: inline-flex; align-items: center; justify-content: center;
+.glow-navitem--has-notif {
+  color: var(--glow-brand) !important;
+  font-weight: 700 !important;
+}
+.glow-navitem--has-notif .glow-navitem-ic {
+  color: var(--glow-brand) !important;
 }
 
-.glow-side-subnav { display: flex; flex-direction: column; gap: 1px; margin: 2px 0 4px 16px; padding-left: 12px; border-left: 1.5px solid var(--glow-line); }
+.glow-side-subnav { display: flex; flex-direction: column; gap: 2px; margin: 2px 0 4px 14px; padding-left: 6px; border-left: none; }
 .glow-subitem {
-  display: flex; align-items: center; gap: 9px; border: none; background: none; color: var(--glow-ink-3);
+  display: flex; align-items: center; gap: 9px; border: none; background: transparent; color: var(--glow-ink-3);
   text-align: left; padding: 7px 10px; border-radius: 9px; font-size: 13px; font-weight: 600;
-  transition: .14s; cursor: pointer; font-family: inherit; width: 100%;
+  transition: color .14s var(--glow-ease), background .14s var(--glow-ease); cursor: pointer; font-family: inherit; width: 100%;
+  position: relative;
 }
-.glow-subitem:hover { background: var(--glow-sunk); color: var(--glow-ink); }
-.glow-subitem.on { color: var(--glow-brand-ink); font-weight: 700; }
-.glow-subdot { width: 5px; height: 5px; border-radius: 50%; background: var(--glow-line); flex: none; transition: .15s; }
+.glow-subitem:not(.on):hover { background: var(--glow-sunk); color: var(--glow-ink); }
+.glow-subitem.on { color: var(--glow-brand-ink); font-weight: 700; background: transparent; }
+.glow-subitem--has-notif {
+  color: var(--glow-brand) !important;
+  font-weight: 700 !important;
+}
+.glow-subitem--has-notif .glow-subdot {
+  background: var(--glow-brand) !important;
+  transform: scale(1.3) !important;
+}
+.glow-subdot { width: 5px; height: 5px; border-radius: 50%; background: var(--glow-line); flex: none; transition: transform .2s var(--glow-ease), background .2s; }
 .glow-subitem.on .glow-subdot { background: var(--glow-brand); transform: scale(1.4); }
 .glow-subitem.locked { opacity: .55; cursor: not-allowed; }
 .glow-subitem.locked:hover { background: none; color: var(--glow-ink-3); }
@@ -4223,33 +4292,58 @@ body.msg-chat-open { overflow: hidden; }
 }
 .glow-neg-stylist-foot-earn { color: var(--glow-ok-ink); }
 
-/* ---- Stylist Drawer ---- */
+/* ---- Stylist Modal (formerly Drawer) ---- */
 .glow-neg-drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  /* Sobre el shell del admin (topbar 20, sidebar 30, bottom 40, fab 45)
-     pero bajo los Dialog/AlertDialog de shadcn (z-50) que abre el drawer:
-     editor de horario y confirmaciones deben quedar por encima. */
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  /* Sobre el shell del admin pero bajo los Dialog/AlertDialog de shadcn (z-50) */
   z-index: 48;
   display: flex;
-  justify-content: flex-end;
-  animation: gpFadeIn 0.18s ease-out;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: gpFadeIn 0.2s ease-out;
 }
 @keyframes gpFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .glow-neg-drawer {
   width: 100%;
-  max-width: 460px;
-  height: 100%;
+  max-width: 680px;
+  max-height: min(88vh, 760px);
   background: var(--glow-surface);
   display: flex;
   flex-direction: column;
-  animation: gpSlideIn 0.25s ease-out;
-  border-left: 1px solid var(--glow-line);
+  border-radius: 20px;
+  border: 1px solid var(--glow-line);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  animation: gpModalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes gpSlideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-@media (max-width: 560px) { .glow-neg-drawer { max-width: 100%; } }
+@keyframes gpModalPop {
+  from {
+    transform: scale(0.96) translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+@media (max-width: 640px) {
+  .glow-neg-drawer-backdrop {
+    padding: 10px;
+    align-items: flex-end;
+  }
+  .glow-neg-drawer {
+    max-width: 100%;
+    max-height: 90vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
 
 .glow-neg-drawer-h {
   display: flex;
@@ -4549,9 +4643,10 @@ body.msg-chat-open { overflow: hidden; }
 .glow-team-kpi strong { font-size: 22px; font-weight: 800; color: var(--glow-ink); font-variant-numeric: tabular-nums; }
 .glow-team-kpi.pay strong { color: var(--glow-ok-ink); }
 @media (max-width: 560px) {
-  .glow-team-kpis { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .glow-team-kpi { padding: 10px 12px; border-radius: 12px; }
-  .glow-team-kpi strong { font-size: 18px; }
+  .glow-team-kpis { grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+  .glow-team-kpi { padding: 9px 10px; border-radius: 12px; }
+  .glow-team-kpi span { font-size: 10.5px; line-height: 1.25; }
+  .glow-team-kpi strong { font-size: 17px; margin-top: 1px; }
 }
 
 /* ---- Equipo: lista ---- */
@@ -4993,10 +5088,11 @@ body.msg-chat-open { overflow: hidden; }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 16px 20px;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--glow-warn-soft), color-mix(in oklab, var(--glow-warn-ink), white 80%));
-  border: 1px solid color-mix(in oklab, var(--glow-warn-ink), white 65%);
+  background: var(--glow-surface);
+  border: 1px solid var(--glow-line);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 .glow-neg-festivos-banner strong {
   display: block;
@@ -5905,8 +6001,21 @@ details[open] .glow-neg-past-summary::before { transform: rotate(90deg); }
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+.no-scrollbar,
+.scrollbar-hide,
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch;
+}
 
 /* ── Agenda móvil: menos chrome sobre el timeline ──
    El hero (ocupación + próxima cita) duplica el resumen del propio timeline

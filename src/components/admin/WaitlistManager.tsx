@@ -457,11 +457,17 @@ export function WaitlistManager({ tenantId }: WaitlistManagerProps) {
 
       {/* Status tabs */}
       <div className="glow-filter-row">
-        <button className={`glow-subtab${activeTab === "active" ? " glow-subtab--on" : ""}`} onClick={() => setActiveTab("active")}>
-          Esperando {activeEntries.length > 0 && <span className="glow-subtab-count">{activeEntries.length}</span>}
+        <button
+          className={`glow-subtab${activeTab === "active" ? " glow-subtab--on" : ""}${activeEntries.length > 0 && activeTab !== "active" ? " glow-subtab--has-notif" : ""}`}
+          onClick={() => setActiveTab("active")}
+        >
+          Esperando {activeEntries.length > 0 && <span className="font-semibold opacity-85">({activeEntries.length})</span>}
         </button>
-        <button className={`glow-subtab${activeTab === "proposed" ? " glow-subtab--on" : ""}`} onClick={() => setActiveTab("proposed")}>
-          Propuestas {proposedEntries.length > 0 && <span className="glow-subtab-count">{proposedEntries.length}</span>}
+        <button
+          className={`glow-subtab${activeTab === "proposed" ? " glow-subtab--on" : ""}${proposedEntries.length > 0 && activeTab !== "proposed" ? " glow-subtab--has-notif" : ""}`}
+          onClick={() => setActiveTab("proposed")}
+        >
+          Propuestas {proposedEntries.length > 0 && <span className="font-semibold opacity-85">({proposedEntries.length})</span>}
         </button>
         <button className={`glow-subtab${activeTab === "history" ? " glow-subtab--on" : ""}`} onClick={() => setActiveTab("history")}>
           Historial

@@ -9,9 +9,7 @@ import {
   Calendar,
   Wallet,
   Users,
-  Menu,
   ShoppingBag,
-  Megaphone,
   UserCircle,
   Sparkles,
   Briefcase,
@@ -33,14 +31,15 @@ import { NotifBadge } from "@/components/admin/layout/NotifBadge";
 import { AdminAccountMenu } from "@/components/admin/layout/AdminAccountMenu";
 import { AdminCommandPalette } from "@/components/admin/layout/AdminCommandPalette";
 import { AdminSubNav, ADMIN_SUB_NAV, getDefaultSubTab, type AdminSection } from "@/components/admin/layout/AdminSubNav";
+import { MobileAdminBottomBar } from "@/components/admin/layout/MobileAdminBottomBar";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { useUnseenOrders } from "@/hooks/useUnseenOrders";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 
 import {
   ClientsSection,
   CatalogSection,
-  MarketingSection,
+  EquipoSection,
   InicioSection,
   NegocioSection,
   AgendaSection,
@@ -61,8 +60,8 @@ type SectionValue =
   | "agenda"
   | "caja"
   | "clientes"
+  | "equipo"
   | "catalogo"
-  | "marketing"
   | "negocio"
   | "ajustes";
 
@@ -78,8 +77,8 @@ const VALID_SECTIONS: SectionValue[] = [
   "agenda",
   "caja",
   "clientes",
+  "equipo",
   "catalogo",
-  "marketing",
   "negocio",
   "ajustes",
 ];
@@ -112,38 +111,40 @@ const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }>
   directorio: { section: "clientes", subTab: "directorio" },
   messages: { section: "clientes", subTab: "mensajes" },
   mensajes: { section: "clientes", subTab: "mensajes" },
-  // Reseñas now in Marketing
-  reviews: { section: "marketing", subTab: "resenas" },
-  resenas: { section: "marketing", subTab: "resenas" },
+  reviews: { section: "clientes", subTab: "resenas" },
+  resenas: { section: "clientes", subTab: "resenas" },
+  // Equipo (now top-level)
+  team: { section: "equipo", subTab: "personal" },
+  equipo: { section: "equipo", subTab: "personal" },
+  personal: { section: "equipo", subTab: "personal" },
+  stylists: { section: "equipo", subTab: "personal" },
+  hours: { section: "equipo", subTab: "horarios" },
+  horarios: { section: "equipo", subTab: "horarios" },
+  ausencias: { section: "equipo", subTab: "ausencias" },
+  vacaciones: { section: "equipo", subTab: "ausencias" },
+  commissions: { section: "equipo", subTab: "personal" },
+  comisiones: { section: "equipo", subTab: "personal" },
   // Catálogo
   services: { section: "catalogo", subTab: "services" },
   products: { section: "catalogo", subTab: "products" },
   packages: { section: "catalogo", subTab: "packages" },
   catalog: { section: "catalogo" },
-  // Promos now in Marketing
-  promos: { section: "marketing", subTab: "promos" },
-  // Marketing
-  marketing: { section: "marketing", subTab: "resumen" },
-  posts: { section: "marketing", subTab: "posts" },
-  qr: { section: "marketing", subTab: "qr" },
-  whatsapp: { section: "marketing", subTab: "difusion" },
-  difusion: { section: "marketing", subTab: "difusion" },
-  broadcast: { section: "marketing", subTab: "difusion" },
+  promos: { section: "catalogo", subTab: "promos" },
+  // Marketing & Difusión mapped to Negocio posts/qr
+  marketing: { section: "negocio", subTab: "posts" },
+  posts: { section: "negocio", subTab: "posts" },
+  qr: { section: "negocio", subTab: "qr" },
+  whatsapp: { section: "negocio", subTab: "posts" },
+  difusion: { section: "negocio", subTab: "posts" },
+  broadcast: { section: "negocio", subTab: "posts" },
   // Negocio
-  negocio: { section: "negocio", subTab: "resumen" },
-  team: { section: "negocio", subTab: "equipo" },
-  equipo: { section: "negocio", subTab: "equipo" },
-  stylists: { section: "negocio", subTab: "equipo" },
-  hours: { section: "negocio", subTab: "horarios" },
-  horarios: { section: "negocio", subTab: "horarios" },
+  negocio: { section: "negocio", subTab: "estadisticas" },
   reports: { section: "negocio", subTab: "objetivos" },
   informes: { section: "negocio", subTab: "estadisticas" },
   stats: { section: "negocio", subTab: "estadisticas" },
   estadisticas: { section: "negocio", subTab: "estadisticas" },
   goals: { section: "negocio", subTab: "objetivos" },
   objetivos: { section: "negocio", subTab: "objetivos" },
-  commissions: { section: "negocio", subTab: "equipo" },
-  comisiones: { section: "negocio", subTab: "equipo" },
   settings: { section: "ajustes", subTab: "general" },
   ajustes: { section: "ajustes", subTab: "general" },
 };
@@ -155,8 +156,14 @@ const LEGACY_URL_REDIRECTS: Record<string, { section: SectionValue; subTab: stri
   "inicio/caja": { section: "caja", subTab: "cobros" },
   "inicio/espera": { section: "agenda", subTab: "espera" },
   "inicio/pedidos": { section: "caja", subTab: "pedidos" },
-  "clientes/resenas": { section: "marketing", subTab: "resenas" },
-  "catalogo/promos": { section: "marketing", subTab: "promos" },
+  "marketing/resenas": { section: "clientes", subTab: "resenas" },
+  "marketing/promos": { section: "catalogo", subTab: "promos" },
+  "marketing/posts": { section: "negocio", subTab: "posts" },
+  "marketing/qr": { section: "negocio", subTab: "qr" },
+  "marketing/difusion": { section: "negocio", subTab: "posts" },
+  "negocio/equipo": { section: "equipo", subTab: "personal" },
+  "negocio/horarios": { section: "equipo", subTab: "horarios" },
+  "negocio/difusion": { section: "negocio", subTab: "posts" },
   "negocio/ajustes": { section: "ajustes", subTab: "general" },
 };
 
@@ -165,7 +172,6 @@ export default function TenantAdmin() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [tenantLoading, setTenantLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [chromeHidden, setChromeHidden] = useState(false);
   const mainWrapRef = useRef<HTMLDivElement>(null);
 
@@ -265,22 +271,21 @@ export default function TenantAdmin() {
   );
 
   const navItems: NavItem[] = useMemo(() => {
-    const clientsBadge = notificationCounts.messages;
+    const clientsBadge = (notificationCounts.messages || 0) + (notificationCounts.reviews || 0);
     const agendaBadge = waitlistCount;
     const cajaBadge = unseenOrders;
-    const marketingBadge = notificationCounts.reviews;
     const allItems: NavItem[] = [
       { value: "inicio", label: "Inicio", icon: <Home className="h-4 w-4" />, badge: notificationCounts.agenda },
       { value: "agenda", label: "Agenda", icon: <Calendar className="h-4 w-4" />, badge: agendaBadge },
       { value: "caja", label: "Caja", icon: <Wallet className="h-4 w-4" />, badge: cajaBadge },
       { value: "clientes", label: "Clientes", icon: <UserCircle className="h-4 w-4" />, badge: clientsBadge },
+      { value: "equipo", label: "Equipo", icon: <Users className="h-4 w-4" /> },
       { value: "catalogo", label: "Catálogo", icon: <ShoppingBag className="h-4 w-4" /> },
-      { value: "marketing", label: "Marketing", icon: <Megaphone className="h-4 w-4" />, badge: marketingBadge },
       { value: "negocio", label: "Negocio", icon: <Briefcase className="h-4 w-4" /> },
       { value: "ajustes", label: "Ajustes", icon: <Settings className="h-4 w-4" /> },
     ];
     if (isStylist && !isAdmin) {
-      return allItems.filter((item) => !["marketing", "negocio", "ajustes"].includes(item.value));
+      return allItems.filter((item) => !["equipo", "negocio", "ajustes"].includes(item.value));
     }
     return allItems;
   }, [notificationCounts, isAdmin, isStylist, waitlistCount, unseenOrders]);
@@ -469,14 +474,14 @@ export default function TenantAdmin() {
             subTab={activeSubTab}
           />
         );
-      case "marketing":
+      case "equipo":
         return (
-          <MarketingSection
+          <EquipoSection
             key={refreshKey}
             tenantId={tenant.id}
-            tenantSlug={tenant.slug}
+            tenantSlug={slug || ""}
             subTab={activeSubTab}
-            onSubTabChange={(t) => goToSection("marketing", t)}
+            onSubTabChange={(t) => goToSection("equipo", t)}
           />
         );
       case "negocio":
@@ -530,10 +535,6 @@ export default function TenantAdmin() {
     ADMIN_SUB_NAV[activeSection as AdminSection]?.find((s) => s.value === activeSubTab)?.label
     || activeSectionLabel;
 
-  const primaryNav = navItems.slice(0, 4);
-  const extraNav = navItems.slice(4);
-  const extraActive = extraNav.some((n) => n.value === activeSection);
-
   return (
     <div className="glow-shell">
       <Preloader
@@ -570,66 +571,105 @@ export default function TenantAdmin() {
         </div>
 
         <nav className="glow-nav" data-tour-target="sidebar-nav">
-          {navItems.map((item) => {
-            const isActive = activeSection === item.value;
-            const subs = ADMIN_SUB_NAV[item.value as AdminSection] || [];
-            const badgeCount = typeof item.badge === "number" ? item.badge : 0;
-            return (
-              <div key={item.value}>
-                <button
-                  className={`glow-navitem${isActive ? " on" : ""}`}
-                  onClick={() => handleTabClick(item.value)}
-                  data-tour-step={`nav-${item.value}`}
-                  data-tour-nav={item.value}
-                >
-                  <span className="glow-navitem-ic">{item.icon}</span>
-                  {item.label}
-                  {badgeCount > 0 && !isActive && (
-                    <span className="glow-navitem-badge">{badgeCount}</span>
-                  )}
-                  {subs.length > 1 && (
-                    <ChevronDown
-                      className="h-3.5 w-3.5"
-                      style={{
-                        marginLeft: "auto", flexShrink: 0, transition: "transform .2s",
-                        transform: isActive ? "rotate(0deg)" : "rotate(-90deg)",
-                      }}
-                    />
-                  )}
-                </button>
-                {isActive && subs.length > 1 && (
-                  <div className="glow-side-subnav">
-                    {subs.map((sub) => {
-                      const subBadge = sub.badgeKey
-                        ? subNavCounts[sub.badgeKey as keyof typeof subNavCounts] || 0
-                        : 0;
-                      const locked = sub.requiredFeature ? !hasFeature(sub.requiredFeature) : false;
-                      return (
-                        <button
-                          key={sub.value}
-                          className={`glow-subitem${activeSubTab === sub.value ? " on" : ""}${locked ? " locked" : ""}`}
-                          onClick={() => { if (!locked) goToSection(item.value as SectionValue, sub.value); }}
-                        >
-                          {locked ? <Lock style={{ width: 11, height: 11, flexShrink: 0 }} /> : <span className="glow-subdot" />}
-                          {sub.label}
-                          {locked && (
-                            <span className="glow-subitem-badge" style={{ color: "var(--glow-warn-ink)", marginLeft: "auto" }}>Pro</span>
-                          )}
-                          {subBadge > 0 && !locked && (
-                            <span className="glow-subitem-badge">{subBadge}</span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          <LayoutGroup id="desktop-sidebar-nav">
+            {navItems.map((item) => {
+              const isActive = activeSection === item.value;
+              const subs = ADMIN_SUB_NAV[item.value as AdminSection] || [];
+              const badgeCount = typeof item.badge === "number" ? item.badge : 0;
+              const hasNotif = badgeCount > 0;
+              return (
+                <div key={item.value} className="relative">
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    className={cn(
+                      "glow-navitem group relative",
+                      isActive && "on",
+                      hasNotif && !isActive && "glow-navitem--has-notif",
+                    )}
+                    onClick={() => handleTabClick(item.value)}
+                    data-tour-step={`nav-${item.value}`}
+                    data-tour-nav={item.value}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="desktopSidebarActivePill"
+                        className="absolute inset-0 bg-[var(--glow-brand-soft)] border border-[var(--glow-brand-softer)]/80 rounded-[11px] -z-10 shadow-[0_2px_12px_-4px_color-mix(in_oklab,var(--glow-brand)_18%,transparent)]"
+                        transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                      />
+                    )}
+                    <span className="glow-navitem-ic relative z-10 transition-transform duration-200 group-hover:scale-110">
+                      {item.icon}
+                    </span>
+                    <span className="relative z-10">{item.label}</span>
+                    {subs.length > 1 && (
+                      <motion.div
+                        animate={{ rotate: isActive ? 0 : -90 }}
+                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                        className="ml-auto shrink-0 flex items-center justify-center relative z-10"
+                      >
+                        <ChevronDown className="h-3.5 w-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
+                      </motion.div>
+                    )}
+                  </motion.button>
+                  <AnimatePresence initial={false}>
+                    {isActive && subs.length > 1 && (
+                      <motion.div
+                        key={`subnav-${item.value}`}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+                        className="glow-side-subnav overflow-hidden"
+                      >
+                        <LayoutGroup id={`desktop-subnav-group-${item.value}`}>
+                          {subs.map((sub) => {
+                            const subBadge = sub.badgeKey
+                              ? subNavCounts[sub.badgeKey as keyof typeof subNavCounts] || 0
+                              : 0;
+                            const locked = sub.requiredFeature ? !hasFeature(sub.requiredFeature) : false;
+                            const isSubActive = activeSubTab === sub.value;
+                            const hasSubNotif = subBadge > 0;
+                            return (
+                              <motion.button
+                                whileTap={!locked ? { scale: 0.98 } : undefined}
+                                key={sub.value}
+                                className={cn(
+                                  "glow-subitem relative",
+                                  isSubActive && "on",
+                                  hasSubNotif && !isSubActive && "glow-subitem--has-notif",
+                                  locked && "locked",
+                                )}
+                                onClick={() => { if (!locked) goToSection(item.value as SectionValue, sub.value); }}
+                              >
+                                {locked ? (
+                                  <Lock style={{ width: 11, height: 11, flexShrink: 0 }} />
+                                ) : (
+                                  <span className={cn(
+                                    "glow-subdot transition-all duration-200",
+                                    (isSubActive || hasSubNotif) && "bg-[var(--glow-brand)]",
+                                    isSubActive && "scale-125",
+                                  )} />
+                                )}
+                                <span className="relative z-10">{sub.label}</span>
+                              </motion.button>
+                            );
+                          })}
+                        </LayoutGroup>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </LayoutGroup>
         </nav>
 
         <div className="glow-side-foot">
-          <div className="glow-user-row">
+          <motion.div
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.99 }}
+            className="glow-user-row cursor-pointer"
+          >
             <span className="glow-ava">
               {userEmail ? userEmail.slice(0, 2).toUpperCase() : "AD"}
             </span>
@@ -647,7 +687,7 @@ export default function TenantAdmin() {
               onGoHome={() => navigate("/")}
               onSignOut={handleSignOut}
             />
-          </div>
+          </motion.div>
         </div>
       </aside>
 
@@ -715,11 +755,12 @@ export default function TenantAdmin() {
               <Wallet className="h-4 w-4" />
               <span>Cobrar</span>
             </button>
-            <button
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
               className="glow-new-cita-btn"
               onClick={() => {
-                // Antes solo navegaba a la agenda: el botón decía "Nueva cita"
-                // y no abría nada. La bandeja la recoge AgendaSection.
                 sessionStorage.setItem("openNewBooking", "1");
                 goToSection("agenda", "dia");
               }}
@@ -727,7 +768,7 @@ export default function TenantAdmin() {
             >
               <Sparkles className="h-4 w-4" />
               <span>Nueva cita</span>
-            </button>
+            </motion.button>
           </div>
         </header>
 
@@ -752,11 +793,11 @@ export default function TenantAdmin() {
         >
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeSection}
-              initial={{ opacity: 0, y: 6 }}
+              key={`${activeSection}-${activeSubTab}`}
+              initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
+              exit={{ opacity: 0, y: -3 }}
+              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
             >
               {renderContent()}
             </motion.div>
@@ -764,59 +805,16 @@ export default function TenantAdmin() {
         </main>
       </div>
 
-      {/* ── Mobile Bottom Nav ── */}
-      <nav className="glow-bottom" data-tour-target="mobile-bottom-nav">
-        {primaryNav.map((item) => {
-          const badgeCount = typeof item.badge === "number" ? item.badge : 0;
-          const showBadge = badgeCount > 0 && activeSection !== item.value;
-          return (
-            <button
-              key={item.value}
-              className={`glow-bottom-item${activeSection === item.value ? " on" : ""}`}
-              onClick={() => handleTabClick(item.value)}
-              data-tour-nav={item.value}
-            >
-              <span className="glow-bottom-ic" style={{ position: "relative" }}>
-                {item.icon}
-                {showBadge && <NotifBadge count={badgeCount} dot />}
-              </span>
-              {item.label}
-            </button>
-          );
-        })}
-        {extraNav.length > 0 && (
-          <button
-            className={`glow-bottom-item${extraActive ? " on" : ""}`}
-            onClick={() => setMoreOpen(true)}
-            data-tour-nav="more"
-          >
-            <span className="glow-bottom-ic"><Menu className="h-5 w-5" /></span>
-            Más
-          </button>
-        )}
-      </nav>
-
-      {/* More bottom sheet */}
-      {moreOpen && (
-        <div className="glow-more-wrap" onClick={() => setMoreOpen(false)}>
-          <div className="glow-more" onClick={(e) => e.stopPropagation()}>
-            <div className="glow-more-grip" />
-            <h4 className="glow-more-title">Más secciones</h4>
-            <div className="glow-more-grid">
-              {extraNav.map((item) => (
-                <button
-                  key={item.value}
-                  className={`glow-more-item${activeSection === item.value ? " on" : ""}`}
-                  onClick={() => { handleTabClick(item.value); setMoreOpen(false); }}
-                >
-                  <span className="glow-more-ic">{item.icon}</span>
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Mobile Bottom Nav (Floating iOS Glass Dock + Spring App Hub) ── */}
+      <MobileAdminBottomBar
+        activeSection={activeSection}
+        onSelectSection={handleTabClick}
+        notificationCounts={notificationCounts}
+        waitlistCount={waitlistCount}
+        unseenOrders={unseenOrders}
+        isStylist={isStylist}
+        isAdmin={isAdmin}
+      />
     </div>
   );
 }

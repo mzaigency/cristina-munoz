@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, LayoutGroup } from "framer-motion";
 import { busyMinutes, toMinutesOfDay } from "@/lib/agendaOccupancy";
 import { STYLIST_FALLBACK } from "@/lib/chartColors";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,8 +24,8 @@ import {
   UserCircle,
   Sparkles,
   ChevronLeft,
-  MoreHorizontal,
   ChevronRight,
+  ChevronDown,
   Lock,
   Phone,
   MessageCircle,
@@ -128,6 +129,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<string>("");
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [weekCalendarOpen, setWeekCalendarOpen] = useState(false);
   /** El buscador se pliega tras el icono: se usa a ratos, no cada día. */
   const [searchOpen, setSearchOpen] = useState(false);
   const [highlightedBookingId, setHighlightedBookingId] = useState<string | null>(null);
@@ -1477,9 +1480,28 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           <div className="ag-dayhead">
             {/* fila 1: día, métricas y acciones */}
             <div className="ag-dayhead-row">
-              <div className="ag-date">
-                <span className="ag-date-d glow-hide-sm">{format(day, "EEEE d", { locale: es })}</span>
-                <span className="ag-date-d glow-show-sm">{format(day, "EEE d", { locale: es })}</span>
+              <div
+                className="ag-date cursor-pointer group select-none transition-opacity hover:opacity-85"
+                onClick={() => setCalendarOpen(true)}
+                title="Elegir cualquier fecha en el calendario"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setCalendarOpen(true);
+                  }
+                }}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="ag-date-d glow-hide-sm group-hover:text-[var(--glow-brand)] transition-colors">
+                    {format(day, "EEEE d", { locale: es })}
+                  </span>
+                  <span className="ag-date-d glow-show-sm group-hover:text-[var(--glow-brand)] transition-colors">
+                    {format(day, "EEE d", { locale: es })}
+                  </span>
+                  <CalendarIcon className="w-3.5 h-3.5 text-[var(--glow-ink-3)] group-hover:text-[var(--glow-brand)] transition-colors opacity-70 group-hover:opacity-100" />
+                </div>
                 <span className="ag-date-m glow-hide-sm">{format(day, "MMMM yyyy", { locale: es })}</span>
                 <span className="ag-date-m glow-show-sm">{format(day, "MMM", { locale: es })}</span>
               </div>
@@ -1531,24 +1553,49 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                   <Ban style={{ width: 13, height: 13 }} />
                   <span className="glow-hide-sm">Bloquear</span>
                 </button>
-                <Popover>
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                   <PopoverTrigger asChild>
-                    <button className="glow-icon-btn glow-icon-btn--ghost" aria-label="Más acciones">
-                      <MoreHorizontal style={{ width: 15, height: 15 }} />
+                    <button
+                      className="glow-btn glow-btn--sm"
+                      aria-label="Abrir calendario para elegir fecha"
+                      title="Elegir cualquier día en el calendario"
+                    >
+                      <CalendarIcon style={{ width: 13, height: 13 }} />
+                      <span className="glow-hide-sm">Calendario</span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent align="end" className="w-auto p-2">
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 210 }}>
+                  <PopoverContent align="end" className="w-auto p-3 shadow-xl rounded-2xl border border-[var(--glow-line)]">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 230 }}>
                       {topLeftSlot}
-                      <div style={{ borderTop: "1px solid var(--glow-line-soft)", paddingTop: 8 }}>
-                        <Calendar
-                          mode="single"
-                          selected={weekStart}
-                          onSelect={handleJumpToDate}
-                          initialFocus
-                          weekStartsOn={1}
-                        />
+                      {topLeftSlot && <div style={{ borderTop: "1px solid var(--glow-line-soft)", margin: "2px 0" }} />}
+                      <div className="flex items-center justify-between px-1 pb-1">
+                        <span className="text-xs font-bold text-[var(--glow-ink)]">Elegir fecha</span>
+                        {!isToday && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleBackToToday();
+                              setCalendarOpen(false);
+                            }}
+                            className="text-xs font-semibold text-[var(--glow-brand)] hover:underline"
+                          >
+                            Ir a hoy
+                          </button>
+                        )}
                       </div>
+                      <Calendar
+                        mode="single"
+                        selected={day}
+                        onSelect={(d) => {
+                          if (d) {
+                            handleJumpToDate(d);
+                            setCalendarOpen(false);
+                          }
+                        }}
+                        initialFocus
+                        weekStartsOn={1}
+                        locale={es}
+                      />
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -1566,27 +1613,41 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                 <ChevronLeft style={{ width: 15, height: 15 }} />
               </button>
 
-              <div className="ag-week">
-                {weekDays.map((d) => {
-                  const key = format(d, "yyyy-MM-dd");
-                  const isOn = key === activeKey;
-                  const dSched = getScheduleForDay(d);
-                  const n = (groupedBookings[key] || []).filter((b) => !isBlockedBooking(b)).length;
-                  return (
-                    <button
-                      key={key}
-                      className={`ag-wd${isOn ? " on" : ""}${dSched.isClosed ? " closed" : ""}`}
-                      onClick={() => setActiveTab(key)}
-                      aria-current={isOn ? "date" : undefined}
-                    >
-                      <span className="ag-wd-n">{format(d, "EEE", { locale: es })}</span>
-                      <span className="ag-wd-d">{format(d, "d")}</span>
-                      <span className="ag-wd-c">{dSched.isClosed ? "—" : n || "—"}</span>
-                      {isSameDay(d, new Date()) && !isOn && <span className="ag-wd-today" />}
-                    </button>
-                  );
-                })}
-              </div>
+              <LayoutGroup id="agenda-week-strip">
+                <div className="ag-week">
+                  {weekDays.map((d) => {
+                    const key = format(d, "yyyy-MM-dd");
+                    const isOn = key === activeKey;
+                    const dSched = getScheduleForDay(d);
+                    const n = (groupedBookings[key] || []).filter((b) => !isBlockedBooking(b)).length;
+                    return (
+                      <button
+                        key={key}
+                        className={`ag-wd${isOn ? " on" : ""}${dSched.isClosed ? " closed" : ""}`}
+                        onClick={() => setActiveTab(key)}
+                        aria-current={isOn ? "date" : undefined}
+                      >
+                        {isOn && (
+                          <motion.div
+                            layoutId={`agActiveDayPill-${format(weekStart, "yyyy-MM-dd")}`}
+                            className="ag-wd-pill"
+                            transition={{
+                              type: "spring",
+                              stiffness: 480,
+                              damping: 34,
+                              mass: 0.8,
+                            }}
+                          />
+                        )}
+                        <span className="ag-wd-n">{format(d, "EEE", { locale: es })}</span>
+                        <span className="ag-wd-d">{format(d, "d")}</span>
+                        <span className="ag-wd-c">{dSched.isClosed ? "—" : n || "—"}</span>
+                        {isSameDay(d, new Date()) && !isOn && <span className="ag-wd-today" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </LayoutGroup>
 
               <button
                 className="ag-wk-arrow"
@@ -1733,10 +1794,25 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         return (
           <div className="ag-dayhead">
             <div className="ag-dayhead-row">
-              <div className="ag-date">
-                <span className="ag-date-d">
-                  {format(weekStart, "d MMM", { locale: es })} – {format(addDays(weekStart, 6), "d MMM", { locale: es })}
-                </span>
+              <div
+                className="ag-date cursor-pointer group select-none transition-opacity hover:opacity-85"
+                onClick={() => setWeekCalendarOpen(true)}
+                title="Elegir cualquier semana en el calendario"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setWeekCalendarOpen(true);
+                  }
+                }}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="ag-date-d group-hover:text-[var(--glow-brand)] transition-colors">
+                    {format(weekStart, "d MMM", { locale: es })} – {format(addDays(weekStart, 6), "d MMM", { locale: es })}
+                  </span>
+                  <CalendarIcon className="w-3.5 h-3.5 text-[var(--glow-ink-3)] group-hover:text-[var(--glow-brand)] transition-colors opacity-70 group-hover:opacity-100" />
+                </div>
                 <span className="ag-date-m">{format(weekStart, "yyyy", { locale: es })}</span>
               </div>
 
@@ -1776,6 +1852,50 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                 >
                   <ChevronRight style={{ width: 15, height: 15 }} />
                 </button>
+                <Popover open={weekCalendarOpen} onOpenChange={setWeekCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="glow-btn glow-btn--sm"
+                      aria-label="Abrir calendario para elegir semana"
+                      title="Elegir cualquier semana en el calendario"
+                    >
+                      <CalendarIcon style={{ width: 13, height: 13 }} />
+                      <span className="glow-hide-sm">Calendario</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-auto p-3 shadow-xl rounded-2xl border border-[var(--glow-line)]">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 230 }}>
+                      <div className="flex items-center justify-between px-1 pb-1">
+                        <span className="text-xs font-bold text-[var(--glow-ink)]">Elegir semana</span>
+                        {!estaSemana && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+                              setWeekCalendarOpen(false);
+                            }}
+                            className="text-xs font-semibold text-[var(--glow-brand)] hover:underline"
+                          >
+                            Esta semana
+                          </button>
+                        )}
+                      </div>
+                      <Calendar
+                        mode="single"
+                        selected={weekStart}
+                        onSelect={(d) => {
+                          if (d) {
+                            setWeekStart(startOfWeek(d, { weekStartsOn: 1 }));
+                            setWeekCalendarOpen(false);
+                          }
+                        }}
+                        initialFocus
+                        weekStartsOn={1}
+                        locale={es}
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 

@@ -24,6 +24,7 @@ import {
   Lock,
   Target,
   Megaphone,
+  Palmtree,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
@@ -36,9 +37,9 @@ export type AdminSection =
   | "inicio"
   | "agenda"
   | "caja"
+  | "equipo"
   | "clientes"
   | "catalogo"
-  | "marketing"
   | "negocio"
   | "ajustes";
 
@@ -68,29 +69,27 @@ export const ADMIN_SUB_NAV: Record<AdminSection, AdminSubTabDef[]> = {
     { value: "pedidos", label: "Pedidos", icon: ShoppingCart, badgeKey: "orders" },
     { value: "cierre", label: "Cierre", icon: Receipt, requiredFeature: "cash_register" },
   ],
+  equipo: [
+    { value: "personal", label: "Miembros", icon: Users },
+    { value: "horarios", label: "Horarios y Turnos", icon: Clock },
+    { value: "ausencias", label: "Vacaciones y Ausencias", icon: Palmtree },
+  ],
   clientes: [
     { value: "directorio", label: "Directorio", icon: UserCircle },
     { value: "mensajes", label: "Mensajes", icon: MessageCircle, badgeKey: "messages" },
+    { value: "resenas", label: "Reseñas", icon: Star, badgeKey: "reviews" },
   ],
   catalogo: [
     { value: "services", label: "Servicios", icon: Scissors },
     { value: "products", label: "Productos", icon: ShoppingBag },
     { value: "packages", label: "Paquetes", icon: Package, requiredFeature: "packages" },
-  ],
-  marketing: [
-    { value: "resumen", label: "Resumen", icon: LayoutDashboard },
-    { value: "posts", label: "Posts", icon: ImagePlus },
     { value: "promos", label: "Promos", icon: Percent, requiredFeature: "promotions" },
-    { value: "resenas", label: "Reseñas", icon: Star, badgeKey: "reviews" },
-    { value: "difusion", label: "Difusión", icon: Megaphone },
-    { value: "qr", label: "Tarjetas QR", icon: QrCode },
   ],
   negocio: [
-    { value: "resumen", label: "Resumen", icon: LayoutDashboard },
-    { value: "equipo", label: "Equipo", icon: Users },
-    { value: "horarios", label: "Horarios", icon: Clock },
     { value: "estadisticas", label: "Estadísticas", icon: BarChart3, requiredFeature: "advanced_analytics" },
     { value: "objetivos", label: "Objetivos", icon: Target, requiredFeature: "monthly_goals" },
+    { value: "posts", label: "Posts Feed", icon: ImagePlus },
+    { value: "qr", label: "Tarjetas QR", icon: QrCode },
   ],
   ajustes: [
     { value: "general", label: "General", icon: Settings },
@@ -98,6 +97,8 @@ export const ADMIN_SUB_NAV: Record<AdminSection, AdminSubTabDef[]> = {
     { value: "alertas", label: "Alertas", icon: Activity },
   ],
 };
+
+import { motion, LayoutGroup } from "framer-motion";
 
 export const getDefaultSubTab = (section: AdminSection): string =>
   ADMIN_SUB_NAV[section][0]?.value ?? "";
@@ -140,41 +141,40 @@ export function AdminSubNav({
     >
       <div className="mx-auto max-w-7xl px-3 min-[920px]:px-[26px]">
         <ScrollArea className="w-full">
-          <div className="glow-subnav-row">
-            {items.map((item) => {
-              const isActive = current === item.value;
-              const locked = item.requiredFeature ? !hasFeature(item.requiredFeature) : false;
-              const badge = item.badgeKey ? counts[item.badgeKey] || 0 : 0;
-              const Icon = locked ? Lock : item.icon;
+          <LayoutGroup id={`admin-subnav-dock-${section}`}>
+            <div className="glow-subnav-row relative">
+              {items.map((item) => {
+                const isActive = current === item.value;
+                const locked = item.requiredFeature ? !hasFeature(item.requiredFeature) : false;
+                const badge = item.badgeKey ? counts[item.badgeKey] || 0 : 0;
+                const hasNotif = badge > 0;
+                const Icon = locked ? Lock : item.icon;
 
-              return (
-                <button
-                  key={item.value}
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-label={`${item.label}${badge > 0 ? `, ${badge} pendientes` : ""}${locked ? ", requiere plan Pro" : ""}`}
-                  onClick={() => {
-                    if (locked) return;
-                    onSelect(item.value);
-                  }}
-                  className={cn(
-                    "glow-subtab",
-                    isActive && "glow-subtab--on",
-                    locked && "glow-subtab--locked",
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5 shrink-0" />
-                  <span>{item.label}</span>
-                  {locked && (
-                    <span className="glow-subtab-pro">Pro</span>
-                  )}
-                  {badge > 0 && !isActive && (
-                    <span className="glow-subtab-count">{badge > 99 ? "99+" : badge}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                return (
+                  <motion.button
+                    whileTap={!locked ? { scale: 0.97 } : undefined}
+                    key={item.value}
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-label={`${item.label}${badge > 0 ? `, ${badge} pendientes` : ""}${locked ? ", requiere plan Pro" : ""}`}
+                    onClick={() => {
+                      if (locked) return;
+                      onSelect(item.value);
+                    }}
+                    className={cn(
+                      "glow-subtab relative z-10",
+                      isActive && "glow-subtab--on",
+                      hasNotif && !isActive && "glow-subtab--has-notif",
+                      locked && "glow-subtab--locked",
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" />
+                    <span>{item.label}</span>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </LayoutGroup>
           <ScrollBar orientation="horizontal" className="h-1" />
         </ScrollArea>
       </div>

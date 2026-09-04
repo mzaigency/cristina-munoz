@@ -15,7 +15,7 @@ const QUICK_STEPS = [
   { id: "first_booking", label: "Crea una cita", tab: "agenda" },
   { id: "cash_register", label: "Primer cobro", tab: "agenda" },
   { id: "first_message", label: "Envía un mensaje", tab: "clients" },
-  { id: "first_story", label: "Publica un Post", tab: "marketing" },
+  { id: "first_story", label: "Publica un Post", tab: "posts" },
   { id: "review_analytics", label: "Revisa estadísticas", tab: "reports" },
 ];
 

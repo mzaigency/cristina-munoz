@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { STYLIST_FALLBACK } from "@/lib/chartColors";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Sparkles, Plus } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { LocalCalendarCRM } from "../LocalCalendarCRM";
 import { WaitlistManager } from "../WaitlistManager";
 import { AgendaImporter } from "../import/AgendaImporter";
@@ -111,24 +111,7 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab }: AgendaSectionProps)
         <WaitlistManager tenantId={tenantId} />
       )}
 
-      {/* FAB "Nueva cita" — solo móvil, solo en Día */}
-      {activeTab === "dia" && (
-        <button
-          onClick={() => setFabOpen(true)}
-          aria-label="Nueva cita"
-          className="md:hidden fixed z-40 flex items-center justify-center rounded-full text-white shadow-lg active:scale-95 transition-transform"
-          style={{
-            right: "calc(1rem + env(safe-area-inset-right))",
-            bottom: "calc(5rem + env(safe-area-inset-bottom))",
-            width: 56,
-            height: 56,
-            background: "var(--glow-gradient)",
-            boxShadow: "0 8px 24px -6px rgb(var(--glow-brand-rgb) / .45)",
-          }}
-        >
-          <Plus className="h-6 w-6" strokeWidth={2.5} />
-        </button>
-      )}
+
 
       <QuickBookingSheet
         key={refreshKey}

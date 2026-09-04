@@ -215,9 +215,23 @@ export default function Profile() {
         noindex={true}
       />
       
-      {/* Header with safe area */}
-      <div className="bg-gradient-to-b from-primary/8 to-transparent pt-[calc(env(safe-area-inset-top)+2rem)] pb-6 px-4">
-        <div className="flex flex-col items-center">
+      {/* Standard Desktop Header Bar */}
+      <div className="sticky top-0 z-20 bg-surface/85 backdrop-blur-xl border-b border-line/60 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex flex-col min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight">
+              Mi Perfil
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-tight hidden sm:block mt-0.5">
+              Gestiona tu información personal, citas y preferencias
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* User Hero section */}
+      <div className="bg-gradient-to-b from-primary/8 to-transparent pt-6 pb-4 px-4">
+        <div className="max-w-2xl mx-auto flex flex-col items-center">
           {/* Avatar with upload */}
           {userId && (
             <div className="mb-4">
@@ -231,7 +245,7 @@ export default function Profile() {
             </div>
           )}
           
-          <h1 className="text-xl font-bold text-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
             {profileData.full_name || "Usuario"}
           </h1>
           {profileData.username && (
@@ -242,7 +256,7 @@ export default function Profile() {
       </div>
 
       {/* Content */}
-      <div className="px-4 py-6">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-16">
         {isEditing ? (
           /* Edit Mode */
           <div className="liquid-glass-card !rounded-2xl p-4">

@@ -214,12 +214,12 @@ export default function MyBookings() {
     return (
       <AppLayout>
         <SEO title="Mis Citas" description="Gestiona tus reservas" canonicalUrl="/mis-citas" noindex={true} />
-        <div className="sticky top-0 z-40 liquid-glass-solid pt-[env(safe-area-inset-top)]">
-          <div className="px-4 py-3">
-            <h1 className="text-[28px] font-bold text-foreground tracking-tight">Mis Citas</h1>
+        <div className="sticky top-0 z-40 bg-surface/85 backdrop-blur-xl border-b border-line/60 pt-[env(safe-area-inset-top)]">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight">Mis Citas</h1>
           </div>
         </div>
-        <div className="px-4 py-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <BookingSkeleton />
         </div>
       </AppLayout>
@@ -237,18 +237,25 @@ export default function MyBookings() {
         enabled={!!user}
       />
 
-      {/* iOS-style Header */}
-      <div className="sticky top-0 z-40 liquid-glass-solid pt-[env(safe-area-inset-top)]">
-        <div className="px-4 py-3">
-          <h1 className="text-[28px] font-bold text-foreground tracking-tight">Mis Citas</h1>
-        </div>
-        <div className="px-4 pb-3">
-          <SegmentedControl options={TABS} value={activeTab} onChange={setActiveTab} />
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-surface/85 backdrop-blur-xl border-b border-line/60 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+          <div className="flex flex-col min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight">
+              Mis Citas
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-tight hidden sm:block mt-0.5">
+              Gestiona tus próximas citas, reprograma o consulta tu historial
+            </p>
+          </div>
+          <div className="w-full sm:w-80 shrink-0">
+            <SegmentedControl options={TABS} value={activeTab} onChange={setActiveTab} />
+          </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="px-4 py-4 pb-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-16">
         {activeTab === "waitlist" ? (
           <MyWaitlistList />
         ) : (

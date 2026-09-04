@@ -72,9 +72,9 @@ const TRAINING_STEPS: TrainingStep[] = [
     title: "Publica tu primer Post",
     description: "Muestra tus trabajos y atrae nuevos clientes",
     icon: <ImagePlus className="h-5 w-5" />,
-    navigateTo: "marketing",
+    navigateTo: "negocio",
     subTab: "posts",
-    sessionStorageKey: "openMarketingSubTab",
+    sessionStorageKey: "openNegocioSubTab",
   },
   {
     id: "review_analytics",
