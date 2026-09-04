@@ -32,9 +32,10 @@ const formatPrice = (price: number | null | undefined): string => {
 interface TenantBookingFlowProps {
   tenantId: string;
   tenantName?: string;
+  logoUrl?: string | null;
 }
 
-export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowProps) => {
+export const TenantBookingFlow = ({ tenantId, tenantName, logoUrl }: TenantBookingFlowProps) => {
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
   const [packages, setPackages] = useState<ServicePackage[]>([]);
@@ -42,6 +43,23 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [pendingServices, setPendingServices] = useState<{ services: Service[], packageId?: string } | null>(null);
+  const [resolvedLogo, setResolvedLogo] = useState<string | null>(logoUrl || null);
+
+  useEffect(() => {
+    if (logoUrl) {
+      setResolvedLogo(logoUrl);
+      return;
+    }
+    if (!tenantId) return;
+    supabase
+      .from('tenants')
+      .select('logo_url')
+      .eq('id', tenantId)
+      .single()
+      .then(({ data }) => {
+        if (data?.logo_url) setResolvedLogo(data.logo_url);
+      });
+  }, [tenantId, logoUrl]);
   const { toast } = useToast();
   const navigate = useNavigate();
   const bookingRef = useRef<HTMLElement>(null);
@@ -487,6 +505,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                         discountedPrice={bookingData.appliedPromotion ? discountedPrice : undefined}
                         tenantId={tenantId}
                         tenantName={tenantName}
+                        logoUrl={resolvedLogo}
                         onSuccess={(name, phone) => {
                           setBookingData({ ...bookingData, name, phone });
                           setBookingConfirmed(true);
@@ -506,6 +525,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName }: TenantBookingFlowPro
                         onBack={handleBack}
                         tenantId={tenantId}
                         tenantName={tenantName}
+                        logoUrl={resolvedLogo}
                         totalPrice={totalPrice}
                         discountedPrice={discountedPrice}
                         hideFooter={true}

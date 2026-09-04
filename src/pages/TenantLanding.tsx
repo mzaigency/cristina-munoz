@@ -443,6 +443,7 @@ const TenantLanding = () => {
             <TenantBookingFlow 
               tenantId={tenant.id} 
               tenantName={tenant.name} 
+              logoUrl={tenant.logo_url}
             />
           </div>
 

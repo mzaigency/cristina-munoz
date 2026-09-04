@@ -4,6 +4,7 @@ import { es } from "date-fns/locale";
 import { BookingData, Promotion } from "@/types/booking";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { supabaseImage } from "@/lib/supabaseImage";
 
 export interface SalonAppointmentCardProps {
   bookingData: BookingData;
@@ -14,6 +15,7 @@ export interface SalonAppointmentCardProps {
   clientPhone?: string | null;
   tenantName?: string;
   tenantId?: string;
+  logoUrl?: string | null;
   onApplyPromotion?: (promotion: Promotion | null) => void;
 }
 
@@ -38,6 +40,7 @@ export const SalonAppointmentCard = ({
   clientPhone,
   tenantName,
   tenantId,
+  logoUrl,
   onApplyPromotion,
 }: SalonAppointmentCardProps) => {
   const [showPromoInput, setShowPromoInput] = useState(false);
@@ -106,41 +109,81 @@ export const SalonAppointmentCard = ({
   };
 
   return (
-    <div className="rounded-2xl border border-neutral-200/90 bg-white shadow-xs overflow-hidden divide-y divide-neutral-100">
-      {/* ── Fecha y Hora ── */}
-      <div className="p-4 sm:p-5 flex items-center justify-between gap-4">
-        <div>
-          {tenantName && (
-            <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block mb-0.5">
-              {tenantName}
-            </span>
+    <div className="relative rounded-2xl sm:rounded-3xl border border-neutral-200/90 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all duration-300">
+      {/* ── Barra superior con gradiente de marca sutil y elegante ── */}
+      <div className="h-1.5 w-full bg-gradient-to-r from-[#22408C] via-[#633593] to-[#98329A]" />
+
+      {/* ── Cabecera: Logo del Salón, Nombre y Estado ── */}
+      <div className="p-4 sm:p-5 bg-gradient-to-b from-neutral-50/70 via-white to-white border-b border-neutral-100 flex items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          {logoUrl ? (
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl border border-neutral-200/80 bg-white p-1 shadow-2xs flex items-center justify-center shrink-0 overflow-hidden">
+              <img
+                src={supabaseImage(logoUrl, { width: 96 }) || logoUrl}
+                alt={tenantName || "Salón"}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#22408C]/10 via-[#633593]/10 to-[#98329A]/15 border border-[#22408C]/15 text-[#22408C] font-bold text-base flex items-center justify-center shrink-0 shadow-2xs">
+              {(tenantName || "S").charAt(0).toUpperCase()}
+            </div>
           )}
+
+          <div className="min-w-0">
+            <h4 className="text-base sm:text-lg font-bold text-neutral-900 truncate leading-tight">
+              {tenantName || "Salón de Belleza"}
+            </h4>
+            <p className="text-xs text-neutral-400 font-medium mt-0.5">Resumen de tu cita</p>
+          </div>
+        </div>
+
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-semibold text-emerald-700 shrink-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          En salón
+        </span>
+      </div>
+
+      {/* ── Bloque Destacado: Fecha y Hora con Gradiente Sutil ── */}
+      <div className="p-4 sm:p-5 bg-gradient-to-r from-neutral-50/90 via-white to-neutral-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100">
+        <div>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-0.5">
+            Día reservado
+          </span>
           <p className="text-base sm:text-lg font-bold text-neutral-900 capitalize leading-snug">
             {bookingData.date
               ? format(bookingData.date, "EEEE, d 'de' MMMM", { locale: es })
               : "Fecha por definir"}
           </p>
-          <div className="flex items-center gap-2 mt-1 text-xs sm:text-[13px] text-neutral-500">
-            <span className="font-bold text-primary tabular-nums">{bookingData.time} h</span>
-            <span className="text-neutral-300">·</span>
-            <span>{totalDuration} min de duración</span>
-          </div>
         </div>
 
-        {bookingData.packageId && (
-          <span className="px-2.5 py-1 rounded-md bg-neutral-100 text-neutral-700 text-xs font-semibold shrink-0">
-            Pack
-          </span>
-        )}
+        <div className="sm:text-right shrink-0">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#22408C]/[0.08] via-[#633593]/[0.08] to-[#98329A]/[0.08] border border-[#22408C]/15 text-[#22408C]">
+            <span className="font-bold text-[15px] sm:text-base tabular-nums">
+              {bookingData.time} h
+            </span>
+            <span className="text-neutral-300">·</span>
+            <span className="text-xs font-semibold text-neutral-600">
+              {totalDuration} min
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* ── Servicios ── */}
       <div className="p-4 sm:p-5 space-y-3">
-        <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
-          {bookingData.services.length === 1 ? "Servicio" : "Servicios"}
-        </span>
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
+            {bookingData.services.length === 1 ? "Servicio" : "Servicios"}
+          </span>
+          {bookingData.packageId && (
+            <span className="px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 text-amber-800 text-[11px] font-semibold">
+              Pack seleccionado
+            </span>
+          )}
+        </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {bookingData.services.map((service) => (
             <div key={service.id} className="flex items-center justify-between gap-3 text-[13.5px]">
               <div className="min-w-0">
@@ -154,7 +197,7 @@ export const SalonAppointmentCard = ({
                 )}
               </div>
               {service.price !== undefined && service.price !== null && (
-                <span className="font-semibold text-neutral-900 tabular-nums shrink-0">
+                <span className="font-bold text-neutral-900 tabular-nums shrink-0">
                   {formatPrice(service.price)}
                 </span>
               )}
@@ -164,9 +207,9 @@ export const SalonAppointmentCard = ({
       </div>
 
       {/* ── Profesional y Cliente ── */}
-      <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-[13px]">
+      <div className="p-4 sm:p-5 bg-neutral-50/40 border-t border-neutral-100 grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-[13px]">
         <div>
-          <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block mb-0.5">
+          <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-0.5">
             Profesional
           </span>
           <p className="font-semibold text-neutral-900">{stylistName}</p>
@@ -174,7 +217,7 @@ export const SalonAppointmentCard = ({
 
         {clientName && (
           <div>
-            <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block mb-0.5">
+            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-0.5">
               A nombre de
             </span>
             <p className="font-semibold text-neutral-900">{clientName}</p>
@@ -187,7 +230,7 @@ export const SalonAppointmentCard = ({
 
       {/* ── Código Promocional ── */}
       {bookingData.appliedPromotion ? (
-        <div className="px-4 py-3 bg-emerald-50/70 border-t border-emerald-100 flex items-center justify-between text-xs">
+        <div className="px-4 py-3 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-teal-500/10 border-t border-emerald-500/20 flex items-center justify-between text-xs">
           <div className="min-w-0">
             <span className="font-semibold text-emerald-950 block truncate">
               Descuento ({bookingData.appliedPromotion.code}): {bookingData.appliedPromotion.name}
@@ -201,7 +244,7 @@ export const SalonAppointmentCard = ({
               <button
                 type="button"
                 onClick={handleRemovePromo}
-                className="text-emerald-700 hover:text-emerald-950 font-medium underline"
+                className="text-emerald-700 hover:text-emerald-950 font-semibold underline text-xs"
               >
                 Quitar
               </button>
@@ -209,7 +252,7 @@ export const SalonAppointmentCard = ({
           </div>
         </div>
       ) : onApplyPromotion && tenantId ? (
-        <div className="px-4 py-3 bg-neutral-50/50">
+        <div className="px-4 py-3 bg-neutral-50/50 border-t border-neutral-100">
           {!showPromoInput ? (
             <button
               type="button"
@@ -264,7 +307,7 @@ export const SalonAppointmentCard = ({
 
       {/* ── Total a abonar ── */}
       {finalPrice > 0 && (
-        <div className="p-4 sm:p-5 bg-neutral-50/70 flex items-center justify-between gap-3">
+        <div className="p-4 sm:p-5 bg-gradient-to-b from-neutral-50/60 to-neutral-100/40 border-t border-neutral-200/80 flex items-center justify-between gap-3">
           <div>
             <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider block">
               Total a pagar
@@ -280,12 +323,12 @@ export const SalonAppointmentCard = ({
                 <span className="text-sm text-neutral-400 line-through tabular-nums">
                   {formatPrice(totalPrice)}
                 </span>
-                <span className="text-2xl font-bold text-primary tabular-nums">
+                <span className="text-2xl font-black text-primary tabular-nums">
                   {formatPrice(discountedPrice!)}
                 </span>
               </div>
             ) : (
-              <span className="text-2xl font-bold text-neutral-900 tabular-nums">
+              <span className="text-2xl font-black text-neutral-900 tabular-nums">
                 {formatPrice(totalPrice)}
               </span>
             )}

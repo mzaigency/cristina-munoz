@@ -16,6 +16,7 @@ interface GuestBookingFormProps {
   discountedPrice?: number;
   tenantId: string;
   tenantName?: string;
+  logoUrl?: string | null;
   onSuccess: (name: string, phone: string) => void;
   onSwitchToLogin: () => void;
   onBack: () => void;
@@ -30,6 +31,7 @@ export function GuestBookingForm({
   discountedPrice,
   tenantId,
   tenantName,
+  logoUrl,
   onSuccess,
   onSwitchToLogin,
   onBack,
@@ -188,6 +190,7 @@ export function GuestBookingForm({
         clientPhone={phone.trim() || null}
         tenantName={tenantName}
         tenantId={tenantId}
+        logoUrl={logoUrl}
       />
 
       {/* Formulario de Contacto */}

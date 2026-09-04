@@ -20,6 +20,7 @@ interface BookingConfirmationProps {
   onBack: () => void;
   tenantId?: string;
   tenantName?: string;
+  logoUrl?: string | null;
   totalPrice?: number;
   discountedPrice?: number;
   addonProducts?: SelectedAddon[];
@@ -40,7 +41,8 @@ export const BookingConfirmation = ({
   onConfirm,
   onBack,
   tenantId,
-  tenantName = "Cristina Muñoz",
+  tenantName,
+  logoUrl,
   totalPrice = 0,
   discountedPrice,
   addonProducts = [],
@@ -382,6 +384,7 @@ export const BookingConfirmation = ({
             clientPhone={userProfile.phone}
             tenantName={tenantName}
             tenantId={tenantId}
+            logoUrl={logoUrl}
           />
         </div>
 
@@ -405,6 +408,7 @@ export const BookingConfirmation = ({
         clientPhone={userProfile.phone}
         tenantName={tenantName}
         tenantId={tenantId}
+        logoUrl={logoUrl}
         onApplyPromotion={onApplyPromotion}
       />
 
