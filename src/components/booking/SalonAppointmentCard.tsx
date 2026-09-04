@@ -4,7 +4,6 @@ import { es } from "date-fns/locale";
 import { BookingData, Promotion } from "@/types/booking";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { supabaseImage } from "@/lib/supabaseImage";
 
 export interface SalonAppointmentCardProps {
   bookingData: BookingData;
@@ -108,24 +107,27 @@ export const SalonAppointmentCard = ({
     }
   };
 
-  return (
-    <div className="relative rounded-2xl sm:rounded-3xl border border-neutral-200/90 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all duration-300">
-      {/* ── Barra superior con gradiente de marca sutil y elegante ── */}
-      <div className="h-1.5 w-full bg-gradient-to-r from-[#22408C] via-[#633593] to-[#98329A]" />
+  const formattedDate = bookingData.date
+    ? (() => {
+        const str = format(bookingData.date, "EEEE, d 'de' MMMM", { locale: es });
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      })()
+    : "Fecha por definir";
 
+  return (
+    <div className="rounded-2xl border border-neutral-200/90 bg-white shadow-xs overflow-hidden transition-all duration-200">
       {/* ── Cabecera: Logo del Salón, Nombre y Estado ── */}
-      <div className="p-4 sm:p-5 bg-gradient-to-b from-neutral-50/70 via-white to-white border-b border-neutral-100 flex items-center justify-between gap-3 sm:gap-4">
+      <div className="p-4 sm:p-5 bg-gradient-to-b from-neutral-50/50 to-white border-b border-neutral-100 flex items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3 min-w-0">
           {logoUrl ? (
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl border border-neutral-200/80 bg-white p-1 shadow-2xs flex items-center justify-center shrink-0 overflow-hidden">
-              <img
-                src={supabaseImage(logoUrl, { width: 96 }) || logoUrl}
-                alt={tenantName || "Salón"}
-                className="w-full h-full object-contain"
-              />
-            </div>
+            <img
+              src={logoUrl}
+              alt={tenantName || "Salón"}
+              className="h-9 sm:h-10 w-auto max-w-[120px] object-contain shrink-0"
+              loading="eager"
+            />
           ) : (
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#22408C]/10 via-[#633593]/10 to-[#98329A]/15 border border-[#22408C]/15 text-[#22408C] font-bold text-base flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-neutral-100 text-neutral-800 font-bold text-sm flex items-center justify-center shrink-0">
               {(tenantName || "S").charAt(0).toUpperCase()}
             </div>
           )}
@@ -144,21 +146,19 @@ export const SalonAppointmentCard = ({
         </span>
       </div>
 
-      {/* ── Bloque Destacado: Fecha y Hora con Gradiente Sutil ── */}
-      <div className="p-4 sm:p-5 bg-gradient-to-r from-neutral-50/90 via-white to-neutral-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100">
+      {/* ── Bloque Destacado: Fecha y Hora con Gradiente Sutil en la Píldora ── */}
+      <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-0.5">
             Día reservado
           </span>
-          <p className="text-base sm:text-lg font-bold text-neutral-900 capitalize leading-snug">
-            {bookingData.date
-              ? format(bookingData.date, "EEEE, d 'de' MMMM", { locale: es })
-              : "Fecha por definir"}
+          <p className="text-base sm:text-lg font-bold text-neutral-900 leading-snug">
+            {formattedDate}
           </p>
         </div>
 
         <div className="sm:text-right shrink-0">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#22408C]/[0.08] via-[#633593]/[0.08] to-[#98329A]/[0.08] border border-[#22408C]/15 text-[#22408C]">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-primary/[0.08] to-purple-600/[0.08] border border-primary/15 text-primary">
             <span className="font-bold text-[15px] sm:text-base tabular-nums">
               {bookingData.time} h
             </span>
