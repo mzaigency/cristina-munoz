@@ -1883,7 +1883,7 @@ body[data-glow-panel] [role="dialog"] {
 
 /* ── Topbar ── */
 /* Chrome wrapper: header + subnav se ocultan/muestran juntos al scrollear */
-.glow-chrome { position: sticky; top: 0; z-index: 20; transition: transform .28s var(--glow-ease); }
+.glow-chrome { position: sticky; top: 0; z-index: 35; transition: transform .28s var(--glow-ease); }
 
 .glow-topbar {
   flex: none;
@@ -2228,6 +2228,23 @@ body[data-glow-panel] [role="dialog"] {
   /* Height controlled by caller via data-msg-h custom prop or explicit style */
   flex: 1 1 0;
   min-height: 0;
+}
+
+/* Mobile client conversation list — smooth page-level scroll without viewport traps */
+.msg-sidebar-mobile {
+  display: flex;
+  flex-direction: column;
+  background: var(--glow-surface);
+  border: 1px solid var(--glow-line);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+.msg-sidebar-mobile .msg-sidebar-body {
+  flex: none;
+  min-height: auto;
+  overflow-y: visible;
+  overscroll-behavior: auto;
 }
 
 /* Mobile fullscreen chat overlay (above bottom nav z-40) */
@@ -5821,7 +5838,7 @@ details[open] .glow-neg-past-summary::before { transform: rotate(90deg); }
    ============================================================ */
 
 .tenant-theme-container {
-  --tv-brand-grad: linear-gradient(100deg, #22408C, #98329A);
+  --tv-brand-grad: var(--tv-brand-grad, linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent))));
   --tv-ease: cubic-bezier(0.23, 1, 0.32, 1);
   --tv-section-tint: #f5f6fb;
   --tv-section-py: 4rem;
@@ -5860,18 +5877,18 @@ details[open] .glow-neg-past-summary::before { transform: rotate(90deg); }
   -webkit-text-fill-color: transparent;
 }
 
-/* Rótulo de sección: azul de marca, pequeño, sin mayúsculas tracked */
+/* Rótulo de sección: color corporativo del salón */
 .tv-kicker {
-  font-size: 12.5px; font-weight: 700; letter-spacing: 0.01em; color: #22408C;
+  font-size: 12.5px; font-weight: 700; letter-spacing: 0.01em; color: var(--tv-kicker-color, hsl(var(--primary)));
 }
 
-/* Píldora en gradiente de marca (sello "Hecho con Glowapp", chips) */
+/* Píldora en gradiente de marca */
 .tv-brand-pill {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 8px 15px; border-radius: 999px;
   font-size: 13px; font-weight: 600; letter-spacing: 0.01em; color: #fff;
   background: var(--tv-brand-grad);
-  box-shadow: 0 10px 24px -12px rgba(84, 52, 160, 0.55);
+  box-shadow: 0 10px 24px -12px rgba(var(--tv-primary-rgb, 84, 52, 160), 0.45);
 }
 
 /* CTA en gradiente de marca */
@@ -5882,7 +5899,7 @@ details[open] .glow-neg-past-summary::before { transform: rotate(90deg); }
   background: var(--tv-brand-grad);
   border-radius: 22px; padding: 13px 18px; font-size: 14px;
   white-space: nowrap;
-  box-shadow: 0 14px 30px -14px rgba(84, 52, 160, 0.45);
+  box-shadow: 0 14px 30px -14px rgba(var(--tv-primary-rgb, 84, 52, 160), 0.45);
   transition: filter .18s var(--tv-ease), transform .18s var(--tv-ease);
   -webkit-tap-highlight-color: transparent;
   overflow: hidden;
@@ -5910,17 +5927,14 @@ details[open] .glow-neg-past-summary::before { transform: rotate(90deg); }
 }
 
 /* ── Overlay del flujo de reserva ──
-   Identidad Glowapp scopeada a .tv-book-modal (no afecta al panel admin,
-   que comparte ServiceSelection). Botones primarios → gradiente de marca;
-   acentos (precios, seleccionados, checkbox) → azul de marca.
-   El overlay se portalea a body (fuera de .tenant-theme-container), así que
-   el gradiente se define aquí como literal, no heredado. */
-.tv-book-modal { --tv-brand-grad: linear-gradient(100deg, #22408C, #98329A); }
+   Identidad del salón dinámica: botones primarios → gradiente de marca;
+   acentos (precios, seleccionados, checkbox) → color primario del salón. */
+.tv-book-modal { --tv-brand-grad: var(--tv-brand-grad, linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))); }
 .tv-book-modal .bg-primary { background-image: var(--tv-brand-grad); border-color: transparent; }
-.tv-book-modal .text-primary { color: #22408C; }
-.tv-book-modal .border-primary { border-color: #22408C; }
-.tv-book-modal [class~="bg-primary/10"] { background-color: rgba(34, 64, 140, 0.09); }
-.tv-book-modal [class~="bg-primary/5"] { background-color: rgba(34, 64, 140, 0.05); }
+.tv-book-modal .text-primary { color: hsl(var(--primary)); }
+.tv-book-modal .border-primary { border-color: hsl(var(--primary)); }
+.tv-book-modal [class~="bg-primary/10"] { background-color: hsl(var(--primary) / 0.09); }
+.tv-book-modal [class~="bg-primary/5"] { background-color: hsl(var(--primary) / 0.05); }
 
 @media (prefers-reduced-motion: no-preference) {
   .tv-book-panel { animation: tvPanelIn 0.3s cubic-bezier(0.23, 1, 0.32, 1); }
@@ -5948,26 +5962,26 @@ details[open] .glow-neg-past-summary::before { transform: rotate(90deg); }
   width: 100%; max-width: 420px;
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 8px 8px 8px 18px;
-  background: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(22px) saturate(1.15);
   -webkit-backdrop-filter: blur(22px) saturate(1.15);
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 30px;
   box-shadow:
     0 8px 32px rgba(16, 20, 40, 0.10),
-    0 0 0 1px rgba(34, 64, 140, 0.05),
+    0 0 0 1px rgba(var(--tv-primary-rgb, 34, 64, 140), 0.08),
     inset 0 1px 1px rgba(255, 255, 255, 0.55);
   pointer-events: auto;
 }
-/* Glow exterior azul Glow / cyan suave */
+/* Glow exterior con la identidad cromática del salón */
 .tv-bookbar__island::before {
   content: "";
   position: absolute; inset: -3px;
-  background: linear-gradient(100deg, rgba(34, 64, 140, 0.18), rgba(34, 211, 238, 0.10));
+  background: linear-gradient(100deg, rgba(var(--tv-primary-rgb, 34, 64, 140), 0.22), rgba(var(--tv-secondary-rgb, 34, 211, 238), 0.14));
   border-radius: 33px;
   filter: blur(14px);
   z-index: -1;
-  opacity: 0.7;
+  opacity: 0.75;
   transition: opacity 0.6s ease;
 }
 /* Reflejo líquido superior */
@@ -5983,14 +5997,14 @@ details[open] .glow-neg-past-summary::before { transform: rotate(90deg); }
 }
 .tv-bookbar__price {
   font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
-  text-transform: uppercase; color: rgba(34, 64, 140, 0.72);
+  text-transform: uppercase; color: hsl(var(--primary));
 }
 .tv-bookbar__label {
   font-size: 13px; font-weight: 500; color: #4b4f5c;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 @media (min-width: 1024px) { .tv-bookbar { display: none; } }
-/* El footer deja hueco para que la barra no tape el sello Glowapp */
+/* El footer deja hueco para que la barra no tape el contenido */
 @media (max-width: 1023px) {
   .tenant-theme-container footer { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
 }

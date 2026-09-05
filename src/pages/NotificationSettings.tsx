@@ -16,18 +16,25 @@ export default function NotificationSettingsPage() {
         canonicalUrl="/perfil/notificaciones"
         noindex
       />
-      <div className="pt-[calc(env(safe-area-inset-top)+1rem)] px-4 pb-6">
-        <div className="flex items-center gap-3 mb-5">
+      {/* Standard Consistent Sticky Header */}
+      <div className="sticky top-0 z-40 bg-surface/85 backdrop-blur-xl border-b border-line/60 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate("/perfil")}
-            className="shrink-0"
+            className="shrink-0 -ml-2 hover:bg-transparent"
+            aria-label="Volver a perfil"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-bold">Ajustes de notificaciones</h1>
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
+            Ajustes de notificaciones
+          </h1>
         </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 pb-20">
         <UserNotificationSettings />
       </div>
     </AppLayout>

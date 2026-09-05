@@ -39,15 +39,16 @@ export const TenantFooter = ({ tenant }: TenantFooterProps) => {
             )}
           </div>
 
-          {/* Sello Glowapp — gradiente de marca sólido */}
+          {/* Sello Glowapp discreto y premium */}
           <a
             href="https://www.glowapp.app"
             target="_blank"
             rel="noopener noreferrer"
-            className="tv-brand-pill hover:brightness-110 transition-all duration-200 ease-out active:scale-[0.97] touch-manipulation my-1"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium text-neutral-500 hover:text-neutral-900 bg-black/[0.03] hover:bg-black/[0.06] border border-black/[0.06] transition-all duration-200 active:scale-[0.98] touch-manipulation"
           >
-            <img src="/favicon.png" alt="Glowapp" className="h-[18px] w-[18px] rounded-[5px]" />
-            <span className="text-[13px] font-semibold">{t("footer.madeWithGlow")}</span>
+            <span className="text-neutral-400 font-normal">Plataforma de reservas</span>
+            <img src="/favicon.png" alt="Glowapp" className="h-3.5 w-3.5 rounded-[3px] opacity-75" />
+            <span className="font-semibold tracking-tight text-neutral-700">Glowapp</span>
           </a>
 
           {/* Legal Links & Copyright */}

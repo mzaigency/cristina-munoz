@@ -61,6 +61,15 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
         )}
       </motion.div>
 
+      {/* Scrim superior para proteger el contraste de la cabecera sobre imágenes claras */}
+      <div
+        className="absolute inset-x-0 top-0 h-36 pointer-events-none z-[1]"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(10,12,22,0.65) 0%, rgba(10,12,22,0.25) 60%, transparent 100%)",
+        }}
+      />
+
       {/* Degradado inferior para legibilidad */}
       <div
         className="absolute inset-0 pointer-events-none"

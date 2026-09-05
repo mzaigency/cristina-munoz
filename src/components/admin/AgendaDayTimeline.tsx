@@ -1,8 +1,11 @@
 import { useMemo, useRef } from "react";
+import { format, parseISO } from "date-fns";
+import { es } from "date-fns/locale";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { busyMinutes } from "@/lib/agendaOccupancy";
-import { Lock, LockOpen, Check, Plus, X } from "lucide-react";
+import { Lock, LockOpen, Check, Plus, X, CalendarOff, AlertTriangle, Palmtree } from "lucide-react";
 import { NO_SELECT, useTimelineDrag } from "@/hooks/useTimelineDrag";
+import { useToast } from "@/hooks/use-toast";
 
 export interface TimelineBooking {
   id: string;
@@ -15,6 +18,17 @@ export interface TimelineBooking {
   status: string;
   notes: string | null;
   title: string | null;
+}
+
+export interface StylistAbsenceInfo {
+  id?: string;
+  stylist_slug: string;
+  date_from: string;
+  date_to: string;
+  is_closed: boolean;
+  label: string | null;
+  open_time?: string | null;
+  close_time?: string | null;
 }
 
 interface AgendaDayTimelineProps {
@@ -39,6 +53,10 @@ interface AgendaDayTimelineProps {
   onResize?: (booking: TimelineBooking, newDuration: number) => void;
   /** Quitar un bloqueo (día completo o franja de horas) */
   onUnblock?: (booking: TimelineBooking) => void;
+  /** Ausencias programadas de profesionales */
+  absences?: StylistAbsenceInfo[];
+  /** Clave de fecha activa (YYYY-MM-DD) */
+  activeDateKey?: string;
 }
 
 /** 1 hora = 110px */
@@ -128,6 +146,7 @@ function CardBody({
   narrow,
   startMin,
   endMin,
+  isStylistAbsent,
 }: {
   b: TimelineBooking;
   color: string;
@@ -135,6 +154,7 @@ function CardBody({
   narrow: boolean;
   startMin: number;
   endMin: number;
+  isStylistAbsent?: boolean;
 }) {
   const service = firstServiceName(b.services) || b.title || "";
   const done = isCompleted(b);
@@ -148,7 +168,7 @@ function CardBody({
       {/* barra de color redondeada (iOS) */}
       <span
         className="my-1 ml-1 w-1.5 rounded-full flex-none"
-        style={{ background: done ? COMPLETED_COLOR : color }}
+        style={{ background: done ? COMPLETED_COLOR : isStylistAbsent ? "#f59e0b" : color }}
       />
       <span
         className="relative flex-1 min-w-0 flex flex-col justify-center"
@@ -167,10 +187,17 @@ function CardBody({
                 · {service}
               </span>
             )}
-            <span
-              className="w-1.5 h-1.5 rounded-full flex-none ml-auto"
-              style={{ background: tone.dot }}
-            />
+            {isStylistAbsent && !done ? (
+              <span
+                className="w-2 h-2 rounded-full flex-none ml-auto bg-amber-500 animate-pulse"
+                title="Profesional ausente: reubica esta cita"
+              />
+            ) : (
+              <span
+                className="w-1.5 h-1.5 rounded-full flex-none ml-auto"
+                style={{ background: tone.dot }}
+              />
+            )}
           </span>
         ) : (
           <>
@@ -181,7 +208,15 @@ function CardBody({
                 >
                   {b.customer_name}
                 </span>
-                {size === "lg" && (
+                {isStylistAbsent && !done ? (
+                  <span
+                    className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-none whitespace-nowrap bg-amber-100 text-amber-800 border border-amber-300/80"
+                    title="Profesional ausente: reubica esta cita arrastrándola"
+                  >
+                    <AlertTriangle className="w-2.5 h-2.5 text-amber-700" />
+                    Reubicar
+                  </span>
+                ) : size === "lg" && (
                   <span
                     className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 rounded-full flex-none whitespace-nowrap ${tone.cls}`}
                   >
@@ -207,7 +242,7 @@ function CardBody({
               /* Media: solo un punto de estado discreto */
               <span
                 className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full"
-                style={{ background: tone.dot }}
+                style={{ background: isStylistAbsent && !done ? "#f59e0b" : tone.dot }}
               />
             )}
           </>
@@ -233,7 +268,10 @@ export function AgendaDayTimeline({
   onMove,
   onResize,
   onUnblock,
+  absences = [],
+  activeDateKey,
 }: AgendaDayTimelineProps) {
+  const { toast } = useToast();
   const dayStart = startHour * 60;
   const dayEnd = endHour * 60;
   const workMinutes = Math.max(1, dayEnd - dayStart);
@@ -277,9 +315,21 @@ export function AgendaDayTimeline({
       const appts = items.filter((it) => !isBlocked(it.b));
       const busy = busyMinutes(appts.map((it) => ({ start: it.start, end: it.end })));
       const occupancy = Math.min(100, Math.round((busy / workMinutes) * 100));
-      return { stylist: s, fullBlocks, items, realCount: appts.length, occupancy, busy };
+
+      const activeKey = activeDateKey;
+      const absence = activeKey
+        ? absences.find(
+            (a) =>
+              a.stylist_slug === s.slug &&
+              a.is_closed &&
+              a.date_from <= activeKey &&
+              a.date_to >= activeKey,
+          )
+        : undefined;
+
+      return { stylist: s, fullBlocks, items, realCount: appts.length, occupancy, busy, absence };
     });
-  }, [bookings, stylists, workMinutes, isBlocked, isFullDayBlocked]);
+  }, [bookings, stylists, workMinutes, isBlocked, isFullDayBlocked, absences, activeDateKey]);
 
   if (stylists.length === 0) return null;
 
@@ -316,7 +366,7 @@ export function AgendaDayTimeline({
           </div>
 
           {/* Un raíl por profesional */}
-          {sections.map(({ stylist, fullBlocks, items, realCount, occupancy }) => {
+          {sections.map(({ stylist, fullBlocks, items, realCount, occupancy, absence }) => {
             const ghost = drag?.active && drag.colId === stylist.slug ? drag : null;
             const blockCount = fullBlocks.length + items.filter((it) => isBlocked(it.b)).length;
             const isDropTarget = !!ghost && drag!.mode === "move" && drag!.originColId !== stylist.slug;
@@ -330,17 +380,32 @@ export function AgendaDayTimeline({
               {/* Cabecera pegada a la columna */}
               <div className="ag-lane-h flex items-center gap-3">
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-none"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-none relative"
                   style={{
                     background: stylist.color,
                     boxShadow: `0 0 0 1px #fff, 0 0 0 3px ${stylist.color}33`,
                   }}
                 >
                   {stylist.name.charAt(0).toUpperCase()}
+                  {absence && (
+                    <span
+                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-white shadow-xs"
+                      title={absence.label || "Ausente"}
+                    />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="glow-row-nm truncate flex items-center gap-1.5" style={{ fontSize: "var(--glow-t-base)" }}>
                     <span className="truncate">{stylist.name}</span>
+                    {absence && (
+                      <span
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200/80 flex-none"
+                        title={`${absence.label || "Ausencia"}${absence.date_from !== absence.date_to ? `: ${absence.date_from} al ${absence.date_to}` : ""}`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-none" />
+                        <span className="truncate max-w-[85px]">{absence.label || "Ausente"}</span>
+                      </span>
+                    )}
                     {blockCount > 0 && (
                       /* La gestión de bloqueos vive aquí y no en el raíl: cuando hay
                          varios se apilaban en la misma posición y solo el de encima
@@ -400,9 +465,22 @@ export function AgendaDayTimeline({
                     )}
                   </h4>
                   <div className="glow-row-mt" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
-                    <span>
-                      {realCount} {realCount === 1 ? "cita" : "citas"} · {occupancy}%
-                    </span>
+                    {absence ? (
+                      <span className={realCount > 0 ? "text-amber-700 font-medium text-xs flex items-center gap-1" : "text-neutral-500 text-xs font-normal"}>
+                        {realCount > 0 ? (
+                          <>
+                            <AlertTriangle style={{ width: 11, height: 11 }} className="text-amber-600 flex-none" />
+                            <span>{realCount} {realCount === 1 ? "cita a reubicar" : "citas a reubicar"}</span>
+                          </>
+                        ) : (
+                          "Ausente hoy"
+                        )}
+                      </span>
+                    ) : (
+                      <span>
+                        {realCount} {realCount === 1 ? "cita" : "citas"} · {occupancy}%
+                      </span>
+                    )}
                     {onUnblock && fullBlocks.length > 0 && (
                       <button
                         type="button"
@@ -428,7 +506,11 @@ export function AgendaDayTimeline({
                 style={{
                   height: railHeight,
                   boxShadow: isDropTarget ? `inset 0 0 0 2px ${stylist.color}66` : undefined,
-                  background: isDropTarget ? `${stylist.color}0d` : undefined,
+                  background: isDropTarget
+                    ? `${stylist.color}0d`
+                    : absence
+                      ? "rgba(245, 158, 11, 0.015)"
+                      : undefined,
                 }}
               >
                 {/* Líneas de hora */}
@@ -462,6 +544,14 @@ export function AgendaDayTimeline({
                         aria-label={`Nueva cita a las ${time} con ${stylist.name}`}
                         onClick={() => {
                           if (suppressClick.current) return;
+                          if (absence) {
+                            toast({
+                              title: `${stylist.name} está ausente hoy`,
+                              description: `Tiene registrado: ${absence.label || "Ausencia programada"}. Selecciona otro profesional disponible para agendar.`,
+                              variant: "destructive",
+                            });
+                            return;
+                          }
                           onQuickCreate(stylist.slug, time);
                         }}
                         className="absolute left-0 right-0 group flex items-center justify-center z-[7]"
@@ -484,7 +574,14 @@ export function AgendaDayTimeline({
                     );
                   })}
 
-                {items.length === 0 && fullBlocks.length === 0 && (
+                {/* Indicador suave cuando el profesional está ausente y no tiene citas */}
+                {absence && realCount === 0 && (
+                  <p className="absolute left-2 right-2 top-4 text-xs text-amber-700/80 font-medium text-center pointer-events-none">
+                    Ausente · {absence.label || "Día libre"}
+                  </p>
+                )}
+
+                {items.length === 0 && fullBlocks.length === 0 && !absence && (
                   <p className="absolute left-2 right-2 top-4 text-xs text-outline text-center pointer-events-none">
                     Sin citas · día libre
                   </p>
@@ -724,13 +821,19 @@ export function AgendaDayTimeline({
                         height,
                         background: done
                           ? COMPLETED_BG
-                          : `color-mix(in oklab, ${stylist.color} 7%, #fff)`,
+                          : absence
+                            ? "color-mix(in oklab, #f59e0b 5%, #fff)"
+                            : `color-mix(in oklab, ${stylist.color} 7%, #fff)`,
                         border: done
                           ? "1px solid color-mix(in oklab, var(--glow-ok) 30%, #fff)"
                           : b.status === "pending"
                             ? "1.5px dashed color-mix(in oklab, var(--glow-warn) 55%, #fff)"
-                            : `1px solid color-mix(in oklab, ${stylist.color} 22%, #fff)`,
-                        boxShadow: size === "sm" ? SHADOW_SM : IOS_SHADOW,
+                            : absence
+                              ? "1.5px solid rgba(245, 158, 11, 0.8)"
+                              : `1px solid color-mix(in oklab, ${stylist.color} 22%, #fff)`,
+                        boxShadow: absence && !done
+                          ? "0 2px 6px -1px rgba(245, 158, 11, 0.18), 0 0 0 1px rgba(245, 158, 11, 0.25)"
+                          : size === "sm" ? SHADOW_SM : IOS_SHADOW,
                         opacity: done ? 0.9 : 1,
                         ...NO_SELECT,
                       }}
@@ -742,6 +845,7 @@ export function AgendaDayTimeline({
                         narrow={narrow}
                         startMin={start}
                         endMin={end}
+                        isStylistAbsent={!!absence}
                       />
 
                       {/* Tirador de MOVER: los puntos del borde izquierdo. En táctil

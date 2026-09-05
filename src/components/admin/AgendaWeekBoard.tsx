@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Lock, LockOpen, Plus, X } from "lucide-react";
+import { Lock, LockOpen, Plus, X, CalendarOff, AlertTriangle, Palmtree } from "lucide-react";
 import { NO_SELECT, useTimelineDrag } from "@/hooks/useTimelineDrag";
-import type { TimelineBooking } from "./AgendaDayTimeline";
+import { useToast } from "@/hooks/use-toast";
+import type { TimelineBooking, StylistAbsenceInfo } from "./AgendaDayTimeline";
 
 export interface WeekBooking extends TimelineBooking {
   Fecha: string;
@@ -49,6 +50,8 @@ interface AgendaWeekBoardProps {
   onResize?: (booking: WeekBooking, newDuration: number) => void;
   /** Quitar un bloqueo */
   onUnblock?: (booking: WeekBooking) => void;
+  /** Ausencias programadas de profesionales */
+  absences?: StylistAbsenceInfo[];
 }
 
 /** 1 hora = 56px: más denso que la vista de día, aún legible */
@@ -183,7 +186,9 @@ export function AgendaWeekBoard({
   onMove,
   onResize,
   onUnblock,
+  absences = [],
 }: AgendaWeekBoardProps) {
+  const { toast } = useToast();
   const dayStart = startHour * 60;
   const dayEnd = endHour * 60;
   const workMinutes = Math.max(1, dayEnd - dayStart);
@@ -277,17 +282,41 @@ export function AgendaWeekBoard({
 
       const lanes =
         laneStylists.length > 0
-          ? laneStylists.map((st) => ({
-              id: `${day.key}|${st.slug}`,
-              stylist: st,
-              ...build(raw.filter((it) => it.b.stylist === st.slug)),
-            }))
-          : [{ id: day.key, stylist: null, ...build(raw) }];
+          ? laneStylists.map((st) => {
+              const absence = absences.find(
+                (a) =>
+                  a.stylist_slug === st.slug &&
+                  a.is_closed &&
+                  a.date_from <= day.key &&
+                  a.date_to >= day.key,
+              );
+              return {
+                id: `${day.key}|${st.slug}`,
+                stylist: st,
+                absence,
+                ...build(raw.filter((it) => it.b.stylist === st.slug)),
+              };
+            })
+          : [{
+              id: day.key,
+              stylist: stylists.length === 1 ? stylists[0] : null,
+              absence:
+                stylists.length === 1
+                  ? absences.find(
+                      (a) =>
+                        a.stylist_slug === stylists[0].slug &&
+                        a.is_closed &&
+                        a.date_from <= day.key &&
+                        a.date_to >= day.key,
+                    )
+                  : undefined,
+              ...build(raw),
+            }];
 
       const count = lanes.reduce((n, l) => n + l.items.filter((it) => !isBlocked(it.b)).length, 0);
       return { day, lanes, count };
     });
-  }, [bookings, days, isBlocked, isFullDayBlocked, laneStylists]);
+  }, [bookings, days, isBlocked, isFullDayBlocked, laneStylists, absences, stylists]);
 
   if (days.length === 0) return null;
 
@@ -395,6 +424,15 @@ export function AgendaWeekBoard({
                             <span className="text-[10px] font-semibold text-outline truncate">
                               {lane.stylist.name.split(" ")[0]}
                             </span>
+                            {lane.absence && (
+                              <span
+                                className="inline-flex items-center gap-0.5 text-[9px] px-1 py-0.2 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 font-medium truncate max-w-[55px]"
+                                title={`${lane.absence.label || "Ausente"}${lane.absence.date_from !== lane.absence.date_to ? `: ${lane.absence.date_from} al ${lane.absence.date_to}` : ""}`}
+                              >
+                                <span className="w-1 h-1 rounded-full bg-amber-500 flex-none" />
+                                <span className="truncate">{lane.absence.label || "Ausente"}</span>
+                              </span>
+                            )}
                           </div>
                         )}
 
@@ -411,7 +449,9 @@ export function AgendaWeekBoard({
                               ? "hsl(var(--primary) / 0.05)"
                               : day.isToday
                                 ? "hsl(var(--primary) / 0.03)"
-                                : "rgba(255,255,255,.3)",
+                                : lane.absence
+                                  ? "rgba(245, 158, 11, 0.015)"
+                                  : "rgba(255,255,255,.3)",
                             boxShadow: isDropTarget
                               ? "inset 0 0 0 2px hsl(var(--primary) / 0.4)"
                               : undefined,
@@ -476,6 +516,14 @@ export function AgendaWeekBoard({
                                       aria-label={`Nueva cita el ${day.key} a las ${time}`}
                                       onClick={() => {
                                         if (suppressClick.current) return;
+                                        if (lane.absence) {
+                                          toast({
+                                            title: `${lane.stylist ? lane.stylist.name : "Profesional"} no disponible`,
+                                            description: `Tiene registrado: ${lane.absence.label || "Ausencia"}.`,
+                                            variant: "destructive",
+                                          });
+                                          return;
+                                        }
                                         onQuickCreate(day.key, time, lane.stylist?.slug);
                                       }}
                                       className="absolute left-0 right-0 group flex items-center justify-center z-[7]"
@@ -494,6 +542,13 @@ export function AgendaWeekBoard({
                                     </button>
                                   );
                                 })}
+
+                              {/* Ausencia del profesional en vista semanal */}
+                              {lane.absence && lane.items.length === 0 && (
+                                <p className="absolute left-0.5 right-0.5 top-1.5 text-[9px] font-medium text-amber-700/70 text-center pointer-events-none truncate">
+                                  {lane.absence.label || "Ausente"}
+                                </p>
+                              )}
 
                               {/* Bloqueo de DÍA COMPLETO: fondo de la calle entera */}
                               {/* Uno solo aunque haya varios: apilados, sus fondos y sus
@@ -709,7 +764,14 @@ export function AgendaWeekBoard({
                                       top,
                                       height,
                                       background: done ? COMPLETED_BG : "#fff",
-                                      boxShadow: CARD_SHADOW,
+                                      border: done
+                                        ? undefined
+                                        : lane.absence
+                                          ? "1.5px solid rgba(245, 158, 11, 0.85)"
+                                          : undefined,
+                                      boxShadow: lane.absence && !done
+                                        ? "0 1px 3px rgba(245, 158, 11, 0.2)"
+                                        : CARD_SHADOW,
                                       opacity: done ? 0.9 : 1,
                                       ...NO_SELECT,
                                     }}

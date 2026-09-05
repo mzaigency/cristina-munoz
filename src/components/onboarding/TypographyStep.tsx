@@ -5,22 +5,35 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { StepProps, fontOptions, bodyFontOptions, buttonStyles } from "./types";
+import {
+  DEFAULT_HEADING_FONT,
+  DEFAULT_BODY_FONT,
+  GOOGLE_FONT_SPECS,
+} from "@/constants/tenantFonts";
 
 export function TypographyStep({ onNext, onPrev, tenantId, tenantName, loading, setLoading }: StepProps) {
-  const [headingFont, setHeadingFont] = useState("Playfair Display");
-  const [bodyFont, setBodyFont] = useState("Inter");
+  const [headingFont, setHeadingFont] = useState(DEFAULT_HEADING_FONT);
+  const [bodyFont, setBodyFont] = useState(DEFAULT_BODY_FONT);
   const [buttonStyle, setButtonStyle] = useState("rounded");
   const { toast } = useToast();
 
   // Load Google Fonts dynamically
   useEffect(() => {
-    const fonts = [...fontOptions.map(f => f.value), ...bodyFontOptions.map(f => f.value)];
+    const fonts = Array.from(new Set([...fontOptions.map(f => f.value), ...bodyFontOptions.map(f => f.value)]));
+    const fontParams = fonts.map(f => {
+      const family = f.replace(/ /g, "+");
+      const axes = GOOGLE_FONT_SPECS[f] || "wght@400;600";
+      return `family=${family}:${axes}`;
+    }).join("&");
+
     const link = document.createElement("link");
-    link.href = `https://fonts.googleapis.com/css2?${fonts.map(f => `family=${f.replace(" ", "+")}`).join("&")}&display=swap`;
+    link.href = `https://fonts.googleapis.com/css2?${fontParams}&display=swap`;
     link.rel = "stylesheet";
     document.head.appendChild(link);
     return () => {
-      document.head.removeChild(link);
+      if (document.head.contains(link)) {
+        document.head.removeChild(link);
+      }
     };
   }, []);
 

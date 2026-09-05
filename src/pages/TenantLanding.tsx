@@ -97,10 +97,24 @@ const TenantLanding = () => {
 
   // Auto-open visual editor when navigating with ?edit=1 (e.g. from Settings shortcut)
   useEffect(() => {
-    if (editParam === "1" && isAdmin && !isEditMode) {
+    if (editParam === "1" && isAdmin) {
       setIsEditMode(true);
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("edit");
+      const newSearch = newParams.toString();
+      navigate({ search: newSearch ? `?${newSearch}` : "" }, { replace: true });
     }
-  }, [editParam, isAdmin, isEditMode]);
+  }, [editParam, isAdmin, navigate, searchParams]);
+
+  const handleCloseEditMode = useCallback(() => {
+    setIsEditMode(false);
+    if (searchParams.has("edit")) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("edit");
+      const newSearch = newParams.toString();
+      navigate({ search: newSearch ? `?${newSearch}` : "" }, { replace: true });
+    }
+  }, [navigate, searchParams]);
 
   // Track QR scans (once per session per tenant)
   useEffect(() => {
@@ -328,12 +342,7 @@ const TenantLanding = () => {
           accentColor={tenant.primary_color}
         />
 
-        {/* Safe area spacer for top notch */}
-        <div 
-          className="fixed top-0 left-0 right-0 bg-background z-[99]" 
-          style={{ height: 'env(safe-area-inset-top)' }} 
-        />
-        
+
         {/* Preview Banner */}
         {isPreview && (
           <div 
@@ -434,7 +443,8 @@ const TenantLanding = () => {
           <div id="servicios">
             <TenantServicesSection 
               tenantId={tenant.id} 
-              tenantName={tenant.name} 
+              tenantName={tenant.name}
+              primaryColor={tenant.primary_color}
             />
           </div>
 
@@ -520,7 +530,7 @@ const TenantLanding = () => {
         {isAdmin && isEditMode && (
           <TenantEditPanel
             tenant={tenant}
-            onClose={() => setIsEditMode(false)}
+            onClose={handleCloseEditMode}
             onSave={(updatedTenant) => setTenant(updatedTenant)}
           />
         )}

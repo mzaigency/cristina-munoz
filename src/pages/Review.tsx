@@ -105,15 +105,12 @@ const Review = () => {
       />
 
       {/* Header */}
-      <div 
-        className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
-      >
-        <div className="px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+      <div className="sticky top-0 z-40 bg-surface/85 backdrop-blur-xl border-b border-line/60 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-lg mx-auto px-4 h-14 sm:h-16 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0 -ml-2 hover:bg-transparent" aria-label="Volver">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="font-semibold text-foreground">Valoración</h1>
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">Valoración</h1>
         </div>
       </div>
 

@@ -494,14 +494,24 @@
 
   /* ── Barra de guardado fija (formularios largos) ────────────────────────── */
   .glow-save-bar {
-    position: sticky; bottom: 0; left: 0; right: 0; z-index: 30;
+    position: sticky; bottom: 0; left: 0; right: 0; z-index: 25;
     display: flex; align-items: center; gap: var(--glow-s3);
-    margin: var(--glow-s5) -16px 0; padding: 12px 16px;
+    margin: var(--glow-s5) 0 0; padding: 12px 16px;
     padding-bottom: calc(12px + env(safe-area-inset-bottom));
-    background: color-mix(in oklab, var(--glow-surface), transparent 8%);
+    background: color-mix(in oklab, var(--glow-surface), transparent 6%);
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border-top: 1px solid var(--glow-line);
-    box-shadow: 0 -8px 24px -14px rgb(var(--glow-ink-rgb) / .18);
+    border: 1px solid var(--glow-line);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px -6px rgb(var(--glow-ink-rgb) / .12);
+  }
+  @media (max-width: 920px) {
+    .glow-save-bar {
+      margin: var(--glow-s4) 0 0;
+      bottom: calc(env(safe-area-inset-bottom) + 76px);
+      border-radius: 14px;
+      padding: 10px 14px;
+      padding-bottom: 10px;
+    }
   }
   @media (max-width: 620px) {
     .glow-save-bar .glow-btn { width: 100%; justify-content: center; }

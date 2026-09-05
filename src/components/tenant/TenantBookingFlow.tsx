@@ -418,7 +418,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName, logoUrl }: TenantBooki
             >
               <div
                 className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
-                style={{ width: `${(step / 3) * 100}%`, background: "linear-gradient(100deg, #22408C, #98329A)" }}
+                style={{ width: `${(step / 3) * 100}%`, background: "var(--tv-brand-grad, hsl(var(--primary)))" }}
               />
             </div>
             <div className="text-center" aria-live="polite" aria-atomic="true">
@@ -680,8 +680,8 @@ export const TenantBookingFlow = ({ tenantId, tenantName, logoUrl }: TenantBooki
                             btn?.click();
                           }}
                           disabled={guestLoading}
-                          className="h-11 px-6 sm:px-8 rounded-xl font-semibold transition-transform duration-200 hover:scale-105 active:scale-95 touch-manipulation shadow-sm shrink-0"
-                          style={{ background: "linear-gradient(100deg, #22408C, #98329A)" }}
+                          className="h-11 px-6 sm:px-8 rounded-xl font-semibold transition-transform duration-200 hover:scale-105 active:scale-95 touch-manipulation shadow-sm shrink-0 text-white"
+                          style={{ background: "var(--tv-brand-grad, hsl(var(--primary)))" }}
                           data-guided-cta="true"
                         >
                           {guestLoading ? (

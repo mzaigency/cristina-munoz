@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -21,6 +21,13 @@ import {
 } from "lucide-react";
 import { TenantImageUploader } from "./TenantImageUploader";
 import { landingThemes, getThemeById } from "@/components/onboarding/landing-themes";
+import {
+  HEADING_FONT_OPTIONS,
+  BODY_FONT_OPTIONS,
+  DEFAULT_HEADING_FONT,
+  DEFAULT_BODY_FONT,
+  GOOGLE_FONT_SPECS,
+} from "@/constants/tenantFonts";
 
 interface Tenant {
   id: string;
@@ -76,17 +83,6 @@ interface TenantEditPanelProps {
   onSave: (updatedTenant: Tenant) => void;
 }
 
-const FONT_OPTIONS = [
-  { value: "Playfair Display", label: "Playfair Display", style: "serif" as const, sample: "Aa" },
-  { value: "Cormorant Garamond", label: "Cormorant", style: "serif" as const, sample: "Aa" },
-  { value: "Libre Baskerville", label: "Baskerville", style: "serif" as const, sample: "Aa" },
-  { value: "Lora", label: "Lora", style: "serif" as const, sample: "Aa" },
-  { value: "Inter", label: "Inter", style: "sans-serif" as const, sample: "Aa" },
-  { value: "Poppins", label: "Poppins", style: "sans-serif" as const, sample: "Aa" },
-  { value: "Montserrat", label: "Montserrat", style: "sans-serif" as const, sample: "Aa" },
-  { value: "Plus Jakarta Sans", label: "Plus Jakarta", style: "sans-serif" as const, sample: "Aa" },
-];
-
 const NAME_SIZES = [
   { value: "medium", label: "M", caption: "Medio" },
   { value: "large", label: "L", caption: "Grande" },
@@ -130,20 +126,49 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<Tenant>({
     ...tenant,
-    font_heading: tenant.font_heading || "Playfair Display",
-    font_body: tenant.font_body || "Inter",
+    font_heading: tenant.font_heading || DEFAULT_HEADING_FONT,
+    font_body: tenant.font_body || DEFAULT_BODY_FONT,
     heading_size: tenant.heading_size || "xlarge",
     button_style: tenant.button_style || "rounded",
     theme_id: tenant.theme_id || "immersive",
   });
   const [activeTab, setActiveTab] = useState<TabKey>("theme");
 
+  // Pre-load all preview fonts when typography tab is activated
+  useEffect(() => {
+    if (activeTab !== "typography") return;
+    const allFonts = [...HEADING_FONT_OPTIONS, ...BODY_FONT_OPTIONS];
+    allFonts.forEach((f) => {
+      const formatted = f.value.replace(/ /g, "+");
+      const id = `font-prev-${formatted}`;
+      if (!document.getElementById(id)) {
+        const link = document.createElement("link");
+        link.id = id;
+        link.rel = "stylesheet";
+        const axes = GOOGLE_FONT_SPECS[f.value] || "wght@400;600";
+        link.href = `https://fonts.googleapis.com/css2?family=${formatted}:${axes}&display=swap`;
+        document.head.appendChild(link);
+      }
+    });
+  }, [activeTab]);
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   // Track dirty state
   const isDirty = useMemo(() => {
     return JSON.stringify(formData) !== JSON.stringify({
       ...tenant,
-      font_heading: tenant.font_heading || "Playfair Display",
-      font_body: tenant.font_body || "Inter",
+      font_heading: tenant.font_heading || DEFAULT_HEADING_FONT,
+      font_body: tenant.font_body || DEFAULT_BODY_FONT,
       heading_size: tenant.heading_size || "xlarge",
       button_style: tenant.button_style || "rounded",
       theme_id: tenant.theme_id || "immersive",
@@ -155,11 +180,6 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
     setFormData((prev) => ({
       ...prev,
       theme_id: theme.id,
-      primary_color: theme.defaultColors.primary,
-      secondary_color: theme.defaultColors.secondary,
-      font_heading: theme.recommendedFonts.heading,
-      font_body: theme.recommendedFonts.body,
-      button_style: theme.buttonStyle,
     }));
   };
 
@@ -211,8 +231,8 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
   const handleDiscard = () => {
     setFormData({
       ...tenant,
-      font_heading: tenant.font_heading || "Playfair Display",
-      font_body: tenant.font_body || "Inter",
+      font_heading: tenant.font_heading || DEFAULT_HEADING_FONT,
+      font_body: tenant.font_body || DEFAULT_BODY_FONT,
       heading_size: tenant.heading_size || "xlarge",
       button_style: tenant.button_style || "rounded",
       theme_id: tenant.theme_id || "immersive",
@@ -282,7 +302,7 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
           {/* THEME */}
           {activeTab === "theme" && (
             <div className="space-y-5">
-              <Section title="Tema de landing" caption="Aplica layout, colores y tipografía">
+              <Section title="Tema de landing" caption="Cambia la estructura y layout visual manteniendo tus colores y tipografías">
                 <div className="space-y-1.5">
                   {landingThemes.map((theme) => {
                     const isOn = formData.theme_id === theme.id;
@@ -299,11 +319,13 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
                         }`}
                       >
                         <div
-                          className="w-10 h-10 rounded-lg flex-shrink-0 shadow-sm"
+                          className="w-10 h-10 rounded-lg flex-shrink-0 shadow-sm flex items-center justify-center text-white"
                           style={{
-                            background: `linear-gradient(135deg, ${theme.defaultColors.primary} 0%, ${theme.defaultColors.secondary} 100%)`,
+                            background: `linear-gradient(135deg, ${formData.primary_color || theme.defaultColors.primary} 0%, ${formData.secondary_color || theme.defaultColors.secondary} 100%)`,
                           }}
-                        />
+                        >
+                          <Layers className="w-5 h-5 text-white/90" />
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[13px] font-semibold text-neutral-900 truncate">{theme.name}</p>
                           <p className="text-[11px] text-neutral-500 truncate">{theme.description}</p>
@@ -322,8 +344,7 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
               <div className="rounded-xl bg-neutral-50 border border-neutral-200 p-3 flex gap-2">
                 <Sparkles className="w-4 h-4 text-neutral-500 shrink-0 mt-0.5" strokeWidth={2} />
                 <p className="text-[11.5px] text-neutral-600 leading-relaxed">
-                  Al elegir un tema se aplican sus colores, fuentes y estilo de botón.
-                  Puedes seguir afinándolos en las pestañas Diseño y Tipografía.
+                  Cambia la estructura y distribución visual del hero manteniendo los colores corporativos, tipografías y datos de tu salón.
                 </p>
               </div>
             </div>
@@ -413,30 +434,36 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
           {/* TYPOGRAPHY */}
           {activeTab === "typography" && (
             <div className="space-y-7">
-              <Section title="Títulos" caption="Fuente principal">
-                <div className="grid grid-cols-2 gap-2">
-                  {FONT_OPTIONS.filter((f) => f.style === "serif").map((font) => {
+              <Section title="Títulos (Headings)" caption="Fuentes curadas para dar carácter a tu marca">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {HEADING_FONT_OPTIONS.map((font) => {
                     const isOn = formData.font_heading === font.value;
                     return (
                       <button
                         key={font.value}
+                        type="button"
                         data-fixed-radius
                         onClick={() => handleChange("font_heading", font.value)}
-                        className={`flex items-center gap-3 p-3 border-2 rounded-xl text-left transition-all duration-200 ${
-                          isOn ? "border-neutral-900 bg-neutral-50" : "border-neutral-200 hover:border-neutral-300"
+                        className={`flex items-start gap-3 p-3 border-2 rounded-xl text-left transition-all duration-200 ${
+                          isOn ? "border-neutral-900 bg-neutral-50 shadow-sm" : "border-neutral-200 hover:border-neutral-300 bg-white"
                         }`}
                       >
                         <span
-                          className="text-2xl text-neutral-900 leading-none flex-shrink-0"
+                          className="text-2xl text-neutral-900 leading-none flex-shrink-0 mt-0.5"
                           style={{ fontFamily: font.value }}
                         >
                           {font.sample}
                         </span>
-                        <div className="min-w-0">
-                          <p className="text-[12px] font-semibold text-neutral-900 truncate" style={{ fontFamily: font.value }}>
-                            {font.label}
-                          </p>
-                          <p className="text-[10px] text-neutral-500">Serif</p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <p className="text-[12.5px] font-bold text-neutral-900 truncate" style={{ fontFamily: font.value }}>
+                              {font.label}
+                            </p>
+                            <span className="text-[9.5px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600 shrink-0 font-medium">
+                              {font.category}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-neutral-500 mt-0.5 truncate">{font.description}</p>
                         </div>
                       </button>
                     );
@@ -444,30 +471,36 @@ export const TenantEditPanel = ({ tenant, onClose, onSave }: TenantEditPanelProp
                 </div>
               </Section>
 
-              <Section title="Cuerpo" caption="Fuente de párrafos">
-                <div className="grid grid-cols-2 gap-2">
-                  {FONT_OPTIONS.filter((f) => f.style === "sans-serif").map((font) => {
+              <Section title="Cuerpo de texto (Body)" caption="Legibilidad óptima en descripciones y servicios">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {BODY_FONT_OPTIONS.map((font) => {
                     const isOn = formData.font_body === font.value;
                     return (
                       <button
                         key={font.value}
+                        type="button"
                         data-fixed-radius
                         onClick={() => handleChange("font_body", font.value)}
-                        className={`flex items-center gap-3 p-3 border-2 rounded-xl text-left transition-all duration-200 ${
-                          isOn ? "border-neutral-900 bg-neutral-50" : "border-neutral-200 hover:border-neutral-300"
+                        className={`flex items-start gap-3 p-3 border-2 rounded-xl text-left transition-all duration-200 ${
+                          isOn ? "border-neutral-900 bg-neutral-50 shadow-sm" : "border-neutral-200 hover:border-neutral-300 bg-white"
                         }`}
                       >
                         <span
-                          className="text-xl text-neutral-900 leading-none flex-shrink-0 font-semibold"
+                          className="text-xl text-neutral-900 leading-none flex-shrink-0 font-semibold mt-0.5"
                           style={{ fontFamily: font.value }}
                         >
                           {font.sample}
                         </span>
-                        <div className="min-w-0">
-                          <p className="text-[12px] font-semibold text-neutral-900 truncate" style={{ fontFamily: font.value }}>
-                            {font.label}
-                          </p>
-                          <p className="text-[10px] text-neutral-500">Sans</p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <p className="text-[12.5px] font-semibold text-neutral-900 truncate" style={{ fontFamily: font.value }}>
+                              {font.label}
+                            </p>
+                            <span className="text-[9.5px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600 shrink-0 font-medium">
+                              {font.category}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-neutral-500 mt-0.5 truncate">{font.description}</p>
                         </div>
                       </button>
                     );

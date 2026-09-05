@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, LayoutGroup } from "framer-motion";
 import { busyMinutes, toMinutesOfDay } from "@/lib/agendaOccupancy";
 import { STYLIST_FALLBACK } from "@/lib/chartColors";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { AgendaDayTimeline } from "./AgendaDayTimeline";
+import { AgendaDayTimeline, type StylistAbsenceInfo } from "./AgendaDayTimeline";
 import { AgendaWeekBoard, type WeekBooking, type WeekDay } from "./AgendaWeekBoard";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -99,7 +99,7 @@ interface LocalBooking {
 
 interface LocalCalendarCRMProps {
   tenantId: string;
-  stylists: Array<{ slug: string; name: string; color: string }>;
+  stylists: Array<{ id?: string; slug: string; name: string; color: string }>;
   onNavigateToCash?: () => void;
   onSelectClient?: (clientId: string) => void;
   /** Contenido opcional alineado a la izquierda de la fila de acciones (p. ej. botón de importar) */
@@ -134,9 +134,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
   /** El buscador se pliega tras el icono: se usa a ratos, no cada día. */
   const [searchOpen, setSearchOpen] = useState(false);
   const [highlightedBookingId, setHighlightedBookingId] = useState<string | null>(null);
-  const [stylistAbsences, setStylistAbsences] = useState<
-    Array<{ stylist_slug: string; date_from: string; date_to: string; is_closed: boolean; label: string | null; open_time: string | null; close_time: string | null }>
-  >([]);
+  const [stylistAbsences, setStylistAbsences] = useState<StylistAbsenceInfo[]>([]);
 
   // Drag & Drop state
   const [draggedBooking, setDraggedBooking] = useState<LocalBooking | null>(null);
@@ -305,40 +303,118 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     fetchBookings();
   }, [weekStart, tenantId]);
 
-  useEffect(() => {
-    const fetchAbsences = async () => {
+  const fetchAbsences = useCallback(async () => {
+    if (!tenantId) return;
+    try {
       const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-      const [overridesRes, stylistsRes] = await Promise.all([
+      const startDateStr = format(weekStart, "yyyy-MM-dd");
+      const endDateStr = format(addDays(weekEnd, 1), "yyyy-MM-dd");
+
+      const [overridesRes, salonOverridesRes, stylistsRes] = await Promise.all([
         supabase
           .from("stylist_hours_overrides")
-          .select("stylist_id, date_from, date_to, is_closed, label, open_time, close_time")
+          .select("id, stylist_id, date_from, date_to, is_closed, label, open_time, close_time")
+          .lte("date_from", endDateStr)
+          .gte("date_to", startDateStr),
+        supabase
+          .from("tenant_hours_overrides")
+          .select("id, date_from, date_to, is_closed, label, open_time, close_time")
           .eq("tenant_id", tenantId)
-          .lte("date_from", format(addDays(weekEnd, 1), "yyyy-MM-dd"))
-          .gte("date_to", format(weekStart, "yyyy-MM-dd")),
+          .lte("date_from", endDateStr)
+          .gte("date_to", startDateStr),
         supabase
           .from("tenant_stylists")
-          .select("id, slug")
+          .select("id, slug, name")
           .eq("tenant_id", tenantId),
       ]);
+
       const idToSlug = new Map<string, string>();
-      (stylistsRes.data ?? []).forEach((s: any) => idToSlug.set(s.id, s.slug));
-      const rows = (overridesRes.data ?? []) as any[];
-      setStylistAbsences(
-        rows
-          .map((r) => ({
-            stylist_slug: idToSlug.get(r.stylist_id) ?? "",
+      const allStylistSlugs: string[] = [];
+      (stylistsRes.data ?? []).forEach((s: any) => {
+        idToSlug.set(s.id, s.slug);
+        allStylistSlugs.push(s.slug);
+      });
+
+      stylists.forEach((st: any) => {
+        if (st.id && !idToSlug.has(st.id)) {
+          idToSlug.set(st.id, st.slug);
+        }
+        if (!allStylistSlugs.includes(st.slug)) {
+          allStylistSlugs.push(st.slug);
+        }
+      });
+
+      const list: StylistAbsenceInfo[] = [];
+
+      // Overrides de estilistas
+      ((overridesRes.data ?? []) as any[]).forEach((r) => {
+        const slug = idToSlug.get(r.stylist_id);
+        if (slug) {
+          list.push({
+            id: r.id,
+            stylist_slug: slug,
             date_from: r.date_from,
             date_to: r.date_to,
             is_closed: !!r.is_closed,
             label: r.label,
             open_time: r.open_time,
             close_time: r.close_time,
-          }))
-          .filter((r) => r.stylist_slug),
-      );
-    };
+          });
+        }
+      });
+
+      // Overrides generales del salón (festivos, cierres) -> aplicar a todos los estilistas
+      ((salonOverridesRes.data ?? []) as any[]).forEach((sr) => {
+        if (sr.is_closed) {
+          allStylistSlugs.forEach((slug) => {
+            list.push({
+              id: `salon-${sr.id}-${slug}`,
+              stylist_slug: slug,
+              date_from: sr.date_from,
+              date_to: sr.date_to,
+              is_closed: true,
+              label: sr.label || "Cierre del salón",
+              open_time: sr.open_time,
+              close_time: sr.close_time,
+            });
+          });
+        }
+      });
+
+      setStylistAbsences(list);
+    } catch (err) {
+      console.error("Error fetching absences:", err);
+    }
+  }, [weekStart, tenantId, stylists]);
+
+  useEffect(() => {
     fetchAbsences();
-  }, [weekStart, tenantId]);
+
+    // Supabase Realtime channel para actualización inmediata de ausencias
+    const channel = supabase
+      .channel(`calendar-absences-${tenantId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "stylist_hours_overrides" },
+        () => fetchAbsences(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tenant_hours_overrides" },
+        () => fetchAbsences(),
+      )
+      .subscribe();
+
+    const onFocus = () => {
+      fetchAbsences();
+    };
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [fetchAbsences, tenantId]);
 
 
 
@@ -1620,6 +1696,21 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                     const isOn = key === activeKey;
                     const dSched = getScheduleForDay(d);
                     const n = (groupedBookings[key] || []).filter((b) => !isBlockedBooking(b)).length;
+                    const hasStylistAbsence =
+                      selectedStylistFilter !== "all"
+                        ? stylistAbsences.some(
+                            (a) =>
+                              a.stylist_slug === selectedStylistFilter &&
+                              a.is_closed &&
+                              a.date_from <= key &&
+                              a.date_to >= key,
+                          )
+                        : false;
+                    const anyStylistAbsent =
+                      stylists.length > 0 &&
+                      stylistAbsences.some(
+                        (a) => a.is_closed && a.date_from <= key && a.date_to >= key,
+                      );
                     return (
                       <button
                         key={key}
@@ -1641,8 +1732,22 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                         )}
                         <span className="ag-wd-n">{format(d, "EEE", { locale: es })}</span>
                         <span className="ag-wd-d">{format(d, "d")}</span>
-                        <span className="ag-wd-c">{dSched.isClosed ? "—" : n || "—"}</span>
+                        <span className="ag-wd-c">{dSched.isClosed ? "—" : hasStylistAbsence ? "🌴" : n || "—"}</span>
                         {isSameDay(d, new Date()) && !isOn && <span className="ag-wd-today" />}
+                        {!isOn && !hasStylistAbsence && anyStylistAbsent && (
+                          <span
+                            style={{
+                              position: "absolute",
+                              top: 4,
+                              right: 4,
+                              width: 5,
+                              height: 5,
+                              borderRadius: "50%",
+                              backgroundColor: "#f59e0b",
+                            }}
+                            title="Hay ausencias registradas este día"
+                          />
+                        )}
                       </button>
                     );
                   })}
@@ -1992,6 +2097,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                 handleTimelineResize(b as unknown as LocalBooking, duration)
               }
               onUnblock={(b) => openUnblock(b as unknown as LocalBooking)}
+              absences={stylistAbsences}
             />
           </div>
         );
@@ -2102,6 +2208,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
                         handleTimelineResize(b as LocalBooking, duration)
                       }
                       onUnblock={(b) => openUnblock(b as LocalBooking)}
+                      absences={stylistAbsences}
+                      activeDateKey={activeKey}
                 />
               </div>
 

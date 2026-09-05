@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutDashboard, CalendarDays, Wallet, BarChart3 } from "lucide-react";
+import { LayoutDashboard, CalendarDays, Wallet, UserCheck, Users } from "lucide-react";
 import panelInicio from "@/assets/panel-inicio.png";
 import panelAgenda from "@/assets/panel-agenda.png";
 import panelCaja from "@/assets/panel-caja.png";
-import panelNegocio from "@/assets/panel-negocio.png";
+import panelClientes from "@/assets/panel-clientes.png";
+import panelEquipo from "@/assets/panel-equipo.png";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -23,7 +24,7 @@ const TABS = [
     icon: CalendarDays,
     img: panelAgenda,
     urlPath: "agenda/dia",
-    blurb: "Todos tus profesionales en una sola pantalla, sin solapamientos.",
+    blurb: "Todos tus profesionales en una sola pantalla, con arrastrar y soltar.",
   },
   {
     id: "caja",
@@ -31,15 +32,23 @@ const TABS = [
     icon: Wallet,
     img: panelCaja,
     urlPath: "caja",
-    blurb: "Cobra en efectivo, tarjeta o Bizum. El cierre se hace solo.",
+    blurb: "TPV táctil: cobra en efectivo, tarjeta o Bizum y haz el cierre sin descuadres.",
   },
   {
-    id: "negocio",
-    label: "Negocio",
-    icon: BarChart3,
-    img: panelNegocio,
-    urlPath: "negocio",
-    blurb: "Objetivos, ranking de equipo e insights del mes sin abrir un Excel.",
+    id: "clientes",
+    label: "Clientes",
+    icon: UserCheck,
+    img: panelClientes,
+    urlPath: "clientes",
+    blurb: "Historial de visitas, notas técnicas, clientes VIP y fidelización automática.",
+  },
+  {
+    id: "equipo",
+    label: "Equipo",
+    icon: Users,
+    img: panelEquipo,
+    urlPath: "equipo",
+    blurb: "Horarios, turnos, comisiones y vacaciones organizadas sin líos de WhatsApp.",
   },
 ];
 

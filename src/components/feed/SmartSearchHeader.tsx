@@ -7,7 +7,7 @@ import { NotificationBadge } from "@/components/notifications/NotificationBadge"
 export function SmartSearchHeader() {
 
   return (
-    <header className="sticky top-0 z-50">
+    <header className="sticky top-0 z-40">
       <div className="relative bg-surface/85 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/75 border-b border-line/60">
         <div className="h-[env(safe-area-inset-top)]" />
 

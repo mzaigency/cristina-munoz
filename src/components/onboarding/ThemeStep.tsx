@@ -19,6 +19,11 @@ interface TenantData {
   hero_image_url: string | null;
   logo_url: string | null;
   address: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  font_heading?: string | null;
+  font_body?: string | null;
+  button_style?: string | null;
 }
 
 interface StylistData {
@@ -47,7 +52,7 @@ export function ThemeStep({ onNext, onPrev, tenantId, tenantName, loading, setLo
       if (!tenantId) return;
 
       const [tenantRes, stylistsRes, servicesRes] = await Promise.all([
-        supabase.from("tenants").select("name, tagline, city, hero_image_url, logo_url, address").eq("id", tenantId).single(),
+        supabase.from("tenants").select("name, tagline, city, hero_image_url, logo_url, address, primary_color, secondary_color, font_heading, font_body, button_style").eq("id", tenantId).single(),
         supabase.from("tenant_stylists").select("id, name, avatar_url").eq("tenant_id", tenantId).eq("is_active", true).limit(4),
         supabase.from("services").select("id, name, price, duration_part1_active").eq("tenant_id", tenantId).limit(4),
       ]);
@@ -66,16 +71,25 @@ export function ThemeStep({ onNext, onPrev, tenantId, tenantName, loading, setLo
       const theme = landingThemes.find(t => t.id === selectedTheme);
       if (!theme) throw new Error("Tema no encontrado");
 
+      const updateData: Record<string, any> = {
+        theme_id: theme.id,
+      };
+      // Solo aplicar defaults si el salón aún no tiene colores o fuentes asignadas
+      if (!tenantData?.primary_color) {
+        updateData.primary_color = theme.defaultColors.primary;
+        updateData.secondary_color = theme.defaultColors.secondary;
+      }
+      if (!tenantData?.font_heading) {
+        updateData.font_heading = theme.recommendedFonts.heading;
+        updateData.font_body = theme.recommendedFonts.body;
+      }
+      if (!tenantData?.button_style) {
+        updateData.button_style = theme.buttonStyle;
+      }
+
       const { error } = await supabase
         .from("tenants")
-        .update({
-          theme_id: theme.id,
-          primary_color: theme.defaultColors.primary,
-          secondary_color: theme.defaultColors.secondary,
-          font_heading: theme.recommendedFonts.heading,
-          font_body: theme.recommendedFonts.body,
-          button_style: theme.buttonStyle,
-        })
+        .update(updateData)
         .eq("id", tenantId);
 
       if (error) throw error;
@@ -254,187 +268,163 @@ function ThemeMiniPreview({ theme, tenantData, services }: ThemeMiniPreviewProps
   const name = tenantData?.name || "Tu Salón";
   const hasImage = !!tenantData?.hero_image_url;
   const hasLogo = !!tenantData?.logo_url;
+  const primary = tenantData?.primary_color || defaultColors.primary;
+  const secondary = tenantData?.secondary_color || defaultColors.secondary;
 
-  // Base gradient style
-  const gradientBg = `linear-gradient(135deg, ${defaultColors.primary} 0%, ${defaultColors.secondary} 100%)`;
+  const gradientBg = `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`;
 
+  // IMMERSIVE
   if (heroLayout === "fullscreen") {
     return (
       <div 
-        className="w-full h-full flex flex-col items-center justify-center relative p-3"
+        className="w-full h-full flex flex-col justify-end relative p-3 overflow-hidden bg-neutral-900"
         style={{ 
           background: hasImage 
-            ? `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url(${tenantData?.hero_image_url}) center/cover` 
+            ? `linear-gradient(to top, rgba(10,12,22,0.9) 0%, rgba(10,12,22,0.3) 50%, rgba(10,12,22,0.6) 100%), url(${tenantData?.hero_image_url}) center/cover` 
             : gradientBg 
         }}
       >
-        {/* Logo or placeholder */}
-        {hasLogo ? (
-          <img src={tenantData?.logo_url!} alt="" className="w-8 h-8 rounded-lg object-cover mb-2" />
-        ) : (
-          <div className="w-8 h-8 rounded-lg bg-white/20 mb-2" />
-        )}
-        
-        <div className="w-full max-w-[90%] h-2 rounded bg-white/90 mb-1" />
-        <div className="w-2/3 h-1.5 rounded bg-white/60 mb-2" />
-        
-        {/* Stars */}
-        <div className="flex gap-0.5 mb-2">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="w-2 h-2 rounded-full bg-yellow-400" />
-          ))}
-        </div>
-        
-        <div className="w-16 h-4 rounded-full bg-white/90" />
-        
-        {/* Service pills */}
-        {services.length > 0 && (
-          <div className="absolute bottom-2 left-2 right-2 flex gap-1">
-            {services.slice(0, 2).map((s, i) => (
-              <div key={i} className="flex-1 h-3 rounded bg-white/20 backdrop-blur-sm" />
-            ))}
+        <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-1 mb-1">
+            <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
+            <span className="text-[9px] font-semibold text-white/90">4.9</span>
+            <span className="text-white/40 text-[8px]">·</span>
+            <span className="text-[8px] text-white/70">Inmersivo</span>
           </div>
-        )}
+          <p className="text-[12px] font-bold text-white leading-tight truncate drop-shadow-md mb-1.5">
+            {name}
+          </p>
+          <div className="w-14 h-3.5 rounded-full bg-white/90 shadow-sm flex items-center justify-center text-[8px] font-semibold text-neutral-900">
+            Reservar
+          </div>
+        </div>
       </div>
     );
   }
 
+  // MINIMAL
   if (heroLayout === "minimal") {
     return (
-      <div className="w-full h-full bg-white flex flex-col p-3">
-        {/* Header */}
-        <div className="flex flex-col items-center pt-4 pb-3">
-          <div className="w-full max-w-[85%] h-2.5 rounded bg-foreground/80 mb-1" />
-          <div className="w-12 h-0.5 mb-1" style={{ backgroundColor: defaultColors.primary }} />
-          <div className="w-2/3 h-1.5 rounded bg-muted-foreground/40 mb-3" />
-          
+      <div 
+        className="w-full h-full flex flex-col items-center justify-center relative p-3 text-center overflow-hidden bg-neutral-950"
+        style={{
+          background: hasImage
+            ? `radial-gradient(ellipse at center, rgba(10,12,20,0.4) 0%, rgba(10,12,20,0.85) 75%), url(${tenantData?.hero_image_url}) center/cover`
+            : "radial-gradient(ellipse at center, rgba(24,24,27,0.8) 0%, #09090b 100%)",
+        }}
+      >
+        <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 backdrop-blur-md mb-1.5">
+            <Star className="w-2 h-2 text-amber-400 fill-amber-400" />
+            <span className="text-[8px] text-white/80">Boutique</span>
+          </div>
+          <p className="text-[11px] font-medium text-white tracking-wide leading-tight truncate max-w-[90%]">
+            {name}
+          </p>
+          <div className="w-6 h-px bg-white/40 my-1.5" />
+          <div className="w-12 h-3 rounded-full border border-white/40 text-[7px] text-white flex items-center justify-center">
+            Cita
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // SPLIT
+  if (heroLayout === "split") {
+    return (
+      <div className="w-full h-full flex flex-col justify-between p-2.5 relative overflow-hidden bg-neutral-950">
+        <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+        {/* Top: Framed photo block */}
+        <div 
+          className="h-[48%] rounded-xl overflow-hidden border border-white/15 relative shadow-md"
+          style={{
+            background: hasImage
+              ? `url(${tenantData?.hero_image_url}) center/cover`
+              : gradientBg,
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        </div>
+        {/* Bottom: Studio content card */}
+        <div className="h-[46%] rounded-xl bg-white/10 backdrop-blur-md border border-white/15 p-2 flex flex-col justify-center">
+          <div className="flex items-center gap-1 mb-0.5">
+            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: primary }} />
+            <span className="text-[7.5px] uppercase tracking-wider font-bold" style={{ color: primary }}>Studio</span>
+          </div>
+          <p className="text-[10.5px] font-bold text-white truncate leading-tight mb-1">
+            {name}
+          </p>
           <div 
-            className="px-4 py-1.5 rounded border-[1.5px] text-[8px] font-medium"
-            style={{ borderColor: defaultColors.primary, color: defaultColors.primary }}
+            className="w-full h-3 rounded-md text-white text-[7.5px] font-semibold flex items-center justify-center shadow-sm"
+            style={{ backgroundColor: primary }}
           >
             Reservar
           </div>
         </div>
-        
-        {/* Gallery grid */}
-        <div className="flex-1 grid grid-cols-2 gap-1.5 mt-2">
-          {[0, 1, 2, 3].map((i) => (
-            <div 
-              key={i} 
-              className="rounded-md overflow-hidden"
-              style={{ 
-                background: hasImage && i === 0 
-                  ? `url(${tenantData?.hero_image_url}) center/cover` 
-                  : 'linear-gradient(135deg, hsl(var(--muted)) 0%, hsl(var(--muted)/0.5) 100%)' 
-              }}
-            />
-          ))}
-        </div>
       </div>
     );
   }
 
-  if (heroLayout === "split") {
-    return (
-      <div className="w-full h-full flex flex-col">
-        {/* Top image */}
-        <div 
-          className="h-[40%]"
-          style={{ 
-            background: hasImage 
-              ? `url(${tenantData?.hero_image_url}) center/cover` 
-              : gradientBg 
-          }}
-        />
-        
-        {/* Content */}
-        <div className="flex-1 bg-white p-3 flex flex-col justify-center">
-          {hasLogo && (
-            <img src={tenantData?.logo_url!} alt="" className="w-6 h-6 rounded object-cover mb-1.5" />
-          )}
-          <div className="w-full h-2 rounded bg-foreground/80 mb-1" />
-          <div className="flex gap-0.5 mb-1.5">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
-            ))}
-          </div>
-          <div 
-            className="w-full h-4 rounded-lg"
-            style={{ backgroundColor: defaultColors.primary }}
-          />
-        </div>
-      </div>
-    );
-  }
-
+  // BOLD
   if (heroLayout === "bold") {
     return (
-      <div className="w-full h-full bg-muted/30 p-2 flex flex-col">
-        {/* Hero card */}
-        <div 
-          className="flex-1 rounded-xl flex flex-col items-center justify-center p-2 relative overflow-hidden"
-          style={{ 
-            background: hasImage 
-              ? `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.5)), url(${tenantData?.hero_image_url}) center/cover` 
-              : gradientBg 
-          }}
-        >
-          {/* Decorative */}
-          <div className="absolute top-2 right-2 w-8 h-8 border border-white/20 rounded-full" />
-          
-          {hasLogo ? (
-            <img src={tenantData?.logo_url!} alt="" className="w-6 h-6 rounded object-cover mb-1" />
-          ) : (
-            <div className="w-6 h-6 rounded bg-white/20 mb-1" />
-          )}
-          <div className="w-14 h-1.5 rounded bg-white mb-0.5" />
-          <div className="w-8 h-1 rounded bg-white/60 mb-2" />
-          <div className="w-12 h-3.5 rounded-lg bg-white" />
-        </div>
-        
-        {/* Info card */}
-        <div className="mt-1.5 p-2 rounded-lg bg-card border border-border">
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded bg-primary/10" />
-            <div className="flex-1">
-              <div className="w-full h-1 rounded bg-muted-foreground/30" />
-            </div>
+      <div 
+        className="w-full h-full flex flex-col justify-end relative p-3 overflow-hidden bg-neutral-950"
+        style={{
+          background: hasImage
+            ? `linear-gradient(135deg, ${primary}CC 0%, ${secondary}99 50%, rgba(10,12,22,0.92) 100%), url(${tenantData?.hero_image_url}) center/cover`
+            : `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`,
+        }}
+      >
+        <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+        <div className="relative z-10">
+          <div className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/20 text-white text-[7.5px] font-bold uppercase tracking-wider mb-1">
+            Atelier Bold
+          </div>
+          <p className="text-[12px] font-black text-white uppercase tracking-tight leading-none drop-shadow mb-1 truncate">
+            {name}
+          </p>
+          <div className="w-8 h-0.5 bg-white mb-1.5 rounded-full" />
+          <div className="w-14 h-3.5 rounded-lg bg-white text-neutral-900 font-bold text-[8px] flex items-center justify-center shadow-md">
+            Reservar
           </div>
         </div>
       </div>
     );
   }
 
-  // Glass (default)
+  // GLASS (default)
   return (
     <div 
-      className="w-full h-full flex flex-col items-center justify-center relative p-3"
+      className="w-full h-full flex flex-col justify-end relative p-2.5 overflow-hidden bg-neutral-950"
       style={{ 
         background: hasImage 
-          ? `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url(${tenantData?.hero_image_url}) center/cover` 
+          ? `linear-gradient(to top, rgba(10,12,22,0.85) 0%, rgba(10,12,22,0.3) 100%), url(${tenantData?.hero_image_url}) center/cover` 
           : gradientBg 
       }}
     >
-      {/* Glass card */}
-      <div className="w-[90%] p-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 flex flex-col items-center">
-        {hasLogo ? (
-          <img src={tenantData?.logo_url!} alt="" className="w-6 h-6 rounded-lg object-cover mb-1.5" />
-        ) : (
-          <div className="w-6 h-6 rounded-lg bg-white/30 mb-1.5" />
-        )}
-        <div className="w-full h-1.5 rounded bg-white/90 mb-0.5" />
-        <div className="w-2/3 h-1 rounded bg-white/60 mb-2" />
-        <div className="w-10 h-3 rounded-full bg-white/90" />
-      </div>
-      
-      {/* Bottom services */}
-      {services.length > 0 && (
-        <div className="absolute bottom-2 left-2 right-2 flex gap-1">
-          {services.slice(0, 2).map((s, i) => (
-            <div key={i} className="flex-1 h-3 rounded bg-white/20 backdrop-blur-sm" />
-          ))}
+      <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+      {/* Ambient orb */}
+      <div 
+        className="absolute bottom-2 left-2 w-16 h-16 rounded-full blur-xl opacity-40 pointer-events-none"
+        style={{ backgroundColor: primary }}
+      />
+      {/* Floating glass card */}
+      <div className="relative z-10 p-2.5 rounded-xl bg-white/15 backdrop-blur-md border border-white/25 shadow-lg">
+        <div className="flex items-center gap-1 mb-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[7.5px] font-semibold text-white/90 uppercase">Liquid Glass</span>
         </div>
-      )}
+        <p className="text-[11px] font-bold text-white truncate leading-tight mb-1.5">
+          {name}
+        </p>
+        <div className="w-full h-3 rounded-lg bg-white/25 border border-white/30 text-white text-[7.5px] font-medium flex items-center justify-center">
+          Reservar cita →
+        </div>
+      </div>
     </div>
   );
 }
@@ -450,8 +440,6 @@ interface ThemePreviewModalProps {
 }
 
 function ThemePreviewModal({ theme, tenantData, stylists, services, onClose, onSelect }: ThemePreviewModalProps) {
-  const displayName = tenantData?.name || "Tu Negocio";
-  
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -466,7 +454,7 @@ function ThemePreviewModal({ theme, tenantData, stylists, services, onClose, onS
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[260px] max-h-[95vh] overflow-y-auto"
+        className="relative w-full max-w-[270px] max-h-[95vh] overflow-y-auto"
       >
         {/* Close button */}
         <button
@@ -479,10 +467,10 @@ function ThemePreviewModal({ theme, tenantData, stylists, services, onClose, onS
         {/* Phone Frame */}
         <div className="relative bg-[#1a1a1a] rounded-[28px] p-[4px] shadow-2xl">
           {/* Notch */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-[#1a1a1a] rounded-b-2xl z-10" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-5 bg-[#1a1a1a] rounded-b-2xl z-20" />
           
           {/* Screen */}
-          <div className="relative bg-white rounded-[24px] overflow-hidden aspect-[9/19]">
+          <div className="relative bg-neutral-950 rounded-[24px] overflow-hidden aspect-[9/19]">
             <ThemeFullPreview 
               theme={theme} 
               tenantData={tenantData}
@@ -537,245 +525,137 @@ function ThemeFullPreview({ theme, tenantData, stylists, services }: ThemeFullPr
   const name = tenantData?.name || "Tu Negocio";
   const tagline = tenantData?.tagline || "Tu espacio de belleza y bienestar";
   const city = tenantData?.city || "Centro";
-  const address = tenantData?.address || "Calle Principal, 123";
   const hasImage = !!tenantData?.hero_image_url;
   const hasLogo = !!tenantData?.logo_url;
+  const primary = tenantData?.primary_color || defaultColors.primary;
+  const secondary = tenantData?.secondary_color || defaultColors.secondary;
 
-  const gradientBg = `linear-gradient(135deg, ${defaultColors.primary} 0%, ${defaultColors.secondary} 100%)`;
+  const gradientBg = `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`;
 
-  // Shared status bar
-  const StatusBar = ({ light = true }: { light?: boolean }) => (
-    <div className={cn(
-      "absolute top-0 left-0 right-0 h-7 flex items-center justify-between px-5 z-20",
-      light ? "text-white" : "text-foreground"
-    )}>
-      <span className="text-[11px] font-semibold">9:41</span>
-      <div className="flex items-center gap-1.5">
-        <div className={cn("w-4 h-2.5 rounded-sm", light ? "bg-white/80" : "bg-foreground/80")} />
-      </div>
-    </div>
+  const TopScrim = () => (
+    <div
+      className="absolute inset-x-0 top-0 h-16 pointer-events-none z-10"
+      style={{
+        background: "linear-gradient(to bottom, rgba(10,12,22,0.7) 0%, transparent 100%)",
+      }}
+    />
   );
 
-  // Stats pills - mirrors real hero components
-  const StatsPills = ({ className = "" }: { className?: string }) => (
-    <div className={cn("flex flex-wrap items-center justify-center gap-1.5", className)}>
-      <div className="flex items-center gap-1 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-1">
-        <Users className="w-3 h-3 text-white/80" />
-        <span className="text-white font-medium text-[10px]">0</span>
-        <span className="text-white/70 text-[9px]">seguidores</span>
-      </div>
-      <div className="flex items-center gap-1 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-1">
-        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-        <span className="text-white font-medium text-[10px]">5.0</span>
-      </div>
-    </div>
-  );
-
-  // ====== IMMERSIVE (fullscreen) ======
+  // IMMERSIVE
   if (heroLayout === "fullscreen") {
     return (
-      <div className="w-full h-full overflow-y-auto relative">
-        <div 
-          className="min-h-full flex flex-col items-center justify-center px-5 py-12 text-center relative"
-          style={{ 
-            background: hasImage 
-              ? `linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.8) 100%), url(${tenantData?.hero_image_url}) center/cover` 
-              : gradientBg 
-          }}
-        >
-          <StatusBar light />
-          
-          {/* Decorative circle */}
-          <div className="absolute top-16 right-5 w-16 h-16 border border-white/10 rounded-full" />
-          
-          {/* Logo */}
-          {hasLogo ? (
-            <img src={tenantData?.logo_url!} alt="" className="w-14 h-14 rounded-2xl object-cover mb-4 shadow-2xl" />
-          ) : (
-            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm mb-4 flex items-center justify-center">
-              <span className="text-xl">✨</span>
-            </div>
-          )}
-          
-          {/* Name */}
-          <h3 className="text-[22px] font-bold text-white mb-2 tracking-tight" style={{ fontFamily: recommendedFonts.heading, textShadow: "0 4px 30px rgba(0,0,0,0.5)" }}>
+      <div 
+        className="w-full h-full flex flex-col justify-end p-5 relative overflow-hidden bg-neutral-900"
+        style={{ 
+          background: hasImage 
+            ? `linear-gradient(to top, rgba(10,12,22,0.92) 0%, rgba(10,12,22,0.4) 50%, rgba(10,12,22,0.65) 100%), url(${tenantData?.hero_image_url}) center/cover` 
+            : gradientBg 
+        }}
+      >
+        <TopScrim />
+        <div className="relative z-10 pb-6">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+            <span className="text-[11px] font-semibold text-white">4.9</span>
+            <span className="text-white/40 text-[10px]">·</span>
+            <span className="text-[11px] text-white/80">{city}</span>
+          </div>
+          <h3 
+            className="text-[24px] font-bold text-white mb-2 leading-tight drop-shadow-md"
+            style={{ fontFamily: recommendedFonts.heading }}
+          >
             {name}
           </h3>
-          
-          {/* Tagline */}
-          <p className="text-white/90 text-xs mb-3 max-w-[85%]" style={{ fontFamily: recommendedFonts.body }}>
+          <p 
+            className="text-white/80 text-xs mb-4 line-clamp-2"
+            style={{ fontFamily: recommendedFonts.body }}
+          >
             {tagline}
           </p>
-          
-          {/* Stars */}
-          <div className="flex items-center gap-0.5 mb-4">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-            ))}
-            <span className="text-white/80 text-[10px] ml-1">(127)</span>
-          </div>
-          
-          {/* Stats pills */}
-          <StatsPills className="mb-5" />
-          
-          {/* CTA */}
           <button 
-            className="px-6 py-2.5 rounded-full text-xs font-semibold shadow-2xl transition-transform"
-            style={{ 
-              background: `linear-gradient(135deg, ${defaultColors.primary} 0%, ${defaultColors.secondary} 100%)`,
-              color: "white"
-            }}
+            className="w-full py-2.5 rounded-full text-xs font-semibold shadow-lg text-white"
+            style={{ background: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)` }}
           >
             Reservar cita
           </button>
-          
-          {/* Location info */}
-          <div className="flex items-center gap-3 mt-5 text-white/70 text-[10px]">
-            <div className="flex items-center gap-1">
-              <MapPin className="w-3 h-3" />
-              <span>{city}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>Abierto</span>
-            </div>
-          </div>
-          
-          {/* Scroll indicator */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
-            <span className="text-white/50 text-[8px] uppercase tracking-widest">Descubre más</span>
-            <ChevronDown className="w-3.5 h-3.5 text-white/50" />
-          </div>
         </div>
       </div>
     );
   }
 
-  // ====== MINIMAL ======
+  // MINIMAL (centrado)
   if (heroLayout === "minimal") {
     return (
-      <div className="w-full h-full overflow-y-auto relative">
-        {/* Background */}
-        {hasImage ? (
-          <div className="absolute inset-0">
-            <img src={tenantData?.hero_image_url!} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-black/85" />
+      <div 
+        className="w-full h-full flex flex-col items-center justify-center p-5 text-center relative overflow-hidden bg-neutral-950"
+        style={{
+          background: hasImage
+            ? `radial-gradient(ellipse at center, rgba(10,12,20,0.35) 0%, rgba(10,12,20,0.85) 75%), url(${tenantData?.hero_image_url}) center/cover`
+            : "radial-gradient(ellipse at center, rgba(24,24,27,0.7) 0%, #09090b 100%)",
+        }}
+      >
+        <TopScrim />
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md mb-3 border border-white/15">
+            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+            <span className="text-[10px] text-white/90 font-medium">Boutique Atelier</span>
           </div>
-        ) : (
-          <div className="absolute inset-0 bg-gray-950" />
-        )}
-        
-        <StatusBar light />
-        
-        <div className="relative z-10 flex flex-col justify-center items-center min-h-full px-5 py-16 text-center">
-          {/* Logo */}
-          {hasLogo && (
-            <img src={tenantData?.logo_url!} alt="" className="w-12 h-12 rounded-xl object-contain mx-auto mb-8" />
-          )}
-          
-          {/* Name - Elegant light */}
-          <h3 className="text-2xl font-light text-white mb-4 tracking-tight" style={{ fontFamily: recommendedFonts.heading }}>
+          <h3 
+            className="text-[22px] font-light text-white mb-2 tracking-wide leading-tight"
+            style={{ fontFamily: recommendedFonts.heading }}
+          >
             {name}
           </h3>
-          
-          {/* Stats */}
-          <div className="flex items-center gap-4 mb-4 text-white/50 text-[10px]">
-            <div className="flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              <span>0</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Star className="w-3 h-3 fill-current" />
-              <span>5.0</span>
-            </div>
-          </div>
-          
-          {/* Minimal line */}
-          <div className="w-10 h-px bg-white/30 mx-auto mb-4" />
-          
-          {/* Tagline */}
-          <p className="text-sm text-white/60 font-light mb-8 max-w-[80%]" style={{ fontFamily: recommendedFonts.body }}>
+          <div className="w-10 h-px bg-white/40 my-2" />
+          <p 
+            className="text-white/70 text-xs font-light mb-4 line-clamp-2 max-w-[90%]"
+            style={{ fontFamily: recommendedFonts.body }}
+          >
             {tagline}
           </p>
-          
-          {/* CTA - Sharp edges, minimal style */}
-          <div className="flex flex-col items-center gap-3 w-full max-w-[200px]">
-            <button 
-              className="w-full py-2.5 text-[10px] font-medium tracking-wide uppercase border border-white/30 text-white hover:bg-white/10 transition-all"
-            >
-              Seguir
-            </button>
-            <button 
-              className="w-full py-2.5 text-[10px] font-medium tracking-wide uppercase border border-white/40 text-white transition-all"
-            >
-              Reservar
-            </button>
-          </div>
+          <button className="px-6 py-2 rounded-full border border-white/50 text-white text-xs font-medium bg-white/5 hover:bg-white/10">
+            Reservar cita
+          </button>
         </div>
       </div>
     );
   }
 
-  // ====== SPLIT ======
+  // SPLIT (editorial spread sobre la foto)
   if (heroLayout === "split") {
     return (
-      <div className="w-full h-full overflow-y-auto relative">
-        {/* Background Image */}
-        {hasImage ? (
-          <div className="absolute inset-0">
-            <img src={tenantData?.hero_image_url!} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20" />
-          </div>
-        ) : (
-          <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${defaultColors.primary} 0%, ${defaultColors.secondary} 100%)` }} />
-        )}
-        
-        <StatusBar light />
-        
-        <div className="relative z-10 min-h-full flex flex-col justify-end px-5 pb-8 pt-16">
-          {/* Logo */}
-          {hasLogo && (
-            <img src={tenantData?.logo_url!} alt="" className="w-11 h-11 object-contain mb-4 rounded-xl shadow-lg" />
-          )}
-          
-          {/* Name */}
-          <h3 className="text-2xl font-bold text-white mb-2 leading-tight" style={{ fontFamily: recommendedFonts.heading }}>
-            {name}
-          </h3>
-          
-          {/* Tagline */}
-          <p className="text-xs text-white/80 mb-3 max-w-[85%]" style={{ fontFamily: recommendedFonts.body }}>
-            {tagline}
-          </p>
-          
-          {/* Location */}
-          <div className="flex items-center gap-1.5 text-white/70 mb-4">
-            <MapPin className="w-3 h-3" />
-            <span className="text-[10px]">{city} · {address}</span>
-          </div>
-          
-          {/* Stats */}
-          <div className="flex flex-wrap items-center gap-1.5 mb-5">
-            <div className="flex items-center gap-1 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-1">
-              <Users className="w-3 h-3 text-white/80" />
-              <span className="text-white text-[10px] font-medium">0</span>
+      <div 
+        className="w-full h-full flex flex-col justify-end p-4 relative overflow-hidden bg-neutral-950"
+        style={{
+          background: hasImage
+            ? `linear-gradient(to top, rgba(10,12,22,0.92) 0%, rgba(10,12,22,0.45) 50%, rgba(10,12,22,0.7) 100%), url(${tenantData?.hero_image_url}) center/cover`
+            : gradientBg,
+        }}
+      >
+        <TopScrim />
+        <div className="relative z-10 pb-5">
+          <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: primary }} />
+              <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: primary }}>Studio Editorial</span>
             </div>
-            <div className="flex items-center gap-1 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-1">
-              <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-              <span className="text-white text-[10px] font-medium">5.0</span>
-            </div>
-          </div>
-          
-          {/* CTA */}
-          <div className="flex flex-col gap-2">
-            <button 
-              className="w-full py-2.5 text-[10px] font-semibold rounded-xl shadow-xl text-white"
-              style={{ backgroundColor: defaultColors.primary }}
+            <h3 
+              className="text-[20px] font-bold text-white leading-tight mb-1.5"
+              style={{ fontFamily: recommendedFonts.heading }}
             >
-              📅 Reservar cita
-            </button>
-            <button className="w-full py-2.5 text-[10px] bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-xl">
-              Seguir
+              {name}
+            </h3>
+            <p 
+              className="text-xs text-white/75 mb-3 line-clamp-2"
+              style={{ fontFamily: recommendedFonts.body }}
+            >
+              {tagline}
+            </p>
+            <button 
+              className="w-full py-2.5 rounded-xl text-white text-xs font-semibold shadow-md"
+              style={{ backgroundColor: primary }}
+            >
+              Reservar cita
             </button>
           </div>
         </div>
@@ -783,168 +663,81 @@ function ThemeFullPreview({ theme, tenantData, stylists, services }: ThemeFullPr
     );
   }
 
-  // ====== BOLD ======
+  // BOLD (alta definición pura sin filtros turbios)
   if (heroLayout === "bold") {
     return (
-      <div className="w-full h-full overflow-y-auto relative">
-        {/* Background with gradient overlay */}
-        <div className="absolute inset-0">
-          {hasImage ? (
-            <>
-              <img src={tenantData?.hero_image_url!} alt="" className="w-full h-full object-cover" />
-              <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${defaultColors.primary}CC 0%, ${defaultColors.secondary}99 50%, ${defaultColors.primary}EE 100%)` }} />
-            </>
-          ) : (
-            <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${defaultColors.primary} 0%, ${defaultColors.secondary} 50%, ${defaultColors.primary} 100%)` }} />
-          )}
-        </div>
-        
-        {/* Animated shapes */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-10 -right-10 w-32 h-32 border-2 border-white/20 rounded-full" />
-          <div className="absolute top-1/3 -left-8 w-24 h-24 border border-white/10 rounded-full" />
-          <div className="absolute bottom-1/4 right-4 w-10 h-10 bg-white/10 rounded-full blur-xl" />
-        </div>
-        
-        <StatusBar light />
-        
-        <div className="relative z-10 min-h-full flex flex-col items-center justify-center px-5 py-10 text-center">
-          {/* Logo with glow */}
-          {hasLogo ? (
-            <div className="relative mb-4">
-              <div className="absolute inset-0 blur-2xl opacity-50 rounded-3xl bg-white" />
-              <img src={tenantData?.logo_url!} alt="" className="relative w-14 h-14 object-contain rounded-2xl bg-white/20 backdrop-blur-sm p-1.5 shadow-2xl" />
-            </div>
-          ) : (
-            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm mb-4 flex items-center justify-center">
-              <span className="text-xl">✨</span>
-            </div>
-          )}
-          
-          {/* Name - Extra bold uppercase */}
-          <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-wider drop-shadow-2xl" style={{ fontFamily: recommendedFonts.heading }}>
+      <div 
+        className="w-full h-full flex flex-col justify-end p-5 relative overflow-hidden bg-neutral-950"
+        style={{
+          background: hasImage
+            ? `linear-gradient(to top, rgba(10,12,22,0.94) 0%, rgba(10,12,22,0.4) 50%, rgba(10,12,22,0.7) 100%), url(${tenantData?.hero_image_url}) center/cover`
+            : `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`,
+        }}
+      >
+        <TopScrim />
+        <div className="relative z-10 pb-6">
+          <div className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-bold uppercase tracking-wider mb-2">
+            ✦ Salón de Autor
+          </div>
+          <h3 
+            className="text-[26px] font-black text-white uppercase tracking-tight leading-[0.95] drop-shadow-lg mb-2"
+            style={{ fontFamily: recommendedFonts.heading }}
+          >
             {name}
           </h3>
-          
-          {/* Underline */}
-          <div className="w-16 h-1 bg-white/60 rounded-full mb-3" />
-          
-          {/* Tagline */}
-          <p className="text-sm text-white/95 font-medium mb-4 max-w-[85%]" style={{ fontFamily: recommendedFonts.body }}>
+          <div className="w-12 h-1 bg-white mb-2 rounded-full" />
+          <p 
+            className="text-white/90 text-xs font-medium mb-4 line-clamp-2"
+            style={{ fontFamily: recommendedFonts.body }}
+          >
             {tagline}
           </p>
-          
-          {/* Stats */}
-          <div className="flex flex-wrap items-center justify-center gap-1.5 mb-5">
-            <div className="flex items-center gap-1 bg-white/25 backdrop-blur-md rounded-full px-2.5 py-1 shadow-lg">
-              <Users className="w-3 h-3 text-white/80" />
-              <span className="text-white font-bold text-[10px]">0</span>
-            </div>
-            <div className="flex items-center gap-1 bg-white/25 backdrop-blur-md rounded-full px-2.5 py-1 shadow-lg">
-              <Star className="w-3 h-3 text-yellow-300 fill-yellow-300" />
-              <span className="text-white font-bold text-[10px]">5.0</span>
-            </div>
-          </div>
-          
-          {/* CTA */}
-          <div className="flex flex-col items-center gap-2 w-full max-w-[200px]">
-            <button className="w-full py-2.5 text-[10px] bg-white/20 backdrop-blur-md border border-white/30 text-white rounded-xl font-medium">
-              Seguir
-            </button>
-            <button className="w-full py-2.5 text-xs font-bold bg-white text-gray-900 shadow-2xl rounded-xl uppercase tracking-wide">
-              ✨ Reservar
-            </button>
-          </div>
-          
-          {/* Scroll indicator */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-            <ChevronDown className="w-4 h-4 text-white/60" />
-          </div>
+          <button 
+            className="w-full py-2.5 rounded-xl text-white font-bold text-xs uppercase tracking-wider shadow-xl"
+            style={{ backgroundColor: primary }}
+          >
+            Reservar cita
+          </button>
         </div>
       </div>
     );
   }
 
-  // ====== GLASS (default) ======
+  // GLASS (panorámica Liquid Glass)
   return (
-    <div className="w-full h-full overflow-y-auto relative">
-      {/* Background */}
-      {hasImage && (
-        <div className="absolute inset-0">
-          <img src={tenantData?.hero_image_url!} alt="" className="w-full h-full object-cover scale-105" />
-          <div className="absolute inset-0 bg-black/30" />
+    <div 
+      className="w-full h-full flex flex-col justify-end p-4 relative overflow-hidden bg-neutral-950"
+      style={{ 
+        background: hasImage 
+          ? `linear-gradient(to top, rgba(10,12,22,0.85) 0%, rgba(10,12,22,0.2) 100%), url(${tenantData?.hero_image_url}) center/cover` 
+          : gradientBg 
+      }}
+    >
+      <TopScrim />
+      <div 
+        className="absolute bottom-6 left-4 w-28 h-28 rounded-full blur-2xl opacity-40 pointer-events-none"
+        style={{ backgroundColor: primary }}
+      />
+      <div className="relative z-10 pb-5 p-4 rounded-2xl bg-white/12 backdrop-blur-2xl border border-white/25 shadow-2xl">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[10px] font-bold text-white/90 uppercase tracking-wider">Citas abiertas hoy</span>
         </div>
-      )}
-      
-      {/* Gradient orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-1/4 -left-1/4 w-[60%] h-[60%] rounded-full blur-3xl opacity-30" style={{ backgroundColor: defaultColors.primary }} />
-        <div className="absolute -bottom-1/4 -right-1/4 w-[50%] h-[50%] rounded-full blur-3xl opacity-25" style={{ backgroundColor: defaultColors.primary }} />
-      </div>
-      
-      <StatusBar light />
-      
-      <div className="relative z-10 min-h-full flex flex-col items-center justify-center px-5 py-12">
-        {/* Glass Card */}
-        <div className="relative w-full p-6 rounded-3xl bg-white/10 backdrop-blur-2xl border border-white/30 shadow-2xl">
-          {/* Sparkle decoration */}
-          <div className="absolute -top-2.5 -right-2.5 p-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
-            <Sparkles className="w-3 h-3 text-white" />
-          </div>
-          
-          {/* Logo */}
-          {hasLogo && (
-            <div className="flex justify-center mb-4">
-              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 p-2 shadow-lg">
-                <img src={tenantData?.logo_url!} alt="" className="w-full h-full object-contain" />
-              </div>
-            </div>
-          )}
-          {!hasLogo && (
-            <div className="flex justify-center mb-4">
-              <div className="w-14 h-14 rounded-2xl bg-white/20 mb-0 flex items-center justify-center">
-                <span className="text-xl">✨</span>
-              </div>
-            </div>
-          )}
-          
-          {/* Name */}
-          <h3 className="text-xl font-bold text-white text-center mb-2 drop-shadow-lg" style={{ fontFamily: recommendedFonts.heading }}>
-            {name}
-          </h3>
-          
-          {/* Tagline */}
-          <p className="text-xs text-white/80 text-center mb-4 leading-relaxed" style={{ fontFamily: recommendedFonts.body }}>
-            {tagline}
-          </p>
-          
-          {/* Stats in glass pills */}
-          <div className="flex flex-wrap items-center justify-center gap-1.5 mb-5">
-            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm border border-white/20">
-              <Users className="w-3 h-3 text-white/80" />
-              <span className="text-[10px] font-medium text-white">0</span>
-            </div>
-            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm border border-white/20">
-              <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-              <span className="text-[10px] font-medium text-white">5.0</span>
-            </div>
-          </div>
-          
-          {/* CTA */}
-          <button className="w-full py-2.5 text-xs font-semibold rounded-2xl bg-white text-gray-900 shadow-xl">
-            Reservar cita →
-          </button>
-          <button className="w-full py-2.5 text-xs mt-2 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-2xl">
-            Seguir
-          </button>
-        </div>
-        
-        {/* Bottom dots */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="w-1 h-1 rounded-full bg-white/50" />
-          ))}
-        </div>
+        <h3 
+          className="text-[20px] font-bold text-white mb-1.5 leading-tight"
+          style={{ fontFamily: recommendedFonts.heading }}
+        >
+          {name}
+        </h3>
+        <p 
+          className="text-xs text-white/80 mb-3 line-clamp-2"
+          style={{ fontFamily: recommendedFonts.body }}
+        >
+          {tagline}
+        </p>
+        <button className="w-full py-2.5 rounded-xl bg-white/25 backdrop-blur-md border border-white/35 text-white text-xs font-semibold shadow-lg">
+          Reservar cita →
+        </button>
       </div>
     </div>
   );

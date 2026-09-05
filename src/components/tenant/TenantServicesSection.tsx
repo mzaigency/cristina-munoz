@@ -209,17 +209,27 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
         >
           {/* "Todos" Tab */}
           <button
+            type="button"
             onClick={() => handleCategoryChange("all")}
-            className={`shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold font-body transition-all duration-200 active:scale-[0.97] ${
+            style={
               activeCategory === "all"
-                ? "bg-neutral-900 text-white shadow-sm"
-                : "bg-white text-neutral-600 hover:text-neutral-900 border border-neutral-200/80 hover:bg-neutral-50"
+                ? {
+                    backgroundColor: primaryColor || "hsl(var(--primary))",
+                    borderColor: primaryColor || "hsl(var(--primary))",
+                    color: "hsl(var(--primary-foreground, 0 0% 100%))",
+                  }
+                : undefined
+            }
+            className={`shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold font-body border transition-all duration-200 active:scale-[0.97] ${
+              activeCategory === "all"
+                ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
+                : "bg-white/95 text-neutral-600 hover:text-neutral-900 border-neutral-200/90 hover:border-neutral-300 hover:bg-white shadow-xs"
             }`}
           >
             <span>Todos</span>
             <span
-              className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold tabular-nums ${
-                activeCategory === "all" ? "bg-white/20 text-white" : "bg-neutral-100 text-neutral-500"
+              className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold tabular-nums transition-colors ${
+                activeCategory === "all" ? "bg-white/25 text-white" : "bg-neutral-100 text-neutral-500"
               }`}
             >
               {services.length}
@@ -233,17 +243,27 @@ export const TenantServicesSection = ({ tenantId, tenantName, primaryColor }: Te
             return (
               <button
                 key={cat}
+                type="button"
                 onClick={() => handleCategoryChange(cat)}
-                className={`shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold font-body transition-all duration-200 active:scale-[0.97] ${
+                style={
                   on
-                    ? "bg-neutral-900 text-white shadow-sm"
-                    : "bg-white text-neutral-600 hover:text-neutral-900 border border-neutral-200/80 hover:bg-neutral-50"
+                    ? {
+                        backgroundColor: primaryColor || "hsl(var(--primary))",
+                        borderColor: primaryColor || "hsl(var(--primary))",
+                        color: "hsl(var(--primary-foreground, 0 0% 100%))",
+                      }
+                    : undefined
+                }
+                className={`shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold font-body border transition-all duration-200 active:scale-[0.97] ${
+                  on
+                    ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
+                    : "bg-white/95 text-neutral-600 hover:text-neutral-900 border-neutral-200/90 hover:border-neutral-300 hover:bg-white shadow-xs"
                 }`}
               >
                 <span>{cat}</span>
                 <span
-                  className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold tabular-nums ${
-                    on ? "bg-white/20 text-white" : "bg-neutral-100 text-neutral-500"
+                  className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold tabular-nums transition-colors ${
+                    on ? "bg-white/25 text-white" : "bg-neutral-100 text-neutral-500"
                   }`}
                 >
                   {count}

@@ -59,11 +59,11 @@ const AgendaSection = ({ tenantId, onSelectClient, subTab }: AgendaSectionProps)
     const fetchStylists = async () => {
       const { data } = await supabase
         .from("tenant_stylists")
-        .select("slug, name, color")
+        .select("id, slug, name, color")
         .eq("tenant_id", tenantId)
         .eq("is_active", true);
       if (data) {
-        setStylists(data.map((s) => ({ slug: s.slug, name: s.name, color: s.color || STYLIST_FALLBACK })));
+        setStylists(data.map((s) => ({ id: s.id, slug: s.slug, name: s.name, color: s.color || STYLIST_FALLBACK })));
       }
     };
     fetchStylists();

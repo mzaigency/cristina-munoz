@@ -47,26 +47,12 @@ export const colorPresets = [
   { primary: "#8B5CF6", secondary: "#EC4899", name: "Aurora", gradient: "from-violet-500 to-pink-500" },
 ];
 
-export const fontOptions = [
-  { value: "Playfair Display", label: "Playfair Display", category: "Elegante" },
-  { value: "Cormorant Garamond", label: "Cormorant Garamond", category: "Elegante" },
-  { value: "Libre Baskerville", label: "Libre Baskerville", category: "Clásico" },
-  { value: "Montserrat", label: "Montserrat", category: "Moderno" },
-  { value: "Poppins", label: "Poppins", category: "Moderno" },
-  { value: "Raleway", label: "Raleway", category: "Minimalista" },
-  { value: "Lora", label: "Lora", category: "Elegante" },
-  { value: "Oswald", label: "Oswald", category: "Bold" },
-];
-
-export const bodyFontOptions = [
-  { value: "Montserrat", label: "Montserrat", category: "Moderno" },
-  { value: "Inter", label: "Inter", category: "Moderno" },
-  { value: "Open Sans", label: "Open Sans", category: "Clásico" },
-  { value: "Lato", label: "Lato", category: "Limpio" },
-  { value: "Roboto", label: "Roboto", category: "Neutro" },
-  { value: "Source Sans Pro", label: "Source Sans Pro", category: "Profesional" },
-  { value: "Nunito", label: "Nunito", category: "Amigable" },
-];
+export {
+  fontOptions,
+  bodyFontOptions,
+  HEADING_FONT_OPTIONS,
+  BODY_FONT_OPTIONS,
+} from "@/constants/tenantFonts";
 
 export const buttonStyles = [
   { value: "rounded", label: "Redondeado", preview: "rounded-xl" },

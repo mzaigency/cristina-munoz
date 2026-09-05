@@ -106,6 +106,7 @@ export function BottomNavigation() {
   return (
     <>
       <nav
+        data-mobile-bottom-nav
         className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+8px)] left-2.5 right-2.5 z-50 max-w-lg mx-auto pointer-events-none select-none md:hidden"
         aria-label="Navegación principal"
       >

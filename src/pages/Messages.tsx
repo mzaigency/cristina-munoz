@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, MessageCircle } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { ConversationList } from '@/components/messages/ConversationList';
 import { ChatWindow } from '@/components/messages/ChatWindow';
@@ -113,104 +114,67 @@ export default function Messages() {
 
   const totalUnread = conversations.reduce((acc, c) => acc + c.unread_count_user, 0);
 
-  // ── Mobile ────────────────────────────────────────────────
-  if (isMobile) {
-    const chatOverlay = selectedConversation && (
-      <div className="msg-mobile-overlay">
-        <ChatWindow
-          conversation={selectedConversation}
-          messages={messages}
-          loading={loadingMessages}
-          onSendMessage={handleSendMessage}
-          currentUserId={user.id}
-          role="user"
-          onBack={handleBack}
-        />
-      </div>
-    );
+  const chatOverlay = selectedConversation && (
+    <div className="msg-mobile-overlay">
+      <ChatWindow
+        conversation={selectedConversation}
+        messages={messages}
+        loading={loadingMessages}
+        onSendMessage={handleSendMessage}
+        currentUserId={user.id}
+        role="user"
+        onBack={handleBack}
+      />
+    </div>
+  );
 
-    return (
-      <AppLayout hideNavigation={!!selectedConversation}>
-        {/* Full-viewport column: no page scroll — list scrolls internally */}
-        <div
-          className="flex flex-col bg-background overflow-hidden"
-          style={{ height: '100dvh' }}
-        >
-          {/* Page header */}
-          <div className="liquid-glass-solid flex-shrink-0 pt-[env(safe-area-inset-top)]">
-            <div className="flex items-center h-14 px-2">
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/')}
-                className="text-primary font-medium gap-0.5 -ml-2 hover:bg-transparent active:opacity-60"
-                aria-label="Volver al inicio"
-              >
-                <ChevronLeft className="h-6 w-6" />
-                <span className="text-[17px]">Atrás</span>
-              </Button>
-              <h1 className="flex-1 text-center text-[17px] font-semibold truncate pr-10">
+  return (
+    <AppLayout hideNavigation={isMobile && !!selectedConversation}>
+      <SEO
+        title="Mensajes"
+        description="Conversaciones directas con tus salones y estilistas"
+        canonicalUrl="/mensajes"
+        noindex={true}
+      />
+
+      {/* Standard Consistent Sticky Header */}
+      <div className="sticky top-0 z-40 bg-surface/85 backdrop-blur-xl border-b border-line/60 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight">
                 Mensajes
               </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-tight hidden sm:block mt-0.5">
+                Conversaciones directas con tus salones y estilistas
+              </p>
             </div>
+            {totalUnread > 0 && (
+              <span className="text-xs font-bold text-rose-500 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20">
+                {totalUnread > 99 ? '99+' : totalUnread} sin leer
+              </span>
+            )}
           </div>
+        </div>
+      </div>
 
-          {/* Shell fills remaining space */}
-          <div className="flex-1 min-h-0 px-3 py-3 pb-[calc(12px+env(safe-area-inset-bottom)+80px)] flex flex-col">
-            <div className="msg-shell-mobile">
-              <header className="msg-sidebar-header">
-                <span className="msg-sidebar-title">
-                  <MessageCircle className="h-5 w-5" style={{ color: 'var(--glow-brand)' }} />
-                  Chats
-                  {totalUnread > 0 && (
-                    <span className="msg-unread-badge">
-                      {totalUnread > 99 ? '99+' : totalUnread}
-                    </span>
-                  )}
-                </span>
-              </header>
-              <div className="msg-sidebar">
-                <ConversationList
-                  conversations={conversations}
-                  loading={loadingConversations}
-                  selectedId={null}
-                  onSelect={handleSelectConversation}
-                  role="user"
-                  showSearch={false}
-                />
-              </div>
-            </div>
+      {/* Mobile: Clean, natural scrolling conversation list */}
+      {isMobile ? (
+        <div className="max-w-2xl mx-auto py-4 px-4 pb-20">
+          <div className="msg-sidebar-mobile">
+            <ConversationList
+              conversations={conversations}
+              loading={loadingConversations}
+              selectedId={null}
+              onSelect={handleSelectConversation}
+              role="user"
+              showSearch={conversations.length > 3}
+            />
           </div>
-
           {chatOverlay && createPortal(chatOverlay, document.body)}
         </div>
-      </AppLayout>
-    );
-  }
-
-  // ── Desktop ───────────────────────────────────────────────
-  return (
-    <AppLayout hideNavigation={false}>
-      <div className="min-h-screen" style={{ background: 'var(--glow-bg)' }}>
-        <div className="sticky top-0 z-10 bg-surface/85 backdrop-blur-xl border-b border-line/60">
-          <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight">
-                  Mensajes
-                </h1>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-tight hidden sm:block mt-0.5">
-                  Conversaciones directas con tus salones y estilistas
-                </p>
-              </div>
-              {totalUnread > 0 && (
-                <span className="text-xs font-bold text-rose-500 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20">
-                  {totalUnread} sin leer
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
+      ) : (
+        /* Desktop: 2-column split shell */
         <div className="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="msg-shell-desktop">
             <aside className="msg-sidebar">
@@ -253,7 +217,8 @@ export default function Messages() {
             />
           </div>
         </div>
-      </div>
+      )}
     </AppLayout>
   );
 }
+

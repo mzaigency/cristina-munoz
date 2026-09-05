@@ -184,11 +184,21 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
   if (!tenant) return null;
 
   return (
-    <div className="glow-fade" style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 96 }}>
-      <div className="glow-page-h" style={{ marginBottom: 0 }}>
+    <div className="glow-fade" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div className="glow-page-h">
         <div>
-          <h2>Ajustes</h2>
-          <p>Cómo se ve tu salón en su web pública</p>
+          <h2>Ajustes generales</h2>
+          <p>Configura la identidad, diseño de marca y datos de contacto de tu salón</p>
+        </div>
+        <div className="glow-page-actions">
+          <button
+            className="glow-btn glow-btn--primary"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? <Loader2 className="glow-spinner-sm" /> : <Save style={{ width: 14, height: 14 }} />}
+            Guardar cambios
+          </button>
         </div>
       </div>
 
@@ -198,12 +208,13 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
         style={{
           display: "flex", alignItems: "center", gap: 12, padding: 14,
           background: "var(--glow-brand-softer)", borderColor: "var(--glow-brand-soft)",
+          flexWrap: "wrap",
         }}
       >
         <span className="glow-kpi-ic glow-kpi-ic--brand" style={{ marginBottom: 0 }}>
           <Sparkles style={{ width: 16, height: 16 }} />
         </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: "1 1 200px", minWidth: 0 }}>
           <div className="glow-row-nm">Editor visual rápido</div>
           <div className="glow-row-mt">Cambia temas, tipografías y colores en directo desde tu web.</div>
         </div>
@@ -217,7 +228,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
         </a>
       </div>
 
-      <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
+      <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))" }}>
         {/* Identidad */}
         <div className="glow-card" style={{ gridColumn: "1 / -1" }}>
           <div className="glow-card-h"><div>
@@ -243,7 +254,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                   id="heading_size"
                   value={tenant.heading_size || "xlarge"}
                   onChange={(e) => setTenant({ ...tenant, heading_size: e.target.value })}
-                  className="w-full h-10 px-3 mt-1 border rounded-md bg-background text-on-surface text-sm"
+                  className="glow-input mt-1"
                 >
                   <option value="medium">Mediano</option>
                   <option value="large">Grande</option>
@@ -276,7 +287,7 @@ export const TenantSettings = ({ tenantId, tenantSlug }: TenantSettingsProps) =>
                 id="language"
                 value={tenant.language || "es"}
                 onChange={(e) => setTenant({ ...tenant, language: e.target.value })}
-                className="w-full h-10 px-3 mt-1 border rounded-md bg-background text-on-surface text-sm sm:max-w-xs"
+                className="glow-input mt-1 sm:max-w-xs"
               >
                 <option value="es">Español</option>
                 <option value="ca">Català</option>

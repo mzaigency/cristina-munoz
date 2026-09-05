@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Phone, User, LogOut, Shield, Calendar, MessageCircle, Home } from "lucide-react";
+import { Menu, X, Phone, User, LogOut, Shield, Calendar, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -13,7 +13,6 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useT } from "@/lib/tenantI18n";
 
 interface Tenant {
@@ -114,52 +113,50 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "liquid-glass-solid !border-x-0 !border-t-0 border-b shadow-sm" : "bg-transparent border-transparent"
+        isScrolled
+          ? "liquid-glass-solid !border-x-0 !border-t-0 border-b shadow-sm"
+          : "border-transparent"
       }`}
       style={{
         paddingTop: "env(safe-area-inset-top)",
         borderColor: isScrolled ? tenant.primary_color || "hsl(var(--border))" : "transparent",
+        background: isScrolled
+          ? undefined
+          : "linear-gradient(180deg, rgba(10, 12, 22, 0.72) 0%, rgba(10, 12, 22, 0.38) 55%, rgba(10, 12, 22, 0) 100%)",
       }}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-14 md:h-16">
-          {/* Home Button + Logo */}
-          <div className="flex items-center gap-3">
-            {/* Home button to go back to main app */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  to="/"
-                  className={`flex items-center justify-center h-9 w-9 rounded-full transition-all duration-300 ${
-                    isScrolled
-                      ? "bg-muted hover:bg-muted/80 text-foreground"
-                      : "bg-white/20 hover:bg-white/30 text-white"
-                  }`}
-                >
-                  <Home className="h-4 w-4" />
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t("nav.backToGlow")}</p>
-              </TooltipContent>
-            </Tooltip>
-
-          {tenant.logo_url ? (
-              <img src={tenant.logo_url} alt={tenant.name} className="h-10 w-auto rounded-xl" />
-            ) : (
-              <span
-                className={`text-xl font-bold transition-colors duration-300 ${
-                  isScrolled ? "" : "text-white drop-shadow-md"
+          {/* Salon Logo & Brand Name */}
+          <button
+            type="button"
+            onClick={() => onNavigate("inicio")}
+            className="flex items-center gap-2.5 text-left focus:outline-none group touch-manipulation"
+            aria-label={`Ir al inicio de ${tenant.name}`}
+          >
+            {tenant.logo_url && (
+              <img
+                src={tenant.logo_url}
+                alt={tenant.name}
+                className={`h-9 md:h-10 w-auto rounded-xl object-contain shadow-sm group-hover:opacity-90 transition-all ${
+                  isScrolled ? "" : "drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
                 }`}
-                style={{
-                  color: isScrolled ? tenant.primary_color || "hsl(var(--primary))" : undefined,
-                  fontFamily: "var(--font-heading)",
-                }}
-              >
-                {tenant.name}
-              </span>
+              />
             )}
-          </div>
+            <span
+              className={`text-lg md:text-xl font-bold tracking-tight transition-colors duration-300 ${
+                isScrolled
+                  ? ""
+                  : "text-white [text-shadow:_0_2px_10px_rgba(0,0,0,0.85),_0_1px_3px_rgba(0,0,0,0.9)]"
+              }`}
+              style={{
+                color: isScrolled ? tenant.primary_color || "hsl(var(--primary))" : undefined,
+                fontFamily: "var(--font-heading)",
+              }}
+            >
+              {tenant.name}
+            </span>
+          </button>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
@@ -172,7 +169,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                     ? activeSection === item.id
                       ? "text-primary"
                       : "text-muted-foreground hover:text-primary"
-                    : "text-white/90 hover:text-white drop-shadow-md"
+                    : "text-white/95 hover:text-white [text-shadow:_0_1px_6px_rgba(0,0,0,0.85)]"
                 }`}
                 style={{
                   color:
@@ -195,7 +192,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                   className={`sm:hidden flex items-center justify-center h-9 w-9 rounded-full transition-all duration-300 touch-manipulation ${
                     isScrolled
                       ? "bg-primary/10 text-primary hover:bg-primary/20"
-                      : "bg-white/20 hover:bg-white/30 text-white"
+                      : "bg-black/40 hover:bg-black/55 text-white backdrop-blur-md border border-white/20 shadow-sm"
                   }`}
                   aria-label="Llamar"
                 >
@@ -205,7 +202,7 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                 <a
                   href={`tel:${tenant.phone}`}
                   className={`hidden sm:flex items-center gap-2 text-sm font-medium transition-colors duration-300 ${
-                    isScrolled ? "" : "text-white drop-shadow-md"
+                    isScrolled ? "" : "text-white [text-shadow:_0_1px_6px_rgba(0,0,0,0.85)]"
                   }`}
                   style={{
                     color: isScrolled ? tenant.primary_color || "hsl(var(--primary))" : undefined,
@@ -224,11 +221,13 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`h-9 w-9 transition-colors duration-300 ${
-                      isScrolled ? "text-foreground" : "text-white hover:text-white/80 hover:bg-white/20"
+                    className={`h-9 w-9 rounded-full transition-all duration-300 ${
+                      isScrolled
+                        ? "text-foreground hover:bg-muted"
+                        : "bg-black/40 hover:bg-black/55 text-white backdrop-blur-md border border-white/20 shadow-sm"
                     }`}
                   >
-                    <User className="h-5 w-5" />
+                    <User className="h-4.5 w-4.5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
@@ -275,21 +274,27 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
                 variant="ghost"
                 size="icon"
                 onClick={handleUserIconClick}
-                className={`h-9 w-9 transition-colors duration-300 ${
-                  isScrolled ? "text-foreground" : "text-white hover:text-white/80 hover:bg-white/20"
+                className={`h-9 w-9 rounded-full transition-all duration-300 ${
+                  isScrolled
+                    ? "text-foreground hover:bg-muted"
+                    : "bg-black/40 hover:bg-black/55 text-white backdrop-blur-md border border-white/20 shadow-sm"
                 }`}
               >
-                <User className="h-5 w-5" />
+                <User className="h-4.5 w-4.5" />
               </Button>
             )}
 
             <Button
               variant="ghost"
               size="icon"
-              className={`md:hidden transition-colors duration-300 ${isScrolled ? "" : "text-white hover:bg-white/20"}`}
+              className={`md:hidden h-9 w-9 rounded-full transition-all duration-300 ${
+                isScrolled
+                  ? "text-foreground hover:bg-muted"
+                  : "bg-black/40 hover:bg-black/55 text-white backdrop-blur-md border border-white/20 shadow-sm"
+              }`}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isMenuOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
             </Button>
           </div>
         </div>
@@ -301,24 +306,17 @@ export const TenantHeader = ({ tenant, onNavigate, activeSection }: TenantHeader
               isScrolled ? "bg-background" : "bg-background/95 backdrop-blur-sm"
             }`}
           >
-            <div className="flex flex-col gap-2">
-              {/* Link to main app */}
-              <Link
-                to="/"
-                className="py-2 px-4 text-left rounded-lg transition-colors flex items-center gap-2 text-muted-foreground hover:bg-muted"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <Home className="h-4 w-4" />
-                {t("nav.backToGlow")}
-              </Link>
-              <div className="border-t my-2" />
+            <div className="flex flex-col gap-1.5">
               {navItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`py-2 px-4 text-left rounded-lg transition-colors ${
-                    activeSection === item.id ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+                  className={`py-2.5 px-4 text-left rounded-xl font-medium transition-colors ${
+                    activeSection === item.id ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:bg-muted"
                   }`}
+                  style={{
+                    color: activeSection === item.id ? tenant.primary_color || "hsl(var(--primary))" : undefined,
+                  }}
                 >
                   {item.label}
                 </button>

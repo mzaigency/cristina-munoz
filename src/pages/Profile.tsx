@@ -216,7 +216,7 @@ export default function Profile() {
       />
       
       {/* Standard Desktop Header Bar */}
-      <div className="sticky top-0 z-20 bg-surface/85 backdrop-blur-xl border-b border-line/60 pt-[env(safe-area-inset-top)]">
+      <div className="sticky top-0 z-40 bg-surface/85 backdrop-blur-xl border-b border-line/60 pt-[env(safe-area-inset-top)]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex flex-col min-w-0">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight">
@@ -245,9 +245,9 @@ export default function Profile() {
             </div>
           )}
           
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">
             {profileData.full_name || "Usuario"}
-          </h1>
+          </h2>
           {profileData.username && (
             <p className="text-sm text-primary font-medium">@{profileData.username}</p>
           )}

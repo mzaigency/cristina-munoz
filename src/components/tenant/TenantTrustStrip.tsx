@@ -35,15 +35,15 @@ export function TenantTrustStrip({ tenantId, city }: TenantTrustStripProps) {
     });
   }
   if (city) {
-    items.push({ icon: <MapPin className="h-4 w-4" style={{ color: "#22408C" }} />, label: city });
+    items.push({ icon: <MapPin className="h-4 w-4" style={{ color: "hsl(var(--primary))" }} />, label: city });
   }
   if (!hoursLoading) {
     items.push({
-      icon: <Clock className="h-4 w-4" style={{ color: openNow ? "#16a249" : "#98329A" }} />,
+      icon: <Clock className="h-4 w-4" style={{ color: openNow ? "#16a249" : "hsl(var(--primary))" }} />,
       label: openNow ? t("trust.openNow") : today.isClosed ? t("trust.closedToday") : t("trust.closedNow"),
     });
   }
-  items.push({ icon: <Calendar className="h-4 w-4" style={{ color: "#98329A" }} />, label: t("trust.online") });
+  items.push({ icon: <Calendar className="h-4 w-4" style={{ color: "hsl(var(--primary))" }} />, label: t("trust.online") });
 
   return (
     <div className="relative z-10 -mt-9 md:-mt-10 bg-transparent">
