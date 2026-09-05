@@ -24,6 +24,8 @@ interface GuestBookingFormProps {
   hideFooter?: boolean;
   onLoadingChange?: (loading: boolean) => void;
   onStageChange?: (stage: "form" | "otp") => void;
+  /** Increment to force the form back to the contact stage from the parent footer. */
+  resetToFormSignal?: number;
 }
 
 type Stage = "form" | "otp";
