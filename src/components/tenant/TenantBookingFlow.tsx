@@ -519,6 +519,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName, logoUrl }: TenantBooki
                         hideFooter={true}
                         onLoadingChange={setGuestLoading}
                         onStageChange={setGuestStage}
+                        resetToFormSignal={guestResetSignal}
                       />
                     </div>
                   )}
@@ -660,14 +661,9 @@ export const TenantBookingFlow = ({ tenantId, tenantName, logoUrl }: TenantBooki
                         <Button
                           variant="outline"
                           onClick={guestStage === "otp" ? () => {
-                            // In OTP stage, "back" goes back to the form
-                            const backBtn = document.querySelector<HTMLButtonElement>('button[class*="Cambiar email"]');
-                            // Simply dispatch a click on the stage-change button
-                            setGuestStage("form");
-                            // GuestBookingForm manages its own stage; we trigger its back-to-form via its own button
-                            const changeBtn = document.querySelector<HTMLButtonElement>('[class*="Cambiar"]');
-                            if (changeBtn) changeBtn.click();
-                            else handleBack();
+                            // In OTP stage, "back" returns to the contact form (step 3),
+                            // not to date/time selection. The child keeps the typed data.
+                            setGuestResetSignal((s) => s + 1);
                           } : handleBack}
                           disabled={guestLoading}
                           className="h-11 px-5 rounded-xl font-medium transition-transform duration-200 hover:scale-105"
