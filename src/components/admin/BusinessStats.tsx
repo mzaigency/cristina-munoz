@@ -351,14 +351,26 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       setHourlyActivity(hoursChartData);
       setRevenueData(sortedDaily);
 
+      // Real client retention: count visits per client (transactions + bookings)
+      // within the period. Returning = more than one visit; new = first visit.
+      const visitCountByClient: Record<string, number> = {};
+      (currentTx || []).forEach((tx: any) => {
+        const key = String(tx.customer_name || "").toLowerCase().trim();
+        if (key) visitCountByClient[key] = (visitCountByClient[key] || 0) + 1;
+      });
+      (currentBookings || []).forEach((b: any) => {
+        if (b.status === "cancelled" || b.status === "cancelada") return;
+        const key = String(b.customer_name || "").toLowerCase().trim();
+        if (key) visitCountByClient[key] = (visitCountByClient[key] || 0) + 1;
+      });
       const uniqueTotal = uniqueClientsSet.size;
-      const returningEst = Math.round(uniqueTotal * 0.65);
-      const newEst = Math.max(0, uniqueTotal - returningEst);
+      const returningCount = Object.values(visitCountByClient).filter((n) => n > 1).length;
+      const newCount = Math.max(0, uniqueTotal - returningCount);
       setClientStats({
         uniqueClients: uniqueTotal,
-        newClients: newEst,
-        returningClients: returningEst,
-        retentionRate: uniqueTotal > 0 ? Math.round((returningEst / uniqueTotal) * 100) : 0,
+        newClients: newCount,
+        returningClients: returningCount,
+        retentionRate: uniqueTotal > 0 ? Math.round((returningCount / uniqueTotal) * 100) : 0,
       });
     } catch (e) {
       console.error("Error loading business stats:", e);

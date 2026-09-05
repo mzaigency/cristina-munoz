@@ -24,6 +24,8 @@ interface GuestBookingFormProps {
   hideFooter?: boolean;
   onLoadingChange?: (loading: boolean) => void;
   onStageChange?: (stage: "form" | "otp") => void;
+  /** Increment to force the form back to the contact stage from the parent footer. */
+  resetToFormSignal?: number;
 }
 
 type Stage = "form" | "otp";
@@ -43,6 +45,7 @@ export function GuestBookingForm({
   hideFooter = false,
   onLoadingChange,
   onStageChange,
+  resetToFormSignal,
 }: GuestBookingFormProps) {
   const [stage, setStage] = useState<Stage>("form");
   const [name, setName] = useState("");
@@ -58,6 +61,12 @@ export function GuestBookingForm({
   // Notify parent of loading / stage changes
   useEffect(() => { onLoadingChange?.(loading); }, [loading, onLoadingChange]);
   useEffect(() => { onStageChange?.(stage); }, [stage, onStageChange]);
+
+  // Parent footer "Cambiar email" asks us to return to the contact form
+  // without losing the typed name/phone.
+  useEffect(() => {
+    if (resetToFormSignal) setStage("form");
+  }, [resetToFormSignal]);
 
   const sendOtp = async () => {
     if (!name.trim() || !email.trim() || !phone.trim()) {
