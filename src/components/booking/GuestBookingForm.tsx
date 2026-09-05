@@ -62,6 +62,12 @@ export function GuestBookingForm({
   useEffect(() => { onLoadingChange?.(loading); }, [loading, onLoadingChange]);
   useEffect(() => { onStageChange?.(stage); }, [stage, onStageChange]);
 
+  // Parent footer "Cambiar email" asks us to return to the contact form
+  // without losing the typed name/phone.
+  useEffect(() => {
+    if (resetToFormSignal) setStage("form");
+  }, [resetToFormSignal]);
+
   const sendOtp = async () => {
     if (!name.trim() || !email.trim() || !phone.trim()) {
       toast({ title: "Faltan datos", description: "Completa nombre, email y teléfono.", variant: "destructive" });
