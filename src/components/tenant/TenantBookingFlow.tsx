@@ -674,7 +674,19 @@ export const TenantBookingFlow = ({ tenantId, tenantName, logoUrl }: TenantBooki
                           onClick={() => {
                             const btnId = guestStage === "otp" ? "guest-otp-submit-btn" : "guest-form-submit-btn";
                             const btn = document.getElementById(btnId) as HTMLButtonElement | null;
-                            btn?.click();
+                            if (!btn) return;
+                            if (btn.disabled) {
+                              toast({
+                                title: guestStage === "otp" ? "Código incompleto" : "Faltan datos",
+                                description: guestStage === "otp"
+                                  ? "Introduce los 6 dígitos del código que te enviamos."
+                                  : "Completa nombre, email y teléfono.",
+                                variant: "destructive",
+                              });
+                              haptic.error();
+                              return;
+                            }
+                            btn.click();
                           }}
                           disabled={guestLoading}
                           className="h-11 px-6 sm:px-8 rounded-xl font-semibold transition-transform duration-200 hover:scale-105 active:scale-95 touch-manipulation shadow-sm shrink-0 text-white"
