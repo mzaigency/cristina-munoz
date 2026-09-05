@@ -149,6 +149,7 @@ export const TenantBookingFlow = ({ tenantId, tenantName, logoUrl }: TenantBooki
   });
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [guestStage, setGuestStage] = useState<"form" | "otp">("form");
+  const [guestResetSignal, setGuestResetSignal] = useState(0);
   const [guestLoading, setGuestLoading] = useState(false);
 
   // Load services, packages, and stylist count from database
