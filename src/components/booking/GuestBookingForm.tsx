@@ -45,6 +45,7 @@ export function GuestBookingForm({
   hideFooter = false,
   onLoadingChange,
   onStageChange,
+  resetToFormSignal,
 }: GuestBookingFormProps) {
   const [stage, setStage] = useState<Stage>("form");
   const [name, setName] = useState("");
