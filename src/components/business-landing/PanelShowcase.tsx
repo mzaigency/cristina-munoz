@@ -4,7 +4,8 @@ import { LayoutDashboard, CalendarDays, Wallet, UserCheck, Users } from "lucide-
 import panelInicio from "@/assets/panel-inicio.png";
 import panelAgenda from "@/assets/panel-agenda.png";
 import panelCaja from "@/assets/panel-caja.png";
-import panelClientes from "@/assets/panel-clientes.png";
+import panelClientesAsset from "@/assets/panel-clientes.png.asset.json";
+const panelClientes = panelClientesAsset.url;
 import panelEquipo from "@/assets/panel-equipo.png";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
