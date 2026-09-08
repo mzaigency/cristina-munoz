@@ -250,7 +250,9 @@ serve(async (req) => {
             }
           }
 
+          sentVisits24h.add(visitKey);
           await supabase.from("bookings").update({ reminder_sent: now.toISOString() }).eq("id", booking.id);
+
 
           results.reminders_24h++;
         } catch (err) {
