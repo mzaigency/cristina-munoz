@@ -414,7 +414,7 @@
 
   /* ── Barra de búsqueda de una sección ──────────────────────────────────── */
   .glow-search { display: flex; align-items: center; gap: var(--glow-s2); margin-bottom: var(--glow-s4); }
-  .glow-search .glow-input { flex: 1; }
+  .glow-search .glow-input { flex: 1; min-width: 0; }
 
   /* ── Cabecera de grupo dentro de una lista ──────────────────────────────
      Permite una sola matriz con secciones (categorías de servicio, meses…)
