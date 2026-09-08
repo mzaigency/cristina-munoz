@@ -424,18 +424,6 @@ serve(async (req) => {
           continue;
         }
 
-        // Otra fila de la misma visita ya pidió la valoración
-        const { count: alreadyReview } = await supabase
-          .from("bookings")
-          .select("id", { count: "exact", head: true })
-          .eq("tenant_id", booking.tenant_id)
-          .eq("user_id", booking.user_id)
-          .eq("Fecha", booking["Fecha"])
-          .not("review_request_sent", "is", null);
-        if ((alreadyReview || 0) > 0) {
-          await supabase.from("bookings").update({ review_request_sent: now.toISOString() }).eq("id", booking.id);
-          continue;
-        }
 
 
         // Calculate when booking ended
