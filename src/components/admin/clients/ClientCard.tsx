@@ -1,11 +1,21 @@
 import { forwardRef } from "react";
-import { ChevronRight, UserCheck } from "lucide-react";
-import { format } from "date-fns";
+import { CalendarCheck, ChevronRight, MessageCircle, UserCheck } from "lucide-react";
+import { format, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { motion } from "framer-motion";
 import { chartColor, readableInk } from "@/lib/chartColors";
 import type { Client } from "./types";
 import { TAG_COLORS } from "./types";
+
+/** "hoy", "ayer", "hace 5 d" o la fecha corta: se lee de un vistazo. */
+function relDate(iso: string) {
+  const days = differenceInCalendarDays(new Date(), new Date(iso));
+  if (days <= 0) return "hoy";
+  if (days === 1) return "ayer";
+  if (days < 30) return `hace ${days} d`;
+  return format(new Date(iso), "d MMM", { locale: es });
+}
+
 
 interface ClientCardProps {
   client: Client;
@@ -51,12 +61,22 @@ export const ClientCard = forwardRef<HTMLDivElement, ClientCardProps>(function C
       }}
     >
       <div style={{ position: "relative", flex: "none" }}>
-        <div
-          className="glow-avatar"
-          style={{ background: avatarColor(client.name), color: readableInk(avatarColor(client.name)) }}
-        >
-          {getInitials(client.name)}
-        </div>
+        {client.avatar_url ? (
+          <img
+            src={client.avatar_url}
+            alt={client.name}
+            loading="lazy"
+            className="glow-avatar"
+            style={{ objectFit: "cover", padding: 0 }}
+          />
+        ) : (
+          <div
+            className="glow-avatar"
+            style={{ background: avatarColor(client.name), color: readableInk(avatarColor(client.name)) }}
+          >
+            {getInitials(client.name)}
+          </div>
+        )}
         {client.user_id && (
           <span
             title="Tiene cuenta en Glowapp"
@@ -82,13 +102,25 @@ export const ClientCard = forwardRef<HTMLDivElement, ClientCardProps>(function C
             </span>
           ))}
         </div>
-        <div className="glow-row-mt">
-          {client.total_visits} {client.total_visits === 1 ? "visita" : "visitas"}
-          {client.phone && ` · ${client.phone}`}
-          {client.last_visit_at &&
-            ` · últ. ${format(new Date(client.last_visit_at), "d MMM", { locale: es })}`}
+        <div className="glow-row-mt" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+            <CalendarCheck style={{ width: 12, height: 12, color: "var(--glow-ink-3)" }} />
+            {client.last_visit_at
+              ? `Visita ${relDate(client.last_visit_at)}`
+              : "Sin visitas"}
+          </span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+            <MessageCircle style={{ width: 12, height: 12, color: "var(--glow-ink-3)" }} />
+            {client.last_contact_at
+              ? `Contacto ${relDate(client.last_contact_at)}`
+              : "Sin contacto"}
+          </span>
+          <span>
+            {client.total_visits} {client.total_visits === 1 ? "visita" : "visitas"}
+          </span>
         </div>
       </div>
+
 
       <div className="glow-row-amt">{(client.total_spent || 0).toFixed(0)} €</div>
       <ChevronRight style={{ width: 17, height: 17, color: "var(--glow-ink-3)", flex: "none" }} />

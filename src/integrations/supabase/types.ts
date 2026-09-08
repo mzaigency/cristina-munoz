@@ -3225,6 +3225,7 @@ export type Database = {
             Returns: boolean
           }
       invoke_booking_notifications: { Args: never; Returns: undefined }
+      invoke_weekly_summary_email: { Args: never; Returns: undefined }
       is_superadmin: { Args: never; Returns: boolean }
       is_tenant_active: { Args: { _tenant_id: string }; Returns: boolean }
       search_my_bookings: {
