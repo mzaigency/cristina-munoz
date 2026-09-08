@@ -400,14 +400,43 @@ serve(async (req) => {
       .in("status", ["confirmed", "completed"])
       .is("review_request_sent", null)
       .not("customer_name", "ilike", "%BLOQUEADO%")
-      .not("customer_name", "ilike", "%VACACIONES%");
+      .not("customer_name", "ilike", "%VACACIONES%")
+      .order("Hora", { ascending: true });
 
     if (errorReview) {
       console.error("Error fetching review bookings:", errorReview);
       results.errors.push(`review fetch: ${errorReview.message}`);
     } else if (completedBookings && completedBookings.length > 0) {
+      // De una visita con varias filas (servicio compuesto o varios servicios)
+      // solo cuenta la última: es cuando la clienta sale del salón.
+      const lastOfVisit = new Map<string, string>();
+      for (const b of completedBookings as any[]) {
+        if (!b.user_id) continue;
+        lastOfVisit.set(visitKeyOf(b), b.id);
+      }
+
       for (const booking of completedBookings) {
         if (!booking.user_id) continue;
+
+        const visitKey = visitKeyOf(booking);
+        if (lastOfVisit.get(visitKey) !== booking.id) {
+          await supabase.from("bookings").update({ review_request_sent: now.toISOString() }).eq("id", booking.id);
+          continue;
+        }
+
+        // Otra fila de la misma visita ya pidió la valoración
+        const { count: alreadyReview } = await supabase
+          .from("bookings")
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", booking.tenant_id)
+          .eq("user_id", booking.user_id)
+          .eq("Fecha", booking["Fecha"])
+          .not("review_request_sent", "is", null);
+        if ((alreadyReview || 0) > 0) {
+          await supabase.from("bookings").update({ review_request_sent: now.toISOString() }).eq("id", booking.id);
+          continue;
+        }
+
 
         // Calculate when booking ended
         const [hours, minutes] = booking["Hora"].split(":").map(Number);
