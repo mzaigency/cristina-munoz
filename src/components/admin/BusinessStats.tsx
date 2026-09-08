@@ -351,20 +351,33 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       setHourlyActivity(hoursChartData);
       setRevenueData(sortedDaily);
 
-      // Real client retention: count visits per client (transactions + bookings)
-      // within the period. Returning = more than one visit; new = first visit.
-      const visitCountByClient: Record<string, number> = {};
+      // Real client retention: count distinct visits per client within the period.
+      // A transaction tied to a booking represents the same visit as that booking,
+      // so we deduplicate by booking_id. Ad-hoc transactions (no booking_id) count as
+      // their own visit keyed by transaction id + date.
+      const visitKeysByClient: Record<string, Set<string>> = {};
+      const addVisit = (clientKey: string, visitKey: string) => {
+        if (!clientKey) return;
+        if (!visitKeysByClient[clientKey]) visitKeysByClient[clientKey] = new Set();
+        visitKeysByClient[clientKey].add(visitKey);
+      };
+
       (currentTx || []).forEach((tx: any) => {
-        const key = String(tx.customer_name || "").toLowerCase().trim();
-        if (key) visitCountByClient[key] = (visitCountByClient[key] || 0) + 1;
+        const clientKey = String(tx.customer_name || "").toLowerCase().trim();
+        const visitKey = tx.booking_id
+          ? `booking:${tx.booking_id}`
+          : `tx:${tx.id}:${format(parseISO(tx.created_at), "yyyy-MM-dd")}`;
+        addVisit(clientKey, visitKey);
       });
+
       (currentBookings || []).forEach((b: any) => {
         if (b.status === "cancelled" || b.status === "cancelada") return;
-        const key = String(b.customer_name || "").toLowerCase().trim();
-        if (key) visitCountByClient[key] = (visitCountByClient[key] || 0) + 1;
+        const clientKey = String(b.customer_name || "").toLowerCase().trim();
+        addVisit(clientKey, `booking:${b.id}`);
       });
+
       const uniqueTotal = uniqueClientsSet.size;
-      const returningCount = Object.values(visitCountByClient).filter((n) => n > 1).length;
+      const returningCount = Object.values(visitKeysByClient).filter((set) => set.size > 1).length;
       const newCount = Math.max(0, uniqueTotal - returningCount);
       setClientStats({
         uniqueClients: uniqueTotal,
