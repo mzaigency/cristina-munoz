@@ -141,7 +141,7 @@ export function BusinessStats({ tenantId }: BusinessStatsProps) {
       // 1. Transactions Current Period
       const { data: currentTx } = await supabase
         .from("transactions")
-        .select("id, total, created_at, payment_method, tip_amount, discount, stylist_id, stylist, customer_name, voided")
+        .select("id, booking_id, total, created_at, payment_method, tip_amount, discount, stylist_id, stylist, customer_name, voided")
         .eq("tenant_id", tenantId)
         .eq("voided", false)
         .gte("created_at", startDate.toISOString())
