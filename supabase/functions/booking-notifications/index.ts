@@ -226,9 +226,8 @@ serve(async (req) => {
           const email = await getUserEmail(booking.user_id);
           if (email) {
             try {
-              const servicesText = Array.isArray(booking.services)
-                ? booking.services.map((s: any) => s?.name).filter(Boolean).join(", ")
-                : "";
+              const servicesText = (servicesByVisit.get(visitKey) || []).join(", ");
+
               await sendAndLogTemplateEmail("booking-reminder-24h", email, {
   idempotencyKey: `booking-reminder-24h-${booking.id}`,
   templateData: {
