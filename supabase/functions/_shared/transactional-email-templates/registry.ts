@@ -18,6 +18,7 @@ import { template as waitlistSlotAvailable } from './waitlist-slot-available.tsx
 import { template as subscriptionPaymentIssue } from './subscription-payment-issue.tsx'
 import { template as clientWelcome } from './client-welcome.tsx'
 import { template as bookingOtp } from './booking-otp.tsx'
+import { template as weeklySummary } from './weekly-summary.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'booking-confirmation': bookingConfirmation,
@@ -29,4 +30,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'subscription-payment-issue': subscriptionPaymentIssue,
   'client-welcome': clientWelcome,
   'booking-otp': bookingOtp,
+  'weekly-summary': weeklySummary,
 }
+
