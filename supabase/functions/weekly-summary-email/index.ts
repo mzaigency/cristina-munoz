@@ -28,6 +28,37 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // ── Auth: cron (service role) o superadmin ────────────────
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace("Bearer ", "").trim();
+    const isService = token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!isService) {
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } },
+      );
+      const { data: isSuperadmin } = await userClient.rpc("is_superadmin");
+      if (!isSuperadmin) {
+        return new Response(JSON.stringify({ error: "No autorizado" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // Modo prueba: { tenantSlug | tenantId, testEmail }
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch (_) {
+      body = {};
+    }
+    const testEmail: string | null = body?.testEmail ?? null;
+    const onlyTenantSlug: string | null = body?.tenantSlug ?? null;
+    const onlyTenantId: string | null = body?.tenantId ?? null;
+
+
     // Semana natural cerrada: lunes -> domingo anterior al día de envío.
     const now = new Date();
     const dow = (now.getUTCDay() + 6) % 7; // 0 = lunes
@@ -41,11 +72,16 @@ serve(async (req) => {
         ? `${start.getUTCDate()} al ${end.getUTCDate()} de ${MONTHS[end.getUTCMonth()]}`
         : `${start.getUTCDate()} de ${MONTHS[start.getUTCMonth()]} al ${end.getUTCDate()} de ${MONTHS[end.getUTCMonth()]}`;
 
-    const { data: tenants, error: tenantsError } = await supabase
+    let tenantsQuery = supabase
       .from("tenants")
       .select("id, name, email, logo_url, slug, is_active, subscription_expires_at")
-      .eq("is_active", true)
-      .not("email", "is", null);
+      .eq("is_active", true);
+
+    if (onlyTenantId) tenantsQuery = tenantsQuery.eq("id", onlyTenantId);
+    else if (onlyTenantSlug) tenantsQuery = tenantsQuery.eq("slug", onlyTenantSlug);
+    else tenantsQuery = tenantsQuery.not("email", "is", null);
+
+    const { data: tenants, error: tenantsError } = await tenantsQuery;
 
     if (tenantsError) throw tenantsError;
 
@@ -54,7 +90,7 @@ serve(async (req) => {
     for (const tenant of tenants || []) {
       results.tenants++;
 
-      if (tenant.subscription_expires_at && new Date(tenant.subscription_expires_at) < now) {
+      if (!testEmail && tenant.subscription_expires_at && new Date(tenant.subscription_expires_at) < now) {
         results.skipped++;
         continue;
       }
@@ -146,13 +182,21 @@ serve(async (req) => {
           .map(([hour, count]) => ({ hour, count }));
 
         // Sin actividad: no molestamos con un correo vacío
-        if (bookingsCount === 0 && revenue === 0) {
+        if (!testEmail && bookingsCount === 0 && revenue === 0) {
           results.skipped++;
           continue;
         }
 
-        await sendAndLogTemplateEmail("weekly-summary", tenant.email as string, {
-          idempotencyKey: `weekly-summary-${tenant.id}-${ymd(start)}`,
+        const recipient = (testEmail || tenant.email) as string;
+        if (!recipient) {
+          results.skipped++;
+          continue;
+        }
+
+        await sendAndLogTemplateEmail("weekly-summary", recipient, {
+          idempotencyKey: testEmail
+            ? `weekly-summary-test-${tenant.id}-${Date.now()}`
+            : `weekly-summary-${tenant.id}-${ymd(start)}`,
           templateData: {
             ownerName: "Hola",
             tenantName: tenant.name,
