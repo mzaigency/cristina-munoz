@@ -1,11 +1,21 @@
 import { forwardRef } from "react";
-import { ChevronRight, UserCheck } from "lucide-react";
-import { format } from "date-fns";
+import { CalendarCheck, ChevronRight, MessageCircle, UserCheck } from "lucide-react";
+import { format, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { motion } from "framer-motion";
 import { chartColor, readableInk } from "@/lib/chartColors";
 import type { Client } from "./types";
 import { TAG_COLORS } from "./types";
+
+/** "hoy", "ayer", "hace 5 d" o la fecha corta: se lee de un vistazo. */
+function relDate(iso: string) {
+  const days = differenceInCalendarDays(new Date(), new Date(iso));
+  if (days <= 0) return "hoy";
+  if (days === 1) return "ayer";
+  if (days < 30) return `hace ${days} d`;
+  return format(new Date(iso), "d MMM", { locale: es });
+}
+
 
 interface ClientCardProps {
   client: Client;
