@@ -74,3 +74,5 @@ project_id = "lyeyzdbplrgqsvyxpfek"
     verify_jwt = false
   [functions.whatsapp-conversation]
     verify_jwt = false
+  [functions.weekly-summary-email]
+    verify_jwt = false
