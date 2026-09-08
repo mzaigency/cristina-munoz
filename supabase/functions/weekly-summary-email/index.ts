@@ -182,13 +182,21 @@ serve(async (req) => {
           .map(([hour, count]) => ({ hour, count }));
 
         // Sin actividad: no molestamos con un correo vacío
-        if (bookingsCount === 0 && revenue === 0) {
+        if (!testEmail && bookingsCount === 0 && revenue === 0) {
           results.skipped++;
           continue;
         }
 
-        await sendAndLogTemplateEmail("weekly-summary", tenant.email as string, {
-          idempotencyKey: `weekly-summary-${tenant.id}-${ymd(start)}`,
+        const recipient = (testEmail || tenant.email) as string;
+        if (!recipient) {
+          results.skipped++;
+          continue;
+        }
+
+        await sendAndLogTemplateEmail("weekly-summary", recipient, {
+          idempotencyKey: testEmail
+            ? `weekly-summary-test-${tenant.id}-${Date.now()}`
+            : `weekly-summary-${tenant.id}-${ymd(start)}`,
           templateData: {
             ownerName: "Hola",
             tenantName: tenant.name,
