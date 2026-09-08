@@ -13,6 +13,10 @@ export interface Client {
   is_blocked: boolean;
   birthday: string | null;
   user_id: string | null;
+  /** Foto de perfil si la clienta tiene cuenta en Glowapp. */
+  avatar_url?: string | null;
+  /** Último mensaje intercambiado con el salón. */
+  last_contact_at?: string | null;
 }
 
 export interface Booking {
