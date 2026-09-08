@@ -56,7 +56,7 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
 
   const fetchClients = async () => {
     try {
-      const [clientsRes, transactionsRes] = await Promise.all([
+      const [clientsRes, transactionsRes, conversationsRes] = await Promise.all([
         supabase
           .from("clients" as any)
           .select("*")
@@ -68,6 +68,10 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
           .select("customer_name, total")
           .eq("tenant_id", tenantId)
           .eq("voided", false),
+        supabase
+          .from("conversations")
+          .select("user_id, last_message_at")
+          .eq("tenant_id", tenantId),
       ]);
 
       if (clientsRes.error) throw clientsRes.error;
@@ -81,12 +85,41 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
         }
       }
 
-      // Enrich clients with real spending
-      const enriched = ((clientsRes.data || []) as unknown as Client[]).map(c => {
+      // Último contacto por chat, por cuenta de la clienta
+      const contactMap = new Map<string, string>();
+      for (const conv of conversationsRes.data || []) {
+        if (!conv.user_id || !conv.last_message_at) continue;
+        const prev = contactMap.get(conv.user_id);
+        if (!prev || new Date(conv.last_message_at) > new Date(prev)) {
+          contactMap.set(conv.user_id, conv.last_message_at);
+        }
+      }
+
+      const baseClients = (clientsRes.data || []) as unknown as Client[];
+
+      // Foto de perfil de las clientas con cuenta en Glowapp
+      const userIds = baseClients.map((c) => c.user_id).filter(Boolean) as string[];
+      const avatarMap = new Map<string, string | null>();
+      if (userIds.length) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, avatar_url")
+          .in("id", userIds);
+        for (const p of profiles || []) avatarMap.set(p.id, p.avatar_url);
+      }
+
+      // Enrich clients with real spending, photo and last contact
+      const enriched = baseClients.map(c => {
         const key = c.name.trim().toLowerCase();
         const spent = spendMap.get(key) || 0;
-        return { ...c, total_spent: spent > 0 ? spent : c.total_spent };
+        return {
+          ...c,
+          total_spent: spent > 0 ? spent : c.total_spent,
+          avatar_url: c.user_id ? avatarMap.get(c.user_id) ?? null : null,
+          last_contact_at: c.user_id ? contactMap.get(c.user_id) ?? null : null,
+        };
       });
+
 
       setClients(enriched);
     } catch (error) {
