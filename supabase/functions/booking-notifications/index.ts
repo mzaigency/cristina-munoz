@@ -166,7 +166,14 @@ serve(async (req) => {
       .eq("status", "confirmed")
       .is("reminder_sent", null)
       .not("customer_name", "ilike", "%BLOQUEADO%")
-      .not("customer_name", "ilike", "%VACACIONES%");
+      .not("customer_name", "ilike", "%VACACIONES%")
+      .order("Hora", { ascending: true });
+
+    // Una visita puede ocupar varias filas (servicio compuesto o varios
+    // servicios en la misma cita): solo se avisa una vez, por la fila más
+    // temprana, y el resto se marca como avisado.
+    const visitKeyOf = (b: any) => `${b.user_id}|${b.tenant_id}|${b["Fecha"]}`;
+    const sentVisits24h = new Set<string>();
 
     if (error24h) {
       console.error("Error fetching 24h bookings:", error24h);
@@ -174,16 +181,26 @@ serve(async (req) => {
     } else if (bookings24h && bookings24h.length > 0) {
       console.log(`Found ${bookings24h.length} bookings for 24h reminder`);
 
+      // Todos los servicios de cada visita, para nombrarlos en el correo
+      const servicesByVisit = new Map<string, string[]>();
+      for (const b of bookings24h as any[]) {
+        if (!b.user_id) continue;
+        const key = visitKeyOf(b);
+        const names = Array.isArray(b.services) ? b.services.map((s: any) => s?.name).filter(Boolean) : [];
+        const acc = servicesByVisit.get(key) || [];
+        for (const n of names) if (!acc.includes(n)) acc.push(n);
+        servicesByVisit.set(key, acc);
+      }
+
       for (const booking of bookings24h) {
         if (!booking.user_id) continue;
 
-        // Un servicio compuesto son dos filas (parte 1 y parte 2) de la MISMA
-        // visita: solo se avisa por la primera, si no la clienta recibe dos
-        // correos y dos avisos para la misma cita.
-        if ((booking as any).compound_part === "part2") {
+        const visitKey = visitKeyOf(booking);
+        if (sentVisits24h.has(visitKey)) {
           await supabase.from("bookings").update({ reminder_sent: now.toISOString() }).eq("id", booking.id);
           continue;
         }
+
 
         // Check user preferences
         const prefs = await getUserPreferences(booking.user_id);
