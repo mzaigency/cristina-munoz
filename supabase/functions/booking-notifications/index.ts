@@ -166,7 +166,14 @@ serve(async (req) => {
       .eq("status", "confirmed")
       .is("reminder_sent", null)
       .not("customer_name", "ilike", "%BLOQUEADO%")
-      .not("customer_name", "ilike", "%VACACIONES%");
+      .not("customer_name", "ilike", "%VACACIONES%")
+      .order("Hora", { ascending: true });
+
+    // Una visita puede ocupar varias filas (servicio compuesto o varios
+    // servicios en la misma cita): solo se avisa una vez, por la fila más
+    // temprana, y el resto se marca como avisado.
+    const visitKeyOf = (b: any) => `${b.user_id}|${b.tenant_id}|${b["Fecha"]}`;
+    const sentVisits24h = new Set<string>();
 
     if (error24h) {
       console.error("Error fetching 24h bookings:", error24h);
@@ -174,16 +181,26 @@ serve(async (req) => {
     } else if (bookings24h && bookings24h.length > 0) {
       console.log(`Found ${bookings24h.length} bookings for 24h reminder`);
 
+      // Todos los servicios de cada visita, para nombrarlos en el correo
+      const servicesByVisit = new Map<string, string[]>();
+      for (const b of bookings24h as any[]) {
+        if (!b.user_id) continue;
+        const key = visitKeyOf(b);
+        const names = Array.isArray(b.services) ? b.services.map((s: any) => s?.name).filter(Boolean) : [];
+        const acc = servicesByVisit.get(key) || [];
+        for (const n of names) if (!acc.includes(n)) acc.push(n);
+        servicesByVisit.set(key, acc);
+      }
+
       for (const booking of bookings24h) {
         if (!booking.user_id) continue;
 
-        // Un servicio compuesto son dos filas (parte 1 y parte 2) de la MISMA
-        // visita: solo se avisa por la primera, si no la clienta recibe dos
-        // correos y dos avisos para la misma cita.
-        if ((booking as any).compound_part === "part2") {
+        const visitKey = visitKeyOf(booking);
+        if (sentVisits24h.has(visitKey)) {
           await supabase.from("bookings").update({ reminder_sent: now.toISOString() }).eq("id", booking.id);
           continue;
         }
+
 
         // Check user preferences
         const prefs = await getUserPreferences(booking.user_id);
@@ -209,9 +226,8 @@ serve(async (req) => {
           const email = await getUserEmail(booking.user_id);
           if (email) {
             try {
-              const servicesText = Array.isArray(booking.services)
-                ? booking.services.map((s: any) => s?.name).filter(Boolean).join(", ")
-                : "";
+              const servicesText = (servicesByVisit.get(visitKey) || []).join(", ");
+
               await sendAndLogTemplateEmail("booking-reminder-24h", email, {
   idempotencyKey: `booking-reminder-24h-${booking.id}`,
   templateData: {
@@ -234,7 +250,9 @@ serve(async (req) => {
             }
           }
 
+          sentVisits24h.add(visitKey);
           await supabase.from("bookings").update({ reminder_sent: now.toISOString() }).eq("id", booking.id);
+
 
           results.reminders_24h++;
         } catch (err) {
@@ -274,7 +292,10 @@ serve(async (req) => {
       .gte("Hora", timeFrom)
       .lte("Hora", timeTo)
       .not("customer_name", "ilike", "%BLOQUEADO%")
-      .not("customer_name", "ilike", "%VACACIONES%");
+      .not("customer_name", "ilike", "%VACACIONES%")
+      .order("Hora", { ascending: true });
+
+    const sentVisits2h = new Set<string>();
 
     if (error2h) {
       console.error("Error fetching 2h bookings:", error2h);
@@ -285,11 +306,27 @@ serve(async (req) => {
       for (const booking of bookings2h) {
         if (!booking.user_id) continue;
 
-        // Parte 2 de un servicio compuesto: misma visita, no se repite el aviso.
-        if ((booking as any).compound_part === "part2") {
+        // Misma visita (servicio compuesto o varios servicios): un solo aviso.
+        const visitKey = visitKeyOf(booking);
+        if (sentVisits2h.has(visitKey)) {
           await supabase.from("bookings").update({ reminder_2h_sent: now.toISOString() }).eq("id", booking.id);
           continue;
         }
+
+        // Otra fila de la misma visita ya avisó en una ejecución anterior
+        const { count: already2h } = await supabase
+          .from("bookings")
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", booking.tenant_id)
+          .eq("user_id", booking.user_id)
+          .eq("Fecha", booking["Fecha"])
+          .not("reminder_2h_sent", "is", null);
+        if ((already2h || 0) > 0) {
+          sentVisits2h.add(visitKey);
+          await supabase.from("bookings").update({ reminder_2h_sent: now.toISOString() }).eq("id", booking.id);
+          continue;
+        }
+
 
         // Check user preferences
         const prefs = await getUserPreferences(booking.user_id);
@@ -323,7 +360,9 @@ serve(async (req) => {
             });
           }
 
+          sentVisits2h.add(visitKey);
           await supabase.from("bookings").update({ reminder_2h_sent: now.toISOString() }).eq("id", booking.id);
+
 
           results.reminders_2h++;
         } catch (err) {
@@ -361,14 +400,31 @@ serve(async (req) => {
       .in("status", ["confirmed", "completed"])
       .is("review_request_sent", null)
       .not("customer_name", "ilike", "%BLOQUEADO%")
-      .not("customer_name", "ilike", "%VACACIONES%");
+      .not("customer_name", "ilike", "%VACACIONES%")
+      .order("Hora", { ascending: true });
 
     if (errorReview) {
       console.error("Error fetching review bookings:", errorReview);
       results.errors.push(`review fetch: ${errorReview.message}`);
     } else if (completedBookings && completedBookings.length > 0) {
+      // De una visita con varias filas (servicio compuesto o varios servicios)
+      // solo cuenta la última: es cuando la clienta sale del salón.
+      const lastOfVisit = new Map<string, string>();
+      for (const b of completedBookings as any[]) {
+        if (!b.user_id) continue;
+        lastOfVisit.set(visitKeyOf(b), b.id);
+      }
+
       for (const booking of completedBookings) {
         if (!booking.user_id) continue;
+
+        const visitKey = visitKeyOf(booking);
+        if (lastOfVisit.get(visitKey) !== booking.id) {
+          await supabase.from("bookings").update({ review_request_sent: now.toISOString() }).eq("id", booking.id);
+          continue;
+        }
+
+
 
         // Calculate when booking ended
         const [hours, minutes] = booking["Hora"].split(":").map(Number);
