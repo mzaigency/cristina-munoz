@@ -151,13 +151,20 @@ serve(async (req) => {
         );
         const bookingsPrev = prevRows.length;
 
-        // Servicios top
+        // Servicios top: cada servicio cuenta 1 por visita (las partes de un
+        // servicio compuesto son varias filas de la misma visita)
         const serviceCount = new Map<string, number>();
+        const seenServiceVisit = new Set<string>();
         for (const b of attended as any[]) {
           const names = Array.isArray(b.services)
             ? b.services.map((srv: any) => srv?.name).filter(Boolean)
             : [];
-          for (const n of names) serviceCount.set(n, (serviceCount.get(n) || 0) + 1);
+          for (const n of names) {
+            const key = `${visitKey(b)}|${n}`;
+            if (seenServiceVisit.has(key)) continue;
+            seenServiceVisit.add(key);
+            serviceCount.set(n, (serviceCount.get(n) || 0) + 1);
+          }
         }
         const topServices = [...serviceCount.entries()]
           .sort((a, b) => b[1] - a[1])
