@@ -263,9 +263,16 @@ serve(async (req) => {
 
       if (email) {
         const [y, m, d] = booking.Fecha.toString().split("-");
-        const services = Array.isArray(booking.services)
-          ? booking.services.map((s: any) => s.name).filter(Boolean).join(", ")
-          : "";
+        // Una visita puede ocupar varias filas (servicio compuesto o varios
+        // servicios): el correo nombra todos, pero se envía una sola vez.
+        const services = Array.from(
+          new Set(
+            bookings.flatMap((b: any) =>
+              Array.isArray(b.services) ? b.services.map((s: any) => s?.name).filter(Boolean) : [],
+            ),
+          ),
+        ).join(", ");
+
 
         await sendAndLogTemplateEmail("booking-cancelled", email, {
   idempotencyKey: `booking-cancelled-${booking.id}`,
