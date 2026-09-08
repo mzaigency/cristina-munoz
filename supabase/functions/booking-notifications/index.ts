@@ -292,7 +292,10 @@ serve(async (req) => {
       .gte("Hora", timeFrom)
       .lte("Hora", timeTo)
       .not("customer_name", "ilike", "%BLOQUEADO%")
-      .not("customer_name", "ilike", "%VACACIONES%");
+      .not("customer_name", "ilike", "%VACACIONES%")
+      .order("Hora", { ascending: true });
+
+    const sentVisits2h = new Set<string>();
 
     if (error2h) {
       console.error("Error fetching 2h bookings:", error2h);
@@ -303,11 +306,27 @@ serve(async (req) => {
       for (const booking of bookings2h) {
         if (!booking.user_id) continue;
 
-        // Parte 2 de un servicio compuesto: misma visita, no se repite el aviso.
-        if ((booking as any).compound_part === "part2") {
+        // Misma visita (servicio compuesto o varios servicios): un solo aviso.
+        const visitKey = visitKeyOf(booking);
+        if (sentVisits2h.has(visitKey)) {
           await supabase.from("bookings").update({ reminder_2h_sent: now.toISOString() }).eq("id", booking.id);
           continue;
         }
+
+        // Otra fila de la misma visita ya avisó en una ejecución anterior
+        const { count: already2h } = await supabase
+          .from("bookings")
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", booking.tenant_id)
+          .eq("user_id", booking.user_id)
+          .eq("Fecha", booking["Fecha"])
+          .not("reminder_2h_sent", "is", null);
+        if ((already2h || 0) > 0) {
+          sentVisits2h.add(visitKey);
+          await supabase.from("bookings").update({ reminder_2h_sent: now.toISOString() }).eq("id", booking.id);
+          continue;
+        }
+
 
         // Check user preferences
         const prefs = await getUserPreferences(booking.user_id);
