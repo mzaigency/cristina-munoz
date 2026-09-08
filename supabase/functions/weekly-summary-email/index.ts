@@ -28,6 +28,37 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // ── Auth: cron (service role) o superadmin ────────────────
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace("Bearer ", "").trim();
+    const isService = token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!isService) {
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } },
+      );
+      const { data: isSuperadmin } = await userClient.rpc("is_superadmin");
+      if (!isSuperadmin) {
+        return new Response(JSON.stringify({ error: "No autorizado" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // Modo prueba: { tenantSlug | tenantId, testEmail }
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch (_) {
+      body = {};
+    }
+    const testEmail: string | null = body?.testEmail ?? null;
+    const onlyTenantSlug: string | null = body?.tenantSlug ?? null;
+    const onlyTenantId: string | null = body?.tenantId ?? null;
+
+
     // Semana natural cerrada: lunes -> domingo anterior al día de envío.
     const now = new Date();
     const dow = (now.getUTCDay() + 6) % 7; // 0 = lunes
