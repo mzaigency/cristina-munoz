@@ -249,6 +249,7 @@ export function ClientsCRM({ tenantId, initialClientId }: ClientsCRMProps) {
       <div className="glow-search">
         <Search style={{ width: 15, height: 15, color: "var(--glow-ink-3)", flexShrink: 0 }} />
         <input
+          className="glow-input"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Buscar por nombre, teléfono o email..."
