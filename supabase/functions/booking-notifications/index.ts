@@ -360,7 +360,9 @@ serve(async (req) => {
             });
           }
 
+          sentVisits2h.add(visitKey);
           await supabase.from("bookings").update({ reminder_2h_sent: now.toISOString() }).eq("id", booking.id);
+
 
           results.reminders_2h++;
         } catch (err) {
