@@ -72,11 +72,16 @@ serve(async (req) => {
         ? `${start.getUTCDate()} al ${end.getUTCDate()} de ${MONTHS[end.getUTCMonth()]}`
         : `${start.getUTCDate()} de ${MONTHS[start.getUTCMonth()]} al ${end.getUTCDate()} de ${MONTHS[end.getUTCMonth()]}`;
 
-    const { data: tenants, error: tenantsError } = await supabase
+    let tenantsQuery = supabase
       .from("tenants")
       .select("id, name, email, logo_url, slug, is_active, subscription_expires_at")
-      .eq("is_active", true)
-      .not("email", "is", null);
+      .eq("is_active", true);
+
+    if (onlyTenantId) tenantsQuery = tenantsQuery.eq("id", onlyTenantId);
+    else if (onlyTenantSlug) tenantsQuery = tenantsQuery.eq("slug", onlyTenantSlug);
+    else tenantsQuery = tenantsQuery.not("email", "is", null);
+
+    const { data: tenants, error: tenantsError } = await tenantsQuery;
 
     if (tenantsError) throw tenantsError;
 
@@ -85,7 +90,7 @@ serve(async (req) => {
     for (const tenant of tenants || []) {
       results.tenants++;
 
-      if (tenant.subscription_expires_at && new Date(tenant.subscription_expires_at) < now) {
+      if (!testEmail && tenant.subscription_expires_at && new Date(tenant.subscription_expires_at) < now) {
         results.skipped++;
         continue;
       }
