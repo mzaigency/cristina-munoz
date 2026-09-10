@@ -9,6 +9,8 @@ import {
   AlertCircle,
   RotateCcw,
   Sparkles,
+  Coins,
+  ArrowDownLeft,
 } from "lucide-react";
 
 export interface QuickPayBooking {
@@ -30,6 +32,8 @@ interface QuickPayModalProps {
     paymentMethod: "cash" | "card" | "mixed";
     mixedCash?: number;
     mixedCard?: number;
+    cashGiven?: number;
+    change?: number;
   }) => Promise<void>;
   onNavigateToCash?: () => void;
   computeBookingTotal: (b: any) => number;
@@ -48,6 +52,7 @@ export const QuickPayModal: React.FC<QuickPayModalProps> = ({
   const [editingTotal, setEditingTotal] = useState(false);
   const [mixedCash, setMixedCash] = useState<string>("");
   const [mixedCard, setMixedCard] = useState<string>("");
+  const [cashGiven, setCashGiven] = useState<string>("");
 
   const originalTotal = booking ? computeBookingTotal(booking) : 0;
   const parsedCustom = parseFloat(customTotal);
@@ -64,6 +69,7 @@ export const QuickPayModal: React.FC<QuickPayModalProps> = ({
       setEditingTotal(false);
       setMixedCash("");
       setMixedCard("");
+      setCashGiven("");
     }
   }, [booking?.id]);
 
@@ -118,11 +124,25 @@ export const QuickPayModal: React.FC<QuickPayModalProps> = ({
   const isCustomPrice =
     customTotal !== "" && Math.abs(effectiveTotal - originalTotal) > 0.001;
 
-  // Mixed calculation validation
+  // Mixed calculation values (defined before cashToPay)
   const numCash = parseFloat(mixedCash) || 0;
   const numCard = parseFloat(mixedCard) || 0;
   const mixedDiff = effectiveTotal - (numCash + numCard);
   const isMixedBalanced = Math.abs(mixedDiff) < 0.03;
+
+  // Cash amount to pay for change calculation
+  const cashToPay =
+    payMethod === "cash"
+      ? effectiveTotal
+      : payMethod === "mixed"
+      ? numCash
+      : 0;
+
+  const numericCashGiven = parseFloat(cashGiven) || 0;
+  const changeAmount =
+    numericCashGiven >= cashToPay && cashToPay > 0
+      ? numericCashGiven - cashToPay
+      : 0;
 
   const canConfirm =
     !paying &&
@@ -136,6 +156,16 @@ export const QuickPayModal: React.FC<QuickPayModalProps> = ({
       paymentMethod: payMethod,
       mixedCash: payMethod === "mixed" ? numCash : undefined,
       mixedCard: payMethod === "mixed" ? numCard : undefined,
+      cashGiven:
+        (payMethod === "cash" || payMethod === "mixed") && numericCashGiven > 0
+          ? numericCashGiven
+          : undefined,
+      change:
+        (payMethod === "cash" || payMethod === "mixed") &&
+        numericCashGiven >= cashToPay &&
+        cashToPay > 0
+          ? changeAmount
+          : undefined,
     });
   };
 
@@ -306,27 +336,6 @@ export const QuickPayModal: React.FC<QuickPayModalProps> = ({
                   <X className="w-4 h-4" />
                 </button>
               </div>
-
-              {/* Botones rápidos de ajuste */}
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setCustomTotal(originalTotal.toFixed(2))}
-                  className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
-                >
-                  Original ({originalTotal.toFixed(2)}€)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const cur = parseFloat(customTotal) || originalTotal;
-                    setCustomTotal((Math.ceil(cur / 5) * 5).toFixed(2));
-                  }}
-                  className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
-                >
-                  Redondear a 5€
-                </button>
-              </div>
             </div>
           )}
         </div>
@@ -469,6 +478,61 @@ export const QuickPayModal: React.FC<QuickPayModalProps> = ({
             </div>
           )}
         </div>
+
+        {/* ── CÁLCULO DE CAMBIO (LIMPIO, COMO EN CAJA) ── */}
+        {(payMethod === "cash" || (payMethod === "mixed" && cashToPay > 0)) && (
+          <div className="mb-4 flex flex-col gap-2">
+            <div className="flex items-center justify-between rounded-xl bg-white border border-slate-200 px-3.5 py-2 shadow-2xs">
+              <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                <Coins className="w-3.5 h-3.5 text-slate-400" />
+                Entrega del cliente
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCashGiven(cashToPay.toFixed(2))}
+                  className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-[11px] font-bold text-slate-600 transition cursor-pointer"
+                  title="Marcar importe exacto"
+                >
+                  Exacto
+                </button>
+                <div className="relative w-28">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    step="0.01"
+                    value={cashGiven}
+                    onChange={(e) => setCashGiven(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full text-base font-black text-right tabular-nums pr-6 py-0.5 bg-transparent text-slate-900 outline-none border-b border-slate-300 focus:border-indigo-600"
+                  />
+                  <span className="absolute right-1 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                    €
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {numericCashGiven > cashToPay && cashToPay > 0 && (
+              <div className="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-200/80 px-3.5 py-2">
+                <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
+                  <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-600" /> Cambio a devolver:
+                </span>
+                <span className="text-base font-black text-emerald-700 tabular-nums">
+                  {changeAmount.toFixed(2)}€
+                </span>
+              </div>
+            )}
+            {numericCashGiven > 0 && numericCashGiven < cashToPay && (
+              <div className="flex items-center justify-between rounded-xl bg-amber-50 border border-amber-200/80 px-3.5 py-1.5 text-xs text-amber-800 font-semibold">
+                <span>Faltan por entregar</span>
+                <span className="font-bold tabular-nums">{(cashToPay - numericCashGiven).toFixed(2)}€</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── BOTÓN DE CONFIRMACIÓN ── */}
         <button

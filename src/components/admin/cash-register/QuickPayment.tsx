@@ -25,9 +25,14 @@ import {
   ChevronRight,
   Copy,
   MessageCircle,
+  Wallet,
+  Pencil,
+  Coins,
+  RotateCcw,
+  Check,
+  AlertCircle,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { format } from "date-fns";
 
 interface TodayBooking {
@@ -114,6 +119,12 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   const [search, setSearch] = useState("");
   const [payOpen, setPayOpen] = useState(false);
 
+  // Price editing state
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingItemPrice, setEditingItemPrice] = useState("");
+  const [editingTotal, setEditingTotal] = useState(false);
+  const [customTotalInput, setCustomTotalInput] = useState("");
+
   // Invoice data state kept for internal logic but UI removed as requested
   const [wantsInvoice, setWantsInvoice] = useState(false);
   const [invoiceData, setInvoiceData] = useState({
@@ -136,6 +147,17 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   useEffect(() => {
     if (payOpen && selectedItems.length === 0) setPayOpen(false);
   }, [payOpen, selectedItems.length]);
+
+  // Handle ESC key to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && payOpen && !loading) {
+        setPayOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [payOpen, loading]);
 
   useEffect(() => {
     fetchData();
@@ -335,6 +357,22 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     return Math.max(numericCashGiven - grandTotal, 0);
   };
 
+  const cashToPay =
+    paymentMethod === "cash"
+      ? grandTotal
+      : paymentMethod === "mixed"
+      ? numericCashAmount
+      : 0;
+
+  const changeAmount =
+    numericCashGiven >= cashToPay && cashToPay > 0
+      ? numericCashGiven - cashToPay
+      : 0;
+
+  const handleExactCash = () => {
+    setCashGiven(cashToPay.toFixed(2));
+  };
+
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(value);
 
@@ -407,6 +445,59 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     );
   };
 
+  const updateItemPrice = (itemId: string, newPrice: number) => {
+    setSelectedItems((prev) =>
+      prev.map((s) => (s.id === itemId ? { ...s, price: Math.max(0, newPrice) } : s))
+    );
+  };
+
+  const startEditItemPrice = (item: SelectedItem) => {
+    setEditingItemId(item.id);
+    setEditingItemPrice(item.price.toString());
+  };
+
+  const saveItemPrice = (itemId: string) => {
+    const parsed = parseFloat(editingItemPrice);
+    if (!isNaN(parsed) && parsed >= 0) {
+      updateItemPrice(itemId, parsed);
+    }
+    setEditingItemId(null);
+    setEditingItemPrice("");
+  };
+
+  const handleSelectPaymentMethod = (method: PaymentMethod) => {
+    setPaymentMethod(method);
+    if (method === "mixed") {
+      const half = (grandTotal / 2).toFixed(2);
+      const remainder = (grandTotal - parseFloat(half)).toFixed(2);
+      setCashAmount(half);
+      setCardAmount(remainder);
+    }
+  };
+
+  const handleCashAmountChange = (val: string) => {
+    setCashAmount(val);
+    const num = parseFloat(val);
+    if (!isNaN(num) && num >= 0 && num <= grandTotal) {
+      setCardAmount((grandTotal - num).toFixed(2));
+    }
+  };
+
+  const handleCardAmountChange = (val: string) => {
+    setCardAmount(val);
+    const num = parseFloat(val);
+    if (!isNaN(num) && num >= 0 && num <= grandTotal) {
+      setCashAmount((grandTotal - num).toFixed(2));
+    }
+  };
+
+  const handleSplitFiftyFifty = () => {
+    const half = (grandTotal / 2).toFixed(2);
+    const remainder = (grandTotal - parseFloat(half)).toFixed(2);
+    setCashAmount(half);
+    setCardAmount(remainder);
+  };
+
   const removeItem = (itemId: string) => {
     setSelectedItems(selectedItems.filter((s) => s.id !== itemId));
   };
@@ -429,6 +520,10 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     setWantsInvoice(false);
     setInvoiceData({ fiscalName: "", nif: "", fiscalAddress: "" });
     setSelectedBookingId(null);
+    setEditingItemId(null);
+    setEditingItemPrice("");
+    setEditingTotal(false);
+    setCustomTotalInput("");
   };
 
   const handleSubmit = async () => {
@@ -1028,321 +1123,630 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         </>
       )}
 
-      {/* ── HOJA DE COBRO ────────────────────────────────────── */}
-      <Sheet open={payOpen} onOpenChange={setPayOpen}>
-        <SheetContent
-          side="bottom"
-          className="h-[92vh] p-0 rounded-t-[28px] border-0 bg-background/95 backdrop-blur-xl flex flex-col"
+      {/* ── MODAL / HOJA DE COBRO ADAPTADA DESKTOP & MOBILE ─────── */}
+      {payOpen && (
+        <div
+          className="ag-detail-wrap"
+          onClick={() => !loading && setPayOpen(false)}
         >
-          <div className="shrink-0 pt-2.5 px-5 pb-3 border-b border-line">
-            <div className="mx-auto h-1.5 w-10 rounded-full bg-outline/25 mb-3" />
-            <p className="text-[11px] font-semibold text-outline">Total a cobrar</p>
-            <p className="text-[28px] font-bold text-ink-2 tabular-nums leading-none mt-0.5">
-              {formatCurrency(grandTotal)}
-            </p>
-          </div>
+          <div
+            className="ag-detail-sheet flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 560, maxHeight: "90vh" }}
+          >
+            <div className="ag-detail-grip" aria-hidden />
 
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-            {/* Líneas */}
-            <section className="space-y-2">
-              <label className="text-[13px] font-semibold text-ink-2">Detalle</label>
-              <div className="rounded-2xl bg-surface border border-line overflow-hidden">
-                {selectedItems.map((item, idx) => (
-                  <div
-                    key={item.id}
-                    className={`flex items-center gap-2 px-3.5 py-2.5 ${idx > 0 ? "border-t border-line" : ""}`}
-                  >
-                    <span className="flex-1 min-w-0">
-                      <span className="block text-[14px] font-medium text-ink-2 truncate">
-                        {item.name}
-                      </span>
-                      <span className="block text-[11px] text-outline tabular-nums">
-                        {formatCurrency(item.price)}
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-1 flex-none">
-                      <button
-                        onClick={() => updateQuantity(item.id, -1)}
-                        aria-label="Quitar uno"
-                        className="w-7 h-7 rounded-full bg-chip flex items-center justify-center text-ink-2 active:scale-90 transition-transform"
-                      >
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <span className="w-5 text-center text-[14px] font-semibold tabular-nums">
-                        {item.quantity}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(item.id, 1)}
-                        aria-label="Añadir uno"
-                        className="w-7 h-7 rounded-full bg-chip flex items-center justify-center text-ink-2 active:scale-90 transition-transform"
-                      >
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    </span>
-                    <span className="w-16 text-right text-[14px] font-bold text-ink-2 tabular-nums flex-none">
-                      {formatCurrency(item.price * item.quantity)}
-                    </span>
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      aria-label={`Quitar ${item.name}`}
-                      className="flex-none text-outline"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
+            <button
+              className="ag-detail-close"
+              onClick={() => !loading && setPayOpen(false)}
+              aria-label="Cerrar cobro"
+              disabled={loading}
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-3 pr-8">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                <Wallet className="w-3.5 h-3.5 text-indigo-600" />
+                Cobro en caja
+              </span>
+              {customerName ? (
+                <span className="text-xs text-slate-500 font-semibold truncate">
+                  {customerName}
+                </span>
+              ) : (
+                <span className="text-xs text-slate-400 font-medium">
+                  Ticket de venta
+                </span>
+              )}
+            </div>
+
+            {/* ── TOTAL A COBRAR (PROMINENTE Y MODIFICABLE) ── */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/30 border border-slate-200/80 mb-4 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  Total a cobrar
+                </span>
+
+                {/* BOTÓN PROMINENTE DE MODIFICAR PRECIO */}
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => {
+                    if (selectedItems.length === 1) {
+                      startEditItemPrice(selectedItems[0]);
+                    } else {
+                      setEditingTotal(!editingTotal);
+                      setCustomTotalInput(grandTotal.toFixed(2));
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300 shadow-sm transition transform active:scale-95 cursor-pointer"
+                  title="Modificar precio fácilmente"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Modificar precio
+                </button>
               </div>
 
-              {(discountAmount > 0 || tip > 0) && (
-                <div className="px-1 space-y-1">
-                  {discountAmount > 0 && (
-                    <div className="flex justify-between text-[13px] font-semibold text-warning">
-                      <span>Descuento</span>
-                      <span className="tabular-nums">-{formatCurrency(discountAmount)}</span>
-                    </div>
-                  )}
-                  {tip > 0 && (
-                    <div className="flex justify-between text-[13px] font-semibold text-accent">
-                      <span>Propina</span>
-                      <span className="tabular-nums">+{formatCurrency(tip)}</span>
+              {/* Total Display */}
+              {!editingTotal ? (
+                <div className="flex items-baseline justify-between">
+                  <div
+                    className="flex items-baseline gap-1.5 cursor-pointer group"
+                    onClick={() => {
+                      if (!loading) {
+                        if (selectedItems.length === 1) {
+                          startEditItemPrice(selectedItems[0]);
+                        } else {
+                          setEditingTotal(true);
+                          setCustomTotalInput(grandTotal.toFixed(2));
+                        }
+                      }
+                    }}
+                    title="Haz clic para modificar importe"
+                  >
+                    <span className="text-4xl font-black text-slate-900 tracking-tight tabular-nums group-hover:text-indigo-600 transition">
+                      {grandTotal.toFixed(2)}
+                    </span>
+                    <span className="text-2xl font-bold text-slate-400">€</span>
+                  </div>
+
+                  {(discountAmount > 0 || tip > 0) && (
+                    <div className="flex flex-col items-end text-xs">
+                      {discountAmount > 0 && (
+                        <span className="text-amber-600 font-semibold tabular-nums">
+                          Dto: -{formatCurrency(discountAmount)}
+                        </span>
+                      )}
+                      {tip > 0 && (
+                        <span className="text-emerald-600 font-semibold tabular-nums">
+                          Propina: +{formatCurrency(tip)}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </section>
-
-            {/* Descuento y propina */}
-            <section className="space-y-2">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowDiscount(!showDiscount)}
-                  className={`flex-1 h-10 rounded-full text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 transition-colors ${
-                    showDiscount || discountAmount > 0
-                      ? "bg-gradient-brand text-white"
-                      : "bg-chip text-ink-2"
-                  }`}
-                >
-                  <Percent className="w-3.5 h-3.5" />
-                  {discountAmount > 0 ? `-${formatCurrency(discountAmount)}` : "Descuento"}
-                </button>
-                <button
-                  onClick={() => setShowTip(!showTip)}
-                  className={`flex-1 h-10 rounded-full text-[13px] font-semibold inline-flex items-center justify-center gap-1.5 transition-colors ${
-                    showTip || tip > 0 ? "bg-gradient-brand text-white" : "bg-chip text-ink-2"
-                  }`}
-                >
-                  <Heart className="w-3.5 h-3.5" />
-                  {tip > 0 ? `+${formatCurrency(tip)}` : "Propina"}
-                </button>
-              </div>
-
-              {showDiscount && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setDiscountType("percentage")}
-                    className={`w-12 h-10 rounded-2xl text-[14px] font-bold ${
-                      discountType === "percentage" ? "bg-primary text-white" : "bg-chip text-ink-2"
-                    }`}
-                  >
-                    %
-                  </button>
-                  <button
-                    onClick={() => setDiscountType("fixed")}
-                    className={`w-12 h-10 rounded-2xl text-[14px] font-bold ${
-                      discountType === "fixed" ? "bg-primary text-white" : "bg-chip text-ink-2"
-                    }`}
-                  >
-                    €
-                  </button>
+              ) : (
+                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-indigo-100">
+                  <span className="text-xs font-bold text-slate-600">Nuevo total:</span>
                   <input
                     type="number"
                     inputMode="decimal"
-                    value={discountValue}
-                    onChange={(e) => setDiscountValue(e.target.value)}
-                    placeholder="0"
-                    className="flex-1 min-w-0 h-10 rounded-2xl bg-chip px-3 text-[15px] text-center tabular-nums outline-none text-ink-2"
+                    step="0.5"
+                    value={customTotalInput}
+                    onChange={(e) => setCustomTotalInput(e.target.value)}
+                    className="w-28 px-3 py-1 rounded-lg border border-indigo-300 bg-white text-lg font-black text-slate-900 outline-none"
+                    placeholder="0.00"
+                    autoFocus
                   />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const parsed = parseFloat(customTotalInput);
+                      if (!isNaN(parsed) && parsed >= 0) {
+                        if (selectedItems.length === 1) {
+                          updateItemPrice(selectedItems[0].id, parsed);
+                        } else {
+                          if (parsed < subtotal) {
+                            setDiscountType("fixed");
+                            setDiscountValue((subtotal - parsed).toFixed(2));
+                          } else {
+                            setDiscountType(null);
+                            setDiscountValue("");
+                            setTipAmount((parsed - subtotal).toFixed(2));
+                          }
+                        }
+                      }
+                      setEditingTotal(false);
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition"
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingTotal(false)}
+                    className="text-xs text-slate-400 hover:text-slate-600 px-1"
+                  >
+                    Cancelar
+                  </button>
                 </div>
               )}
+            </div>
 
-              {showTip && (
-                <div className="flex gap-2">
-                  {[1, 2, 5, 10].map((v) => (
-                    <button
-                      key={v}
-                      onClick={() => setTipAmount(parseFloat(tipAmount) === v ? "" : v.toString())}
-                      className={`flex-1 h-10 rounded-2xl text-[14px] font-semibold tabular-nums ${
-                        parseFloat(tipAmount) === v ? "bg-primary text-white" : "bg-chip text-ink-2"
-                      }`}
-                    >
-                      {v}€
-                    </button>
-                  ))}
+            {/* SCROLLABLE CONTENT */}
+            <div className="flex-1 overflow-y-auto pr-1 space-y-4 text-left">
+              {/* Líneas / Detalle */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Detalle ({itemCount})
+                  </label>
+                  <button
+                    type="button"
+                    onClick={clearAll}
+                    className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 transition cursor-pointer"
+                  >
+                    Vaciar ticket
+                  </button>
                 </div>
-              )}
-            </section>
 
-            {/* Método de pago */}
-            <section className="space-y-2">
-              <label className="text-[13px] font-semibold text-ink-2">Cómo paga</label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { value: "cash" as const, icon: Banknote, label: "Efectivo" },
-                  { value: "card" as const, icon: CreditCard, label: "Tarjeta" },
-                  { value: "mixed" as const, icon: Sparkles, label: "Mixto" },
-                ].map(({ value, icon: Icon, label }) => {
-                  const on = paymentMethod === value;
-                  return (
-                    <button
-                      key={value}
-                      onClick={() => setPaymentMethod(value)}
-                      className={`h-16 rounded-2xl flex flex-col items-center justify-center gap-1 transition-colors ${
-                        on ? "bg-gradient-brand text-white" : "bg-chip text-ink-2"
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span className="text-[12px] font-semibold">{label}</span>
-                    </button>
-                  );
-                })}
+                <div className="rounded-2xl bg-white border border-slate-200 divide-y divide-slate-100 overflow-hidden shadow-xs">
+                  {selectedItems.map((item) => {
+                    const isEditingPrice = editingItemId === item.id;
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-2.5 px-3.5 py-2.5 hover:bg-slate-50/50 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <span className="block text-sm font-semibold text-slate-800 truncate">
+                            {item.name}
+                          </span>
+                          {isEditingPrice ? (
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <input
+                                type="number"
+                                inputMode="decimal"
+                                step="0.5"
+                                autoFocus
+                                value={editingItemPrice}
+                                onChange={(e) => setEditingItemPrice(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") saveItemPrice(item.id);
+                                  if (e.key === "Escape") setEditingItemId(null);
+                                }}
+                                className="w-20 px-2 py-0.5 text-xs font-bold rounded-md border border-indigo-300 bg-white text-indigo-700 outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => saveItemPrice(item.id)}
+                                className="px-2 py-0.5 text-xs font-bold rounded-md bg-indigo-600 text-white"
+                              >
+                                OK
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingItemId(null)}
+                                className="p-0.5 text-slate-400 hover:text-slate-600"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-xs text-slate-400 tabular-nums">
+                                {formatCurrency(item.price)}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => startEditItemPrice(item)}
+                                className="inline-flex items-center gap-0.5 text-[10px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50/80 hover:bg-indigo-100 px-1.5 py-0.5 rounded transition cursor-pointer"
+                                title="Modificar precio de este concepto"
+                              >
+                                <Pencil className="w-2.5 h-2.5" />
+                                Modificar
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Qty controls */}
+                        <div className="flex items-center gap-1 flex-none bg-slate-100 rounded-lg p-0.5">
+                          <button
+                            onClick={() => updateQuantity(item.id, -1)}
+                            aria-label="Quitar uno"
+                            className="w-6 h-6 rounded-md bg-white text-slate-700 flex items-center justify-center hover:bg-slate-50 active:scale-95 shadow-xs transition cursor-pointer"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="w-5 text-center text-xs font-bold tabular-nums text-slate-800">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.id, 1)}
+                            aria-label="Añadir uno"
+                            className="w-6 h-6 rounded-md bg-white text-slate-700 flex items-center justify-center hover:bg-slate-50 active:scale-95 shadow-xs transition cursor-pointer"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        {/* Subtotal */}
+                        <span className="w-16 text-right text-sm font-bold text-slate-900 tabular-nums flex-none">
+                          {formatCurrency(item.price * item.quantity)}
+                        </span>
+
+                        {/* Remove */}
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          aria-label={`Quitar ${item.name}`}
+                          className="flex-none p-1 text-slate-300 hover:text-rose-500 transition cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              {paymentMethod === "mixed" && (
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="rounded-2xl bg-surface border border-line px-3.5 py-2">
-                    <span className="block text-[11px] font-semibold text-outline">Efectivo</span>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      value={cashAmount}
-                      onChange={(e) => setCashAmount(e.target.value)}
-                      placeholder="0"
-                      className="w-full bg-transparent text-[16px] font-semibold tabular-nums outline-none text-ink-2"
-                    />
-                  </label>
-                  <label className="rounded-2xl bg-surface border border-line px-3.5 py-2">
-                    <span className="block text-[11px] font-semibold text-outline">Tarjeta</span>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      value={cardAmount}
-                      onChange={(e) => setCardAmount(e.target.value)}
-                      placeholder="0"
-                      className="w-full bg-transparent text-[16px] font-semibold tabular-nums outline-none text-ink-2"
-                    />
-                  </label>
-                  {getMixedRemaining() > 0.01 && (
-                    <p className="col-span-2 text-[12px] font-semibold text-destructive text-center">
-                      Faltan {formatCurrency(getMixedRemaining())}
-                    </p>
-                  )}
+              {/* Descuento y propina */}
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowDiscount(!showDiscount)}
+                    className={`flex-1 h-9 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                      showDiscount || discountAmount > 0
+                        ? "bg-amber-500 text-white shadow-xs"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                    }`}
+                  >
+                    <Percent className="w-3.5 h-3.5" />
+                    {discountAmount > 0 ? `Descuento (-${formatCurrency(discountAmount)})` : "Descuento"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowTip(!showTip)}
+                    className={`flex-1 h-9 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                      showTip || tip > 0
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                    }`}
+                  >
+                    <Heart className="w-3.5 h-3.5" />
+                    {tip > 0 ? `Propina (+${formatCurrency(tip)})` : "Propina"}
+                  </button>
                 </div>
-              )}
 
-              {(paymentMethod === "cash" || (paymentMethod === "mixed" && numericCashAmount > 0)) && (
-                <>
-                  <label className="flex items-center justify-between rounded-2xl bg-surface border border-line px-3.5 py-2.5">
-                    <span className="text-[13px] font-semibold text-outline">Entrega</span>
+                {showDiscount && (
+                  <div className="flex items-center gap-2 p-2 rounded-xl bg-amber-50/50 border border-amber-200">
+                    <div className="flex rounded-lg overflow-hidden border border-amber-300 bg-white p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setDiscountType("percentage")}
+                        className={`px-2.5 py-1 text-xs font-bold rounded cursor-pointer ${
+                          discountType === "percentage" ? "bg-amber-500 text-white" : "text-amber-800 hover:bg-amber-50"
+                        }`}
+                      >
+                        %
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDiscountType("fixed")}
+                        className={`px-2.5 py-1 text-xs font-bold rounded cursor-pointer ${
+                          discountType === "fixed" ? "bg-amber-500 text-white" : "text-amber-800 hover:bg-amber-50"
+                        }`}
+                      >
+                        €
+                      </button>
+                    </div>
                     <input
                       type="number"
                       inputMode="decimal"
-                      value={cashGiven}
-                      onChange={(e) => setCashGiven(e.target.value)}
-                      placeholder="0"
-                      className="w-28 bg-transparent text-[18px] font-bold tabular-nums text-right outline-none text-ink-2"
+                      value={discountValue}
+                      onChange={(e) => {
+                        if (!discountType) setDiscountType("percentage");
+                        setDiscountValue(e.target.value);
+                      }}
+                      placeholder="Valor"
+                      className="flex-1 min-w-0 h-8 rounded-lg bg-white border border-amber-200 px-2.5 text-sm font-semibold text-center tabular-nums outline-none text-slate-800 focus:border-amber-500"
                     />
-                  </label>
-                  {getChange() > 0 && (
-                    <div className="flex items-center justify-between rounded-2xl bg-success-soft px-3.5 py-2.5">
-                      <span className="text-[13px] font-semibold text-success">Cambio</span>
-                      <span className="text-[18px] font-bold text-success tabular-nums">
-                        {formatCurrency(getChange())}
+                    {discountAmount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDiscountValue("");
+                          setDiscountType(null);
+                        }}
+                        className="text-xs font-bold text-amber-700 hover:underline px-1 cursor-pointer"
+                      >
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {showTip && (
+                  <div className="flex items-center gap-1.5 p-2 rounded-xl bg-emerald-50/50 border border-emerald-200">
+                    {[1, 2, 5, 10].map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setTipAmount(parseFloat(tipAmount) === v ? "" : v.toString())}
+                        className={`flex-1 h-8 rounded-lg text-xs font-bold tabular-nums transition cursor-pointer ${
+                          parseFloat(tipAmount) === v
+                            ? "bg-emerald-600 text-white shadow-xs"
+                            : "bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-50"
+                        }`}
+                      >
+                        +{v}€
+                      </button>
+                    ))}
+                    {tip > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setTipAmount("")}
+                        className="text-xs font-bold text-emerald-700 hover:underline px-1 cursor-pointer"
+                      >
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Cómo paga */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Método de pago
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: "cash" as const, icon: Banknote, label: "Efectivo" },
+                    { value: "card" as const, icon: CreditCard, label: "Tarjeta" },
+                    { value: "mixed" as const, icon: Sparkles, label: "Mixto" },
+                  ].map(({ value, icon: Icon, label }) => {
+                    const on = paymentMethod === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => handleSelectPaymentMethod(value)}
+                        className={`py-2.5 px-3 rounded-xl flex flex-col items-center justify-center gap-1 border transition-all cursor-pointer ${
+                          on
+                            ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                            : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200"
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 ${on ? "text-indigo-400" : "text-slate-500"}`} />
+                        <span className="text-xs font-bold">{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Tarjeta view */}
+                {paymentMethod === "card" && (
+                  <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 flex-none">
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-slate-800">Cobro íntegro con tarjeta</p>
+                      <p className="text-[11px] text-slate-500">Pasa el datáfono / TPV por {formatCurrency(grandTotal)}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Mixto view */}
+                {paymentMethod === "mixed" && (
+                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3.5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Desglose del cobro</span>
+                      <button
+                        type="button"
+                        onClick={handleSplitFiftyFifty}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 px-2 py-0.5 rounded-md shadow-xs transition cursor-pointer"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        50% / 50%
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="p-2.5 rounded-xl bg-white border border-slate-200">
+                        <span className="block text-[11px] font-bold text-slate-500 mb-1">
+                          Efectivo
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            value={cashAmount}
+                            onChange={(e) => handleCashAmountChange(e.target.value)}
+                            placeholder="0.00"
+                            className="w-full text-base font-bold tabular-nums outline-none text-slate-900"
+                          />
+                          <span className="text-xs font-bold text-slate-400">€</span>
+                        </div>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white border border-slate-200">
+                        <span className="block text-[11px] font-bold text-slate-500 mb-1">
+                          Tarjeta
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            value={cardAmount}
+                            onChange={(e) => handleCardAmountChange(e.target.value)}
+                            placeholder="0.00"
+                            className="w-full text-base font-bold tabular-nums outline-none text-slate-900"
+                          />
+                          <span className="text-xs font-bold text-slate-400">€</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Balance status */}
+                    {getMixedRemaining() > 0.01 ? (
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2">
+                        <AlertCircle className="w-3.5 h-3.5 flex-none" />
+                        <span>Faltan {formatCurrency(getMixedRemaining())} por asignar</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2">
+                        <Check className="w-3.5 h-3.5 flex-none" />
+                        <span>Importe total completamente asignado ({formatCurrency(grandTotal)})</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Entrega y Cambio para Efectivo o Mixto */}
+                {(paymentMethod === "cash" || (paymentMethod === "mixed" && numericCashAmount > 0)) && (
+                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3.5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">
+                        {paymentMethod === "mixed" ? "Entrega de efectivo" : "Entrega del cliente"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleExactCash}
+                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 px-2 py-0.5 rounded-md shadow-xs transition cursor-pointer"
+                      >
+                        Exacto ({formatCurrency(cashToPay)})
+                      </button>
+                    </div>
+
+                    <div className="relative">
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        value={cashGiven}
+                        onChange={(e) => setCashGiven(e.target.value)}
+                        placeholder={`Ej: ${Math.ceil(cashToPay)}`}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-lg font-black text-slate-900 tabular-nums focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition"
+                      />
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                        €
                       </span>
                     </div>
+
+                    {changeAmount > 0 && (
+                      <div className="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-200 px-3.5 py-2.5">
+                        <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                          <Coins className="w-4 h-4 text-emerald-600" />
+                          Cambio a devolver
+                        </span>
+                        <span className="text-xl font-black text-emerald-700 tabular-nums">
+                          +{formatCurrency(changeAmount)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Atendido por */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Atendido por <span className="text-rose-500">*</span>
+                  </label>
+                  {!selectedStylistId && (
+                    <span className="text-[11px] font-semibold text-rose-500">Requerido</span>
                   )}
-                </>
-              )}
-            </section>
-
-            {/* Estilista */}
-            <section className="space-y-2">
-              <label className="text-[13px] font-semibold text-ink-2">Atendido por</label>
-              <div className="grid grid-cols-2 gap-2">
-                {stylists.map((stylist) => {
-                  const on = selectedStylistId === stylist.id;
-                  return (
-                    <button
-                      key={stylist.id}
-                      onClick={() => setSelectedStylistId(stylist.id)}
-                      className={`h-11 rounded-2xl inline-flex items-center justify-center gap-2 text-[13px] font-semibold transition-colors ${
-                        on ? "bg-gradient-brand text-white" : "bg-chip text-ink-2"
-                      }`}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full flex-none"
-                        style={{ background: on ? "#fff" : stylist.color || STYLIST_FALLBACK }}
-                      />
-                      <span className="truncate">{stylist.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* Cliente */}
-            <section className="space-y-2">
-              <label className="text-[13px] font-semibold text-ink-2">Cliente (opcional)</label>
-              <div className="rounded-2xl bg-surface border border-line overflow-hidden">
-                <div className="flex items-center gap-2.5 px-3.5 py-3">
-                  <User className="w-4 h-4 text-outline flex-none" />
-                  <input
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Nombre"
-                    className="flex-1 min-w-0 bg-transparent text-[15px] outline-none text-ink-2"
-                  />
                 </div>
-                <div className="flex items-center gap-2.5 px-3.5 py-3 border-t border-line">
-                  <Mail className="w-4 h-4 text-outline flex-none" />
-                  <input
-                    type="email"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    placeholder="Email para el ticket"
-                    className="flex-1 min-w-0 bg-transparent text-[15px] outline-none text-ink-2"
-                  />
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {stylists.map((stylist) => {
+                    const on = selectedStylistId === stylist.id;
+                    return (
+                      <button
+                        key={stylist.id}
+                        type="button"
+                        onClick={() => setSelectedStylistId(stylist.id)}
+                        className={`h-10 px-3 rounded-xl inline-flex items-center gap-2 text-xs font-bold transition border cursor-pointer ${
+                          on
+                            ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                            : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200"
+                        }`}
+                      >
+                        <span
+                          className="w-2.5 h-2.5 rounded-full flex-none"
+                          style={{ background: stylist.color || STYLIST_FALLBACK }}
+                        />
+                        <span className="truncate">{stylist.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-            </section>
-          </div>
 
-          <div
-            className="shrink-0 border-t border-line px-5 pt-3.5 bg-background/95 backdrop-blur-xl"
-            style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
-          >
-            <button
-              onClick={handleSubmit}
-              disabled={loading || selectedItems.length === 0 || !selectedStylistId}
-              className="w-full h-12 rounded-full bg-gradient-brand text-white text-[15px] font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[.99] transition-transform"
-              style={{ boxShadow: "0 8px 22px -10px rgba(34,64,140,.6)" }}
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4" />
-                  Confirmar cobro · {formatCurrency(grandTotal)}
-                </>
+              {/* Cliente */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Cliente (opcional)
+                </label>
+                <div className="rounded-xl bg-white border border-slate-200 overflow-hidden divide-y divide-slate-100">
+                  <div className="flex items-center gap-2.5 px-3 py-2">
+                    <User className="w-3.5 h-3.5 text-slate-400 flex-none" />
+                    <input
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Nombre del cliente"
+                      className="flex-1 min-w-0 bg-transparent text-xs font-medium outline-none text-slate-800 placeholder:text-slate-400"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2.5 px-3 py-2">
+                    <Mail className="w-3.5 h-3.5 text-slate-400 flex-none" />
+                    <input
+                      type="email"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      placeholder="Email para enviar ticket digital"
+                      className="flex-1 min-w-0 bg-transparent text-xs font-medium outline-none text-slate-800 placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer / Confirmación */}
+            <div className="shrink-0 pt-3 border-t border-slate-200 mt-3">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={
+                  loading ||
+                  selectedItems.length === 0 ||
+                  !selectedStylistId ||
+                  (paymentMethod === "mixed" && getMixedRemaining() > 0.01)
+                }
+                className="w-full h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold inline-flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-md transition active:scale-[.99] cursor-pointer"
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    Confirmar cobro · {formatCurrency(grandTotal)}
+                  </>
+                )}
+              </button>
+              {!selectedStylistId && (
+                <p className="text-center text-[11px] text-rose-500 font-medium mt-1.5">
+                  Selecciona quién ha atendido para poder cobrar
+                </p>
               )}
-            </button>
-            {!selectedStylistId && (
-              <p className="text-center text-[11px] text-outline mt-2">
-                Elige quién ha atendido para poder cobrar
-              </p>
-            )}
+            </div>
           </div>
-        </SheetContent>
-      </Sheet>
+        </div>
+      )}
 
       {/* Importe manual */}
       <Dialog open={showManualInput} onOpenChange={setShowManualInput}>

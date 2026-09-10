@@ -683,6 +683,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         paymentDetails.cash_amount = params?.mixedCash ?? 0;
         paymentDetails.card_amount = params?.mixedCard ?? 0;
       }
+      if ((method === "cash" || method === "mixed") && params?.cashGiven && params.cashGiven > 0) {
+        paymentDetails.cash_given = params.cashGiven;
+        paymentDetails.change = params.change ?? 0;
+      }
 
       const { error } = await supabase.from("transactions").insert({
         stylist: paySheetBooking.stylist,
@@ -709,6 +713,9 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
           ? "Tarjeta"
           : `Mixto (${(params?.mixedCash ?? 0).toFixed(2)}€ ef. + ${(params?.mixedCard ?? 0).toFixed(2)}€ tarj.)`;
 
+      const changeText =
+        params?.change && params.change > 0 ? ` · Cambio: ${params.change.toFixed(2)}€` : "";
+
       const newNotes = `[✓ COMPLETADA] [💳 COBRADA] ${today}`;
       await supabase.from("bookings").update({ notes: newNotes }).eq("id", paySheetBooking.id);
 
@@ -716,7 +723,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
       toast({
         title: "Cobro registrado",
-        description: `${total.toFixed(2)}€ · ${methodLabel} · ${paySheetBooking.customer_name}`,
+        description: `${total.toFixed(2)}€ · ${methodLabel}${changeText} · ${paySheetBooking.customer_name}`,
       });
       setPaySheetBooking(null);
       setDetailBooking(null);
