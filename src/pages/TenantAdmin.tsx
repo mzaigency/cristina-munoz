@@ -142,7 +142,6 @@ const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }>
   // Negocio
   negocio: { section: "negocio", subTab: "estadisticas" },
   reports: { section: "negocio", subTab: "objetivos" },
-  informes: { section: "negocio", subTab: "informes" },
   stats: { section: "negocio", subTab: "estadisticas" },
   estadisticas: { section: "negocio", subTab: "estadisticas" },
   goals: { section: "negocio", subTab: "objetivos" },

@@ -73,7 +73,7 @@ import { cn } from "@/lib/utils";
 import { AdminBookingFlow } from "./AdminBookingFlow";
 import { QuickBookingSheet } from "./QuickBookingSheet";
 import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
-import { fetchBookingGroup, shiftBookingGroup, validateShiftedBookingGroup } from "@/lib/bookingGroup";
+import { fetchBookingGroup, fetchBookingChargeGroup, shiftBookingGroup, validateShiftedBookingGroup } from "@/lib/bookingGroup";
 import { AppointmentDetailModal } from "./AppointmentDetailModal";
 import { QuickPayModal } from "./QuickPayModal";
 
@@ -186,6 +186,8 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
 
   // Quick payment sheet
   const [paySheetBooking, setPaySheetBooking] = useState<LocalBooking | null>(null);
+  // Todas las filas de la visita (las dos partes de un compuesto incluidas)
+  const [payGroupIds, setPayGroupIds] = useState<string[]>([]);
   const [payMethod, setPayMethod] = useState<"cash" | "card">("cash");
   const [paying, setPaying] = useState(false);
   const [customTotal, setCustomTotal] = useState<string>("");
@@ -645,11 +647,33 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
     return (b.services as any[]).reduce((sum, s) => sum + (Number(s?.price) || 0) * (Number(s?.quantity) || 1), 0);
   };
 
+  /**
+   * Cobrar una parte cobra la visita entera: se juntan los servicios de todas
+   * las filas vinculadas (las dos partes de un compuesto cuentan una vez).
+   */
+  const openPaySheet = async (booking: LocalBooking) => {
+    setPaySheetBooking(booking);
+    setPayGroupIds([booking.id]);
+    try {
+      const group = await fetchBookingChargeGroup(booking.id);
+      setPayGroupIds(group.ids);
+      if (group.services.length > 0) {
+        setPaySheetBooking((prev) =>
+          prev && prev.id === booking.id ? ({ ...prev, services: group.services as any } as LocalBooking) : prev,
+        );
+      }
+    } catch (error) {
+      console.error("booking charge group", error);
+    }
+  };
+
   const handleQuickCharge = async (params?: {
     total: number;
     paymentMethod: "cash" | "card" | "mixed";
     mixedCash?: number;
     mixedCard?: number;
+    cashGiven?: number;
+    change?: number;
   }) => {
     if (!paySheetBooking) return;
     setPaying(true);
@@ -717,9 +741,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         params?.change && params.change > 0 ? ` · Cambio: ${params.change.toFixed(2)}€` : "";
 
       const newNotes = `[✓ COMPLETADA] [💳 COBRADA] ${today}`;
-      await supabase.from("bookings").update({ notes: newNotes }).eq("id", paySheetBooking.id);
+      const groupIds = payGroupIds.length > 0 ? payGroupIds : [paySheetBooking.id];
+      await supabase.from("bookings").update({ notes: newNotes }).in("id", groupIds);
 
-      setBookings(bookings.map((b) => (b.id === paySheetBooking.id ? { ...b, notes: newNotes } : b)));
+      setBookings(bookings.map((b) => (groupIds.includes(b.id) ? { ...b, notes: newNotes } : b)));
 
       toast({
         title: "Cobro registrado",
@@ -3363,7 +3388,7 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
             setPayMethod("cash");
             setCustomTotal("");
             setEditingTotal(false);
-            setPaySheetBooking(b as LocalBooking);
+            void openPaySheet(b as LocalBooking);
             setDetailBooking(null);
           }}
           onDelete={(b) => {
@@ -3380,7 +3405,10 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
       <QuickPayModal
         booking={paySheetBooking}
         paying={paying}
-        onClose={() => setPaySheetBooking(null)}
+        onClose={() => {
+          setPaySheetBooking(null);
+          setPayGroupIds([]);
+        }}
         onConfirm={handleQuickCharge}
         onNavigateToCash={onNavigateToCash}
         computeBookingTotal={computeBookingTotal}
