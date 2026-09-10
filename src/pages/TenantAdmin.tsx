@@ -105,6 +105,8 @@ const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }>
   pedidos: { section: "caja", subTab: "pedidos" },
   historial: { section: "caja", subTab: "historial" },
   cierre: { section: "caja", subTab: "cierre" },
+  informes: { section: "negocio", subTab: "informes" },
+  fiscal: { section: "negocio", subTab: "informes" },
   // Clientes
   clients: { section: "clientes", subTab: "directorio" },
   directory: { section: "clientes", subTab: "directorio" },
@@ -140,7 +142,7 @@ const LEGACY_NAV_MAP: Record<string, { section: SectionValue; subTab?: string }>
   // Negocio
   negocio: { section: "negocio", subTab: "estadisticas" },
   reports: { section: "negocio", subTab: "objetivos" },
-  informes: { section: "negocio", subTab: "estadisticas" },
+  informes: { section: "negocio", subTab: "informes" },
   stats: { section: "negocio", subTab: "estadisticas" },
   estadisticas: { section: "negocio", subTab: "estadisticas" },
   goals: { section: "negocio", subTab: "objetivos" },
@@ -156,6 +158,8 @@ const LEGACY_URL_REDIRECTS: Record<string, { section: SectionValue; subTab: stri
   "inicio/caja": { section: "caja", subTab: "cobros" },
   "inicio/espera": { section: "agenda", subTab: "espera" },
   "inicio/pedidos": { section: "caja", subTab: "pedidos" },
+  "caja/informes": { section: "negocio", subTab: "informes" },
+  "caja/fiscal": { section: "negocio", subTab: "informes" },
   "marketing/resenas": { section: "clientes", subTab: "resenas" },
   "marketing/promos": { section: "catalogo", subTab: "promos" },
   "marketing/posts": { section: "negocio", subTab: "posts" },
@@ -456,6 +460,7 @@ export default function TenantAdmin() {
             key={refreshKey}
             tenantId={tenant.id}
             subTab={activeSubTab}
+            onNavigate={(sec, sub) => goToSection(sec as SectionValue, sub)}
           />
         );
       case "clientes":

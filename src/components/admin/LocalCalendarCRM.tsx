@@ -74,6 +74,7 @@ import { AdminBookingFlow } from "./AdminBookingFlow";
 import { QuickBookingSheet } from "./QuickBookingSheet";
 import { useTenantBusinessHours } from "@/hooks/useTenantBusinessHours";
 import { fetchBookingGroup, shiftBookingGroup, validateShiftedBookingGroup } from "@/lib/bookingGroup";
+import { AppointmentDetailModal } from "./AppointmentDetailModal";
 
 interface LocalBooking {
   id: string;
@@ -3313,352 +3314,38 @@ export const LocalCalendarCRM = ({ tenantId, stylists, onNavigateToCash, onSelec
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Booking detail sheet */}
-      {detailBooking &&
-        (() => {
-          const isCompleted = detailBooking.notes?.includes("[✓ COMPLETADA]");
-          const cleanNotes = (detailBooking.notes || "").replace("[✓ COMPLETADA] ", "").trim();
-          const stylistColor = getStylistColor(detailBooking.stylist);
-          const stylistName = stylists.find((s) => s.slug === detailBooking.stylist)?.name || detailBooking.stylist;
-          const phone = (detailBooking.Telefono || "").trim();
-          const phoneClean = phone.replace(/\s|-/g, "");
-          const initial = (detailBooking.customer_name || "?").trim().charAt(0).toUpperCase();
-          return (
-            <div className="ag-detail-wrap" onClick={() => setDetailBooking(null)}>
-              <div className="ag-detail-sheet" onClick={(e) => e.stopPropagation()}>
-                <div className="ag-sheet-grip" aria-hidden />
-                <div className="ag-detail-grip" />
-                <button className="ag-detail-close" onClick={() => setDetailBooking(null)} aria-label="Cerrar">
-                  <X style={{ width: 16, height: 16 }} />
-                </button>
-
-                {/* Status pill */}
-                {isCompleted && (
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      fontSize: 11.5,
-                      fontWeight: 800,
-                      color: "oklch(0.42 0.13 150)",
-                      background: "oklch(0.95 0.04 150)",
-                      padding: "4px 10px",
-                      borderRadius: 99,
-                      marginBottom: 10,
-                      letterSpacing: ".02em",
-                    }}
-                  >
-                    <Check style={{ width: 12, height: 12 }} />
-                    COMPLETADA
-                  </div>
-                )}
-
-                {/* Time hero */}
-                <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 4 }}>
-                  <span
-                    style={{
-                      fontSize: 34,
-                      fontWeight: 800,
-                      letterSpacing: "-.04em",
-                      color: "var(--ag-ink)",
-                      lineHeight: 1,
-                    }}
-                  >
-                    {detailBooking.Hora?.slice(0, 5)}
-                  </span>
-                  {detailBooking.end_time && (
-                    <span style={{ fontSize: 17, fontWeight: 700, color: "var(--ag-muted)" }}>
-                      – {detailBooking.end_time.slice(0, 5)}
-                    </span>
-                  )}
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    marginBottom: 18,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "var(--ag-muted)",
-                  }}
-                >
-                  <span style={{ textTransform: "capitalize" }}>
-                    {format(parseISO(detailBooking.Fecha), "EEEE d 'de' MMMM", { locale: es })}
-                  </span>
-                  {detailBooking.total_duration > 0 && (
-                    <>
-                      <span style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--ag-muted)" }} />
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                        <Clock style={{ width: 12, height: 12 }} />
-                        {detailBooking.total_duration} min
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                {/* Client card */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    marginBottom: 14,
-                    padding: "12px 14px",
-                    background: "var(--ag-chip)",
-                    borderRadius: 16,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 13,
-                      background: `linear-gradient(150deg, ${stylistColor}, color-mix(in oklab, ${stylistColor}, #000 25%))`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                      color: "#fff",
-                      fontWeight: 800,
-                      fontSize: 17,
-                      letterSpacing: "-.02em",
-                    }}
-                  >
-                    {initial}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: 16,
-                        fontWeight: 800,
-                        letterSpacing: "-.01em",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {detailBooking.customer_name}
-                    </div>
-                    {phone && (
-                      <div
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: "var(--ag-muted)",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {phone}
-                      </div>
-                    )}
-                  </div>
-                  {phone && (
-                    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                      <a
-                        href={`tel:${phoneClean}`}
-                        className="ag-detail-phone-btn"
-                        title="Llamar"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Phone style={{ width: 17, height: 17 }} />
-                      </a>
-                      <a
-                        href={`https://wa.me/${phoneClean.replace(/^\+/, "")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ag-detail-phone-btn whatsapp"
-                        title="WhatsApp"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MessageCircle style={{ width: 17, height: 17 }} />
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                {/* Services */}
-                {Array.isArray(detailBooking.services) && detailBooking.services.length > 0 && (
-                  <div
-                    style={{
-                      marginBottom: 14,
-                      border: "1px solid var(--ag-line)",
-                      borderRadius: 14,
-                      overflow: "hidden",
-                    }}
-                  >
-                    {(detailBooking.services as any[]).map((s: any, i: number) => (
-                      <div
-                        key={i}
-                        style={{
-                          display: "flex",
-                          gap: 10,
-                          padding: "11px 14px",
-                          borderBottom:
-                            i < (detailBooking.services as any[]).length - 1 ? "1px solid var(--ag-line2)" : "none",
-                          alignItems: "center",
-                        }}
-                      >
-                        <span style={{ fontSize: 14, fontWeight: 700, flex: 1 }}>{s.name || s}</span>
-                        {s.duration && (
-                          <span
-                            style={{
-                              fontSize: 12,
-                              color: "var(--ag-muted)",
-                              fontWeight: 700,
-                              fontVariantNumeric: "tabular-nums",
-                            }}
-                          >
-                            {s.duration}min
-                          </span>
-                        )}
-                        {s.price && (
-                          <span
-                            style={{
-                              fontSize: 14,
-                              fontWeight: 800,
-                              color: "var(--ag-accent)",
-                              fontVariantNumeric: "tabular-nums",
-                            }}
-                          >
-                            {s.price}€
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Meta badges */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      background: `${stylistColor}1a`,
-                      color: stylistColor,
-                      borderRadius: 99,
-                      padding: "4px 11px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 5,
-                    }}
-                  >
-                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: stylistColor }} />
-                    {stylistName}
-                  </span>
-                  {detailBooking.canal && (
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        background: "oklch(0.95 0.04 230)",
-                        color: "oklch(0.38 0.13 230)",
-                        borderRadius: 99,
-                        padding: "4px 11px",
-                        textTransform: "uppercase",
-                        letterSpacing: ".04em",
-                      }}
-                    >
-                      {detailBooking.canal}
-                    </span>
-                  )}
-                  {detailBooking.skip_availability_check && (
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        background: "oklch(0.96 0.05 75)",
-                        color: "oklch(0.48 0.12 65)",
-                        borderRadius: 99,
-                        padding: "4px 11px",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 5,
-                      }}
-                    >
-                      <ShieldAlert style={{ width: 12, height: 12 }} />
-                      Sin disponibilidad
-                    </span>
-                  )}
-                </div>
-
-                {/* Notes */}
-                {cleanNotes && !cleanNotes.startsWith("Periodo bloqueado") && (
-                  <div
-                    style={{
-                      fontSize: 13,
-                      color: "var(--ag-ink2)",
-                      background: "var(--ag-chip)",
-                      borderLeft: "3px solid var(--ag-accent)",
-                      borderRadius: 10,
-                      padding: "10px 14px",
-                      marginBottom: 16,
-                      fontStyle: "italic",
-                    }}
-                  >
-                    {cleanNotes}
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="ag-detail-actions">
-                  <button
-                    className="ag-detail-action"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDetailBooking(null);
-                      setSelectedBooking(detailBooking);
-                      setIsEditDialogOpen(true);
-                    }}
-                  >
-                    <Pencil style={{ width: 15, height: 15 }} />
-                    Editar
-                  </button>
-                  <button
-                    className={`ag-detail-action ${isCompleted ? "" : "primary"}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDetailBooking(null);
-                      handleMarkCompleted(detailBooking);
-                    }}
-                  >
-                    <Check style={{ width: 15, height: 15 }} />
-                    {isCompleted ? "Desmarcar" : "Completar"}
-                  </button>
-                  {!isCompleted && (
-                    <button
-                      className="ag-detail-action"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPayMethod("cash");
-                        setCustomTotal("");
-                        setEditingTotal(false);
-                        setPaySheetBooking(detailBooking);
-                        setDetailBooking(null);
-                      }}
-                    >
-                      <Wallet style={{ width: 15, height: 15 }} />
-                      Cobrar
-                    </button>
-                  )}
-                  <button
-                    className="ag-detail-action danger"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDetailBooking(null);
-                      handleDeleteBooking(detailBooking);
-                    }}
-                  >
-                    <Trash2 style={{ width: 15, height: 15 }} />
-                    Eliminar
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
+      {/* Booking detail modal */}
+      {detailBooking && (
+        <AppointmentDetailModal
+          booking={detailBooking}
+          stylists={stylists}
+          tenantId={tenantId}
+          onClose={() => setDetailBooking(null)}
+          onEdit={(b) => {
+            setDetailBooking(null);
+            setSelectedBooking(b as LocalBooking);
+            setIsEditDialogOpen(true);
+          }}
+          onMarkCompleted={(b) => {
+            setDetailBooking(null);
+            handleMarkCompleted(b as LocalBooking);
+          }}
+          onQuickCharge={(b) => {
+            setPayMethod("cash");
+            setCustomTotal("");
+            setEditingTotal(false);
+            setPaySheetBooking(b as LocalBooking);
+            setDetailBooking(null);
+          }}
+          onDelete={(b) => {
+            setDetailBooking(null);
+            handleDeleteBooking(b as LocalBooking);
+          }}
+          onSelectClient={onSelectClient}
+          isBlockedBooking={(b) => isBlockedBooking(b as LocalBooking)}
+          getStylistColor={getStylistColor}
+        />
+      )}
 
       {/* Quick payment sheet */}
       {paySheetBooking &&

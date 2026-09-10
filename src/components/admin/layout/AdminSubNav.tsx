@@ -25,6 +25,7 @@ import {
   Target,
   Megaphone,
   Palmtree,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
@@ -66,8 +67,8 @@ export const ADMIN_SUB_NAV: Record<AdminSection, AdminSubTabDef[]> = {
   caja: [
     { value: "cobros", label: "Cobrar", icon: Wallet, requiredFeature: "cash_register" },
     { value: "historial", label: "Historial", icon: History, requiredFeature: "cash_register" },
-    { value: "pedidos", label: "Pedidos", icon: ShoppingCart, badgeKey: "orders" },
     { value: "cierre", label: "Cierre", icon: Receipt, requiredFeature: "cash_register" },
+    { value: "pedidos", label: "Pedidos", icon: ShoppingCart, badgeKey: "orders" },
   ],
   equipo: [
     { value: "personal", label: "Miembros", icon: Users },
@@ -88,6 +89,7 @@ export const ADMIN_SUB_NAV: Record<AdminSection, AdminSubTabDef[]> = {
   negocio: [
     { value: "estadisticas", label: "Estadísticas", icon: BarChart3, requiredFeature: "advanced_analytics" },
     { value: "objetivos", label: "Objetivos", icon: Target, requiredFeature: "monthly_goals" },
+    { value: "informes", label: "Informes", icon: FileText },
     { value: "posts", label: "Posts Feed", icon: ImagePlus },
     { value: "qr", label: "Tarjetas QR", icon: QrCode },
   ],

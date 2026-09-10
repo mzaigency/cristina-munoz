@@ -32,6 +32,8 @@ import {
   ExternalLink,
   LogOut,
   Plus,
+  FileText,
+  FileSpreadsheet,
 } from "lucide-react";
 
 interface AdminCommandPaletteProps {
@@ -108,6 +110,12 @@ export function AdminCommandPalette({
           </CommandItem>
           <CommandItem onSelect={() => go("/inicio/caja")}>
             <Wallet className="mr-2 h-4 w-4" /> Caja
+          </CommandItem>
+          <CommandItem onSelect={() => go("/negocio/informes")}>
+            <FileText className="mr-2 h-4 w-4" /> Informes y Fiscalidad
+          </CommandItem>
+          <CommandItem onSelect={() => go("/negocio/informes")}>
+            <FileSpreadsheet className="mr-2 h-4 w-4" /> Exportar Caja a Excel (Gestoría)
           </CommandItem>
           <CommandItem onSelect={() => go("/inicio/espera")}>
             <Hourglass className="mr-2 h-4 w-4" /> Lista de espera

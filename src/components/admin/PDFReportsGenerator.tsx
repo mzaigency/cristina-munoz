@@ -15,19 +15,845 @@ import {
 } from "date-fns";
 import { es } from "date-fns/locale";
 import { FileText, Loader2, Euro, Users, TrendingUp, Receipt, Sparkles } from "lucide-react";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface PDFReportsGeneratorProps {
   tenantId: string;
   tenantName?: string;
 }
 
-type ReportType = "monthly" | "productivity" | "services" | "fiscal";
-type RangeMode = "month" | "quarter" | "prev_quarter" | "custom";
+export type ReportType = "monthly" | "productivity" | "services" | "fiscal";
+export type RangeMode = "month" | "quarter" | "prev_quarter" | "custom";
 
-const BRAND_PRIMARY = "#22408C";  // = --glow-brand
-const BRAND_ACCENT = "#98329A";  // = --glow-accent
+const BRAND_PRIMARY = "#22408C"; // Glow Navy Brand (#22408C)
+const BRAND_ACCENT = "#3B82F6";  // Clean Cobalt Accent
+const BRAND_DARK = "#131520";    // Glow Ink Dark (#131520)
 
 const fmtEUR = (n: number) => new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n || 0);
+
+// ============================================================
+// DATA FETCHING
+// ============================================================
+
+export async function fetchReportData(
+  tenantId: string,
+  tenantName: string,
+  start: Date,
+  end: Date,
+  label: string
+) {
+  const startISO = start.toISOString();
+  const endISO = end.toISOString();
+
+  // Comparativa: período inmediatamente anterior, misma duración
+  const durMs = end.getTime() - start.getTime();
+  const prevEnd = new Date(start.getTime() - 1);
+  const prevStart = new Date(start.getTime() - durMs - 1);
+
+  const [{ data: tx }, { data: prevTx }, { data: bookings }] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select("id, total, payment_method, tip_amount, discount, stylist, stylist_id, services, customer_name, created_at")
+      .eq("tenant_id", tenantId)
+      .eq("voided", false)
+      .gte("created_at", startISO)
+      .lte("created_at", endISO)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("transactions")
+      .select("total")
+      .eq("tenant_id", tenantId)
+      .eq("voided", false)
+      .gte("created_at", prevStart.toISOString())
+      .lte("created_at", prevEnd.toISOString()),
+    supabase
+      .from("bookings")
+      .select("id, status, canal, created_at")
+      .eq("tenant_id", tenantId)
+      .gte("created_at", startISO)
+      .lte("created_at", endISO),
+  ]);
+
+  const total = (tx || []).reduce((s, t: any) => s + Number(t.total || 0), 0);
+  const txCount = tx?.length || 0;
+  const avg = txCount > 0 ? total / txCount : 0;
+  const cash = (tx || [])
+    .filter((t: any) => t.payment_method === "cash")
+    .reduce((s, t: any) => s + Number(t.total || 0), 0);
+  const card = (tx || [])
+    .filter((t: any) => t.payment_method === "card")
+    .reduce((s, t: any) => s + Number(t.total || 0), 0);
+  const mixed = (tx || [])
+    .filter((t: any) => t.payment_method === "mixed")
+    .reduce((s, t: any) => s + Number(t.total || 0), 0);
+  const tips = (tx || []).reduce((s, t: any) => s + Number(t.tip_amount || 0), 0);
+  const discounts = (tx || []).reduce((s, t: any) => s + Number(t.discount || 0), 0);
+  const prevTotal = (prevTx || []).reduce((s, t: any) => s + Number(t.total || 0), 0);
+  const growth = prevTotal > 0 ? ((total - prevTotal) / prevTotal) * 100 : 0;
+
+  // Por estilista
+  const byStylist: Record<string, { name: string; sales: number; count: number; tips: number; services: number }> =
+    {};
+  (tx || []).forEach((t: any) => {
+    const key = t.stylist || "Sin asignar";
+    if (!byStylist[key]) byStylist[key] = { name: key, sales: 0, count: 0, tips: 0, services: 0 };
+    byStylist[key].sales += Number(t.total || 0);
+    byStylist[key].count += 1;
+    byStylist[key].tips += Number(t.tip_amount || 0);
+    const svcs = Array.isArray(t.services) ? t.services : [];
+    byStylist[key].services += svcs.reduce((c: number, s: any) => c + (s.quantity || 1), 0);
+  });
+  const stylists = Object.values(byStylist).sort((a, b) => b.sales - a.sales);
+
+  // Por servicio
+  const byService: Record<string, { name: string; count: number; revenue: number }> = {};
+  (tx || []).forEach((t: any) => {
+    const svcs = Array.isArray(t.services) ? t.services : [];
+    svcs.forEach((s: any) => {
+      const name = s.name || "Sin nombre";
+      if (!byService[name]) byService[name] = { name, count: 0, revenue: 0 };
+      byService[name].count += s.quantity || 1;
+      byService[name].revenue += Number(s.total || (s.price || 0) * (s.quantity || 1));
+    });
+  });
+  const services = Object.values(byService).sort((a, b) => b.revenue - a.revenue);
+
+  // Evolución diaria (para sparkline + fiscal)
+  const days = eachDayOfInterval({ start, end });
+  const dailyMap: Record<
+    string,
+    { date: Date; total: number; cash: number; card: number; count: number; tips: number }
+  > = {};
+  days.forEach((d) => {
+    const key = format(d, "yyyy-MM-dd");
+    dailyMap[key] = { date: d, total: 0, cash: 0, card: 0, count: 0, tips: 0 };
+  });
+  (tx || []).forEach((t: any) => {
+    const key = format(new Date(t.created_at), "yyyy-MM-dd");
+    if (!dailyMap[key]) return;
+    dailyMap[key].total += Number(t.total || 0);
+    dailyMap[key].count += 1;
+    dailyMap[key].tips += Number(t.tip_amount || 0);
+    if (t.payment_method === "cash") dailyMap[key].cash += Number(t.total || 0);
+    if (t.payment_method === "card") dailyMap[key].card += Number(t.total || 0);
+  });
+  const daily = Object.values(dailyMap);
+
+  // Reservas (para resumen ejecutivo)
+  const bookingsTotal = bookings?.length || 0;
+  const bookingsCancelled = (bookings || []).filter((b: any) => b.status === "cancelled").length;
+  const bookingsCrm = (bookings || []).filter((b: any) => b.canal === "crm").length;
+  const bookingsWeb = bookingsTotal - bookingsCrm;
+
+  return {
+    rawTransactions: tx || [],
+    tenantName,
+    rangeLabel: label,
+    generatedAt: format(new Date(), "d MMM yyyy 'a las' HH:mm", { locale: es }),
+    total,
+    txCount,
+    avg,
+    cash,
+    card,
+    mixed,
+    tips,
+    discounts,
+    prevTotal,
+    growth,
+    stylists,
+    services,
+    daily,
+    bookingsTotal,
+    bookingsCancelled,
+    bookingsCrm,
+    bookingsWeb,
+    iva: total - total / 1.21, // IVA 21% estimado
+    netSinIva: total / 1.21,
+  };
+}
+
+// ============================================================
+// NATIVE VECTOR PDF GENERATION (selectable text, not images)
+// ============================================================
+
+function hexToRGB(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  return [parseInt(h.substring(0, 2), 16), parseInt(h.substring(2, 4), 16), parseInt(h.substring(4, 6), 16)];
+}
+
+const C = {
+  primary: hexToRGB(BRAND_PRIMARY),
+  accent: hexToRGB(BRAND_ACCENT),
+  dark: hexToRGB(BRAND_DARK),
+  slate700: hexToRGB("#3A3D4A"),
+  slate500: hexToRGB("#676B7E"),
+  slate400: hexToRGB("#9DA1B2"),
+  slate200: hexToRGB("#E4E6EF"),
+  slate100: hexToRGB("#F2F3F8"),
+  slate50: hexToRGB("#F6F7FB"),
+  white: [255, 255, 255] as [number, number, number],
+  green700: hexToRGB("#15803D"),
+  green200: hexToRGB("#BBF7D0"),
+  green100: hexToRGB("#DCFCE7"),
+  red700: hexToRGB("#B91C1C"),
+  red100: hexToRGB("#FEE2E2"),
+  darkCard1: hexToRGB("#131520"),
+};
+
+const PW = 210; // A4 width mm
+const PH = 297; // A4 height mm
+const ML = 18;  // margin left
+const MR = 18;  // margin right
+const MT = 18;  // margin top
+const MB = 22;  // margin bottom
+const CW = PW - ML - MR; // content width
+
+interface PDFCtx {
+  doc: jsPDF;
+  y: number;
+}
+
+function ensureSpace(ctx: PDFCtx, needed: number): void {
+  if (ctx.y + needed > PH - MB) {
+    ctx.doc.addPage();
+    ctx.y = MT;
+  }
+}
+
+function drawRoundedRect(
+  doc: jsPDF,
+  x: number, y: number, w: number, h: number, r: number,
+  fillColor?: [number, number, number],
+  strokeColor?: [number, number, number],
+  lineWidth?: number
+): void {
+  if (fillColor) doc.setFillColor(...fillColor);
+  if (strokeColor) {
+    doc.setDrawColor(...strokeColor);
+    doc.setLineWidth(lineWidth || 0.3);
+  }
+  const mode = fillColor && strokeColor ? "FD" : fillColor ? "F" : "S";
+  doc.roundedRect(x, y, w, h, Math.min(r, h / 2), Math.min(r, h / 2), mode);
+}
+
+function drawDivider(doc: jsPDF, x: number, y: number, w: number): void {
+  // Hairline subtle rule
+  doc.setDrawColor(...C.slate200);
+  doc.setLineWidth(0.3);
+  doc.line(x, y, x + w, y);
+
+  // Elegant brand indicator on left
+  doc.setFillColor(...C.primary);
+  doc.rect(x, y - 0.35, 24, 0.7, "F");
+}
+
+function drawPill(
+  doc: jsPDF, text: string, x: number, y: number,
+  bgColor: [number, number, number], textColor: [number, number, number],
+  borderColor?: [number, number, number], fontSize?: number
+): { w: number; h: number } {
+  const fs = fontSize || 6.5;
+  doc.setFontSize(fs);
+  doc.setFont("helvetica", "bold");
+  const tw = doc.getTextWidth(text);
+  const padX = 3;
+  const padY = 1.5;
+  const pw = tw + padX * 2;
+  const ph = fs * 0.4 + padY * 2;
+  drawRoundedRect(doc, x, y, pw, ph, ph / 2, bgColor, borderColor || bgColor, 0.2);
+  doc.setTextColor(...textColor);
+  doc.text(text, x + padX, y + ph / 2 + fs * 0.12, { baseline: "middle" });
+  return { w: pw, h: ph };
+}
+
+// ── Executive Header ──
+function drawHeader(ctx: PDFCtx, d: any, reportTitle: string): void {
+  const { doc } = ctx;
+  const headerStartY = MT + 2;
+
+  // ── Left Column: Salon brand & document title ──
+  ctx.y = headerStartY;
+
+  // Salon title: Luxury Editorial Serif
+  doc.setFont("times", "bold");
+  doc.setFontSize(22);
+  doc.setTextColor(...C.dark);
+  doc.text(d.tenantName || "Salón", ML, ctx.y + 7);
+
+  // Subtitle + Period Pill
+  ctx.y += 12;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...C.slate500);
+  doc.text(reportTitle, ML, ctx.y + 3);
+  const stW = doc.getTextWidth(reportTitle);
+  drawPill(doc, d.rangeLabel, ML + stW + 3, ctx.y, C.slate100, C.dark, C.slate200, 6.5);
+
+  // ── Right Column: Official Meta Box ──
+  const metaW = 54;
+  const metaH = 22;
+  const metaX = ML + CW - metaW;
+  const metaY = headerStartY;
+
+  drawRoundedRect(doc, metaX, metaY, metaW, metaH, 2, C.slate50, C.slate200, 0.25);
+
+  doc.setFontSize(5.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...C.slate500);
+  doc.text("EMISIÓN:", metaX + 3.5, metaY + 4.5);
+
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...C.dark);
+  doc.text(d.generatedAt || "", metaX + 3.5, metaY + 8.8);
+
+  doc.setFontSize(6.5);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...C.slate500);
+  doc.text("Moneda: EUR (€)", metaX + 3.5, metaY + 13);
+
+  // Verification badge: clean green pill badge safely inside the box
+  drawPill(doc, "Verificado", metaX + 3.5, metaY + 15.5, C.green100, C.green700, C.green200, 5.8);
+
+  // ── Spacing & Divider ──
+  // Guarantee divider is comfortably below both left column and right meta box
+  ctx.y = Math.max(ctx.y + 7, metaY + metaH + 5);
+  drawDivider(doc, ML, ctx.y, CW);
+  ctx.y += 6;
+}
+
+// ── Section Title ──
+function drawSectionTitle(ctx: PDFCtx, title: string): void {
+  ensureSpace(ctx, 12);
+  const { doc } = ctx;
+
+  // Solid brand accent bar (left)
+  doc.setFillColor(...C.primary);
+  doc.roundedRect(ML, ctx.y + 0.5, 1.5, 4, 0.75, 0.75, "F");
+
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...C.dark);
+  doc.text(title.toUpperCase(), ML + 4.5, ctx.y + 3.5);
+  ctx.y += 7.5;
+}
+
+// ── KPI Card ──
+function drawKPICard(
+  ctx: PDFCtx, x: number, w: number,
+  label: string, value: string, sub?: string,
+  highlight?: boolean, growthVal?: number
+): number {
+  const { doc } = ctx;
+  const hasGrowth = growthVal && isFinite(growthVal) && growthVal !== 0;
+  const cardH = sub ? (hasGrowth ? 24 : 20) : (hasGrowth ? 22 : 17);
+  ensureSpace(ctx, cardH + 2);
+
+  if (highlight) {
+    drawRoundedRect(doc, x, ctx.y, w, cardH, 2, C.dark);
+
+    doc.setFontSize(6);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...C.slate400);
+    doc.text(label.toUpperCase(), x + 4, ctx.y + 5);
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...C.white);
+    doc.text(value, x + 4, ctx.y + 12);
+
+    if (sub) {
+      doc.setFontSize(6);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...C.slate400);
+      doc.text(sub, x + 4, ctx.y + 16.5);
+    }
+  } else {
+    drawRoundedRect(doc, x, ctx.y, w, cardH, 2, C.white, C.slate200, 0.25);
+
+    doc.setFontSize(6);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...C.slate500);
+    doc.text(label.toUpperCase(), x + 4, ctx.y + 5);
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...C.dark);
+    doc.text(value, x + 4, ctx.y + 12);
+
+    if (sub) {
+      doc.setFontSize(6);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...C.slate500);
+      doc.text(sub, x + 4, ctx.y + 16.5);
+    }
+  }
+
+  if (hasGrowth) {
+    const up = growthVal! > 0;
+    const badgeText = `${up ? "+" : "-"}${Math.abs(growthVal!).toFixed(1)}%`;
+    drawPill(doc, badgeText, x + 4, ctx.y + (sub ? 18.5 : 14.5), up ? C.green100 : C.red100, up ? C.green700 : C.red700, undefined, 6);
+  }
+
+  return cardH;
+}
+
+// ── KPI Grid ──
+function drawKPIGrid(
+  ctx: PDFCtx,
+  cards: Array<{ label: string; value: string; sub?: string; highlight?: boolean; growth?: number }>
+): void {
+  const cols = cards.length;
+  const gap = 3;
+  const cardW = (CW - (cols - 1) * gap) / cols;
+  let maxH = 0;
+  const savedY = ctx.y;
+  cards.forEach((c, i) => {
+    ctx.y = savedY;
+    const h = drawKPICard(ctx, ML + i * (cardW + gap), cardW, c.label, c.value, c.sub, c.highlight, c.growth);
+    maxH = Math.max(maxH, h);
+  });
+  ctx.y = savedY + maxH + 4;
+}
+
+// ── Bar Chart Row ──
+function drawBarRow(ctx: PDFCtx, label: string, value: string, pct: number): void {
+  ensureSpace(ctx, 7);
+  const { doc } = ctx;
+
+  const labelW = 40;
+  const valueW = 34;
+  const barX = ML + labelW;
+  const barW = CW - labelW - valueW - 2;
+
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...C.slate700);
+  const truncLabel = label.length > 22 ? label.substring(0, 20) + "…" : label;
+  doc.text(truncLabel, ML, ctx.y + 3.5);
+
+  // Track
+  drawRoundedRect(doc, barX, ctx.y + 1.5, barW, 2.5, 1.25, C.slate100);
+
+  // Fill
+  const fillW = Math.max(barW * (pct / 100), 0.5);
+  doc.setFillColor(...C.primary);
+  doc.roundedRect(barX, ctx.y + 1.5, fillW, 2.5, 1.25, 1.25, "F");
+
+  // Value
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...C.dark);
+  doc.text(value, ML + CW, ctx.y + 3.5, { align: "right" });
+
+  ctx.y += 7;
+}
+
+// ── Table (via jspdf-autotable) ──
+function drawTable(
+  ctx: PDFCtx,
+  headers: string[],
+  rows: string[][],
+  numCols?: number[],
+  totalRow?: string[] | null
+): void {
+  const { doc } = ctx;
+  ensureSpace(ctx, 15);
+
+  const numSet = new Set(numCols || []);
+  const bodyData = [...rows];
+  if (totalRow) bodyData.push(totalRow);
+  const totalRowIdx = totalRow ? bodyData.length - 1 : -1;
+
+  autoTable(doc, {
+    startY: ctx.y,
+    margin: { left: ML, right: MR },
+    head: [headers],
+    body: bodyData,
+    theme: "plain",
+    styles: {
+      fontSize: 7.5,
+      cellPadding: { top: 2.2, bottom: 2.2, left: 2.5, right: 2.5 },
+      textColor: C.dark,
+      lineColor: C.slate100,
+      lineWidth: 0.2,
+      font: "helvetica",
+    },
+    headStyles: {
+      fillColor: C.slate50,
+      textColor: C.slate700,
+      fontSize: 6.5,
+      fontStyle: "bold",
+      cellPadding: { top: 2.5, bottom: 2.5, left: 2.5, right: 2.5 },
+    },
+    columnStyles: Object.fromEntries(
+      headers.map((_, i) => [
+        i,
+        numSet.has(i) ? { halign: "right" as const } : {},
+      ])
+    ),
+    alternateRowStyles: {
+      fillColor: [250, 252, 254] as [number, number, number],
+    },
+    didParseCell: (data: any) => {
+      if (data.section === "body" && data.row.index === totalRowIdx) {
+        data.cell.styles.fillColor = C.slate100;
+        data.cell.styles.fontStyle = "bold";
+        data.cell.styles.textColor = C.dark;
+      }
+      if (data.section === "body" && data.column.index === 0 && data.row.index !== totalRowIdx) {
+        data.cell.styles.fontStyle = "bold";
+      }
+    },
+  });
+
+  ctx.y = (doc as any).lastAutoTable?.finalY + 4 || ctx.y + 20;
+}
+
+// ── Sparkline (vector line chart) ──
+function drawSparkline(ctx: PDFCtx, daily: any[]): void {
+  if (!daily.length) return;
+  ensureSpace(ctx, 30);
+  const { doc } = ctx;
+
+  const chartX = ML + 4;
+  const chartW = CW - 8;
+  const chartH = 18;
+  const chartY = ctx.y + 2;
+
+  drawRoundedRect(doc, ML, ctx.y, CW, chartH + 14, 2, C.slate50, C.slate200, 0.2);
+
+  const max = Math.max(...daily.map((d: any) => d.total), 1);
+  const stepX = chartW / Math.max(daily.length - 1, 1);
+
+  doc.setDrawColor(...C.primary);
+  doc.setLineWidth(0.5);
+  for (let i = 0; i < daily.length - 1; i++) {
+    const x1 = chartX + i * stepX;
+    const y1 = chartY + chartH - (daily[i].total / max) * (chartH - 2);
+    const x2 = chartX + (i + 1) * stepX;
+    const y2 = chartY + chartH - (daily[i + 1].total / max) * (chartH - 2);
+    doc.line(x1, y1, x2, y2);
+  }
+
+  // Peak dot
+  const maxIdx = daily.reduce((best: number, d: any, i: number) => (d.total > daily[best].total ? i : best), 0);
+  const peakX = chartX + maxIdx * stepX;
+  const peakY = chartY + chartH - (daily[maxIdx].total / max) * (chartH - 2);
+  doc.setFillColor(...C.primary);
+  doc.circle(peakX, peakY, 1, "F");
+
+  // Labels below
+  const labelY = chartY + chartH + 5;
+  doc.setFontSize(6.5);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...C.slate500);
+  doc.text(format(daily[0].date, "d MMM", { locale: es }), chartX, labelY);
+
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...C.primary);
+  doc.text(
+    `Mejor día: ${format(daily[maxIdx].date, "d MMM", { locale: es })} · ${fmtEUR(daily[maxIdx].total)}`,
+    chartX + chartW / 2, labelY, { align: "center" }
+  );
+
+  doc.setTextColor(...C.dark);
+  doc.text(
+    `Total: ${fmtEUR(daily.reduce((s: number, d: any) => s + d.total, 0))}`,
+    chartX + chartW, labelY, { align: "right" }
+  );
+
+  ctx.y += chartH + 18;
+}
+
+// ── Footer (all pages) ──
+function drawFooter(ctx: PDFCtx, d: any): void {
+  const { doc } = ctx;
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(...C.slate200);
+    doc.setLineWidth(0.3);
+    doc.line(ML, PH - MB + 4, ML + CW, PH - MB + 4);
+
+    doc.setFontSize(6);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...C.slate400);
+    doc.text(
+      `Documento oficial emitido por GlowApp para ${d.tenantName || "Salón"} · Uso contable y fiscal.`,
+      ML, PH - MB + 8
+    );
+    doc.text(
+      `glowapp.app · Confidencial · Pág. ${p}/${totalPages}`,
+      ML + CW, PH - MB + 8, { align: "right" }
+    );
+  }
+}
+
+// ============================================================
+// REPORT BODY BUILDERS
+// ============================================================
+
+function buildMonthlyPDF(ctx: PDFCtx, d: any): void {
+  drawSectionTitle(ctx, "Indicadores clave");
+  drawKPIGrid(ctx, [
+    { label: "Ingresos", value: fmtEUR(d.total), highlight: true, growth: d.growth },
+    { label: "Transacciones", value: String(d.txCount), sub: `vs. ${fmtEUR(d.prevTotal)} anterior` },
+    { label: "Ticket medio", value: fmtEUR(d.avg) },
+    { label: "Propinas", value: fmtEUR(d.tips), sub: `Descuentos: ${fmtEUR(d.discounts)}` },
+  ]);
+
+  drawSectionTitle(ctx, "Evolución diaria");
+  drawSparkline(ctx, d.daily);
+
+  drawSectionTitle(ctx, "Métodos de pago");
+  const pmT = d.total || 1;
+  if (d.cash > 0) drawBarRow(ctx, "Efectivo", `${fmtEUR(d.cash)} (${((d.cash / pmT) * 100).toFixed(0)}%)`, (d.cash / pmT) * 100);
+  if (d.card > 0) drawBarRow(ctx, "Tarjeta", `${fmtEUR(d.card)} (${((d.card / pmT) * 100).toFixed(0)}%)`, (d.card / pmT) * 100);
+  if (d.mixed > 0) drawBarRow(ctx, "Mixto", `${fmtEUR(d.mixed)} (${((d.mixed / pmT) * 100).toFixed(0)}%)`, (d.mixed / pmT) * 100);
+  if (d.total <= 0) {
+    ctx.doc.setFontSize(7.5);
+    ctx.doc.setFont("helvetica", "italic");
+    ctx.doc.setTextColor(...C.slate400);
+    ctx.doc.text("Sin pagos registrados", ML + CW / 2, ctx.y + 3, { align: "center" });
+    ctx.y += 8;
+  }
+
+  drawSectionTitle(ctx, "Reservas");
+  drawKPIGrid(ctx, [
+    { label: "Total", value: String(d.bookingsTotal), sub: `${d.bookingsCancelled} canceladas` },
+    { label: "Vía Admin", value: String(d.bookingsCrm) },
+    { label: "Vía Web", value: String(d.bookingsWeb) },
+  ]);
+
+  if (d.stylists.length > 0) {
+    drawSectionTitle(ctx, "Top estilistas");
+    drawTable(
+      ctx,
+      ["Profesional", "Servicios", "Ventas", "Ticket medio"],
+      d.stylists.slice(0, 8).map((s: any) => [
+        s.name,
+        String(s.services),
+        fmtEUR(s.sales),
+        fmtEUR(s.count > 0 ? s.sales / s.count : 0),
+      ]),
+      [1, 2, 3]
+    );
+  }
+
+  if (d.services.length > 0) {
+    drawSectionTitle(ctx, "Top servicios");
+    const svSlice = d.services.slice(0, 8);
+    const maxRev = Math.max(...svSlice.map((s: any) => s.revenue), 1);
+    svSlice.forEach((s: any) => {
+      drawBarRow(ctx, s.name, `${fmtEUR(s.revenue)} · ${s.count}u`, (s.revenue / maxRev) * 100);
+    });
+  }
+}
+
+function buildProductivityPDF(ctx: PDFCtx, d: any): void {
+  drawSectionTitle(ctx, "Resumen del equipo");
+  drawKPIGrid(ctx, [
+    { label: "Ingresos totales", value: fmtEUR(d.total), highlight: true },
+    { label: "Servicios realizados", value: String(d.stylists.reduce((s: number, x: any) => s + x.services, 0)) },
+    { label: "Propinas equipo", value: fmtEUR(d.tips) },
+  ]);
+
+  drawSectionTitle(ctx, "Detalle por profesional");
+  if (d.stylists.length === 0) {
+    ctx.doc.setFontSize(7.5);
+    ctx.doc.setFont("helvetica", "italic");
+    ctx.doc.setTextColor(...C.slate400);
+    ctx.doc.text("Sin datos en el período", ML + CW / 2, ctx.y + 3, { align: "center" });
+    ctx.y += 8;
+  } else {
+    drawTable(
+      ctx,
+      ["Profesional", "Transacciones", "Servicios", "Propinas", "Ventas", "Ticket medio"],
+      d.stylists.map((s: any) => [
+        s.name, String(s.count), String(s.services),
+        fmtEUR(s.tips), fmtEUR(s.sales),
+        fmtEUR(s.count > 0 ? s.sales / s.count : 0),
+      ]),
+      [1, 2, 3, 4, 5],
+      [
+        "TOTAL EQUIPO",
+        String(d.stylists.reduce((s: number, x: any) => s + x.count, 0)),
+        String(d.stylists.reduce((s: number, x: any) => s + x.services, 0)),
+        fmtEUR(d.tips), fmtEUR(d.total),
+        fmtEUR(d.txCount > 0 ? d.total / d.txCount : 0),
+      ]
+    );
+  }
+
+  if (d.stylists.length > 0) {
+    drawSectionTitle(ctx, "Ranking visual");
+    const maxSales = Math.max(...d.stylists.map((s: any) => s.sales), 1);
+    d.stylists.forEach((s: any) => {
+      drawBarRow(ctx, s.name, fmtEUR(s.sales), (s.sales / maxSales) * 100);
+    });
+  }
+}
+
+function buildServicesPDF(ctx: PDFCtx, d: any): void {
+  drawSectionTitle(ctx, "Resumen catálogo");
+  drawKPIGrid(ctx, [
+    { label: "Ingresos por servicios", value: fmtEUR(d.services.reduce((s: number, x: any) => s + x.revenue, 0)), highlight: true },
+    { label: "Servicios distintos", value: String(d.services.length) },
+    { label: "Cantidad total", value: String(d.services.reduce((s: number, x: any) => s + x.count, 0)) },
+  ]);
+
+  const top = d.services.slice(0, 15);
+  drawSectionTitle(ctx, "Top 15 servicios");
+  if (top.length === 0) {
+    ctx.doc.setFontSize(7.5);
+    ctx.doc.setFont("helvetica", "italic");
+    ctx.doc.setTextColor(...C.slate400);
+    ctx.doc.text("Sin servicios en el período", ML + CW / 2, ctx.y + 3, { align: "center" });
+    ctx.y += 8;
+  } else {
+    drawTable(
+      ctx,
+      ["#", "Servicio", "Cantidad", "Ingresos", "Precio medio"],
+      top.map((s: any, i: number) => [
+        String(i + 1), s.name, String(s.count),
+        fmtEUR(s.revenue),
+        fmtEUR(s.count > 0 ? s.revenue / s.count : 0),
+      ]),
+      [0, 2, 3, 4],
+      [
+        "",
+        `TOTAL TOP ${top.length} SERVICIOS`,
+        String(top.reduce((s: number, x: any) => s + x.count, 0)),
+        fmtEUR(top.reduce((s: number, x: any) => s + x.revenue, 0)),
+        fmtEUR(
+          top.reduce((s: number, x: any) => s + x.count, 0) > 0
+            ? top.reduce((s: number, x: any) => s + x.revenue, 0) / top.reduce((s: number, x: any) => s + x.count, 0)
+            : 0
+        ),
+      ]
+    );
+  }
+
+  if (d.services.length > 0) {
+    drawSectionTitle(ctx, "Distribución de ingresos");
+    const topBars = d.services.slice(0, 10);
+    const maxRev = Math.max(...topBars.map((s: any) => s.revenue), 1);
+    topBars.forEach((s: any) => {
+      drawBarRow(ctx, s.name, `${fmtEUR(s.revenue)} · ${s.count}u`, (s.revenue / maxRev) * 100);
+    });
+  }
+}
+
+function buildFiscalPDF(ctx: PDFCtx, d: any): void {
+  drawSectionTitle(ctx, "Totales del período");
+  drawKPIGrid(ctx, [
+    { label: "Total facturado", value: fmtEUR(d.total), sub: `${d.txCount} transacciones`, highlight: true },
+    { label: "Base imponible (sin IVA)", value: fmtEUR(d.netSinIva), sub: "21% IVA estimado" },
+    { label: "IVA estimado", value: fmtEUR(d.iva) },
+  ]);
+
+  drawSectionTitle(ctx, "Reparto por método de pago");
+  drawKPIGrid(ctx, [
+    { label: "Efectivo", value: fmtEUR(d.cash) },
+    { label: "Tarjeta", value: fmtEUR(d.card) },
+    { label: "Mixto / Otros", value: fmtEUR(d.mixed) },
+  ]);
+
+  ctx.doc.setFontSize(7);
+  ctx.doc.setFont("helvetica", "normal");
+  ctx.doc.setTextColor(...C.slate500);
+  ctx.doc.text(`Propinas: ${fmtEUR(d.tips)} · Descuentos aplicados: ${fmtEUR(d.discounts)}`, ML + 2, ctx.y);
+  ctx.y += 6;
+
+  drawSectionTitle(ctx, "Desglose día a día");
+  const activeDays = d.daily.filter((x: any) => x.count > 0);
+  if (activeDays.length === 0) {
+    ctx.doc.setFontSize(7.5);
+    ctx.doc.setFont("helvetica", "italic");
+    ctx.doc.setTextColor(...C.slate400);
+    ctx.doc.text("Sin transacciones en el período", ML + CW / 2, ctx.y + 3, { align: "center" });
+    ctx.y += 8;
+  } else {
+    drawTable(
+      ctx,
+      ["Fecha", "Tickets", "Efectivo", "Tarjeta", "Propinas", "Total"],
+      activeDays.map((x: any) => [
+        format(x.date, "EEE d MMM yyyy", { locale: es }),
+        String(x.count), fmtEUR(x.cash), fmtEUR(x.card),
+        fmtEUR(x.tips), fmtEUR(x.total),
+      ]),
+      [1, 2, 3, 4, 5],
+      ["TOTAL", String(d.txCount), fmtEUR(d.cash), fmtEUR(d.card), fmtEUR(d.tips), fmtEUR(d.total)]
+    );
+  }
+
+  ensureSpace(ctx, 8);
+  ctx.doc.setFontSize(6.5);
+  ctx.doc.setFont("helvetica", "italic");
+  ctx.doc.setTextColor(...C.slate400);
+  ctx.doc.text(
+    "Nota: IVA calculado al 21% sobre el total facturado. Consulta con tu asesor el tipo aplicable a cada servicio.",
+    ML + 2, ctx.y
+  );
+  ctx.y += 6;
+}
+
+// ============================================================
+// MAIN DOWNLOAD FUNCTION
+// ============================================================
+
+export async function downloadReportPDF(type: ReportType, d: any): Promise<void> {
+  const titleMap: Record<ReportType, string> = {
+    monthly: "Resumen Ejecutivo de Negocio",
+    productivity: "Productividad y Rendimiento del Equipo",
+    services: "Catálogo y Rendimiento de Servicios",
+    fiscal: "Informe Fiscal Oficial para Asesoría / IVA",
+  };
+  const fileNameMap: Record<ReportType, string> = {
+    monthly: "Resumen_Ejecutivo",
+    productivity: "Productividad_Equipo",
+    services: "Rendimiento_Servicios",
+    fiscal: "Informe_Fiscal",
+  };
+
+  const safeTenant = (d.tenantName || "Salon").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const safeLabel = (d.rangeLabel || "Periodo").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const fileName = `${fileNameMap[type] || "Informe"}_${safeTenant}_${safeLabel}.pdf`;
+
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+  const ctx: PDFCtx = { doc, y: MT };
+
+  drawHeader(ctx, d, titleMap[type]);
+
+  if (type === "monthly") buildMonthlyPDF(ctx, d);
+  else if (type === "productivity") buildProductivityPDF(ctx, d);
+  else if (type === "services") buildServicesPDF(ctx, d);
+  else if (type === "fiscal") buildFiscalPDF(ctx, d);
+
+  drawFooter(ctx, d);
+  doc.save(fileName);
+}
+
+// Legacy: keep for backward compatibility if needed elsewhere
+export function openPrintReport(type: ReportType, data: any) {
+  // Now just downloads PDF directly
+  downloadReportPDF(type, data);
+}
+
+// Also export getReportParts and buildHTML for backward compat (CashReportsHub uses downloadReportPDF directly)
+export function getReportParts(type: ReportType, d: any) {
+  return { title: type, styles: "", header: "", body: "", footer: "" };
+}
+
+export function buildHTML(type: ReportType, d: any): string {
+  return "";
+}
+
+// ============================================================
+// REACT UI COMPONENT
+// ============================================================
 
 export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFReportsGeneratorProps) {
   const [generating, setGenerating] = useState<ReportType | null>(null);
@@ -78,143 +904,9 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
     setGenerating(type);
     try {
       const { start, end, label } = resolveRange();
-      const startISO = start.toISOString();
-      const endISO = end.toISOString();
-
-      // Comparativa: período inmediatamente anterior, misma duración
-      const durMs = end.getTime() - start.getTime();
-      const prevEnd = new Date(start.getTime() - 1);
-      const prevStart = new Date(start.getTime() - durMs - 1);
-
-      const [{ data: tx }, { data: prevTx }, { data: bookings }] = await Promise.all([
-        supabase
-          .from("transactions")
-          .select("total, payment_method, tip_amount, discount, stylist, stylist_id, services, created_at")
-          .eq("tenant_id", tenantId)
-          .eq("voided", false)
-          .gte("created_at", startISO)
-          .lte("created_at", endISO)
-          .order("created_at", { ascending: true }),
-        supabase
-          .from("transactions")
-          .select("total")
-          .eq("tenant_id", tenantId)
-          .eq("voided", false)
-          .gte("created_at", prevStart.toISOString())
-          .lte("created_at", prevEnd.toISOString()),
-        supabase
-          .from("bookings")
-          .select("id, status, canal, created_at")
-          .eq("tenant_id", tenantId)
-          .gte("created_at", startISO)
-          .lte("created_at", endISO),
-      ]);
-
-      const total = (tx || []).reduce((s, t: any) => s + Number(t.total || 0), 0);
-      const txCount = tx?.length || 0;
-      const avg = txCount > 0 ? total / txCount : 0;
-      const cash = (tx || [])
-        .filter((t: any) => t.payment_method === "cash")
-        .reduce((s, t: any) => s + Number(t.total || 0), 0);
-      const card = (tx || [])
-        .filter((t: any) => t.payment_method === "card")
-        .reduce((s, t: any) => s + Number(t.total || 0), 0);
-      const mixed = (tx || [])
-        .filter((t: any) => t.payment_method === "mixed")
-        .reduce((s, t: any) => s + Number(t.total || 0), 0);
-      const tips = (tx || []).reduce((s, t: any) => s + Number(t.tip_amount || 0), 0);
-      const discounts = (tx || []).reduce((s, t: any) => s + Number(t.discount || 0), 0);
-      const prevTotal = (prevTx || []).reduce((s, t: any) => s + Number(t.total || 0), 0);
-      const growth = prevTotal > 0 ? ((total - prevTotal) / prevTotal) * 100 : 0;
-
-      // Por estilista
-      const byStylist: Record<string, { name: string; sales: number; count: number; tips: number; services: number }> =
-        {};
-      (tx || []).forEach((t: any) => {
-        const key = t.stylist || "Sin asignar";
-        if (!byStylist[key]) byStylist[key] = { name: key, sales: 0, count: 0, tips: 0, services: 0 };
-        byStylist[key].sales += Number(t.total || 0);
-        byStylist[key].count += 1;
-        byStylist[key].tips += Number(t.tip_amount || 0);
-        const svcs = Array.isArray(t.services) ? t.services : [];
-        byStylist[key].services += svcs.reduce((c: number, s: any) => c + (s.quantity || 1), 0);
-      });
-      const stylists = Object.values(byStylist).sort((a, b) => b.sales - a.sales);
-
-      // Por servicio
-      const byService: Record<string, { name: string; count: number; revenue: number }> = {};
-      (tx || []).forEach((t: any) => {
-        const svcs = Array.isArray(t.services) ? t.services : [];
-        svcs.forEach((s: any) => {
-          const name = s.name || "Sin nombre";
-          if (!byService[name]) byService[name] = { name, count: 0, revenue: 0 };
-          byService[name].count += s.quantity || 1;
-          byService[name].revenue += Number(s.total || (s.price || 0) * (s.quantity || 1));
-        });
-      });
-      const services = Object.values(byService).sort((a, b) => b.revenue - a.revenue);
-
-      // Evolución diaria (para sparkline + fiscal)
-      const days = eachDayOfInterval({ start, end });
-      const dailyMap: Record<
-        string,
-        { date: Date; total: number; cash: number; card: number; count: number; tips: number }
-      > = {};
-      days.forEach((d) => {
-        const key = format(d, "yyyy-MM-dd");
-        dailyMap[key] = { date: d, total: 0, cash: 0, card: 0, count: 0, tips: 0 };
-      });
-      (tx || []).forEach((t: any) => {
-        const key = format(new Date(t.created_at), "yyyy-MM-dd");
-        if (!dailyMap[key]) return;
-        dailyMap[key].total += Number(t.total || 0);
-        dailyMap[key].count += 1;
-        dailyMap[key].tips += Number(t.tip_amount || 0);
-        if (t.payment_method === "cash") dailyMap[key].cash += Number(t.total || 0);
-        if (t.payment_method === "card") dailyMap[key].card += Number(t.total || 0);
-      });
-      const daily = Object.values(dailyMap);
-
-      // Reservas (para resumen ejecutivo)
-      const bookingsTotal = bookings?.length || 0;
-      const bookingsCancelled = (bookings || []).filter((b: any) => b.status === "cancelled").length;
-      const bookingsCrm = (bookings || []).filter((b: any) => b.canal === "crm").length;
-      const bookingsWeb = bookingsTotal - bookingsCrm;
-
-      const data = {
-        tenantName,
-        rangeLabel: label,
-        generatedAt: format(new Date(), "d MMM yyyy 'a las' HH:mm", { locale: es }),
-        total,
-        txCount,
-        avg,
-        cash,
-        card,
-        mixed,
-        tips,
-        discounts,
-        prevTotal,
-        growth,
-        stylists,
-        services,
-        daily,
-        bookingsTotal,
-        bookingsCancelled,
-        bookingsCrm,
-        bookingsWeb,
-        iva: total - total / 1.21, // IVA 21% estimado
-        netSinIva: total / 1.21,
-      };
-
-      const html = buildHTML(type, data);
-      const win = window.open("", "_blank");
-      if (win) {
-        win.document.write(html);
-        win.document.close();
-        win.onload = () => setTimeout(() => win.print(), 350);
-      }
-
-      toast({ title: "Informe generado", description: "Listo para imprimir o guardar como PDF" });
+      const data = await fetchReportData(tenantId, tenantName, start, end, label);
+      await downloadReportPDF(type, data);
+      toast({ title: "Informe descargado", description: "El archivo PDF se ha descargado en tu equipo." });
     } catch (e: any) {
       console.error(e);
       toast({ title: "Error", description: e.message, variant: "destructive" });
@@ -340,575 +1032,9 @@ export function PDFReportsGenerator({ tenantId, tenantName = "Salón" }: PDFRepo
         </div>
 
         <p className="text-[11px] text-outline text-center">
-          Los informes se abren en una nueva ventana. Imprime o guarda como PDF desde el diálogo del navegador.
+          Descarga directa en formato PDF con texto seleccionable y diseño ejecutivo.
         </p>
       </div>
     </div>
   );
-}
-
-// ============================================================
-// HTML GENERATION
-// ============================================================
-
-function buildHTML(type: ReportType, d: any): string {
-  const titleMap: Record<ReportType, string> = {
-    monthly: "Resumen ejecutivo",
-    productivity: "Productividad del equipo",
-    services: "Catálogo y servicios",
-    fiscal: "Informe para asesoría",
-  };
-
-  const styles = `
-    <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-        color: #131520; background: #fff; padding: 32px 36px; line-height: 1.5;
-        -webkit-font-smoothing: antialiased;
-      }
-      .header {
-        display: flex; justify-content: space-between; align-items: flex-start;
-        padding-bottom: 20px; margin-bottom: 28px;
-        border-bottom: 3px solid transparent;
-        border-image: linear-gradient(90deg, ${BRAND_PRIMARY}, ${BRAND_ACCENT}) 1;
-      }
-      .brand-mark {
-        font-size: 11px; font-weight: 700; letter-spacing: 2px;
-        color: ${BRAND_PRIMARY}; text-transform: uppercase; margin-bottom: 6px;
-      }
-      .salon-name { font-size: 26px; font-weight: 800; color: #131520; letter-spacing: -0.5px; }
-      .report-type { font-size: 13px; color: #676B7E; margin-top: 4px; font-weight: 500; }
-      .meta-right { text-align: right; font-size: 11px; color: #676B7E; line-height: 1.6; }
-      .meta-right strong { color: #1e293b; }
-
-      .section { margin-top: 32px; page-break-inside: avoid; }
-      .section-title {
-        font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
-        color: ${BRAND_PRIMARY}; margin-bottom: 12px;
-        display: flex; align-items: center; gap: 8px;
-      }
-      .section-title::before {
-        content: ''; width: 4px; height: 14px; border-radius: 2px;
-        background: linear-gradient(180deg, ${BRAND_PRIMARY}, ${BRAND_ACCENT});
-      }
-
-      .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-      .kpi-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
-      .kpi-card {
-        background: #f8fafc; border: 1px solid #E4E6EF; border-radius: 14px;
-        padding: 16px; position: relative; overflow: hidden;
-      }
-      .kpi-card.highlight {
-        background: linear-gradient(135deg, ${BRAND_PRIMARY} 0%, ${BRAND_ACCENT} 100%);
-        color: #fff; border-color: transparent;
-      }
-      .kpi-card.highlight .kpi-label, .kpi-card.highlight .kpi-sub { color: rgba(255,255,255,0.85); }
-      .kpi-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #676B7E; }
-      .kpi-value { font-size: 22px; font-weight: 800; margin-top: 6px; color: #131520; letter-spacing: -0.5px; }
-      .kpi-card.highlight .kpi-value { color: #fff; }
-      .kpi-sub { font-size: 10px; color: #9DA1B2; margin-top: 4px; }
-
-      .growth-badge {
-        display: inline-block; padding: 3px 10px; border-radius: 999px;
-        font-size: 11px; font-weight: 600; margin-top: 6px;
-      }
-      .growth-up { background: #d1fae5; color: #065f46; }
-      .growth-down { background: #fee2e2; color: #991b1b; }
-
-      table { width: 100%; border-collapse: collapse; font-size: 12px; }
-      thead th {
-        background: linear-gradient(90deg, ${BRAND_PRIMARY}, ${BRAND_ACCENT});
-        color: #fff; padding: 10px 12px; text-align: left;
-        font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;
-      }
-      thead th:first-child { border-radius: 8px 0 0 8px; }
-      thead th:last-child { border-radius: 0 8px 8px 0; }
-      tbody td { padding: 10px 12px; border-bottom: 1px solid #F2F3F8; }
-      tbody tr:last-child td { border-bottom: none; }
-      tbody tr:nth-child(even) { background: #fafbfc; }
-      .num { text-align: right; font-variant-numeric: tabular-nums; }
-
-      .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 12px; }
-      .bar-label { flex: 0 0 140px; font-weight: 500; color: #334155; }
-      .bar-track { flex: 1; height: 10px; background: #F2F3F8; border-radius: 999px; overflow: hidden; }
-      .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, ${BRAND_PRIMARY}, ${BRAND_ACCENT}); }
-      .bar-value { flex: 0 0 110px; text-align: right; font-weight: 600; color: #131520; font-variant-numeric: tabular-nums; }
-
-      .sparkline-card {
-        background: #f8fafc; border: 1px solid #E4E6EF; border-radius: 14px;
-        padding: 20px; margin-top: 12px;
-      }
-
-      .footer {
-        margin-top: 40px; padding-top: 16px; border-top: 1px solid #E4E6EF;
-        text-align: center; font-size: 10px; color: #9DA1B2;
-      }
-      .footer strong { color: ${BRAND_PRIMARY}; font-weight: 700; }
-
-      .empty { color: #9DA1B2; font-style: italic; padding: 20px; text-align: center; font-size: 12px; }
-
-      @media print {
-        body { padding: 18mm 16mm; }
-        @page { size: A4; margin: 0; }
-        .section { page-break-inside: avoid; }
-        .kpi-card.highlight { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .bar-fill { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      }
-    </style>
-  `;
-
-  const header = `
-    <div class="header">
-      <div>
-        <div class="brand-mark">GlowApp · Informe</div>
-        <div class="salon-name">${escapeHtml(d.tenantName)}</div>
-        <div class="report-type">${titleMap[type]} · ${escapeHtml(d.rangeLabel)}</div>
-      </div>
-      <div class="meta-right">
-        <div>Generado el</div>
-        <div><strong>${d.generatedAt}</strong></div>
-      </div>
-    </div>
-  `;
-
-  const footer = `
-    <div class="footer">
-      Generado con <strong>GlowApp</strong> · glowapp.app · Datos confidenciales del negocio
-    </div>
-  `;
-
-  let body = "";
-  if (type === "monthly") body = renderMonthly(d);
-  else if (type === "productivity") body = renderProductivity(d);
-  else if (type === "services") body = renderServices(d);
-  else if (type === "fiscal") body = renderFiscal(d);
-
-  return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>${titleMap[type]} - ${escapeHtml(d.tenantName)}</title>${styles}</head><body>${header}${body}${footer}</body></html>`;
-}
-
-function renderMonthly(d: any) {
-  return `
-    <div class="section">
-      <div class="section-title">Indicadores clave</div>
-      <div class="kpi-grid">
-        <div class="kpi-card highlight">
-          <div class="kpi-label">Ingresos</div>
-          <div class="kpi-value">${fmtEUR(d.total)}</div>
-          ${renderGrowth(d.growth)}
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Transacciones</div>
-          <div class="kpi-value">${d.txCount}</div>
-          <div class="kpi-sub">vs. ${fmtEUR(d.prevTotal)} anterior</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Ticket medio</div>
-          <div class="kpi-value">${fmtEUR(d.avg)}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Propinas</div>
-          <div class="kpi-value">${fmtEUR(d.tips)}</div>
-          <div class="kpi-sub">Descuentos: ${fmtEUR(d.discounts)}</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Evolución diaria</div>
-      <div class="sparkline-card">
-        ${renderSparkline(d.daily)}
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Métodos de pago</div>
-      ${renderPaymentBars(d.cash, d.card, d.mixed, d.total)}
-    </div>
-
-    <div class="section">
-      <div class="section-title">Reservas</div>
-      <div class="kpi-grid cols-3">
-        <div class="kpi-card">
-          <div class="kpi-label">Total</div>
-          <div class="kpi-value">${d.bookingsTotal}</div>
-          <div class="kpi-sub">${d.bookingsCancelled} canceladas</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Vía Admin</div>
-          <div class="kpi-value">${d.bookingsCrm}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Vía Web</div>
-          <div class="kpi-value">${d.bookingsWeb}</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Top estilistas</div>
-      ${renderStylistTable(d.stylists.slice(0, 8))}
-    </div>
-
-    <div class="section">
-      <div class="section-title">Top servicios</div>
-      ${renderServiceBars(d.services.slice(0, 8))}
-    </div>
-  `;
-}
-
-function renderProductivity(d: any) {
-  return `
-    <div class="section">
-      <div class="section-title">Resumen del equipo</div>
-      <div class="kpi-grid cols-3">
-        <div class="kpi-card highlight">
-          <div class="kpi-label">Ingresos totales</div>
-          <div class="kpi-value">${fmtEUR(d.total)}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Servicios realizados</div>
-          <div class="kpi-value">${d.stylists.reduce((s: number, x: any) => s + x.services, 0)}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Propinas equipo</div>
-          <div class="kpi-value">${fmtEUR(d.tips)}</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Detalle por profesional</div>
-      ${
-        d.stylists.length === 0
-          ? `<div class="empty">Sin datos en el período</div>`
-          : `
-      <table>
-        <thead>
-          <tr>
-            <th>Profesional</th>
-            <th class="num">Transacciones</th>
-            <th class="num">Servicios</th>
-            <th class="num">Propinas</th>
-            <th class="num">Ventas</th>
-            <th class="num">Ticket medio</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${d.stylists
-            .map(
-              (s: any) => `
-            <tr>
-              <td><strong>${escapeHtml(s.name)}</strong></td>
-              <td class="num">${s.count}</td>
-              <td class="num">${s.services}</td>
-              <td class="num">${fmtEUR(s.tips)}</td>
-              <td class="num"><strong>${fmtEUR(s.sales)}</strong></td>
-              <td class="num">${fmtEUR(s.count > 0 ? s.sales / s.count : 0)}</td>
-            </tr>
-          `,
-            )
-            .join("")}
-        </tbody>
-      </table>`
-      }
-    </div>
-
-    <div class="section">
-      <div class="section-title">Ranking visual</div>
-      ${renderStylistBars(d.stylists)}
-    </div>
-  `;
-}
-
-function renderServices(d: any) {
-  const top = d.services.slice(0, 15);
-  return `
-    <div class="section">
-      <div class="section-title">Resumen catálogo</div>
-      <div class="kpi-grid cols-3">
-        <div class="kpi-card highlight">
-          <div class="kpi-label">Ingresos por servicios</div>
-          <div class="kpi-value">${fmtEUR(d.services.reduce((s: number, x: any) => s + x.revenue, 0))}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Servicios distintos</div>
-          <div class="kpi-value">${d.services.length}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Cantidad total</div>
-          <div class="kpi-value">${d.services.reduce((s: number, x: any) => s + x.count, 0)}</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Top 15 servicios</div>
-      ${
-        top.length === 0
-          ? `<div class="empty">Sin servicios en el período</div>`
-          : `
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 40px">#</th>
-            <th>Servicio</th>
-            <th class="num">Cantidad</th>
-            <th class="num">Ingresos</th>
-            <th class="num">Precio medio</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${top
-            .map(
-              (s: any, i: number) => `
-            <tr>
-              <td>${i + 1}</td>
-              <td><strong>${escapeHtml(s.name)}</strong></td>
-              <td class="num">${s.count}</td>
-              <td class="num"><strong>${fmtEUR(s.revenue)}</strong></td>
-              <td class="num">${fmtEUR(s.count > 0 ? s.revenue / s.count : 0)}</td>
-            </tr>
-          `,
-            )
-            .join("")}
-        </tbody>
-      </table>`
-      }
-    </div>
-
-    <div class="section">
-      <div class="section-title">Distribución de ingresos</div>
-      ${renderServiceBars(top.slice(0, 10))}
-    </div>
-  `;
-}
-
-function renderFiscal(d: any) {
-  return `
-    <div class="section">
-      <div class="section-title">Totales del período</div>
-      <div class="kpi-grid cols-3">
-        <div class="kpi-card highlight">
-          <div class="kpi-label">Total facturado</div>
-          <div class="kpi-value">${fmtEUR(d.total)}</div>
-          <div class="kpi-sub">${d.txCount} transacciones</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Base imponible (sin IVA)</div>
-          <div class="kpi-value">${fmtEUR(d.netSinIva)}</div>
-          <div class="kpi-sub">21% IVA estimado</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">IVA estimado</div>
-          <div class="kpi-value">${fmtEUR(d.iva)}</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Reparto por método de pago</div>
-      <div class="kpi-grid cols-3">
-        <div class="kpi-card">
-          <div class="kpi-label">Efectivo</div>
-          <div class="kpi-value">${fmtEUR(d.cash)}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Tarjeta</div>
-          <div class="kpi-value">${fmtEUR(d.card)}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Mixto / Otros</div>
-          <div class="kpi-value">${fmtEUR(d.mixed)}</div>
-        </div>
-      </div>
-      <p style="margin-top:10px; font-size:11px; color:#676B7E">
-        Propinas: <strong>${fmtEUR(d.tips)}</strong> · Descuentos aplicados: <strong>${fmtEUR(d.discounts)}</strong>
-      </p>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Desglose día a día</div>
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th class="num">Tickets</th>
-            <th class="num">Efectivo</th>
-            <th class="num">Tarjeta</th>
-            <th class="num">Propinas</th>
-            <th class="num">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${d.daily
-            .filter((x: any) => x.count > 0)
-            .map(
-              (x: any) => `
-            <tr>
-              <td>${format(x.date, "EEE d MMM yyyy", { locale: es })}</td>
-              <td class="num">${x.count}</td>
-              <td class="num">${fmtEUR(x.cash)}</td>
-              <td class="num">${fmtEUR(x.card)}</td>
-              <td class="num">${fmtEUR(x.tips)}</td>
-              <td class="num"><strong>${fmtEUR(x.total)}</strong></td>
-            </tr>
-          `,
-            )
-            .join("")}
-          <tr style="background: #F2F3F8">
-            <td><strong>TOTAL</strong></td>
-            <td class="num"><strong>${d.txCount}</strong></td>
-            <td class="num"><strong>${fmtEUR(d.cash)}</strong></td>
-            <td class="num"><strong>${fmtEUR(d.card)}</strong></td>
-            <td class="num"><strong>${fmtEUR(d.tips)}</strong></td>
-            <td class="num"><strong>${fmtEUR(d.total)}</strong></td>
-          </tr>
-        </tbody>
-      </table>
-      <p style="margin-top:12px; font-size:10px; color:#9DA1B2; font-style: italic;">
-        Nota: IVA calculado al 21% sobre el total facturado. Consulta con tu asesor el tipo aplicable a cada servicio.
-      </p>
-    </div>
-  `;
-}
-
-function renderGrowth(growth: number) {
-  if (!isFinite(growth) || growth === 0) return "";
-  const up = growth > 0;
-  return `<div class="growth-badge ${up ? "growth-up" : "growth-down"}">${up ? "↑" : "↓"} ${Math.abs(growth).toFixed(1)}%</div>`;
-}
-
-function renderPaymentBars(cash: number, card: number, mixed: number, total: number) {
-  if (total <= 0) return `<div class="empty">Sin pagos registrados</div>`;
-  const rows: { label: string; value: number }[] = [
-    { label: "Efectivo", value: cash },
-    { label: "Tarjeta", value: card },
-    { label: "Mixto", value: mixed },
-  ].filter((r) => r.value > 0);
-  return rows
-    .map((r) => {
-      const pct = (r.value / total) * 100;
-      return `
-      <div class="bar-row">
-        <div class="bar-label">${r.label}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-        <div class="bar-value">${fmtEUR(r.value)} (${pct.toFixed(0)}%)</div>
-      </div>
-    `;
-    })
-    .join("");
-}
-
-function renderStylistTable(stylists: any[]) {
-  if (stylists.length === 0) return `<div class="empty">Sin datos</div>`;
-  return `
-    <table>
-      <thead>
-        <tr>
-          <th>Profesional</th>
-          <th class="num">Servicios</th>
-          <th class="num">Ventas</th>
-          <th class="num">Ticket medio</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${stylists
-          .map(
-            (s) => `
-          <tr>
-            <td><strong>${escapeHtml(s.name)}</strong></td>
-            <td class="num">${s.services}</td>
-            <td class="num"><strong>${fmtEUR(s.sales)}</strong></td>
-            <td class="num">${fmtEUR(s.count > 0 ? s.sales / s.count : 0)}</td>
-          </tr>
-        `,
-          )
-          .join("")}
-      </tbody>
-    </table>
-  `;
-}
-
-function renderStylistBars(stylists: any[]) {
-  if (stylists.length === 0) return `<div class="empty">Sin datos</div>`;
-  const max = Math.max(...stylists.map((s) => s.sales), 1);
-  return stylists
-    .map(
-      (s) => `
-    <div class="bar-row">
-      <div class="bar-label">${escapeHtml(s.name)}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${(s.sales / max) * 100}%"></div></div>
-      <div class="bar-value">${fmtEUR(s.sales)}</div>
-    </div>
-  `,
-    )
-    .join("");
-}
-
-function renderServiceBars(services: any[]) {
-  if (services.length === 0) return `<div class="empty">Sin servicios</div>`;
-  const max = Math.max(...services.map((s) => s.revenue), 1);
-  return services
-    .map(
-      (s) => `
-    <div class="bar-row">
-      <div class="bar-label">${escapeHtml(s.name)}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${(s.revenue / max) * 100}%"></div></div>
-      <div class="bar-value">${fmtEUR(s.revenue)} · ${s.count}u</div>
-    </div>
-  `,
-    )
-    .join("");
-}
-
-function renderSparkline(daily: any[]) {
-  if (!daily.length) return `<div class="empty">Sin datos</div>`;
-  const W = 640,
-    H = 120,
-    P = 10;
-  const max = Math.max(...daily.map((d) => d.total), 1);
-  const stepX = (W - P * 2) / Math.max(daily.length - 1, 1);
-  const points = daily.map((d, i) => {
-    const x = P + i * stepX;
-    const y = H - P - (d.total / max) * (H - P * 2);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
-  const path = "M " + points.join(" L ");
-  const area = `M ${P},${H - P} L ` + points.join(" L ") + ` L ${P + (daily.length - 1) * stepX},${H - P} Z`;
-  const maxIdx = daily.reduce((best, d, i) => (d.total > daily[best].total ? i : best), 0);
-  const maxDay = daily[maxIdx];
-  const total = daily.reduce((s, d) => s + d.total, 0);
-  return `
-    <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block">
-      <defs>
-        <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${BRAND_PRIMARY}" stop-opacity="0.35"/>
-          <stop offset="100%" stop-color="${BRAND_ACCENT}" stop-opacity="0.02"/>
-        </linearGradient>
-        <linearGradient id="sparkStroke" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="${BRAND_PRIMARY}"/>
-          <stop offset="100%" stop-color="${BRAND_ACCENT}"/>
-        </linearGradient>
-      </defs>
-      <path d="${area}" fill="url(#sparkFill)" />
-      <path d="${path}" fill="none" stroke="url(#sparkStroke)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
-    </svg>
-    <div style="display:flex; justify-content: space-between; margin-top: 10px; font-size: 11px; color: #676B7E;">
-      <span>${format(daily[0].date, "d MMM", { locale: es })}</span>
-      <span>Mejor día: <strong style="color:${BRAND_PRIMARY}">${format(maxDay.date, "d MMM", { locale: es })}</strong> · ${fmtEUR(maxDay.total)}</span>
-      <span>Total: <strong style="color:#131520">${fmtEUR(total)}</strong></span>
-    </div>
-  `;
-}
-
-function escapeHtml(s: string): string {
-  return String(s || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }

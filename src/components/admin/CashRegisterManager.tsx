@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Lock, Banknote, CreditCard } from "lucide-react";
+import { Loader2, Lock, Banknote, CreditCard, FileSpreadsheet, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { QuickPayment } from "./cash-register/QuickPayment";
 import { TransactionHistory } from "./cash-register/TransactionHistory";
-
 import { DailySummary } from "./cash-register/DailySummary";
-import { ExportData } from "./cash-register/ExportData";
 
 export interface Transaction {
   id: string;
@@ -50,9 +48,10 @@ interface CashRegisterManagerProps {
   tenantId: string;
   /** Qué pantalla de caja se muestra; la fila de pestañas vive en CajaSection */
   view?: "cobrar" | "historial" | "cierre";
+  onGoToReports?: () => void;
 }
 
-export const CashRegisterManager = ({ tenantId, view = "cobrar" }: CashRegisterManagerProps) => {
+export const CashRegisterManager = ({ tenantId, view = "cobrar", onGoToReports }: CashRegisterManagerProps) => {
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [daySummary, setDaySummary] = useState<DaySummary>({
@@ -202,7 +201,7 @@ export const CashRegisterManager = ({ tenantId, view = "cobrar" }: CashRegisterM
         <>
           {/* Resumen compacto: lo de hoy de un vistazo, sin comerse la pantalla */}
           <div className="flex items-center gap-3 rounded-2xl bg-surface-container-low px-4 py-3">
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0">
               <p className="text-[22px] font-bold text-ink-2 tabular-nums leading-none">
                 {fmtEur(daySummary.totalSales)}
               </p>
@@ -211,7 +210,26 @@ export const CashRegisterManager = ({ tenantId, view = "cobrar" }: CashRegisterM
                 {daySummary.transactionCount === 1 ? "cobro" : "cobros"}
               </p>
             </div>
-            <div className="text-right text-[11px] text-outline leading-relaxed tabular-nums">
+
+            {onGoToReports && (
+              <div className="flex-1 flex justify-center px-2 min-w-0">
+                <button
+                  type="button"
+                  onClick={onGoToReports}
+                  className="inline-flex items-center gap-1.5 text-[11.5px] text-outline hover:text-brand transition-colors px-2.5 py-1 rounded-lg hover:bg-surface-container/60 cursor-pointer"
+                  title="Ir a Informes y Exportación de Excel en Negocio"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-brand shrink-0" />
+                  <span className="hidden sm:inline">¿Quieres sacar el informe o el Excel?</span>
+                  <span className="sm:hidden">¿Informe o Excel?</span>
+                  <span className="font-semibold text-brand underline underline-offset-2 shrink-0">
+                    Ir a Informes →
+                  </span>
+                </button>
+              </div>
+            )}
+
+            <div className="text-right text-[11px] text-outline leading-relaxed tabular-nums ml-auto shrink-0">
               <p className="flex items-center justify-end gap-1">
                 <Banknote className="w-3.5 h-3.5 text-success" />
                 {fmtEur(daySummary.cashTotal)}
@@ -240,8 +258,24 @@ export const CashRegisterManager = ({ tenantId, view = "cobrar" }: CashRegisterM
 
       {view === "historial" && (
         <>
+          {onGoToReports && (
+            <div className="flex items-center justify-between px-1 -mb-2">
+              <span className="text-[12px] text-outline">
+                {transactions.length} {transactions.length === 1 ? "cobro hoy" : "cobros hoy"}
+              </span>
+              <button
+                type="button"
+                onClick={onGoToReports}
+                className="inline-flex items-center gap-1.5 text-[11.5px] text-outline hover:text-brand transition-colors cursor-pointer"
+                title="Ir a Informes y Exportación de Excel en Negocio"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-brand" />
+                <span>¿Quieres sacar el informe o el Excel?</span>
+                <span className="font-semibold text-brand underline underline-offset-2">Ir a Informes →</span>
+              </button>
+            </div>
+          )}
           <TransactionHistory transactions={transactions} onUpdate={fetchTodayData} />
-          <ExportData tenantId={tenantId} />
         </>
       )}
 

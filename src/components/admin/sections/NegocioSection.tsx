@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { GoalsReports } from "../negocio/GoalsReports";
 import { BusinessStats } from "../BusinessStats";
+import { CashReportsHub } from "../cash-register/CashReportsHub";
 import { LockedFeature } from "../LockedFeature";
 import { PostCreator } from "@/components/social/PostCreator";
 import { PostGrid } from "@/components/social/PostGrid";
@@ -24,7 +25,7 @@ interface NegocioSectionProps {
   onSubTabChange?: (subTab: string) => void;
 }
 
-type NegocioTab = "estadisticas" | "objetivos" | "posts" | "qr";
+type NegocioTab = "estadisticas" | "objetivos" | "informes" | "posts" | "qr";
 
 const POST_CATEGORIES = [
   { id: "all", label: "Todas" },
@@ -43,7 +44,7 @@ const NegocioSection = ({
   subTab,
   onSubTabChange,
 }: NegocioSectionProps) => {
-  const validTabs: NegocioTab[] = ["estadisticas", "objetivos", "posts", "qr"];
+  const validTabs: NegocioTab[] = ["estadisticas", "objetivos", "informes", "posts", "qr"];
   const [internalTab, setInternalTab] = useState<NegocioTab>("estadisticas");
   const activeTab: NegocioTab = validTabs.includes(subTab as NegocioTab)
     ? (subTab as NegocioTab)
@@ -141,6 +142,12 @@ const NegocioSection = ({
           ) : (
             <GoalsReports tenantId={tenantId} tenantName={tenantName} />
           ))}
+
+        {activeTab === "informes" && (
+          <div data-tour-target="negocio-informes">
+            <CashReportsHub tenantId={tenantId} tenantName={tenantName} />
+          </div>
+        )}
 
         {activeTab === "posts" && (
           <div className="glow-fade glow-mkt-posts">

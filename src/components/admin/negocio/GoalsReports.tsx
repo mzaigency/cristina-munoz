@@ -15,7 +15,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { startOfMonth, endOfMonth, format, subMonths, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { PDFReportsGenerator } from "../PDFReportsGenerator";
 
 interface GoalsReportsProps {
   tenantId: string;
@@ -339,10 +338,6 @@ export function GoalsReports({ tenantId, tenantName }: GoalsReportsProps) {
         </div>
       </section>
 
-      {/* PDF reports */}
-      <section>
-        <PDFReportsGenerator tenantId={tenantId} tenantName={tenantName} />
-      </section>
     </div>
   );
 }
