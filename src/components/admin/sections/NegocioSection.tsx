@@ -145,7 +145,7 @@ const NegocioSection = ({
 
         {activeTab === "informes" && (
           <div data-tour-target="negocio-informes">
-            <CashReportsHub tenantId={tenantId} tenantName={tenantName} />
+            <CashReportsHub tenantId={tenantId} />
           </div>
         )}
 

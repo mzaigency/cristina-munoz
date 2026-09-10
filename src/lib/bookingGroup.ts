@@ -67,6 +67,62 @@ export async function fetchBookingGroup(seedId: string): Promise<BookingGroupRow
   return [...rows.values()];
 }
 
+export interface BookingChargeGroup {
+  /** Every booking row of the visit (both parts of a compound service included). */
+  ids: string[];
+  /** Services of the whole visit, deduplicated (a compound counts once). */
+  services: any[];
+}
+
+/**
+ * Charging one part of a compound service must charge the whole visit: both
+ * parts share the same service, so it is merged and counted a single time.
+ */
+export async function fetchBookingChargeGroup(seedId: string): Promise<BookingChargeGroup> {
+  const rows = new Map<string, { id: string; services: any; related_booking_id: string | null }>();
+  const visited = new Set<string>();
+  let pending = [seedId];
+
+  while (pending.length > 0) {
+    const ids = pending.filter((id) => !visited.has(id));
+    if (ids.length === 0) break;
+    ids.forEach((id) => visited.add(id));
+
+    const [currentResult, childrenResult] = await Promise.all([
+      supabase.from("bookings").select("id, services, related_booking_id").in("id", ids),
+      supabase.from("bookings").select("id, services, related_booking_id").in("related_booking_id", ids),
+    ]);
+    if (currentResult.error) throw currentResult.error;
+    if (childrenResult.error) throw childrenResult.error;
+
+    const discovered = [...(currentResult.data ?? []), ...(childrenResult.data ?? [])] as Array<{
+      id: string;
+      services: any;
+      related_booking_id: string | null;
+    }>;
+    pending = [];
+    for (const row of discovered) {
+      rows.set(row.id, row);
+      if (!visited.has(row.id)) pending.push(row.id);
+      if (row.related_booking_id && !visited.has(row.related_booking_id)) pending.push(row.related_booking_id);
+    }
+  }
+
+  const merged: any[] = [];
+  const seen = new Set<string>();
+  for (const row of rows.values()) {
+    if (!Array.isArray(row.services)) continue;
+    for (const service of row.services as any[]) {
+      const key = String(service?.id ?? service?.name ?? service ?? "");
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      merged.push(service);
+    }
+  }
+
+  return { ids: rows.size > 0 ? [...rows.keys()] : [seedId], services: merged };
+}
+
 /** Keeps the original offsets between all parts, including processing pauses. */
 export function shiftBookingGroup(
   rows: BookingGroupRow[],

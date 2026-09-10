@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
+import { fetchBookingChargeGroup } from "@/lib/bookingGroup";
 
 interface TodayBooking {
   id: string;
@@ -139,6 +140,8 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   // Today's bookings for quick charge
   const [todayBookings, setTodayBookings] = useState<TodayBooking[]>([]);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  // Todas las filas de la visita (las dos partes de un compuesto incluidas)
+  const [selectedBookingGroupIds, setSelectedBookingGroupIds] = useState<string[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
 
   const { toast } = useToast();
@@ -172,7 +175,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       if (pendingBooking) {
         try {
           const booking = JSON.parse(pendingBooking);
-          loadBookingData(booking, services, stylists);
+          void loadBookingData(booking, services, stylists);
           sessionStorage.removeItem('pendingChargeBooking');
         } catch (e) {
           console.error('Error parsing pending booking:', e);
@@ -223,7 +226,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     }
   };
 
-  const loadBookingData = (booking: any, servicesList?: Service[], stylistsList?: Stylist[]) => {
+  const loadBookingData = async (booking: any, servicesList?: Service[], stylistsList?: Stylist[]) => {
     const svcList = servicesList || services;
     const stList = stylistsList || stylists;
     
@@ -252,9 +255,22 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
       setSelectedStylistId(matchedStylist.id);
     }
     
+    // Cobrar una parte cobra la visita entera: juntamos los servicios de todas
+    // las filas vinculadas (las dos partes de un compuesto cuentan una vez).
+    let visitServices: any[] = Array.isArray(booking.services) ? booking.services : [];
+    let groupIds: string[] = [booking.id];
+    try {
+      const group = await fetchBookingChargeGroup(booking.id);
+      groupIds = group.ids;
+      if (group.services.length > 0) visitServices = group.services;
+    } catch (e) {
+      console.error("booking charge group", e);
+    }
+    setSelectedBookingGroupIds(groupIds);
+
     // Load services from booking with prices
-    if (Array.isArray(booking.services)) {
-      const bookingServices: SelectedItem[] = booking.services.map((s: any, idx: number) => {
+    if (visitServices.length > 0) {
+      const bookingServices: SelectedItem[] = visitServices.map((s: any, idx: number) => {
         // Find the actual service to get the correct price
         const realService = svcList.find(srv => srv.id === s.id || srv.name === s.name);
         const price = realService?.price ?? s.price ?? 0;
@@ -520,6 +536,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     setWantsInvoice(false);
     setInvoiceData({ fiscalName: "", nif: "", fiscalAddress: "" });
     setSelectedBookingId(null);
+    setSelectedBookingGroupIds([]);
     setEditingItemId(null);
     setEditingItemPrice("");
     setEditingTotal(false);
@@ -651,7 +668,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
             notes: `[✓ COMPLETADA] [💳 COBRADA] ${today}`,
             status: "confirmed" // Keep as confirmed, the notes indicate completion
           })
-          .eq("id", selectedBookingId);
+          .in("id", selectedBookingGroupIds.length > 0 ? selectedBookingGroupIds : [selectedBookingId]);
         
         // Refresh today's bookings list
         fetchTodayBookings();
@@ -980,7 +997,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
               return (
                 <button
                   key={booking.id}
-                  onClick={() => loadBookingData(booking, services, stylists)}
+                  onClick={() => void loadBookingData(booking, services, stylists)}
                   className={`shrink-0 w-[150px] text-left rounded-2xl border px-3 py-2.5 transition-colors ${
                     isSelected
                       ? "border-primary/50 bg-primary/[0.06]"
