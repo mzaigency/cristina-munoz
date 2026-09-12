@@ -8,6 +8,7 @@ import { ShopCartProvider } from "@/contexts/ShopCartContext";
 
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { MaintenanceScreen } from "@/components/MaintenanceScreen";
+import { GlobalAnnouncementPill } from "@/components/common/GlobalAnnouncementPill";
 import { supabase } from "@/integrations/supabase/client";
 import { Preloader } from "@/components/ui/preloader";
 import glowappLogo from "@/assets/glowapp-logo.png";
@@ -201,6 +202,7 @@ const App = () => (
                 </Suspense>
                 <BrowserRouter>
                   <ScrollToTop />
+                  <GlobalAnnouncementPill />
                   <MaintenanceGate>
                     <Suspense fallback={<PageLoader />}>
                       <Routes>

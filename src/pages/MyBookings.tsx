@@ -59,7 +59,7 @@ const TABS = [
 export default function MyBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const initialTab =
     tabParam === "history"
@@ -68,6 +68,16 @@ export default function MyBookings() {
         ? "waitlist"
         : "upcoming";
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    if (tabParam === "history") {
+      setActiveTab("history");
+    } else if (tabParam === "waitlist") {
+      setActiveTab("waitlist");
+    } else {
+      setActiveTab("upcoming");
+    }
+  }, [tabParam]);
   const [dateToCancel, setDateToCancel] = useState<string | null>(null);
   const [cancelingDate, setCancelingDate] = useState<string | null>(null);
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
@@ -251,7 +261,14 @@ export default function MyBookings() {
             </div>
           </div>
           <div className="w-full sm:w-80 shrink-0">
-            <SegmentedControl options={TABS} value={activeTab} onChange={setActiveTab} />
+            <SegmentedControl
+              options={TABS}
+              value={activeTab}
+              onChange={(val) => {
+                setActiveTab(val);
+                setSearchParams(val === "upcoming" ? {} : { tab: val });
+              }}
+            />
           </div>
         </div>
       </div>

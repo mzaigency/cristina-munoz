@@ -8,52 +8,53 @@ export const MaintenanceScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [step, setStep] = useState<"email" | "password">("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleCheckEmail = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim() || !password) {
+      setError("Introduce tu correo y contraseña");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
-      const { data: isSuperadmin, error: rpcError } = await supabase
-        .rpc("check_superadmin_email", { _email: email.trim().toLowerCase() });
+      // 1. Iniciar sesión con Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
-      if (rpcError || !isSuperadmin) {
-        setError("No autorizado");
+      if (authError || !authData.user) {
+        setError(authError?.message === "Invalid login credentials"
+          ? "Credenciales incorrectas"
+          : authError?.message || "Error al autenticar");
         setLoading(false);
         return;
       }
 
-      setStep("password");
-    } catch {
-      setError("Error al verificar");
-    } finally {
-      setLoading(false);
-    }
-  };
+      // 2. Verificar que el usuario tenga rol de superadmin
+      const { data: roleData, error: roleError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", authData.user.id)
+        .eq("role", "superadmin")
+        .maybeSingle();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-
-      if (authError) {
-        setError("Contraseña incorrecta");
+      if (roleError || !roleData) {
+        await supabase.auth.signOut();
+        setError("Acceso denegado: Esta cuenta no tiene permisos de SuperAdministrador.");
+        setLoading(false);
         return;
       }
-      // Auth state change will trigger MaintenanceGate re-check automatically
-    } catch {
-      setError("Error al iniciar sesión");
-    } finally {
+
+      // 3. SuperAdmin verificado: redirigir directamente al panel
+      window.location.href = "/superadmin";
+    } catch (err: any) {
+      setError(err?.message || "Error al iniciar sesión");
       setLoading(false);
     }
   };
@@ -153,95 +154,79 @@ export const MaintenanceScreen = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-left"
+              className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-left shadow-2xl"
             >
-              <div className="flex items-center gap-2 mb-4">
-                <ShieldCheck className="h-4 w-4 text-white/70" />
-                <span className="text-sm font-medium text-white/80">Acceso autorizado</span>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-white/80" />
+                  <span className="text-sm font-semibold text-white">Acceso SuperAdmin</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setShowLogin(false); setError(""); }}
+                  className="text-white/40 hover:text-white text-xs transition-colors"
+                >
+                  Cancelar
+                </button>
               </div>
 
-              {step === "email" ? (
-                <form onSubmit={handleCheckEmail} className="space-y-3">
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                    <input
-                      type="email"
-                      placeholder="tu@email.com"
-                      value={email}
-                      onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                      className="w-full h-11 pl-10 pr-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
-                      required
-                      autoFocus
-                    />
-                  </div>
+              <form onSubmit={handleLogin} className="space-y-3">
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+                  <input
+                    type="email"
+                    placeholder="Correo de superadmin..."
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                    className="w-full h-10 pl-10 pr-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-white/40 transition-all"
+                    required
+                    autoFocus
+                  />
+                </div>
 
-                  {error && (
-                    <p className="text-red-300 text-xs">{error}</p>
-                  )}
-
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Contraseña..."
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                    className="w-full h-10 pl-10 pr-10 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-white/40 transition-all"
+                    required
+                  />
                   <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full h-10 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
                   >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verificar"}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
-                </form>
-              ) : (
-                <form onSubmit={handleLogin} className="space-y-3">
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                    <input
-                      type="email"
-                      value={email}
-                      disabled
-                      className="w-full h-11 pl-10 pr-4 rounded-xl bg-white/5 border border-white/10 text-white/50 text-sm"
-                    />
-                  </div>
+                </div>
 
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Contraseña"
-                      value={password}
-                      onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                      className="w-full h-11 pl-10 pr-10 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
-                      required
-                      autoFocus
-                      minLength={6}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
+                {error && (
+                  <p className="text-red-300 text-xs bg-red-500/20 border border-red-500/30 rounded-lg p-2 leading-relaxed">
+                    {error}
+                  </p>
+                )}
 
-                  {error && (
-                    <p className="text-red-300 text-xs">{error}</p>
-                  )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-10 rounded-xl bg-white/25 hover:bg-white/35 text-white text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                  <span>Entrar como SuperAdmin</span>
+                </button>
 
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => { setStep("email"); setPassword(""); setError(""); }}
-                      className="h-10 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white/60 text-sm transition-colors"
-                    >
-                      Atrás
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="flex-1 h-10 rounded-xl bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
-                    </button>
-                  </div>
-                </form>
-              )}
+                <div className="text-center pt-1">
+                  <a
+                    href="/superadmin"
+                    className="text-[11px] text-white/60 hover:text-white underline transition-colors"
+                  >
+                    O ir directamente al panel en /superadmin →
+                  </a>
+                </div>
+              </form>
             </motion.div>
           )}
         </AnimatePresence>

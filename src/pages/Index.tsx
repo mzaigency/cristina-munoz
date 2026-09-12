@@ -1,5 +1,6 @@
 import { SEO } from "@/components/SEO";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,7 +58,43 @@ const Index = () => {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
-  const [feedMode, setFeedMode] = useState<FeedMode>("discover");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const feedParam = searchParams.get("feed");
+  const [feedMode, setFeedMode] = useState<FeedMode>(() =>
+    feedParam === "following" ? "following" : "discover",
+  );
+
+  useEffect(() => {
+    if (feedParam === "following") {
+      setFeedMode("following");
+    } else {
+      setFeedMode("discover");
+    }
+  }, [feedParam]);
+
+  useEffect(() => {
+    const handleFeedEvent = (e: any) => {
+      if (e.detail === "following") {
+        setFeedMode("following");
+        setSearchParams({ feed: "following" });
+      } else if (e.detail === "discover") {
+        setFeedMode("discover");
+        setSearchParams({});
+      }
+    };
+    window.addEventListener("glowapp:feed-mode", handleFeedEvent);
+    return () => window.removeEventListener("glowapp:feed-mode", handleFeedEvent);
+  }, [setSearchParams]);
+
+  const handleFeedModeChange = (newMode: FeedMode) => {
+    setFeedMode(newMode);
+    if (newMode === "following") {
+      setSearchParams({ feed: "following" });
+    } else {
+      setSearchParams({});
+    }
+    window.dispatchEvent(new CustomEvent("glowapp:feed-mode-changed", { detail: newMode }));
+  };
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const { favorites, isAuthenticated } = useFavorites();
   const { followingCount } = useFollows();
@@ -309,7 +346,7 @@ const Index = () => {
 
         {/* Feed Toggle */}
         <div className="flex justify-center mb-3">
-          <FeedToggle mode={feedMode} onChange={setFeedMode} followingCount={followingCount} />
+          <FeedToggle mode={feedMode} onChange={handleFeedModeChange} followingCount={followingCount} />
         </div>
 
         {/* Main Content */}
