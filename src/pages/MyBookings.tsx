@@ -233,34 +233,30 @@ export default function MyBookings() {
 
   const today = format(new Date(), "yyyy-MM-dd");
 
-  // Filtrar citas compuestas: solo mostrar la cita principal (part1), no la secundaria (part2)
-  // Para el cliente, un servicio compuesto es UNA sola cita
-  const visibleBookings = bookings.filter((b) => {
-    // Si es parte de un compuesto y es la parte 2, no mostrar
-    if (b.is_part_of_compound && b.compound_part === "part2") {
-      return false;
-    }
-    return true;
-  });
+  // Cada visita real = una tarjeta. Un servicio compuesto (o varios servicios
+  // de la misma cita) se agrupan; dos citas distintas del mismo día NO.
+  const visits = groupIntoVisits(bookings);
 
-  const upcomingBookings = visibleBookings.filter((b) => b.Fecha >= today);
-  const pastBookings = visibleBookings.filter((b) => b.Fecha < today);
   const displayedBookings =
     activeTab === "upcoming"
-      ? upcomingBookings
+      ? visits.filter((v) => v.Fecha >= today)
       : activeTab === "history"
-        ? pastBookings
+        ? visits.filter((v) => v.Fecha < today)
         : [];
 
   // Group by date
   const groupedBookings = displayedBookings.reduce(
-    (acc, booking) => {
-      if (!acc[booking.Fecha]) acc[booking.Fecha] = [];
-      acc[booking.Fecha].push(booking);
+    (acc, visit) => {
+      if (!acc[visit.Fecha]) acc[visit.Fecha] = [];
+      acc[visit.Fecha].push(visit);
       return acc;
     },
-    {} as Record<string, Booking[]>,
+    {} as Record<string, Visit[]>,
   );
+
+  for (const date of Object.keys(groupedBookings)) {
+    groupedBookings[date].sort((a, b) => (a.Hora || "").localeCompare(b.Hora || ""));
+  }
 
   const sortedDates = Object.keys(groupedBookings).sort((a, b) =>
     activeTab === "upcoming"
