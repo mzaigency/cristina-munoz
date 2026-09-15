@@ -128,8 +128,8 @@ export default function MyBookings() {
       setActiveTab("upcoming");
     }
   }, [tabParam]);
-  const [dateToCancel, setDateToCancel] = useState<string | null>(null);
-  const [cancelingDate, setCancelingDate] = useState<string | null>(null);
+  const [visitToCancel, setVisitToCancel] = useState<Visit | null>(null);
+  const [cancelingVisitId, setCancelingVisitId] = useState<string | null>(null);
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
