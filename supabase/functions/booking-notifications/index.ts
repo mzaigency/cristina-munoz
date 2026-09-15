@@ -424,6 +424,7 @@ serve(async (req) => {
         end_time,
         total_duration,
         tenant_id,
+        related_booking_id,
         tenants!inner(name, slug)
       `,
       )
@@ -443,17 +444,18 @@ serve(async (req) => {
       const lastOfVisit = new Map<string, string>();
       for (const b of completedBookings as any[]) {
         if (!b.user_id) continue;
-        lastOfVisit.set(visitKeyOf(b), b.id);
+        lastOfVisit.set(await visitKeyOf(b), b.id);
       }
 
       for (const booking of completedBookings) {
         if (!booking.user_id) continue;
 
-        const visitKey = visitKeyOf(booking);
+        const visitKey = await visitKeyOf(booking);
         if (lastOfVisit.get(visitKey) !== booking.id) {
           await supabase.from("bookings").update({ review_request_sent: now.toISOString() }).eq("id", booking.id);
           continue;
         }
+
 
 
 
