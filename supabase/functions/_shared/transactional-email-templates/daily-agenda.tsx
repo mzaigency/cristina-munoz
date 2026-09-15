@@ -35,10 +35,15 @@ interface Props {
 const eur = (n: number) =>
   `${(n || 0).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €`
 
-/** Escala de la agenda: 1 minuto = 1 px, como en el panel. */
-const PX_PER_MIN = 1
-/** Alto mínimo de una cita para que quepa el contenido. */
-const MIN_BLOCK_PX = 56
+/**
+ * Misma escala que la agenda del panel: 1 minuto = 1 px, compartida por todos
+ * los carriles. La rejilla se dibuja como una tabla de franjas de 15 minutos
+ * (cada franja = 15 px) y cada cita ocupa tantas filas como duración tenga,
+ * así las horas coinciden de carril a carril.
+ */
+const SLOT_MIN = 15
+const SLOT_PX = 15
+const RULER_W = '44px'
 
 const toMin = (t: string): number => {
   const m = /^(\d{1,2}):(\d{2})/.exec(t || '')
@@ -56,7 +61,7 @@ interface TimedAppt extends Appt {
 const timed = (a: Appt): TimedAppt => {
   const start = toMin(a.time)
   const end = a.endTime ? toMin(a.endTime) : start + 60
-  return { ...a, start, end: Math.max(end, start + 15) }
+  return { ...a, start, end: Math.max(end, start + SLOT_MIN) }
 }
 
 /** Mezcla del color del profesional con blanco, para el fondo suave de la cita. */
@@ -69,150 +74,203 @@ const softBg = (hex: string): string => {
   return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`
 }
 
-/** Bloque de cita con alto proporcional a su duración. */
-const ApptBlock = ({ a, color, heightPx }: { a: TimedAppt; color: string; heightPx: number }) => (
-  <Section
-    style={{
-      height: `${heightPx}px`,
-      borderRadius: '10px',
-      backgroundColor: softBg(color),
-      borderLeft: `4px solid ${color}`,
-      padding: '6px 9px',
-      margin: '0 0 2px',
-      overflow: 'hidden',
-    }}
-  >
-    <Text
-      style={{
-        fontSize: '13px',
-        fontWeight: 700 as const,
-        color: INK,
-        margin: 0,
-        lineHeight: 1.3,
-        whiteSpace: 'nowrap' as const,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-      }}
-    >
-      {a.customerName}
-      {a.isNew ? <span style={{ color: '#98329A' }}> · nueva</span> : null}
-    </Text>
-    <Text
-      style={{
-        fontSize: '12px',
-        color: '#5c6070',
-        margin: '1px 0 0',
-        lineHeight: 1.3,
-        whiteSpace: 'nowrap' as const,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-      }}
-    >
-      {a.services}
-      {a.price ? <span style={{ color: PRIMARY, fontWeight: 700 as const }}> · {eur(a.price)}</span> : null}
-    </Text>
-    {heightPx >= 84 && a.phone ? (
-      <Text style={{ fontSize: '11px', color: MUTED, margin: '2px 0 0', lineHeight: 1.3 }}>{a.phone}</Text>
-    ) : null}
-  </Section>
-)
+type LaneSeg =
+  | { kind: 'appt'; a: TimedAppt; slots: number }
+  | { kind: 'gap'; slots: number }
 
-/** Hueco sin citas: espacio en blanco con la misma escala. */
-const Gap = ({ minutes }: { minutes: number }) => {
-  const h = Math.max(0, Math.round(minutes * PX_PER_MIN))
-  if (h < 4) return null
-  return <Section style={{ height: `${h}px`, lineHeight: `${h}px`, fontSize: '0px' }}>&nbsp;</Section>
+/** Trocea el día de un profesional en citas y huecos, en franjas de 15 min. */
+const buildLane = (st: StylistDay, dayStart: number, dayEnd: number): LaneSeg[] => {
+  const appts = st.appointments.map(timed).sort((a, b) => a.start - b.start)
+  const segs: LaneSeg[] = []
+  let cursor = dayStart
+  for (const a of appts) {
+    const start = Math.max(a.start, dayStart)
+    const end = Math.min(a.end, dayEnd)
+    if (start > cursor) segs.push({ kind: 'gap', slots: Math.round((start - cursor) / SLOT_MIN) })
+    const slots = Math.max(1, Math.round((end - start) / SLOT_MIN))
+    segs.push({ kind: 'appt', a, slots })
+    cursor = Math.max(cursor, end)
+  }
+  if (cursor < dayEnd) segs.push({ kind: 'gap', slots: Math.round((dayEnd - cursor) / SLOT_MIN) })
+  return segs.filter((sg) => sg.slots > 0)
 }
 
-/** Columna de profesional: cabecera + línea de tiempo con escala píxel/minuto. */
-const StylistColumn = ({
-  st,
-  width,
-  dayStart,
-}: {
-  st: StylistDay
-  width: string
-  dayStart: number
-}) => {
-  const color = st.color || PRIMARY
-  const appts = st.appointments.map(timed).sort((a, b) => a.start - b.start)
-
-  const blocks: React.ReactNode[] = []
-  let cursor = dayStart
-  appts.forEach((a, i) => {
-    if (a.start > cursor) blocks.push(<Gap key={`gap-${i}`} minutes={a.start - cursor} />)
-    const heightPx = Math.max(MIN_BLOCK_PX, Math.round((a.end - a.start) * PX_PER_MIN))
-    blocks.push(
-      <Row key={`t-${i}`}>
-        <Column style={{ width: '44px', verticalAlign: 'top' as const }}>
-          <Text style={{ fontSize: '11px', fontWeight: 700 as const, color: MUTED, margin: 0, lineHeight: 1.3 }}>
-            {a.time}
-          </Text>
-        </Column>
-        <Column style={{ verticalAlign: 'top' as const }}>
-          <ApptBlock a={a} color={color} heightPx={heightPx} />
-        </Column>
-      </Row>,
-    )
-    cursor = Math.max(cursor, a.end)
-  })
-
+/** Cita dentro de la rejilla: alto = duración, sin desplazar a los demás carriles. */
+const ApptCell = ({ a, color, slots }: { a: TimedAppt; color: string; slots: number }) => {
+  const h = slots * SLOT_PX - 3
   return (
-    <Column style={{ width, verticalAlign: 'top' as const, padding: '0 5px' }}>
-      <Section
+    <td
+      rowSpan={slots}
+      style={{
+        height: `${slots * SLOT_PX}px`,
+        verticalAlign: 'top',
+        padding: '0 5px 2px 0',
+      }}
+    >
+      <div
         style={{
-          borderRadius: '14px',
-          backgroundColor: s.panel.backgroundColor,
-          border: `1px solid ${LINE}`,
-          padding: '10px 10px 12px',
+          height: `${h}px`,
+          borderRadius: '8px',
+          backgroundColor: softBg(color),
+          borderLeft: `3px solid ${color}`,
+          padding: '4px 7px',
+          overflow: 'hidden',
         }}
       >
-        <Row>
-          <Column style={{ verticalAlign: 'middle' as const }}>
-            <Section
-              style={{
-                display: 'inline-block',
-                borderRadius: '999px',
-                backgroundColor: color,
-                padding: '4px 10px',
-              }}
-            >
-              <Text style={{ fontSize: '12px', fontWeight: 700 as const, color: '#ffffff', margin: 0 }}>
-                {st.name}
-              </Text>
-            </Section>
-          </Column>
-          <Column style={{ verticalAlign: 'middle' as const, textAlign: 'right' as const }}>
-            <Text style={{ ...s.label, margin: 0 }}>
-              {st.appointments.length} {st.appointments.length === 1 ? 'cita' : 'citas'}
-            </Text>
-          </Column>
-        </Row>
-        <Section style={{ height: '10px', lineHeight: '10px', fontSize: '0px' }}>&nbsp;</Section>
-        {appts.length === 0 ? (
-          <Text style={{ ...s.muted, textAlign: 'center' as const, margin: '12px 0' }}>Sin citas hoy</Text>
-        ) : (
-          <>
-            {blocks}
-            <Row>
-              <Column style={{ width: '44px', verticalAlign: 'top' as const }}>
-                <Text style={{ fontSize: '11px', fontWeight: 700 as const, color: MUTED, margin: 0, lineHeight: 1.3 }}>
-                  {fromMin(cursor)}
-                </Text>
-              </Column>
-              <Column>&nbsp;</Column>
-            </Row>
-          </>
-        )}
-      </Section>
-    </Column>
+        <p
+          style={{
+            fontSize: slots >= 2 ? '12px' : '11px',
+            fontWeight: 700,
+            color: INK,
+            margin: 0,
+            lineHeight: 1.25,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {a.time} · {a.customerName}
+          {a.isNew ? <span style={{ color: '#98329A' }}> · nueva</span> : null}
+        </p>
+        {slots >= 2 ? (
+          <p
+            style={{
+              fontSize: '11px',
+              color: '#5c6070',
+              margin: '1px 0 0',
+              lineHeight: 1.25,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {a.services}
+            {a.price ? <span style={{ color: PRIMARY, fontWeight: 700 }}> · {eur(a.price)}</span> : null}
+          </p>
+        ) : null}
+        {slots >= 4 && a.phone ? (
+          <p style={{ fontSize: '11px', color: MUTED, margin: '2px 0 0', lineHeight: 1.25 }}>{a.phone}</p>
+        ) : null}
+      </div>
+    </td>
   )
 }
 
-const chunk = <T,>(arr: T[], size: number): T[][] => {
-  const out: T[][] = []
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size))
-  return out
+/** Rejilla completa: regla de horas + un carril por profesional, escala común. */
+const AgendaGrid = ({ stylists }: { stylists: StylistDay[] }) => {
+  const all = stylists.flatMap((st) => st.appointments.map(timed))
+  const dayStart = all.length ? Math.floor(Math.min(...all.map((a) => a.start)) / 60) * 60 : 9 * 60
+  const dayEnd = all.length ? Math.ceil(Math.max(...all.map((a) => a.end)) / 60) * 60 : 18 * 60
+  const totalSlots = Math.max(1, Math.round((dayEnd - dayStart) / SLOT_MIN))
+
+  const lanes = stylists.map((st) => ({ st, color: st.color || PRIMARY, segs: buildLane(st, dayStart, dayEnd) }))
+
+  // Puntero por carril: las citas solo se pintan en la franja donde empiezan
+  // (su rowSpan cubre el resto); los huecos se pintan franja a franja.
+  const laneAt = lanes.map(({ segs }) => {
+    const bySlot = new Map<number, LaneSeg>()
+    let cur = 0
+    for (const seg of segs) {
+      if (seg.kind === 'gap') {
+        for (let i = 0; i < seg.slots; i++) bySlot.set(cur + i, { kind: 'gap', slots: 1 })
+      } else {
+        bySlot.set(cur, seg)
+      }
+      cur += seg.slots
+    }
+    return bySlot
+  })
+
+  const laneWidth = `${Math.floor((100 - 8) / lanes.length)}%`
+  const gridRows: React.ReactNode[] = []
+
+  for (let slot = 0; slot < totalSlots; slot++) {
+    const minutes = dayStart + slot * SLOT_MIN
+    const isHour = minutes % 60 === 0
+    const cells: React.ReactNode[] = [
+      <td
+        key="ruler"
+        style={{
+          width: RULER_W,
+          height: `${SLOT_PX}px`,
+          verticalAlign: 'top',
+          textAlign: 'right',
+          padding: '0 8px 0 0',
+          fontSize: isHour ? '11px' : '1px',
+          fontWeight: 700,
+          color: isHour ? MUTED : '#ffffff',
+          lineHeight: 1,
+        }}
+      >
+        {isHour ? fromMin(minutes) : ' '}
+      </td>,
+    ]
+    lanes.forEach(({ color }, li) => {
+      const seg = laneAt[li].get(slot)
+      if (!seg) return // cubierto por el rowSpan de una cita anterior
+      if (seg.kind === 'gap') {
+        cells.push(
+          <td
+            key={`g-${li}`}
+            style={{
+              height: `${SLOT_PX}px`,
+              borderTop: isHour ? `1px solid ${LINE}` : '1px solid transparent',
+              padding: '0 5px 0 0',
+              fontSize: '1px',
+              lineHeight: 1,
+            }}
+          >
+            &nbsp;
+          </td>,
+        )
+      } else {
+        cells.push(<ApptCell key={`a-${li}`} a={seg.a} color={color} slots={seg.slots} />)
+      }
+    })
+    gridRows.push(<tr key={`slot-${slot}`}>{cells}</tr>)
+  }
+
+  return (
+    <Section
+      style={{
+        borderRadius: '14px',
+        backgroundColor: '#ffffff',
+        border: `1px solid ${LINE}`,
+        padding: '12px 10px 14px',
+      }}
+    >
+      {/* Una sola tabla con layout fijo: regla + carriles alineados a la misma escala */}
+      <table
+        role="presentation"
+        cellPadding={0}
+        cellSpacing={0}
+        style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse' }}
+      >
+        <tbody>
+          <tr>
+            <td style={{ width: RULER_W }}>&nbsp;</td>
+            {lanes.map(({ st, color }) => (
+              <td key={st.name} style={{ width: laneWidth, padding: '0 5px 8px 0', verticalAlign: 'bottom' }}>
+                <div
+                  style={{
+                    borderRadius: '999px',
+                    backgroundColor: color,
+                    padding: '4px 0',
+                    textAlign: 'center',
+                  }}
+                >
+                  <p style={{ fontSize: '12px', fontWeight: 700, color: '#ffffff', margin: 0 }}>
+                    {st.name}
+                  </p>
+                </div>
+              </td>
+            ))}
+          </tr>
+          {gridRows}
+        </tbody>
+      </table>
+    </Section>
+  )
 }
 
 const Email = ({
@@ -225,102 +283,79 @@ const Email = ({
   lastTime,
   stylists = [],
   panelUrl = 'https://www.glowapp.app/admin',
-}: Props) => {
-  const perRow = stylists.length >= 3 ? 3 : 2
-  const width = `${Math.round(100 / perRow)}%`
-  const rows = chunk(stylists, perRow)
+}: Props) => (
+  <BrandEmail
+    preview={`${totalCount} citas hoy en ${tenantName}${firstTime ? ` · desde las ${firstTime}` : ''}`}
+    logoUrl={tenantLogoUrl || undefined}
+    logoAlt={tenantName}
+    footerNote={`Agenda del día de ${tenantName}`}
+    maxWidth="760px"
+  >
+    <Section style={{ ...s.content, textAlign: 'center' as const }}>
+      <Text style={s.badge}>Agenda de hoy</Text>
+      <Heading style={s.h1}>
+        {totalCount === 0 ? 'Hoy no tienes citas' : `Hoy tienes ${totalCount} ${totalCount === 1 ? 'cita' : 'citas'}`}
+      </Heading>
+      <Text style={s.lead}>
+        {dateLabel ? (
+          <>
+            <strong style={s.strong}>{dateLabel}</strong> en{' '}
+          </>
+        ) : null}
+        <strong style={s.strong}>{tenantName}</strong>. Toda la agenda de un vistazo, aunque te falle la
+        conexión.
+      </Text>
+    </Section>
 
-  // Todas las columnas comparten el mismo arranque de día para que se alineen.
-  const allStarts = stylists.flatMap((st) => st.appointments.map((a) => toMin(a.time)))
-  const dayStart = allStarts.length ? Math.floor(Math.min(...allStarts) / 60) * 60 : 9 * 60
-
-  return (
-    <BrandEmail
-      preview={`${totalCount} citas hoy en ${tenantName}${firstTime ? ` · desde las ${firstTime}` : ''}`}
-      logoUrl={tenantLogoUrl || undefined}
-      logoAlt={tenantName}
-      footerNote={`Agenda del día de ${tenantName}`}
-      maxWidth="760px"
-    >
-      <Section style={{ ...s.content, textAlign: 'center' as const }}>
-        <Text style={s.badge}>Agenda de hoy</Text>
-        <Heading style={s.h1}>
-          {totalCount === 0 ? 'Hoy no tienes citas' : `Hoy tienes ${totalCount} ${totalCount === 1 ? 'cita' : 'citas'}`}
-        </Heading>
-        <Text style={s.lead}>
-          {dateLabel ? (
-            <>
-              <strong style={s.strong}>{dateLabel}</strong> en{' '}
-            </>
-          ) : null}
-          <strong style={s.strong}>{tenantName}</strong>. Toda la agenda de un vistazo, aunque te falle la
-          conexión.
-        </Text>
-      </Section>
-
-      {totalCount > 0 ? (
-        <Section style={s.content}>
-          <Section style={s.panel}>
-            <Row>
-              <Column style={{ width: '25%', verticalAlign: 'top' as const }}>
-                <Text style={s.label}>Citas</Text>
-                <Text style={s.value}>{totalCount}</Text>
-              </Column>
-              <Column style={{ width: '25%', verticalAlign: 'top' as const }}>
-                <Text style={s.label}>Empiezas</Text>
-                <Text style={s.value}>{firstTime || '—'}</Text>
-              </Column>
-              <Column style={{ width: '25%', verticalAlign: 'top' as const }}>
-                <Text style={s.label}>Acabas</Text>
-                <Text style={s.value}>{lastTime || '—'}</Text>
-              </Column>
-              <Column style={{ width: '25%', verticalAlign: 'top' as const }}>
-                <Text style={s.label}>Previsión</Text>
-                <Text style={s.value}>{expectedRevenue > 0 ? eur(expectedRevenue) : '—'}</Text>
-              </Column>
-            </Row>
-          </Section>
-
-          {rows.map((group, ri) => (
-            <Row key={`row-${ri}`} style={{ margin: '0 0 14px' }}>
-              {group.map((st) => (
-                <StylistColumn key={st.name} st={st} width={width} dayStart={dayStart} />
-              ))}
-              {group.length < perRow
-                ? Array.from({ length: perRow - group.length }).map((_, i) => (
-                    <Column key={`fill-${i}`} style={{ width, verticalAlign: 'top' as const }}>
-                      &nbsp;
-                    </Column>
-                  ))
-                : null}
-            </Row>
-          ))}
-        </Section>
-      ) : (
-        <Section style={s.content}>
-          <Section style={{ ...s.panel, textAlign: 'center' as const }}>
-            <Text style={{ ...s.text, margin: 0 }}>
-              Día libre de citas. Buen momento para publicar algo o llamar a las clientas que hace tiempo
-              que no vienen.
-            </Text>
-          </Section>
-        </Section>
-      )}
-
+    {totalCount > 0 ? (
       <Section style={s.content}>
-        <Section style={s.ctaWrap}>
-          <Button style={s.button} href={panelUrl}>
-            Abrir la agenda
-          </Button>
+        <Section style={s.panel}>
+          <Row>
+            <Column style={{ width: '25%', verticalAlign: 'top' as const }}>
+              <Text style={s.label}>Citas</Text>
+              <Text style={s.value}>{totalCount}</Text>
+            </Column>
+            <Column style={{ width: '25%', verticalAlign: 'top' as const }}>
+              <Text style={s.label}>Empiezas</Text>
+              <Text style={s.value}>{firstTime || '—'}</Text>
+            </Column>
+            <Column style={{ width: '25%', verticalAlign: 'top' as const }}>
+              <Text style={s.label}>Acabas</Text>
+              <Text style={s.value}>{lastTime || '—'}</Text>
+            </Column>
+            <Column style={{ width: '25%', verticalAlign: 'top' as const }}>
+              <Text style={s.label}>Previsión</Text>
+              <Text style={s.value}>{expectedRevenue > 0 ? eur(expectedRevenue) : '—'}</Text>
+            </Column>
+          </Row>
         </Section>
-        <Text style={{ ...s.muted, textAlign: 'center' as const, margin: '12px 0 24px' }}>
-          Sin conexión, apunta los cobros en papel y luego regístralos en Caja poniendo la fecha del día
-          real: los números te cuadran igual.
-        </Text>
+
+        <AgendaGrid stylists={stylists} />
       </Section>
-    </BrandEmail>
-  )
-}
+    ) : (
+      <Section style={s.content}>
+        <Section style={{ ...s.panel, textAlign: 'center' as const }}>
+          <Text style={{ ...s.text, margin: 0 }}>
+            Día libre de citas. Buen momento para publicar algo o llamar a las clientas que hace tiempo
+            que no vienen.
+          </Text>
+        </Section>
+      </Section>
+    )}
+
+    <Section style={s.content}>
+      <Section style={s.ctaWrap}>
+        <Button style={s.button} href={panelUrl}>
+          Abrir la agenda
+        </Button>
+      </Section>
+      <Text style={{ ...s.muted, textAlign: 'center' as const, margin: '12px 0 24px' }}>
+        Sin conexión, apunta los cobros en papel y luego regístralos en Caja poniendo la fecha del día
+        real: los números te cuadran igual.
+      </Text>
+    </Section>
+  </BrandEmail>
+)
 
 export const template = {
   component: Email,
@@ -349,6 +384,7 @@ export const template = {
         name: 'Desiree',
         color: '#35AFC4',
         appointments: [
+          { time: '10:00', endTime: '10:30', customerName: 'Sara Vidal', services: 'Recogido', price: 20 },
           { time: '16:00', endTime: '17:00', customerName: 'Ana Pons', phone: '+34 600 555 666', services: 'Manicura', price: 25 },
           { time: '17:00', endTime: '18:00', customerName: 'Nuria Bosch', services: 'Corte', price: 30 },
         ],
