@@ -165,12 +165,17 @@ const AgendaGrid = ({ stylists }: { stylists: StylistDay[] }) => {
 
   const lanes = stylists.map((st) => ({ st, color: st.color || PRIMARY, segs: buildLane(st, dayStart, dayEnd) }))
 
-  // Puntero por carril: qué segmento empieza en cada franja.
+  // Puntero por carril: las citas solo se pintan en la franja donde empiezan
+  // (su rowSpan cubre el resto); los huecos se pintan franja a franja.
   const laneAt = lanes.map(({ segs }) => {
     const bySlot = new Map<number, LaneSeg>()
     let cur = 0
     for (const seg of segs) {
-      bySlot.set(cur, seg)
+      if (seg.kind === 'gap') {
+        for (let i = 0; i < seg.slots; i++) bySlot.set(cur + i, { kind: 'gap', slots: 1 })
+      } else {
+        bySlot.set(cur, seg)
+      }
       cur += seg.slots
     }
     return bySlot
