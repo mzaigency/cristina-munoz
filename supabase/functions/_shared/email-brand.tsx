@@ -126,7 +126,7 @@ export const BrandEmail = ({ preview, logoUrl, logoAlt = 'Glowapp', footerNote, 
     <Preview>{preview}</Preview>
     <Body style={styles.main}>
       <Section style={styles.outer}>
-        <Container style={styles.card}>
+        <Container style={maxWidth ? { ...styles.card, maxWidth } : styles.card}>
           <Section style={styles.bar}>&nbsp;</Section>
           <Section style={styles.header}>
             {logoUrl ? (
