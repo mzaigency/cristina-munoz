@@ -664,7 +664,14 @@ export default function TenantAdmin() {
                                     isSubActive && "scale-125",
                                   )} />
                                 )}
-                                <span className="relative z-10">{sub.label}</span>
+                                 <span className="relative z-10">{sub.label}</span>
+                                 {!locked && hasSubNotif && (
+                                   <NotifBadge
+                                     count={subBadge}
+                                     position="inline"
+                                     className="ml-auto z-10 h-[18px] min-w-[18px] ring-0"
+                                   />
+                                 )}
                               </motion.button>
                             );
                           })}
