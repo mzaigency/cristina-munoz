@@ -538,6 +538,8 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
     setTipAmount("");
     setShowDiscount(false);
     setShowTip(false);
+    setShowBackdate(false);
+    setChargeAt("");
     setWantsInvoice(false);
     setInvoiceData({ fiscalName: "", nif: "", fiscalAddress: "" });
     setSelectedBookingId(null);
