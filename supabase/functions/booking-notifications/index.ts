@@ -313,6 +313,7 @@ serve(async (req) => {
         "Hora",
         tenant_id,
         compound_part,
+        related_booking_id,
         tenants!inner(name)
       `,
       )
@@ -337,25 +338,25 @@ serve(async (req) => {
         if (!booking.user_id) continue;
 
         // Misma visita (servicio compuesto o varios servicios): un solo aviso.
-        const visitKey = visitKeyOf(booking);
+        const groupIds = await fetchGroupIds(booking.id);
+        const visitKey = groupIds[0];
         if (sentVisits2h.has(visitKey)) {
           await supabase.from("bookings").update({ reminder_2h_sent: now.toISOString() }).eq("id", booking.id);
           continue;
         }
 
-        // Otra fila de la misma visita ya avisó en una ejecución anterior
+        // Otra fila de la MISMA visita ya avisó en una ejecución anterior
         const { count: already2h } = await supabase
           .from("bookings")
           .select("id", { count: "exact", head: true })
-          .eq("tenant_id", booking.tenant_id)
-          .eq("user_id", booking.user_id)
-          .eq("Fecha", booking["Fecha"])
+          .in("id", groupIds)
           .not("reminder_2h_sent", "is", null);
         if ((already2h || 0) > 0) {
           sentVisits2h.add(visitKey);
           await supabase.from("bookings").update({ reminder_2h_sent: now.toISOString() }).eq("id", booking.id);
           continue;
         }
+
 
 
         // Check user preferences
