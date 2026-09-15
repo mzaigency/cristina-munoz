@@ -50,6 +50,56 @@ type Booking = {
   related_booking_id?: string;
 };
 
+/** Una visita real al salón: puede ocupar varias filas (servicio compuesto o varios servicios). */
+type Visit = Booking & { ids: string[] };
+
+/**
+ * Agrupa las filas de reservas en visitas reales siguiendo la cadena
+ * `related_booking_id`. Dos citas distintas el mismo día quedan separadas.
+ */
+function groupIntoVisits(rows: Booking[]): Visit[] {
+  const byId = new Map(rows.map((r) => [r.id, r]));
+
+  const rootOf = (row: Booking): string => {
+    const seen = new Set<string>();
+    let current = row;
+    while (current.related_booking_id && byId.has(current.related_booking_id) && !seen.has(current.id)) {
+      seen.add(current.id);
+      current = byId.get(current.related_booking_id)!;
+    }
+    return current.id;
+  };
+
+  const groups = new Map<string, Booking[]>();
+  for (const row of rows) {
+    const key = rootOf(row);
+    const acc = groups.get(key) || [];
+    acc.push(row);
+    groups.set(key, acc);
+  }
+
+  return Array.from(groups.values()).map((group) => {
+    const sorted = [...group].sort((a, b) => (a.Hora || "").localeCompare(b.Hora || ""));
+    const head = sorted[0];
+    const services: any[] = [];
+    for (const row of sorted) {
+      if (!Array.isArray(row.services)) continue;
+      for (const service of row.services) {
+        const already = services.some(
+          (s) => (s?.id && service?.id && s.id === service.id) || (s?.name && s.name === service?.name),
+        );
+        if (!already) services.push(service);
+      }
+    }
+    return {
+      ...head,
+      services: services.length > 0 ? services : head.services,
+      total_duration: sorted.reduce((sum, row) => sum + (row.total_duration || 0), 0) || head.total_duration,
+      ids: sorted.map((row) => row.id),
+    };
+  });
+}
+
 const TABS = [
   { value: "upcoming", label: "Próximas" },
   { value: "waitlist", label: "En espera" },
