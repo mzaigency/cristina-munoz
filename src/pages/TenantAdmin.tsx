@@ -605,11 +605,21 @@ export default function TenantAdmin() {
                       {item.icon}
                     </span>
                     <span className="relative z-10">{item.label}</span>
+                    {hasNotif && (
+                      <NotifBadge
+                        count={badgeCount}
+                        position="inline"
+                        className="ml-auto z-10 h-[18px] min-w-[18px] ring-0"
+                      />
+                    )}
                     {subs.length > 1 && (
                       <motion.div
                         animate={{ rotate: isActive ? 0 : -90 }}
                         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                        className="ml-auto shrink-0 flex items-center justify-center relative z-10"
+                        className={cn(
+                          "shrink-0 flex items-center justify-center relative z-10",
+                          hasNotif ? "ml-1.5" : "ml-auto",
+                        )}
                       >
                         <ChevronDown className="h-3.5 w-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
                       </motion.div>
