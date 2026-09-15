@@ -50,6 +50,56 @@ type Booking = {
   related_booking_id?: string;
 };
 
+/** Una visita real al salón: puede ocupar varias filas (servicio compuesto o varios servicios). */
+type Visit = Booking & { ids: string[] };
+
+/**
+ * Agrupa las filas de reservas en visitas reales siguiendo la cadena
+ * `related_booking_id`. Dos citas distintas el mismo día quedan separadas.
+ */
+function groupIntoVisits(rows: Booking[]): Visit[] {
+  const byId = new Map(rows.map((r) => [r.id, r]));
+
+  const rootOf = (row: Booking): string => {
+    const seen = new Set<string>();
+    let current = row;
+    while (current.related_booking_id && byId.has(current.related_booking_id) && !seen.has(current.id)) {
+      seen.add(current.id);
+      current = byId.get(current.related_booking_id)!;
+    }
+    return current.id;
+  };
+
+  const groups = new Map<string, Booking[]>();
+  for (const row of rows) {
+    const key = rootOf(row);
+    const acc = groups.get(key) || [];
+    acc.push(row);
+    groups.set(key, acc);
+  }
+
+  return Array.from(groups.values()).map((group) => {
+    const sorted = [...group].sort((a, b) => (a.Hora || "").localeCompare(b.Hora || ""));
+    const head = sorted[0];
+    const services: any[] = [];
+    for (const row of sorted) {
+      if (!Array.isArray(row.services)) continue;
+      for (const service of row.services) {
+        const already = services.some(
+          (s) => (s?.id && service?.id && s.id === service.id) || (s?.name && s.name === service?.name),
+        );
+        if (!already) services.push(service);
+      }
+    }
+    return {
+      ...head,
+      services: services.length > 0 ? services : head.services,
+      total_duration: sorted.reduce((sum, row) => sum + (row.total_duration || 0), 0) || head.total_duration,
+      ids: sorted.map((row) => row.id),
+    };
+  });
+}
+
 const TABS = [
   { value: "upcoming", label: "Próximas" },
   { value: "waitlist", label: "En espera" },
@@ -78,8 +128,8 @@ export default function MyBookings() {
       setActiveTab("upcoming");
     }
   }, [tabParam]);
-  const [dateToCancel, setDateToCancel] = useState<string | null>(null);
-  const [cancelingDate, setCancelingDate] = useState<string | null>(null);
+  const [visitToCancel, setVisitToCancel] = useState<Visit | null>(null);
+  const [cancelingVisitId, setCancelingVisitId] = useState<string | null>(null);
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -111,36 +161,34 @@ export default function MyBookings() {
     }
   };
 
-  const handleCancelAllBookingsForDate = async () => {
-    if (!dateToCancel) return;
+  /** Cancela solo la cita seleccionada (todas las filas de esa misma visita). */
+  const handleCancelVisit = async () => {
+    if (!visitToCancel) return;
 
-    setCancelingDate(dateToCancel);
+    setCancelingVisitId(visitToCancel.id);
     try {
-      const bookingsForDate = bookings.filter((b) => b.Fecha === dateToCancel);
-      const bookingIds = bookingsForDate.map((b) => b.id);
-
       const { error: functionError } = await supabase.functions.invoke("cancel-booking", {
-        body: { bookingIds, user: "client" },
+        body: { bookingIds: visitToCancel.ids, user: "client" },
       });
 
       if (functionError) throw functionError;
 
       toast({
-        title: "Citas canceladas",
-        description: `Todas las citas del ${format(parseISODateToLocal(dateToCancel), "dd-MM-yyyy")} han sido canceladas`,
+        title: "Cita cancelada",
+        description: `Tu cita del ${format(parseISODateToLocal(visitToCancel.Fecha), "dd-MM-yyyy")} a las ${formatTimeHHmm(visitToCancel.Hora)} ha sido cancelada`,
       });
 
       await loadBookings();
     } catch (error) {
-      console.error("Error canceling bookings:", error);
+      console.error("Error canceling booking:", error);
       toast({
         title: "Error",
-        description: "No se pudieron cancelar las citas",
+        description: "No se pudo cancelar la cita",
         variant: "destructive",
       });
     } finally {
-      setCancelingDate(null);
-      setDateToCancel(null);
+      setCancelingVisitId(null);
+      setVisitToCancel(null);
     }
   };
 
@@ -185,34 +233,30 @@ export default function MyBookings() {
 
   const today = format(new Date(), "yyyy-MM-dd");
 
-  // Filtrar citas compuestas: solo mostrar la cita principal (part1), no la secundaria (part2)
-  // Para el cliente, un servicio compuesto es UNA sola cita
-  const visibleBookings = bookings.filter((b) => {
-    // Si es parte de un compuesto y es la parte 2, no mostrar
-    if (b.is_part_of_compound && b.compound_part === "part2") {
-      return false;
-    }
-    return true;
-  });
+  // Cada visita real = una tarjeta. Un servicio compuesto (o varios servicios
+  // de la misma cita) se agrupan; dos citas distintas del mismo día NO.
+  const visits = groupIntoVisits(bookings);
 
-  const upcomingBookings = visibleBookings.filter((b) => b.Fecha >= today);
-  const pastBookings = visibleBookings.filter((b) => b.Fecha < today);
   const displayedBookings =
     activeTab === "upcoming"
-      ? upcomingBookings
+      ? visits.filter((v) => v.Fecha >= today)
       : activeTab === "history"
-        ? pastBookings
+        ? visits.filter((v) => v.Fecha < today)
         : [];
 
   // Group by date
   const groupedBookings = displayedBookings.reduce(
-    (acc, booking) => {
-      if (!acc[booking.Fecha]) acc[booking.Fecha] = [];
-      acc[booking.Fecha].push(booking);
+    (acc, visit) => {
+      if (!acc[visit.Fecha]) acc[visit.Fecha] = [];
+      acc[visit.Fecha].push(visit);
       return acc;
     },
-    {} as Record<string, Booking[]>,
+    {} as Record<string, Visit[]>,
   );
+
+  for (const date of Object.keys(groupedBookings)) {
+    groupedBookings[date].sort((a, b) => (a.Hora || "").localeCompare(b.Hora || ""));
+  }
 
   const sortedDates = Object.keys(groupedBookings).sort((a, b) =>
     activeTab === "upcoming"
@@ -384,14 +428,10 @@ export default function MyBookings() {
                           {format(dateObj, "d MMM", { locale: es })}
                         </span>
                       </div>
-                      {activeTab === "upcoming" && (
-                        <button
-                          onClick={() => setDateToCancel(date)}
-                          disabled={cancelingDate === date}
-                          className="text-xs text-destructive font-medium px-3 py-1.5 rounded-full bg-destructive/10 active:bg-destructive/20 transition-colors"
-                        >
-                          {cancelingDate === date ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Cancelar"}
-                        </button>
+                      {activeTab === "upcoming" && groupedBookings[date].length > 1 && (
+                        <span className="text-xs text-muted-foreground">
+                          {groupedBookings[date].length} citas
+                        </span>
                       )}
                     </div>
 
@@ -482,6 +522,18 @@ export default function MyBookings() {
                                 >
                                   Mensaje
                                 </button>
+                                <button
+                                  onClick={() => setVisitToCancel(booking)}
+                                  disabled={cancelingVisitId === booking.id}
+                                  aria-label="Cancelar esta cita"
+                                  className="h-10 px-4 rounded-xl bg-destructive/10 text-sm font-medium text-destructive active:bg-destructive/20 transition-colors disabled:opacity-60"
+                                >
+                                  {cancelingVisitId === booking.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    "Cancelar"
+                                  )}
+                                </button>
                               </div>
                             )}
 
@@ -525,29 +577,35 @@ export default function MyBookings() {
       </AnimatePresence>
 
       {/* Cancel Dialog - iOS style */}
-      <AlertDialog open={!!dateToCancel} onOpenChange={() => setDateToCancel(null)}>
+      <AlertDialog open={!!visitToCancel} onOpenChange={() => setVisitToCancel(null)}>
         <AlertDialogContent className="rounded-3xl max-w-[340px] p-0 overflow-hidden">
           <AlertDialogHeader className="p-6 pb-4 text-center">
             <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
               <X className="h-7 w-7 text-destructive" />
             </div>
-            <AlertDialogTitle className="text-lg">¿Cancelar citas?</AlertDialogTitle>
+            <AlertDialogTitle className="text-lg">¿Cancelar esta cita?</AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              Vas a cancelar todas las citas del{" "}
-              <span className="font-medium text-foreground">
-                {dateToCancel && format(parseISODateToLocal(dateToCancel), "EEEE d 'de' MMMM", { locale: es })}
-              </span>
+              {visitToCancel && (
+                <>
+                  Vas a cancelar tu cita del{" "}
+                  <span className="font-medium text-foreground">
+                    {format(parseISODateToLocal(visitToCancel.Fecha), "EEEE d 'de' MMMM", { locale: es })} a las{" "}
+                    {formatTimeHHmm(visitToCancel.Hora)}
+                  </span>
+                  . Tus otras citas se mantienen.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col border-t border-border/50 p-0 sm:flex-col sm:space-x-0">
             <AlertDialogAction
-              onClick={handleCancelAllBookingsForDate}
+              onClick={handleCancelVisit}
               className="h-14 rounded-none border-b border-border/50 bg-transparent text-destructive font-semibold hover:bg-destructive/5 m-0"
             >
               Sí, cancelar
             </AlertDialogAction>
             <AlertDialogCancel className="h-14 rounded-none bg-transparent text-primary font-semibold hover:bg-primary/5 m-0 border-0">
-              Mantener citas
+              Mantener cita
             </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
