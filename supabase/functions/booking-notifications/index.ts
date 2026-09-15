@@ -159,6 +159,7 @@ serve(async (req) => {
         tenant_id,
         services,
         compound_part,
+        related_booking_id,
         tenants!inner(name, logo_url, address, city, phone, google_maps_url)
       `,
       )
@@ -169,10 +170,38 @@ serve(async (req) => {
       .not("customer_name", "ilike", "%VACACIONES%")
       .order("Hora", { ascending: true });
 
-    // Una visita puede ocupar varias filas (servicio compuesto o varios
-    // servicios en la misma cita): solo se avisa una vez, por la fila más
-    // temprana, y el resto se marca como avisado.
-    const visitKeyOf = (b: any) => `${b.user_id}|${b.tenant_id}|${b["Fecha"]}`;
+    // Una visita = las filas enlazadas por `related_booking_id` (partes de un
+    // servicio compuesto o varios servicios de la misma cita). Dos citas
+    // distintas el mismo día NO son la misma visita: cada una avisa aparte.
+    const groupCache = new Map<string, string[]>();
+    const fetchGroupIds = async (seedId: string): Promise<string[]> => {
+      const cached = groupCache.get(seedId);
+      if (cached) return cached;
+
+      const found = new Set<string>();
+      let pending = [seedId];
+      while (pending.length > 0) {
+        const ids = pending.filter((id) => !found.has(id));
+        if (ids.length === 0) break;
+        ids.forEach((id) => found.add(id));
+
+        const [cur, kids] = await Promise.all([
+          supabase.from("bookings").select("id, related_booking_id").in("id", ids),
+          supabase.from("bookings").select("id, related_booking_id").in("related_booking_id", ids),
+        ]);
+        pending = [];
+        for (const row of [...(cur.data ?? []), ...(kids.data ?? [])] as any[]) {
+          if (!found.has(row.id)) pending.push(row.id);
+          if (row.related_booking_id && !found.has(row.related_booking_id)) pending.push(row.related_booking_id);
+        }
+      }
+
+      const sorted = (found.size > 0 ? [...found] : [seedId]).sort();
+      for (const id of sorted) groupCache.set(id, sorted);
+      return sorted;
+    };
+    // La clave de visita es el id raíz del grupo enlazado.
+    const visitKeyOf = async (b: any) => (await fetchGroupIds(b.id))[0];
     const sentVisits24h = new Set<string>();
 
     if (error24h) {
@@ -185,12 +214,13 @@ serve(async (req) => {
       const servicesByVisit = new Map<string, string[]>();
       for (const b of bookings24h as any[]) {
         if (!b.user_id) continue;
-        const key = visitKeyOf(b);
+        const key = await visitKeyOf(b);
         const names = Array.isArray(b.services) ? b.services.map((s: any) => s?.name).filter(Boolean) : [];
         const acc = servicesByVisit.get(key) || [];
         for (const n of names) if (!acc.includes(n)) acc.push(n);
         servicesByVisit.set(key, acc);
       }
+
 
       for (const booking of bookings24h) {
         if (!booking.user_id) continue;
