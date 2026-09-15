@@ -225,7 +225,7 @@ serve(async (req) => {
       for (const booking of bookings24h) {
         if (!booking.user_id) continue;
 
-        const visitKey = visitKeyOf(booking);
+        const visitKey = await visitKeyOf(booking);
         if (sentVisits24h.has(visitKey)) {
           await supabase.from("bookings").update({ reminder_sent: now.toISOString() }).eq("id", booking.id);
           continue;
