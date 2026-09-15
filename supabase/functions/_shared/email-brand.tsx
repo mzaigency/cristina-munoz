@@ -115,10 +115,12 @@ interface ShellProps {
   logoAlt?: string
   /** Texto del footer antes de la firma de Glowapp */
   footerNote?: React.ReactNode
+  /** Ancho máximo de la tarjeta (por defecto 520px) */
+  maxWidth?: string
   children: React.ReactNode
 }
 
-export const BrandEmail = ({ preview, logoUrl, logoAlt = 'Glowapp', footerNote, children }: ShellProps) => (
+export const BrandEmail = ({ preview, logoUrl, logoAlt = 'Glowapp', footerNote, maxWidth, children }: ShellProps) => (
   <Html lang="es" dir="ltr">
     <Head />
     <Preview>{preview}</Preview>
