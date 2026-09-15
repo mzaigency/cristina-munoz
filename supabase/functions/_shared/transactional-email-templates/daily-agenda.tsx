@@ -35,45 +35,128 @@ interface Props {
 const eur = (n: number) =>
   `${(n || 0).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €`
 
-/** Tarjeta de cita con el mismo lenguaje visual que la agenda del panel. */
-const ApptCard = ({ a, color }: { a: Appt; color: string }) => (
+/** Escala de la agenda: 1 minuto = 1 px, como en el panel. */
+const PX_PER_MIN = 1
+/** Alto mínimo de una cita para que quepa el contenido. */
+const MIN_BLOCK_PX = 56
+
+const toMin = (t: string): number => {
+  const m = /^(\d{1,2}):(\d{2})/.exec(t || '')
+  return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : 0
+}
+
+const fromMin = (min: number): string =>
+  `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
+
+interface TimedAppt extends Appt {
+  start: number
+  end: number
+}
+
+const timed = (a: Appt): TimedAppt => {
+  const start = toMin(a.time)
+  const end = a.endTime ? toMin(a.endTime) : start + 60
+  return { ...a, start, end: Math.max(end, start + 15) }
+}
+
+/** Mezcla del color del profesional con blanco, para el fondo suave de la cita. */
+const softBg = (hex: string): string => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '')
+  if (!m) return '#f2f5fb'
+  const n = parseInt(m[1], 16)
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255
+  const mix = (c: number) => Math.round(c + (255 - c) * 0.9)
+  return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`
+}
+
+/** Bloque de cita con alto proporcional a su duración. */
+const ApptBlock = ({ a, color, heightPx }: { a: TimedAppt; color: string; heightPx: number }) => (
   <Section
     style={{
-      borderRadius: '12px',
-      backgroundColor: '#ffffff',
-      border: `1px solid ${LINE}`,
+      height: `${heightPx}px`,
+      borderRadius: '10px',
+      backgroundColor: softBg(color),
       borderLeft: `4px solid ${color}`,
-      padding: '9px 11px',
-      margin: '0 0 7px',
+      padding: '6px 9px',
+      margin: '0 0 2px',
+      overflow: 'hidden',
     }}
   >
-    <Row>
-      <Column style={{ verticalAlign: 'top' as const }}>
-        <Text style={{ fontSize: '13px', fontWeight: 700 as const, color: INK, margin: 0, lineHeight: 1.35 }}>
-          {a.time}
-          {a.endTime ? <span style={{ color: MUTED, fontWeight: 600 as const }}> – {a.endTime}</span> : null}
-        </Text>
-        <Text style={{ fontSize: '14px', fontWeight: 700 as const, color: INK, margin: '3px 0 0', lineHeight: 1.35 }}>
-          {a.customerName}
-          {a.isNew ? <span style={{ color: '#98329A', fontWeight: 700 as const }}> · nueva</span> : null}
-        </Text>
-        <Text style={{ fontSize: '13px', color: '#5c6070', margin: '1px 0 0', lineHeight: 1.4 }}>{a.services}</Text>
-        {a.phone ? (
-          <Text style={{ fontSize: '12px', color: MUTED, margin: '2px 0 0', lineHeight: 1.4 }}>{a.phone}</Text>
-        ) : null}
-      </Column>
-      {a.price ? (
-        <Column style={{ width: '58px', verticalAlign: 'top' as const, textAlign: 'right' as const }}>
-          <Text style={{ fontSize: '13px', fontWeight: 700 as const, color: PRIMARY, margin: 0 }}>{eur(a.price)}</Text>
-        </Column>
-      ) : null}
-    </Row>
+    <Text
+      style={{
+        fontSize: '13px',
+        fontWeight: 700 as const,
+        color: INK,
+        margin: 0,
+        lineHeight: 1.3,
+        whiteSpace: 'nowrap' as const,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}
+    >
+      {a.customerName}
+      {a.isNew ? <span style={{ color: '#98329A' }}> · nueva</span> : null}
+    </Text>
+    <Text
+      style={{
+        fontSize: '12px',
+        color: '#5c6070',
+        margin: '1px 0 0',
+        lineHeight: 1.3,
+        whiteSpace: 'nowrap' as const,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}
+    >
+      {a.services}
+      {a.price ? <span style={{ color: PRIMARY, fontWeight: 700 as const }}> · {eur(a.price)}</span> : null}
+    </Text>
+    {heightPx >= 84 && a.phone ? (
+      <Text style={{ fontSize: '11px', color: MUTED, margin: '2px 0 0', lineHeight: 1.3 }}>{a.phone}</Text>
+    ) : null}
   </Section>
 )
 
-/** Columna de profesional: cabecera de color + sus citas en orden. */
-const StylistColumn = ({ st, width }: { st: StylistDay; width: string }) => {
+/** Hueco sin citas: espacio en blanco con la misma escala. */
+const Gap = ({ minutes }: { minutes: number }) => {
+  const h = Math.max(0, Math.round(minutes * PX_PER_MIN))
+  if (h < 4) return null
+  return <Section style={{ height: `${h}px`, lineHeight: `${h}px`, fontSize: '0px' }}>&nbsp;</Section>
+}
+
+/** Columna de profesional: cabecera + línea de tiempo con escala píxel/minuto. */
+const StylistColumn = ({
+  st,
+  width,
+  dayStart,
+}: {
+  st: StylistDay
+  width: string
+  dayStart: number
+}) => {
   const color = st.color || PRIMARY
+  const appts = st.appointments.map(timed).sort((a, b) => a.start - b.start)
+
+  const blocks: React.ReactNode[] = []
+  let cursor = dayStart
+  appts.forEach((a, i) => {
+    if (a.start > cursor) blocks.push(<Gap key={`gap-${i}`} minutes={a.start - cursor} />)
+    const heightPx = Math.max(MIN_BLOCK_PX, Math.round((a.end - a.start) * PX_PER_MIN))
+    blocks.push(
+      <Row key={`t-${i}`}>
+        <Column style={{ width: '44px', verticalAlign: 'top' as const }}>
+          <Text style={{ fontSize: '11px', fontWeight: 700 as const, color: MUTED, margin: 0, lineHeight: 1.3 }}>
+            {a.time}
+          </Text>
+        </Column>
+        <Column style={{ verticalAlign: 'top' as const }}>
+          <ApptBlock a={a} color={color} heightPx={heightPx} />
+        </Column>
+      </Row>,
+    )
+    cursor = Math.max(cursor, a.end)
+  })
+
   return (
     <Column style={{ width, verticalAlign: 'top' as const, padding: '0 5px' }}>
       <Section
@@ -81,28 +164,46 @@ const StylistColumn = ({ st, width }: { st: StylistDay; width: string }) => {
           borderRadius: '14px',
           backgroundColor: s.panel.backgroundColor,
           border: `1px solid ${LINE}`,
-          padding: '10px 10px 4px',
+          padding: '10px 10px 12px',
         }}
       >
-        <Section
-          style={{
-            height: '4px',
-            lineHeight: '4px',
-            fontSize: '0px',
-            background: color,
-            borderRadius: '999px',
-            margin: '0 0 8px',
-          }}
-        >
-          &nbsp;
-        </Section>
-        <Text style={{ fontSize: '14px', fontWeight: 800 as const, color: INK, margin: '0 0 2px' }}>{st.name}</Text>
-        <Text style={{ ...s.label, margin: '0 0 9px' }}>
-          {st.appointments.length} {st.appointments.length === 1 ? 'cita' : 'citas'}
-        </Text>
-        {st.appointments.map((a, i) => (
-          <ApptCard key={`${a.time}-${i}`} a={a} color={color} />
-        ))}
+        <Row>
+          <Column style={{ verticalAlign: 'middle' as const }}>
+            <Section
+              style={{
+                display: 'inline-block',
+                borderRadius: '999px',
+                backgroundColor: color,
+                padding: '4px 10px',
+              }}
+            >
+              <Text style={{ fontSize: '12px', fontWeight: 700 as const, color: '#ffffff', margin: 0 }}>
+                {st.name}
+              </Text>
+            </Section>
+          </Column>
+          <Column style={{ verticalAlign: 'middle' as const, textAlign: 'right' as const }}>
+            <Text style={{ ...s.label, margin: 0 }}>
+              {st.appointments.length} {st.appointments.length === 1 ? 'cita' : 'citas'}
+            </Text>
+          </Column>
+        </Row>
+        <Section style={{ height: '10px', lineHeight: '10px', fontSize: '0px' }}>&nbsp;</Section>
+        {appts.length === 0 ? (
+          <Text style={{ ...s.muted, textAlign: 'center' as const, margin: '12px 0' }}>Sin citas hoy</Text>
+        ) : (
+          <>
+            {blocks}
+            <Row>
+              <Column style={{ width: '44px', verticalAlign: 'top' as const }}>
+                <Text style={{ fontSize: '11px', fontWeight: 700 as const, color: MUTED, margin: 0, lineHeight: 1.3 }}>
+                  {fromMin(cursor)}
+                </Text>
+              </Column>
+              <Column>&nbsp;</Column>
+            </Row>
+          </>
+        )}
       </Section>
     </Column>
   )
@@ -128,6 +229,10 @@ const Email = ({
   const perRow = stylists.length >= 3 ? 3 : 2
   const width = `${Math.round(100 / perRow)}%`
   const rows = chunk(stylists, perRow)
+
+  // Todas las columnas comparten el mismo arranque de día para que se alineen.
+  const allStarts = stylists.flatMap((st) => st.appointments.map((a) => toMin(a.time)))
+  const dayStart = allStarts.length ? Math.floor(Math.min(...allStarts) / 60) * 60 : 9 * 60
 
   return (
     <BrandEmail
@@ -179,7 +284,7 @@ const Email = ({
           {rows.map((group, ri) => (
             <Row key={`row-${ri}`} style={{ margin: '0 0 14px' }}>
               {group.map((st) => (
-                <StylistColumn key={st.name} st={st} width={width} />
+                <StylistColumn key={st.name} st={st} width={width} dayStart={dayStart} />
               ))}
               {group.length < perRow
                 ? Array.from({ length: perRow - group.length }).map((_, i) => (
