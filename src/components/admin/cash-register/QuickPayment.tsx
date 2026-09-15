@@ -113,6 +113,11 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
   const [tipAmount, setTipAmount] = useState("");
   const [showTip, setShowTip] = useState(false);
 
+  // Cobro de otro día: cuando el salón se queda sin conexión, apunta en papel y
+  // luego lo registra aquí con la fecha real para que la caja cuadre.
+  const [showBackdate, setShowBackdate] = useState(false);
+  const [chargeAt, setChargeAt] = useState("");
+
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastTransaction, setLastTransaction] = useState<any>(null);
 
