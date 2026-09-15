@@ -605,6 +605,7 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
         created_by: user.id,
         tenant_id: tenantId,
         booking_id: selectedBookingId || null,
+        ...(chargeAt ? { created_at: new Date(chargeAt).toISOString() } : {}),
       };
 
       const { data: inserted, error } = await supabase
