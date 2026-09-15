@@ -32,5 +32,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'client-welcome': clientWelcome,
   'booking-otp': bookingOtp,
   'weekly-summary': weeklySummary,
+  'daily-agenda': dailyAgenda,
 }
 
