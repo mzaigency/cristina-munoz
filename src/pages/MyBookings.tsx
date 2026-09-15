@@ -577,29 +577,35 @@ export default function MyBookings() {
       </AnimatePresence>
 
       {/* Cancel Dialog - iOS style */}
-      <AlertDialog open={!!dateToCancel} onOpenChange={() => setDateToCancel(null)}>
+      <AlertDialog open={!!visitToCancel} onOpenChange={() => setVisitToCancel(null)}>
         <AlertDialogContent className="rounded-3xl max-w-[340px] p-0 overflow-hidden">
           <AlertDialogHeader className="p-6 pb-4 text-center">
             <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
               <X className="h-7 w-7 text-destructive" />
             </div>
-            <AlertDialogTitle className="text-lg">¿Cancelar citas?</AlertDialogTitle>
+            <AlertDialogTitle className="text-lg">¿Cancelar esta cita?</AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              Vas a cancelar todas las citas del{" "}
-              <span className="font-medium text-foreground">
-                {dateToCancel && format(parseISODateToLocal(dateToCancel), "EEEE d 'de' MMMM", { locale: es })}
-              </span>
+              {visitToCancel && (
+                <>
+                  Vas a cancelar tu cita del{" "}
+                  <span className="font-medium text-foreground">
+                    {format(parseISODateToLocal(visitToCancel.Fecha), "EEEE d 'de' MMMM", { locale: es })} a las{" "}
+                    {formatTimeHHmm(visitToCancel.Hora)}
+                  </span>
+                  . Tus otras citas se mantienen.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col border-t border-border/50 p-0 sm:flex-col sm:space-x-0">
             <AlertDialogAction
-              onClick={handleCancelAllBookingsForDate}
+              onClick={handleCancelVisit}
               className="h-14 rounded-none border-b border-border/50 bg-transparent text-destructive font-semibold hover:bg-destructive/5 m-0"
             >
               Sí, cancelar
             </AlertDialogAction>
             <AlertDialogCancel className="h-14 rounded-none bg-transparent text-primary font-semibold hover:bg-primary/5 m-0 border-0">
-              Mantener citas
+              Mantener cita
             </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
