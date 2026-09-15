@@ -161,36 +161,34 @@ export default function MyBookings() {
     }
   };
 
-  const handleCancelAllBookingsForDate = async () => {
-    if (!dateToCancel) return;
+  /** Cancela solo la cita seleccionada (todas las filas de esa misma visita). */
+  const handleCancelVisit = async () => {
+    if (!visitToCancel) return;
 
-    setCancelingDate(dateToCancel);
+    setCancelingVisitId(visitToCancel.id);
     try {
-      const bookingsForDate = bookings.filter((b) => b.Fecha === dateToCancel);
-      const bookingIds = bookingsForDate.map((b) => b.id);
-
       const { error: functionError } = await supabase.functions.invoke("cancel-booking", {
-        body: { bookingIds, user: "client" },
+        body: { bookingIds: visitToCancel.ids, user: "client" },
       });
 
       if (functionError) throw functionError;
 
       toast({
-        title: "Citas canceladas",
-        description: `Todas las citas del ${format(parseISODateToLocal(dateToCancel), "dd-MM-yyyy")} han sido canceladas`,
+        title: "Cita cancelada",
+        description: `Tu cita del ${format(parseISODateToLocal(visitToCancel.Fecha), "dd-MM-yyyy")} a las ${formatTimeHHmm(visitToCancel.Hora)} ha sido cancelada`,
       });
 
       await loadBookings();
     } catch (error) {
-      console.error("Error canceling bookings:", error);
+      console.error("Error canceling booking:", error);
       toast({
         title: "Error",
-        description: "No se pudieron cancelar las citas",
+        description: "No se pudo cancelar la cita",
         variant: "destructive",
       });
     } finally {
-      setCancelingDate(null);
-      setDateToCancel(null);
+      setCancelingVisitId(null);
+      setVisitToCancel(null);
     }
   };
 
