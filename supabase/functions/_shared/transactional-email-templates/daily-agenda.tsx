@@ -99,15 +99,15 @@ const buildLane = (st: StylistDay, dayStart: number, dayEnd: number): LaneSeg[] 
 const ApptCell = ({ a, color, slots }: { a: TimedAppt; color: string; slots: number }) => {
   const h = slots * SLOT_PX - 3
   return (
-    <Column
+    <td
       rowSpan={slots}
       style={{
         height: `${slots * SLOT_PX}px`,
-        verticalAlign: 'top' as const,
+        verticalAlign: 'top',
         padding: '0 5px 2px 0',
       }}
     >
-      <Section
+      <div
         style={{
           height: `${h}px`,
           borderRadius: '8px',
@@ -117,42 +117,42 @@ const ApptCell = ({ a, color, slots }: { a: TimedAppt; color: string; slots: num
           overflow: 'hidden',
         }}
       >
-        <Text
+        <p
           style={{
             fontSize: slots >= 2 ? '12px' : '11px',
-            fontWeight: 700 as const,
+            fontWeight: 700,
             color: INK,
             margin: 0,
             lineHeight: 1.25,
-            whiteSpace: 'nowrap' as const,
+            whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
           }}
         >
           {a.time} · {a.customerName}
           {a.isNew ? <span style={{ color: '#98329A' }}> · nueva</span> : null}
-        </Text>
+        </p>
         {slots >= 2 ? (
-          <Text
+          <p
             style={{
               fontSize: '11px',
               color: '#5c6070',
               margin: '1px 0 0',
               lineHeight: 1.25,
-              whiteSpace: 'nowrap' as const,
+              whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
             }}
           >
             {a.services}
-            {a.price ? <span style={{ color: PRIMARY, fontWeight: 700 as const }}> · {eur(a.price)}</span> : null}
-          </Text>
+            {a.price ? <span style={{ color: PRIMARY, fontWeight: 700 }}> · {eur(a.price)}</span> : null}
+          </p>
         ) : null}
         {slots >= 4 && a.phone ? (
-          <Text style={{ fontSize: '11px', color: MUTED, margin: '2px 0 0', lineHeight: 1.25 }}>{a.phone}</Text>
+          <p style={{ fontSize: '11px', color: MUTED, margin: '2px 0 0', lineHeight: 1.25 }}>{a.phone}</p>
         ) : null}
-      </Section>
-    </Column>
+      </div>
+    </td>
   )
 }
 
