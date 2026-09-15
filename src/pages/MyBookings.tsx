@@ -522,6 +522,18 @@ export default function MyBookings() {
                                 >
                                   Mensaje
                                 </button>
+                                <button
+                                  onClick={() => setVisitToCancel(booking)}
+                                  disabled={cancelingVisitId === booking.id}
+                                  aria-label="Cancelar esta cita"
+                                  className="h-10 px-4 rounded-xl bg-destructive/10 text-sm font-medium text-destructive active:bg-destructive/20 transition-colors disabled:opacity-60"
+                                >
+                                  {cancelingVisitId === booking.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    "Cancelar"
+                                  )}
+                                </button>
                               </div>
                             )}
 
