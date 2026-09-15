@@ -188,47 +188,46 @@ const AgendaGrid = ({ stylists }: { stylists: StylistDay[] }) => {
     const minutes = dayStart + slot * SLOT_MIN
     const isHour = minutes % 60 === 0
     const cells: React.ReactNode[] = [
-      <Column
+      <td
         key="ruler"
         style={{
           width: RULER_W,
           height: `${SLOT_PX}px`,
-          verticalAlign: 'top' as const,
-          textAlign: 'right' as const,
+          verticalAlign: 'top',
+          textAlign: 'right',
           padding: '0 8px 0 0',
+          fontSize: isHour ? '11px' : '1px',
+          fontWeight: 700,
+          color: isHour ? MUTED : '#ffffff',
+          lineHeight: 1,
         }}
       >
-        {isHour ? (
-          <Text style={{ fontSize: '11px', fontWeight: 700 as const, color: MUTED, margin: '-6px 0 0', lineHeight: 1 }}>
-            {fromMin(minutes)}
-          </Text>
-        ) : (
-          <Text style={{ fontSize: '1px', color: '#ffffff', margin: 0, lineHeight: 1 }}>&nbsp;</Text>
-        )}
-      </Column>,
+        {isHour ? fromMin(minutes) : ' '}
+      </td>,
     ]
     lanes.forEach(({ color }, li) => {
       const seg = laneAt[li].get(slot)
       if (!seg) return // cubierto por el rowSpan de una cita anterior
       if (seg.kind === 'gap') {
         cells.push(
-          <Column
+          <td
             key={`g-${li}`}
             style={{
-              width: laneWidth,
               height: `${SLOT_PX}px`,
               borderTop: isHour ? `1px solid ${LINE}` : '1px solid transparent',
               padding: '0 5px 0 0',
+              fontSize: '1px',
+              lineHeight: 1,
             }}
           >
-            <Text style={{ fontSize: '1px', color: '#ffffff', margin: 0, lineHeight: 1 }}>&nbsp;</Text>
-          </Column>,
+            &nbsp;
+          </td>,
         )
       } else {
         cells.push(<ApptCell key={`a-${li}`} a={seg.a} color={color} slots={seg.slots} />)
       }
     })
-    gridRows.push(<Row key={`slot-${slot}`}>{cells}</Row>)
+    gridRows.push(<tr key={`slot-${slot}`}>{cells}</tr>)
   }
 
   return (
@@ -240,27 +239,36 @@ const AgendaGrid = ({ stylists }: { stylists: StylistDay[] }) => {
         padding: '12px 10px 14px',
       }}
     >
-      {/* Cabecera de carriles */}
-      <Row>
-        <Column style={{ width: RULER_W }}>&nbsp;</Column>
-        {lanes.map(({ st, color }) => (
-          <Column key={st.name} style={{ width: laneWidth, padding: '0 5px 8px 0', verticalAlign: 'bottom' as const }}>
-            <Section
-              style={{
-                borderRadius: '999px',
-                backgroundColor: color,
-                padding: '4px 0',
-                textAlign: 'center' as const,
-              }}
-            >
-              <Text style={{ fontSize: '12px', fontWeight: 700 as const, color: '#ffffff', margin: 0 }}>
-                {st.name}
-              </Text>
-            </Section>
-          </Column>
-        ))}
-      </Row>
-      {gridRows}
+      {/* Una sola tabla con layout fijo: regla + carriles alineados a la misma escala */}
+      <table
+        role="presentation"
+        cellPadding={0}
+        cellSpacing={0}
+        style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse' }}
+      >
+        <tbody>
+          <tr>
+            <td style={{ width: RULER_W }}>&nbsp;</td>
+            {lanes.map(({ st, color }) => (
+              <td key={st.name} style={{ width: laneWidth, padding: '0 5px 8px 0', verticalAlign: 'bottom' }}>
+                <div
+                  style={{
+                    borderRadius: '999px',
+                    backgroundColor: color,
+                    padding: '4px 0',
+                    textAlign: 'center',
+                  }}
+                >
+                  <p style={{ fontSize: '12px', fontWeight: 700, color: '#ffffff', margin: 0 }}>
+                    {st.name}
+                  </p>
+                </div>
+              </td>
+            ))}
+          </tr>
+          {gridRows}
+        </tbody>
+      </table>
     </Section>
   )
 }
