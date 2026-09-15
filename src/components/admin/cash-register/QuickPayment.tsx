@@ -1737,7 +1737,58 @@ export const QuickPayment = ({ onTransactionCreated, tenantId }: QuickPaymentPro
                   </div>
                 </div>
               </div>
+
+              {/* Fecha del cobro (para volcar lo apuntado a mano) */}
+              <div className="space-y-2">
+                {!showBackdate ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const d = new Date();
+                      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                      setChargeAt(d.toISOString().slice(0, 16));
+                      setShowBackdate(true);
+                    }}
+                    className="text-xs font-bold text-slate-500 hover:text-slate-800 hover:underline cursor-pointer"
+                  >
+                    Este cobro es de otro día
+                  </button>
+                ) : (
+                  <>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Fecha y hora del cobro
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="datetime-local"
+                        value={chargeAt}
+                        max={(() => {
+                          const d = new Date();
+                          d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                          return d.toISOString().slice(0, 16);
+                        })()}
+                        onChange={(e) => setChargeAt(e.target.value)}
+                        className="flex-1 min-w-0 h-10 rounded-xl bg-white border border-slate-200 px-3 text-xs font-medium outline-none text-slate-800"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setChargeAt("");
+                          setShowBackdate(false);
+                        }}
+                        className="text-xs font-bold text-slate-500 hover:underline px-1 cursor-pointer"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      El cobro contará en la caja y en las estadísticas de ese día.
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
+
 
             {/* Footer / Confirmación */}
             <div className="shrink-0 pt-3 border-t border-slate-200 mt-3">
