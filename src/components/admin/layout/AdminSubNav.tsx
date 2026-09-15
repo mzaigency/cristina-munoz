@@ -172,6 +172,9 @@ export function AdminSubNav({
                   >
                     <Icon className="h-3.5 w-3.5 shrink-0" />
                     <span>{item.label}</span>
+                    {!locked && badge > 0 && (
+                      <NotifBadge count={badge} position="inline" className="ml-1 h-[18px] min-w-[18px] ring-0" />
+                    )}
                   </motion.button>
                 );
               })}
