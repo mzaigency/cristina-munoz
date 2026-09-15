@@ -61,8 +61,10 @@ export const logSuperAdminAction = async (
         key: `audit_${fullEntry.id}`,
         value: JSON.stringify(fullEntry),
       })
-      .then(() => {})
-      .catch(() => {});
+      .then(
+        () => {},
+        () => {},
+      );
   } catch (err) {
     console.warn("Could not record audit log:", err);
   }
