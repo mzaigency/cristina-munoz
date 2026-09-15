@@ -19,6 +19,7 @@ import { template as subscriptionPaymentIssue } from './subscription-payment-iss
 import { template as clientWelcome } from './client-welcome.tsx'
 import { template as bookingOtp } from './booking-otp.tsx'
 import { template as weeklySummary } from './weekly-summary.tsx'
+import { template as dailyAgenda } from './daily-agenda.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'booking-confirmation': bookingConfirmation,
@@ -31,5 +32,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'client-welcome': clientWelcome,
   'booking-otp': bookingOtp,
   'weekly-summary': weeklySummary,
+  'daily-agenda': dailyAgenda,
 }
 

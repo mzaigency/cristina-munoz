@@ -76,3 +76,5 @@ project_id = "lyeyzdbplrgqsvyxpfek"
     verify_jwt = false
   [functions.weekly-summary-email]
     verify_jwt = false
+  [functions.daily-agenda-email]
+    verify_jwt = false
