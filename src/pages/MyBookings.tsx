@@ -428,14 +428,10 @@ export default function MyBookings() {
                           {format(dateObj, "d MMM", { locale: es })}
                         </span>
                       </div>
-                      {activeTab === "upcoming" && (
-                        <button
-                          onClick={() => setDateToCancel(date)}
-                          disabled={cancelingDate === date}
-                          className="text-xs text-destructive font-medium px-3 py-1.5 rounded-full bg-destructive/10 active:bg-destructive/20 transition-colors"
-                        >
-                          {cancelingDate === date ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Cancelar"}
-                        </button>
+                      {activeTab === "upcoming" && groupedBookings[date].length > 1 && (
+                        <span className="text-xs text-muted-foreground">
+                          {groupedBookings[date].length} citas
+                        </span>
                       )}
                     </div>
 
