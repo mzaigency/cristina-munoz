@@ -1,6 +1,6 @@
 /// <reference types="npm:@types/react@18.3.1" />
 import * as React from 'npm:react@18.3.1'
-import { Button, Column, Heading, Row, Section, Text } from 'npm:@react-email/components@0.0.22'
+import { Button, Heading, Section, Text } from 'npm:@react-email/components@0.0.22'
 import { BrandEmail, styles as s, PRIMARY, MUTED, LINE, INK } from '../email-brand.tsx'
 import type { TemplateEntry } from './registry.ts'
 
@@ -45,7 +45,6 @@ const fromMin = (min: number): string =>
 
 const telHref = (phone: string): string => `tel:${phone.replace(/[^+\d]/g, '')}`
 
-/** Mezcla del color del profesional con blanco, para el fondo suave de la cita. */
 const softBg = (hex: string): string => {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex || '')
   if (!m) return '#f2f5fb'
@@ -55,12 +54,6 @@ const softBg = (hex: string): string => {
   return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`
 }
 
-/**
- * Agenda del día pensada para leerse sin conexión y en el móvil:
- * un bloque por cita que SIEMPRE muestra hora, clienta, servicio y precio,
- * y los ratos libres como líneas compactas entre citas (útiles para encajar
- * llamadas). El teléfono es un enlace tel: para llamar tocando.
- */
 const ApptBlock = ({ a, color }: { a: Appt; color: string }) => (
   <table
     role="presentation"
@@ -120,7 +113,6 @@ const ApptBlock = ({ a, color }: { a: Appt; color: string }) => (
   </table>
 )
 
-/** Línea compacta para el rato libre entre dos citas. */
 const GapLine = ({ from, to }: { from: string; to: string }) => (
   <p
     style={{
@@ -136,16 +128,83 @@ const GapLine = ({ from, to }: { from: string; to: string }) => (
   </p>
 )
 
-const StylistSection = ({ st }: { st: StylistDay }) => {
-  const color = st.color || PRIMARY
-  const appts = [...st.appointments].sort((a, b) => toMin(a.time) - toMin(b.time))
+const Legend = ({ stylists }: { stylists: StylistDay[] }) => {
+  const items = stylists
+    .filter((st) => st.appointments.length > 0)
+    .map((st) => ({ ...st, color: st.color || PRIMARY }))
+
+  if (items.length === 0) return null
+
+  return (
+    <Section
+      style={{
+        borderRadius: '14px',
+        backgroundColor: '#ffffff',
+        border: `1px solid ${LINE}`,
+        padding: '12px',
+        margin: '0 0 12px',
+      }}
+    >
+      <Text style={{ ...s.label, margin: '0 0 8px' }}>Profesionales</Text>
+      <table role="presentation" cellPadding={0} cellSpacing={0} style={{ width: '100%' }}>
+        <tbody>
+          <tr>
+            {items.map((st, i) => (
+              <td
+                key={st.name}
+                style={{
+                  verticalAlign: 'middle',
+                  paddingRight: i < items.length - 1 ? '10px' : '0',
+                  paddingBottom: '6px',
+                }}
+              >
+                <table role="presentation" cellPadding={0} cellSpacing={0}>
+                  <tbody>
+                    <tr>
+                      <td
+                        style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '999px',
+                          backgroundColor: st.color,
+                          padding: '0',
+                        }}
+                      >
+                        &nbsp;
+                      </td>
+                      <td style={{ paddingLeft: '6px', verticalAlign: 'middle' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: INK }}>{st.name}</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </Section>
+  )
+}
+
+const Timeline = ({ stylists }: { stylists: StylistDay[] }) => {
+  const colorOf = (name: string) => {
+    const st = stylists.find((s) => s.name === name)
+    return st?.color || PRIMARY
+  }
+
+  const all = stylists
+    .flatMap((st) => st.appointments.map((a) => ({ ...a, stylistName: st.name })))
+    .sort((a, b) => toMin(a.time) - toMin(b.time) || a.customerName.localeCompare(b.customerName))
 
   const items: React.ReactNode[] = []
   let cursor: number | null = null
-  appts.forEach((a, i) => {
+  all.forEach((a, i) => {
     const start = toMin(a.time)
-    if (cursor !== null && start > cursor) items.push(<GapLine key={`g-${i}`} from={fromMin(cursor)} to={a.time} />)
-    items.push(<ApptBlock key={`a-${i}`} a={a} color={color} />)
+    if (cursor !== null && start > cursor) {
+      items.push(<GapLine key={`g-${i}`} from={fromMin(cursor)} to={a.time} />)
+    }
+    items.push(<ApptBlock key={`a-${i}`} a={a} color={colorOf(a.stylistName)} />)
     cursor = a.endTime ? toMin(a.endTime) : start + 60
   })
 
@@ -159,32 +218,6 @@ const StylistSection = ({ st }: { st: StylistDay }) => {
         margin: '0 0 12px',
       }}
     >
-      <table role="presentation" cellPadding={0} cellSpacing={0} style={{ width: '100%', margin: '0 0 10px' }}>
-        <tbody>
-          <tr>
-            <td style={{ verticalAlign: 'middle' }}>
-              <span
-                style={{
-                  display: 'inline-block',
-                  borderRadius: '999px',
-                  backgroundColor: color,
-                  padding: '5px 14px',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  color: '#ffffff',
-                }}
-              >
-                {st.name}
-              </span>
-            </td>
-            <td style={{ verticalAlign: 'middle', textAlign: 'right' }}>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: MUTED }}>
-                {appts.length} {appts.length === 1 ? 'cita' : 'citas'}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
       {items}
     </Section>
   )
@@ -227,29 +260,32 @@ const Email = ({
     {totalCount > 0 ? (
       <Section style={s.content}>
         <Section style={s.panel}>
-          <Row>
-            <Column style={{ width: '25%', verticalAlign: 'top' as const }}>
-              <Text style={s.label}>Citas</Text>
-              <Text style={s.value}>{totalCount}</Text>
-            </Column>
-            <Column style={{ width: '25%', verticalAlign: 'top' as const }}>
-              <Text style={s.label}>Empiezas</Text>
-              <Text style={s.value}>{firstTime || '—'}</Text>
-            </Column>
-            <Column style={{ width: '25%', verticalAlign: 'top' as const }}>
-              <Text style={s.label}>Acabas</Text>
-              <Text style={s.value}>{lastTime || '—'}</Text>
-            </Column>
-            <Column style={{ width: '25%', verticalAlign: 'top' as const }}>
-              <Text style={s.label}>Previsión</Text>
-              <Text style={s.value}>{expectedRevenue > 0 ? eur(expectedRevenue) : '—'}</Text>
-            </Column>
-          </Row>
+          <table role="presentation" cellPadding={0} cellSpacing={0} style={{ width: '100%' }}>
+            <tbody>
+              <tr>
+                <td style={{ width: '25%', verticalAlign: 'top' }}>
+                  <Text style={s.label}>Citas</Text>
+                  <Text style={s.value}>{totalCount}</Text>
+                </td>
+                <td style={{ width: '25%', verticalAlign: 'top' }}>
+                  <Text style={s.label}>Empiezas</Text>
+                  <Text style={s.value}>{firstTime || '—'}</Text>
+                </td>
+                <td style={{ width: '25%', verticalAlign: 'top' }}>
+                  <Text style={s.label}>Acabas</Text>
+                  <Text style={s.value}>{lastTime || '—'}</Text>
+                </td>
+                <td style={{ width: '25%', verticalAlign: 'top' }}>
+                  <Text style={s.label}>Previsión</Text>
+                  <Text style={s.value}>{expectedRevenue > 0 ? eur(expectedRevenue) : '—'}</Text>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </Section>
 
-        {stylists.map((st) => (
-          <StylistSection key={st.name} st={st} />
-        ))}
+        <Legend stylists={stylists} />
+        <Timeline stylists={stylists} />
       </Section>
     ) : (
       <Section style={s.content}>
@@ -286,7 +322,7 @@ export const template = {
   previewData: {
     tenantName: 'Cristina Muñoz Perruqueria',
     dateLabel: 'martes 15 de septiembre',
-    totalCount: 4,
+    totalCount: 5,
     expectedRevenue: 210,
     firstTime: '09:30',
     lastTime: '18:00',
@@ -297,6 +333,7 @@ export const template = {
         appointments: [
           { time: '09:30', endTime: '10:30', customerName: 'Laura Gil', phone: '+34 600 111 222', services: 'Corte y peinado', price: 35 },
           { time: '11:00', endTime: '13:00', customerName: 'Marta Ruiz', phone: '+34 600 333 444', services: 'Tinte + Corte', price: 85, isNew: true },
+          { time: '15:00', endTime: '16:00', customerName: 'Elena Sol', phone: '+34 600 777 888', services: 'Mechas', price: 60 },
         ],
       },
       {
@@ -305,7 +342,6 @@ export const template = {
         appointments: [
           { time: '10:00', endTime: '10:30', customerName: 'Sara Vidal', services: 'Recogido', price: 20 },
           { time: '16:00', endTime: '17:00', customerName: 'Ana Pons', phone: '+34 600 555 666', services: 'Manicura', price: 25 },
-          { time: '17:00', endTime: '18:00', customerName: 'Nuria Bosch', services: 'Corte', price: 30 },
         ],
       },
     ],
