@@ -1,123 +1,49 @@
+# Pantallas del cliente en escritorio: estética premium Glowapp
 
-# Rediseño móvil integral — 4 zonas críticas
+Objetivo: que Inicio, Mis Citas, Mensajes y Mi Perfil se vean como un producto único y cuidado en ordenador, sin las mezclas de estilos actuales, y con los salones en rejilla con botón "Ver más" en vez de scroll infinito.
 
-Objetivo: que las 4 pantallas donde Laura (dueña) y sus clientas pasan más tiempo se sientan **app nativa**, no web adaptada. Prioridad iPhone estrecho (375px), safe areas siempre, pulgar cómodo.
+## Qué está descuadrado hoy
 
-Orden de implementación por impacto sobre conversión y uso diario:
+Comprobado en la pantalla de Inicio a 1440px:
 
----
+- El contenido queda arrinconado a la izquierda con un hueco vacío enorme a la derecha: las tarjetas de las secciones tienen un ancho fijo (310px) dentro de filas deslizables pensadas para móvil.
+- El buscador va centrado con un ancho distinto al del resto del contenido, así que nada queda alineado entre sí.
+- La fila de categorías se corta por el borde derecho, sin final visible ni flechas.
+- Conviven tres lenguajes visuales: chips de colores distintos (naranja, verde, azul), pastilla negra de "Todos", botones flotantes redondos y tarjetas con sombras diferentes.
+- El menú lateral usa otro registro: botón con degradado, subrayados y tipografías que no casan con el contenido.
 
-## 1. Booking Flow móvil (`ServiceSelection`, `DateTimeSelection`, `BookingSummaryMobile`)
+## Qué se hará
 
-**Problemas actuales**
-- 4 pasos con `BookingSummaryMobile` fijo abajo (z-9999) que **pisa el CTA "Continuar"** de cada paso.
-- El resumen expandible ocupa demasiado alto cuando tiene 3+ servicios → tapa el calendario.
-- Grid de servicios en 2 columnas con tarjetas altas: mucho scroll para ver 5-6 servicios.
-- `DateTimeSelection`: días de la semana en fila horizontal apretada + slots en grid 3-col con targets <44px.
-- Progress "Paso X de 4" está duplicado (arriba y dentro del summary).
+**1. Una sola rejilla de contenido**
+- Mismo ancho y márgenes para cabecera, buscador, filtros y contenido: todo alineado en la misma columna centrada.
+- En escritorio los salones pasan a rejilla de 3 (y 4 en pantallas grandes) por sección, con tarjetas que crecen al ancho disponible. En móvil se mantiene la fila deslizable actual, que ahí funciona bien.
+- Cada sección muestra una primera tanda y un botón "Ver más" que despliega el resto — nada de scroll infinito ni carga automática.
 
-**Rediseño**
-- **Header sticky compacto** (56px): back + título del paso + progress bar fino (4 segmentos, 3px alto). Elimina el "Paso X de 4" duplicado.
-- **BookingSummaryMobile como barra minimal** (56px colapsado): solo total + duración + CTA primario del paso (Continuar/Confirmar). El CTA vive DENTRO de la barra → un solo elemento fijo, no dos capas superpuestas. Sheet expandible tira hacia arriba para ver detalle.
-- **Selector de servicios**: lista vertical con filas compactas (72px alto, checkbox táctil grande a la derecha, precio + duración a la izquierda del check). Categorías como chips sticky arriba si hay >1 categoría.
-- **DateTimeSelection**: 
-  - Selector de día = carrusel horizontal snap-scroll (7 días visibles a la vez, chip 56×64px con día + número).
-  - Slots en 2 columnas (no 3) con altura 48px, tipografía 16px, estados claros (disponible/lleno/seleccionado).
-  - Sticky "Mañana / Tarde / Noche" como segmented control arriba de la grilla.
-- **Confirmación (paso 4)**: ver sección 2.
+**2. Tarjetas de salón premium**
+- Una sola forma de tarjeta: foto grande con esquinas de marca, nombre, descripción a dos líneas, ciudad y valoración en su sitio fijo, y borde/sombra suaves iguales en todas.
+- Las etiquetas ("Huecos hoy", "Nuevo", "Popular", "Verificado") se unifican en un único estilo de marca en vez de cinco colores distintos.
+- Al pasar el ratón: elevación sutil y ligero acercamiento de la foto, con el easing de marca.
 
-**Safe areas**: barra inferior con `pb-[env(safe-area-inset-bottom)]`. Header con `pt-[env(safe-area-inset-top)]` solo si es fullscreen (no en overlay).
+**3. Filtros y buscador**
+- Fila de categorías con un solo estilo de pastilla (activa en azul de marca, resto neutra), con contador cuando aplique, y en escritorio repartida sin corte lateral.
+- Buscador con el ancho del contenido, borde y sombra de marca, y el botón de enviar en el degradado Glowapp (único acento fuerte de la pantalla).
+- El conmutador Descubrir/Actividad se integra en la cabecera en lugar de flotar centrado.
 
----
+**4. Menú lateral**
+- Tipografía, radios, colores y espaciados de los tokens de marca; activo marcado con color y peso, sin degradados sueltos.
+- Pie del menú con una sola acción principal y el resto en secundario.
 
-## 2. BookingConfirmation móvil
-
-**Problemas actuales**
-- Card grande con logo del salón + resumen + formulario apilado → 2 scrolls hasta el botón.
-- Formulario de teléfono (cuando falta) aparece como bloque inline sin jerarquía diferenciada.
-- CTA "Confirmar reserva" se pierde bajo el `BookingSummaryMobile` fijo.
-
-**Rediseño**
-- **Layout de una pantalla sin scroll** en iPhone 13+ (390×844):
-  - Header: "Confirma tu cita" + salón (avatar 32px + nombre).
-  - Resumen compacto en 1 tarjeta: fecha + hora grande (24px), servicios en línea separados por •, duración total + precio total a la derecha.
-  - Datos del cliente: 2-3 campos con labels flotantes (nombre readonly, teléfono si falta, notas opcional colapsable).
-  - CTA gigante primario abajo (dentro de la barra sticky, no bookbar duplicado).
-- **Estado "falta teléfono"**: no bloquea, aparece como campo requerido inline con hint claro "Necesitamos tu móvil para recordarte la cita".
-- Éxito: `SuccessCelebration` fullscreen ya existe, mantenerlo.
-
----
-
-## 3. Agenda móvil (panel admin) — `AgendaView` móvil
-
-**Problemas actuales** (dolor diario de Laura, una mano, entre clientas)
-- Vista día muestra columnas por estilista → en móvil se ven medias columnas y hay scroll horizontal.
-- Citas de <30min quedan visualmente aplastadas.
-- Botón "Nueva cita" flotante compite con la bottom-nav.
-- No hay salto rápido a "ahora".
-
-**Rediseño**
-- **Vista día = una sola columna cronológica** (agrupa multi-estilista con badge de color del pro). Multi-pro solo en tablet+.
-- **Timeline vertical densa**: bloques con hora izquierda (48px ancho), cita a la derecha, color del estilista en la barra izquierda del bloque. Mínimo 56px de alto por cita.
-- **Header sticky**: fecha grande + swipe horizontal para cambiar día + botón "Hoy" cuando no estás en hoy.
-- **Línea "ahora"** roja fina cruzando el timeline, con auto-scroll al abrir.
-- **FAB "+"** con `bottom: calc(80px + env(safe-area-inset-bottom))` para no chocar con nav.
-- **Long-press en cita** → sheet de acciones (cobrar, reprogramar, cancelar). Tap simple → detalle.
-
----
-
-## 4. Landing de tenant en móvil
-
-**Problemas actuales**
-- Hero: Playfair italic + gradiente de marca + foto pelean. En 375px se amontonan.
-- `TenantBookBar` fija abajo se solapa con safe-area/nav.
-- Secciones sin ritmo: servicios, equipo, galería y reseñas tienen todas el mismo peso visual.
-
-**Rediseño**
-- **Hero**: foto full-bleed 100vh con overlay gradient bottom, título editorial (una sola tipografía, no mezclar Playfair + gradiente), CTA único centrado abajo del hero (no en la bookbar duplicado). Nombre del salón + categoría + ciudad como metadata pequeña sobre el título.
-- **TenantBookBar**: solo aparece al hacer scroll pasado el hero (evita duplicar CTA). `pb-[env(safe-area-inset-bottom)]` fijo.
-- **Jerarquía de secciones**: Servicios (primero, denso), Equipo (carrusel horizontal), Galería (grid 2-col), Reseñas (carrusel). Cada sección con `SectionHeader` unificado.
-- **Servicios en móvil**: lista vertical (no grid), fila 72px con nombre + duración + precio. Tap → añadir a reserva.
-
----
-
-## Sistema compartido (crear una vez, usar en las 4 zonas)
-
-- Componente `MobileStickyBar` con slot para CTA y safe-area. Reemplaza `BookingSummaryMobile` inferior + `TenantBookBar` + botones flotantes duplicados.
-- Componente `MobilePageHeader` con back + título + progress opcional + safe-area top.
-- Tokens: espaciados táctiles (`--tap-min: 44px`), altura de barras (`--bar-h: 56px`), z-index unificado (nav: 40, sticky-bar: 50, overlay: 80, modal: 100).
-
----
-
-## Fuera de alcance de este plan
-- No se toca lógica de negocio (edge functions, RLS, hooks de datos).
-- No se rediseña desktop (queda intacto).
-- No se cambian tipografías ni paleta globales.
-
----
+**5. Mis Citas, Mensajes y Mi Perfil**
+- Misma columna, misma cabecera y mismas tarjetas que Inicio: en escritorio las citas pasan a rejilla de dos columnas en vez de una lista estrecha centrada.
+- Mensajes con lista y conversación a dos paneles bien proporcionados en escritorio.
+- Perfil con tarjetas de la misma familia y avatar/datos alineados a la rejilla.
+- Cero cambios en móvil salvo los que hereden de las tarjetas unificadas; se respetan las zonas seguras de iPhone.
 
 ## Detalles técnicos
 
-**Archivos que se tocarán:**
-- `src/components/booking/ServiceSelection.tsx` — lista móvil
-- `src/components/booking/DateTimeSelection.tsx` — carrusel días + slots 2-col
-- `src/components/booking/BookingSummaryMobile.tsx` — barra minimal con CTA integrado
-- `src/components/booking/BookingConfirmation.tsx` — layout una pantalla
-- `src/components/admin/agenda/*` (identificar el componente móvil actual)
-- `src/pages/TenantLanding.tsx` + `src/components/tenant/*` (hero, bookbar, secciones)
-- Nuevos: `src/components/mobile/MobileStickyBar.tsx`, `src/components/mobile/MobilePageHeader.tsx`
-
-**Verificación:**
-- Playwright viewport 390×844 (iPhone 13) + 375×667 (iPhone SE) para cada pantalla.
-- Contraste AA en todos los textos sobre gradiente/foto.
-- `prefers-reduced-motion` respetado.
-
----
-
-## Orden de ejecución sugerido
-1. Sistema compartido (`MobileStickyBar`, `MobilePageHeader`, tokens).
-2. Booking Flow (pasos 1-3) + Confirmation (paso 4) — el flujo completo de una tacada.
-3. Agenda admin móvil.
-4. Landing tenant móvil.
-
-¿Apruebas este alcance o quieres recortar/reordenar antes de que lo implemente?
+- Layout: `AppLayout` define un contenedor único (`glow-container`) reutilizado por `Index`, `MyBookings`, `Messages`, `Profile`; se elimina el desajuste entre `max-w-2xl/3xl` del buscador y `max-w-6xl` del contenido.
+- `FeedSection`: en `md+` renderiza rejilla (`grid` 3/4 col) en lugar de flex con `overflow-x-auto`; `FeedCarouselItem` deja de forzar ancho fijo cuando está en modo rejilla. Estado de sección con tanda inicial + "Ver más" (paso configurable), sustituyendo el crecimiento por scroll de `Index` (`visibleCount`/`ITEMS_PER_PAGE` se reutiliza por sección).
+- `PremiumSalonCard`: unificación de badges en un componente interno de etiqueta con variantes basadas en tokens `--glow-*`; alturas fijas por bloque para que la rejilla no baile.
+- `CategoryPills`: un único estilo con variantes activa/inactiva por tokens; en escritorio `flex-wrap` en vez de scroll horizontal.
+- `ClientSidebar`: colores, radios y tipografía desde tokens; se retira el degradado del botón secundario.
+- Solo capa de presentación: nada de cambios en consultas, hooks de datos ni backend.
