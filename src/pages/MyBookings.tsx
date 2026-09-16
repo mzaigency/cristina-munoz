@@ -268,11 +268,10 @@ export default function MyBookings() {
     return (
       <AppLayout>
         <SEO title="Mis Citas" description="Gestiona tus reservas" canonicalUrl="/mis-citas" noindex={true} />
-        <div className="sticky top-0 z-40 bg-surface/85 backdrop-blur-xl border-b border-line/60 pt-[env(safe-area-inset-top)]">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight">Mis Citas</h1>
-          </div>
-        </div>
+        <ClientPageHeader
+          title="Mis Citas"
+          subtitle="Gestiona tus próximas citas, reprograma o consulta tu historial"
+        />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <BookingSkeleton />
         </div>
