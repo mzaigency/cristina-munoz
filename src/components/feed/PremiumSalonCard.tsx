@@ -5,7 +5,6 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useFollows } from "@/hooks/useFollows";
 import { cn } from "@/lib/utils";
 import { supabaseImage } from "@/lib/supabaseImage";
-import { RecommendationBadge } from "./RecommendationBadge";
 
 interface PremiumSalonCardProps {
   salon: {
