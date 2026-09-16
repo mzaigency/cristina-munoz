@@ -56,6 +56,21 @@ export function PremiumSalonCard({
     toggleFavorite(salon.id);
   };
 
+  // Máximo dos etiquetas, mismo lenguaje visual; el degradado de marca es el único acento
+  const tags = [
+    hasAvailabilityToday
+      ? { label: "Huecos hoy", icon: Zap, accent: true }
+      : null,
+    hasHighRecommendation && !hasAvailabilityToday
+      ? { label: "Para ti", icon: Sparkles, accent: true }
+      : null,
+    isNew ? { label: "Nuevo", icon: undefined, accent: false } : null,
+    isPopular ? { label: "Popular", icon: Sparkles, accent: false } : null,
+  ]
+    .filter((t): t is { label: string; icon?: typeof Zap; accent: boolean } => Boolean(t))
+    .slice(0, 2);
+
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
