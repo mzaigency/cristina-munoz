@@ -112,42 +112,18 @@ export function FeedSection({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Desktop carousel scroll arrows */}
-          {!expanded && (
-            <div className="hidden md:flex items-center gap-1.5 mr-1">
-              <button
-                type="button"
-                onClick={() => scrollCarousel("left")}
-                className="h-8 w-8 rounded-full border border-line bg-surface hover:bg-surface-container active:scale-95 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all shadow-xs"
-                title="Anterior"
-                aria-label="Desplazar a la izquierda"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollCarousel("right")}
-                className="h-8 w-8 rounded-full border border-line bg-surface hover:bg-surface-container active:scale-95 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all shadow-xs"
-                title="Siguiente"
-                aria-label="Desplazar a la derecha"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-
+        <div className="hidden md:flex items-center gap-2 shrink-0">
           {onToggleExpand && (
             <motion.button
-              whileTap={{ scale: 0.93 }}
+              whileTap={{ scale: 0.96 }}
               onClick={handleToggle}
-              className="shrink-0 flex items-center gap-0.5 text-xs font-semibold text-primary px-2.5 py-1 rounded-full hover:bg-primary/10 transition-colors"
+              className="shrink-0 flex items-center gap-1 text-[13px] font-semibold text-[var(--glow-brand)] px-3 py-1.5 rounded-full border border-[var(--glow-brand)]/20 bg-[var(--glow-brand-soft)] hover:bg-[var(--glow-brand)]/12 transition-colors"
             >
-              {expanded ? "Ver menos" : "Ver todo"}
+              {expanded ? "Ver menos" : "Ver más"}
               <ChevronRight
                 className={cn(
                   "h-3.5 w-3.5 transition-transform duration-300",
-                  expanded && "rotate-90",
+                  expanded ? "-rotate-90" : "rotate-90",
                 )}
               />
             </motion.button>
@@ -155,21 +131,36 @@ export function FeedSection({
         </div>
       </div>
 
-      {/* Body: carrusel o grid */}
-      {expanded ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch">
-          {children}
-        </div>
-      ) : (
-        <div
-          ref={carouselRef}
-          className={cn(
-            "flex gap-3.5 overflow-x-auto no-scrollbar scrollbar-hide snap-x snap-mandatory scroll-pl-4 sm:scroll-pl-0 items-stretch",
-            "-mx-4 px-4 sm:mx-0 sm:px-0 pb-2",
-          )}
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {children}
+      {/* Body: carrusel en móvil, rejilla en escritorio */}
+      <div
+        ref={carouselRef}
+        className={cn(
+          "items-stretch",
+          expanded
+            ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5"
+            : "flex gap-3.5 overflow-x-auto no-scrollbar scrollbar-hide snap-x snap-mandatory scroll-pl-4 sm:scroll-pl-0 -mx-4 px-4 pb-2 md:grid md:grid-cols-3 xl:grid-cols-4 md:gap-5 md:overflow-visible md:mx-0 md:px-0 md:pb-0 md:snap-none",
+        )}
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        {children}
+      </div>
+
+      {/* Ver más en móvil */}
+      {onToggleExpand && (
+        <div className="mt-3 flex md:hidden justify-center">
+          <button
+            type="button"
+            onClick={handleToggle}
+            className="flex items-center gap-1 text-[13px] font-semibold text-[var(--glow-brand)] px-4 py-2 rounded-full border border-[var(--glow-brand)]/20 bg-[var(--glow-brand-soft)] active:scale-[0.97] transition-transform"
+          >
+            {expanded ? "Ver menos" : "Ver más"}
+            <ChevronRight
+              className={cn(
+                "h-3.5 w-3.5 transition-transform duration-300",
+                expanded ? "-rotate-90" : "rotate-90",
+              )}
+            />
+          </button>
         </div>
       )}
     </motion.section>
