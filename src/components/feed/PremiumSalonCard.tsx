@@ -118,16 +118,11 @@ export function PremiumSalonCard({
                   key={tag.label}
                   className={cn(
                     "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight shadow-[0_3px_10px_-3px_rgba(19,21,32,0.45)]",
-                    tag.accent
-                      ? "bg-[linear-gradient(100deg,var(--glow-brand),#98329A)] text-white"
-                      : "bg-white text-[#131520] border border-black/5",
+                    tag.className,
                   )}
                 >
                   {tag.icon ? (
-                    <tag.icon
-                      className={cn("h-3 w-3", tag.accent ? "text-white" : "text-[var(--glow-brand)]")}
-                      strokeWidth={2.4}
-                    />
+                    <tag.icon className="h-3 w-3" strokeWidth={2.4} />
                   ) : null}
                   <span>{tag.label}</span>
                 </span>
