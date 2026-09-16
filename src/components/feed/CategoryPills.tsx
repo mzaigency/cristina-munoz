@@ -45,81 +45,91 @@ export function CategoryPills({
 
   const isQuickFilter = selected === "popular" || selected === "huecos";
 
+  const PILL_BASE =
+    "relative shrink-0 flex items-center gap-1.5 h-9 px-3.5 rounded-full font-semibold text-[13px] border transition-colors duration-200";
+  const PILL_OFF =
+    "bg-white dark:bg-surface border-line text-foreground/75 hover:text-foreground hover:border-[var(--glow-brand)]/30 hover:bg-[var(--glow-brand-soft)]";
+  const PILL_ON = "text-white border-transparent";
+
   return (
     <div
-      className="flex items-center gap-2 overflow-x-auto no-scrollbar scrollbar-hide -mx-4 px-4 py-1"
+      className="flex items-center gap-2 overflow-x-auto no-scrollbar scrollbar-hide -mx-4 px-4 py-1 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible md:gap-2.5"
       style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
     >
-      {/* Quick filters */}
-      {QUICK_FILTERS.map((filter) => {
-        const Icon = filter.icon;
-        const isSelected = selected === filter.id;
-        const isHuecos = filter.id === "huecos";
-        const isPopular = filter.id === "popular";
-
-        return (
-          <motion.button
-            key={filter.id}
-            whileTap={{ scale: 0.94 }}
-            onClick={() => handleFilterClick(filter.id, isSelected)}
-            className={cn(
-              "relative shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold text-xs border transition-all duration-200",
-              isHuecos && isSelected && "bg-emerald-600 text-white border-transparent shadow-md shadow-emerald-600/25",
-              isHuecos && !isSelected && "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20",
-              isPopular && isSelected && "bg-amber-500 text-white border-transparent shadow-md shadow-amber-500/25",
-              isPopular && !isSelected && "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 hover:bg-amber-500/20",
-            )}
-          >
-            {loadingAvailability && isHuecos ? (
-              <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Icon className="h-3.5 w-3.5" />
-            )}
-            <span>{filter.label}</span>
-            {isHuecos && hasCheckedAvailability && availableCount > 0 && !loadingAvailability && (
-              <span
-                className={cn(
-                  "ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold leading-tight",
-                  isSelected ? "bg-white/25 text-white" : "bg-emerald-600 text-white",
-                )}
-              >
-                {availableCount}
-              </span>
-            )}
-          </motion.button>
-        );
-      })}
-
-      {/* Divider */}
-      <div className="shrink-0 w-[1px] h-4.5 bg-line/80 my-auto rounded-full" />
-
-      {/* Categories group with smooth sliding indicator */}
       <LayoutGroup id="category-subtabs">
-        {/* All button */}
+        {/* Filtros rápidos */}
+        {QUICK_FILTERS.map((filter) => {
+          const Icon = filter.icon;
+          const isSelected = selected === filter.id;
+          const isHuecos = filter.id === "huecos";
+
+          return (
+            <motion.button
+              key={filter.id}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => handleFilterClick(filter.id, isSelected)}
+              className={cn(PILL_BASE, isSelected ? PILL_ON : PILL_OFF)}
+            >
+              {isSelected && (
+                <motion.div
+                  layoutId="active-category-pill"
+                  className="absolute inset-0 rounded-full bg-[linear-gradient(100deg,var(--glow-brand),#98329A)] shadow-[0_6px_18px_-8px_rgba(34,64,140,0.6)]"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-1.5">
+                {loadingAvailability && isHuecos ? (
+                  <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Icon
+                    className={cn("h-3.5 w-3.5", !isSelected && "text-[var(--glow-brand)]")}
+                    strokeWidth={2.2}
+                  />
+                )}
+                <span>{filter.label}</span>
+                {isHuecos && hasCheckedAvailability && availableCount > 0 && !loadingAvailability && (
+                  <span
+                    className={cn(
+                      "ml-0.5 px-1.5 rounded-full text-[10px] font-bold leading-[16px]",
+                      isSelected
+                        ? "bg-white/25 text-white"
+                        : "bg-[var(--glow-brand-soft)] text-[var(--glow-brand-ink)]",
+                    )}
+                  >
+                    {availableCount}
+                  </span>
+                )}
+              </span>
+            </motion.button>
+          );
+        })}
+
+        {/* Separador */}
+        <div className="shrink-0 w-px h-5 bg-line my-auto rounded-full" />
+
+        {/* Todos */}
         <motion.button
-          whileTap={{ scale: 0.94 }}
+          whileTap={{ scale: 0.96 }}
           onClick={() => onSelect(null)}
-          className={cn(
-            "relative shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold text-xs border transition-colors duration-200",
-            selected === null
-              ? "text-white border-transparent"
-              : "bg-surface border-line text-foreground/80 hover:bg-surface-container",
-          )}
+          className={cn(PILL_BASE, selected === null ? PILL_ON : PILL_OFF)}
         >
           {selected === null && (
             <motion.div
               layoutId="active-category-pill"
-              className="absolute inset-0 rounded-full bg-gradient-to-r from-[var(--glow-brand)] to-[#98329A] shadow-md shadow-[var(--glow-brand)]/20"
+              className="absolute inset-0 rounded-full bg-[linear-gradient(100deg,var(--glow-brand),#98329A)] shadow-[0_6px_18px_-8px_rgba(34,64,140,0.6)]"
               transition={{ type: "spring", stiffness: 380, damping: 30 }}
             />
           )}
           <span className="relative z-10 flex items-center gap-1.5">
-            <LayoutGrid className="h-3.5 w-3.5" />
+            <LayoutGrid
+              className={cn("h-3.5 w-3.5", selected !== null && "text-[var(--glow-brand)]")}
+              strokeWidth={2.2}
+            />
             <span>Todos</span>
           </span>
         </motion.button>
 
-        {/* Category pills */}
+        {/* Categorías */}
         {items.map((category) => {
           const Icon = category.icon;
           const isSelected = selected === category.id;
@@ -127,24 +137,22 @@ export function CategoryPills({
           return (
             <motion.button
               key={category.id}
-              whileTap={{ scale: 0.94 }}
+              whileTap={{ scale: 0.96 }}
               onClick={() => onSelect(isSelected ? null : category.id)}
-              className={cn(
-                "relative shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold text-xs border transition-colors duration-200",
-                isSelected
-                  ? "text-white border-transparent"
-                  : "bg-surface border-line text-foreground/80 hover:bg-surface-container",
-              )}
+              className={cn(PILL_BASE, isSelected ? PILL_ON : PILL_OFF)}
             >
               {isSelected && (
                 <motion.div
                   layoutId="active-category-pill"
-                  className="absolute inset-0 rounded-full bg-gradient-to-r from-[var(--glow-brand)] to-[#98329A] shadow-md shadow-[var(--glow-brand)]/20"
+                  className="absolute inset-0 rounded-full bg-[linear-gradient(100deg,var(--glow-brand),#98329A)] shadow-[0_6px_18px_-8px_rgba(34,64,140,0.6)]"
                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
                 />
               )}
               <span className="relative z-10 flex items-center gap-1.5">
-                <Icon className="h-3.5 w-3.5" />
+                <Icon
+                  className={cn("h-3.5 w-3.5", !isSelected && "text-[var(--glow-brand)]")}
+                  strokeWidth={2.2}
+                />
                 <span>{category.label}</span>
               </span>
             </motion.button>
