@@ -1,11 +1,14 @@
-import { Building2 } from "lucide-react";
+import { Building2, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import glowappLogo from "@/assets/glowapp-logo.png";
 import { NotificationBadge } from "@/components/notifications/NotificationBadge";
 import { ClientPageHeader } from "@/components/navigation/ClientPageHeader";
+import { useIsSuperadmin } from "@/hooks/useIsSuperadmin";
 
 export function SmartSearchHeader() {
+  const isSuperadmin = useIsSuperadmin();
+
   return (
     <ClientPageHeader
       title="Explorar Salones"
