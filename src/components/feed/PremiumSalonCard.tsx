@@ -60,14 +60,14 @@ export function PremiumSalonCard({
   type CardTag = { label: string; icon?: typeof Zap; className: string; iconClassName?: string };
   const tags: CardTag[] = [
     ...(hasAvailabilityToday
-      ? [{ label: "Huecos hoy", icon: Clock, className: "bg-emerald-600 text-white" }]
+      ? [{ label: "Huecos hoy", icon: Clock, className: "bg-emerald-600/85 backdrop-blur-md text-white border border-emerald-500/60" }]
       : []),
     ...(hasHighRecommendation && !hasAvailabilityToday
       ? [{ label: "Para ti", icon: Sparkles, className: "bg-[linear-gradient(100deg,var(--glow-brand),#98329A)] text-white" }]
       : []),
-    ...(isNew ? [{ label: "Nuevo", className: "bg-white text-[#131520] border border-black/5" }] : []),
+    ...(isNew ? [{ label: "Nuevo", className: "bg-white/65 backdrop-blur-md text-[#131520] border border-white/70" }] : []),
     ...(isPopular
-      ? [{ label: "Popular", icon: Flame, className: "bg-amber-500 text-white" }]
+      ? [{ label: "Popular", icon: Flame, className: "bg-amber-500/90 backdrop-blur-md text-white border border-amber-400/60" }]
       : []),
   ].slice(0, 2);
 
