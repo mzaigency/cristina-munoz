@@ -191,7 +191,7 @@ export function FeedCarouselItem({
   return (
     <div
       ref={itemRef}
-      className="snap-start shrink-0 w-[74vw] sm:w-[275px] md:w-[290px] lg:w-[310px] flex flex-col h-full"
+      className="snap-start shrink-0 w-[74vw] sm:w-[275px] md:w-auto md:shrink flex flex-col h-full"
       onClickCapture={handleClickCapture}
     >
       {children}
