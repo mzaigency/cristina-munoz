@@ -146,12 +146,12 @@ export function PremiumSalonCard({
               </motion.div>
             </motion.button>
 
-            {/* Valoración */}
+            {/* Valoración — vidrio oscuro para contraste sobre la foto, números blancos */}
             {salon.avgRating !== null && (
-              <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/92 backdrop-blur-md border border-white/60 shadow-[0_2px_8px_-2px_rgba(19,21,32,0.25)]">
+              <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#131520]/60 backdrop-blur-md border border-white/25 shadow-[0_2px_8px_-2px_rgba(19,21,32,0.45)]">
                 <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                <span className="text-xs font-bold text-[#131520]">{salon.avgRating.toFixed(1)}</span>
-                <span className="text-[10px] font-medium text-[#131520]/55">({salon.reviewCount})</span>
+                <span className="text-xs font-bold text-white">{salon.avgRating.toFixed(1)}</span>
+                <span className="text-[10px] font-medium text-white/70">({salon.reviewCount})</span>
               </div>
             )}
           </div>

@@ -29,7 +29,7 @@ const ROW =
   "flex items-center gap-2 overflow-x-auto no-scrollbar scrollbar-hide -mx-4 px-4 py-1 md:mx-0 md:px-0";
 
 const PILL =
-  "relative shrink-0 flex items-center gap-1.5 h-9 px-3.5 rounded-full font-semibold text-[13px] border transition-colors duration-200";
+  "relative shrink-0 flex items-center gap-1.5 h-9 px-3.5 rounded-full font-semibold text-[13px] border backdrop-blur-md transition-colors duration-200";
 
 export function CategoryPills({
   categories = DEFAULT_CATEGORIES,
@@ -65,10 +65,10 @@ export function CategoryPills({
             onClick={() => handleFilterClick(filter.id, isSelected)}
             className={cn(
               PILL,
-              isHuecos && isSelected && "bg-emerald-600 text-white border-emerald-600 shadow-[0_6px_16px_-8px_rgba(5,150,105,0.7)]",
-              isHuecos && !isSelected && "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100",
-              !isHuecos && isSelected && "bg-amber-500 text-white border-amber-500 shadow-[0_6px_16px_-8px_rgba(217,119,6,0.7)]",
-              !isHuecos && !isSelected && "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100",
+              isHuecos && isSelected && "bg-emerald-600/85 text-white border-emerald-500/60 shadow-[0_6px_16px_-8px_rgba(5,150,105,0.7)]",
+              isHuecos && !isSelected && "bg-emerald-500/15 text-emerald-800 border-emerald-400/40 hover:bg-emerald-500/25",
+              !isHuecos && isSelected && "bg-amber-500/90 text-white border-amber-400/60 shadow-[0_6px_16px_-8px_rgba(217,119,6,0.7)]",
+              !isHuecos && !isSelected && "bg-amber-500/15 text-amber-800 border-amber-400/40 hover:bg-amber-500/25",
             )}
           >
             {loadingAvailability && isHuecos ? (
@@ -103,7 +103,7 @@ export function CategoryPills({
             PILL,
             selected === null
               ? "text-white border-transparent"
-              : "bg-white border-[var(--glow-line)] text-foreground hover:border-[var(--glow-brand)]/40 hover:bg-[var(--glow-brand-soft)]",
+              : "bg-white/65 border-white/70 text-foreground shadow-[0_1px_3px_rgba(19,21,32,0.06)] hover:border-[var(--glow-brand)]/40 hover:bg-white/85",
           )}
         >
           {selected === null && (
@@ -136,7 +136,7 @@ export function CategoryPills({
                 PILL,
                 isSelected
                   ? "text-white border-transparent"
-                  : "bg-white border-[var(--glow-line)] text-foreground hover:border-[var(--glow-brand)]/40 hover:bg-[var(--glow-brand-soft)]",
+                  : "bg-white/65 border-white/70 text-foreground shadow-[0_1px_3px_rgba(19,21,32,0.06)] hover:border-[var(--glow-brand)]/40 hover:bg-white/85",
               )}
             >
               {isSelected && (
