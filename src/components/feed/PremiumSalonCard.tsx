@@ -187,7 +187,7 @@ export function PremiumSalonCard({
               {/* 3. Badges / Match Reasons / Lo sigues — fixed 22px height */}
               <div className="h-5.5 mt-2 flex items-center gap-1.5 overflow-hidden">
                 {following && (
-                  <span className="text-[10px] font-bold text-[var(--glow-brand-ink)] bg-[var(--glow-brand-soft)] px-2 py-0.5 rounded-full shrink-0">
+                  <span className="text-[10.5px] font-bold text-[var(--glow-brand-ink)] bg-[var(--glow-brand-soft)] border border-[var(--glow-brand)]/15 px-2 py-0.5 rounded-full shrink-0">
                     Lo sigues
                   </span>
                 )}
@@ -198,13 +198,13 @@ export function PremiumSalonCard({
                     .map((reason, i) => (
                       <span
                         key={i}
-                        className="text-[10px] font-bold text-[var(--glow-brand-ink)] bg-[var(--glow-brand-soft)] px-2 py-0.5 rounded-full shrink-0 truncate max-w-[130px]"
+                        className="text-[10.5px] font-bold text-[var(--glow-brand-ink)] bg-[var(--glow-brand-soft)] border border-[var(--glow-brand)]/15 px-2 py-0.5 rounded-full shrink-0 truncate max-w-[130px]"
                       >
                         {reason}
                       </span>
                     ))
                 ) : !following ? (
-                  <span className="text-[10px] font-medium text-muted-foreground bg-surface-container px-2 py-0.5 rounded-full shrink-0">
+                  <span className="text-[10.5px] font-semibold text-foreground/70 bg-surface-container border border-line/70 px-2 py-0.5 rounded-full shrink-0">
                     Verificado
                   </span>
                 ) : null}
