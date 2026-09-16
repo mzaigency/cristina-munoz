@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Star, Heart, Sparkles, Zap, Navigation } from "lucide-react";
+import { MapPin, Star, Heart, Sparkles, Zap, Navigation, Clock, Flame } from "lucide-react";
 import { motion } from "motion/react";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFollows } from "@/hooks/useFollows";
@@ -55,15 +55,20 @@ export function PremiumSalonCard({
     toggleFavorite(salon.id);
   };
 
-  // Máximo dos etiquetas, mismo lenguaje visual; el degradado de marca es el único acento
-  type CardTag = { label: string; icon?: typeof Zap; accent: boolean };
+  // Máximo dos etiquetas. "Huecos hoy" y "Popular" heredan el icono y el color
+  // de su píldora de filtro para que se distingan de un vistazo.
+  type CardTag = { label: string; icon?: typeof Zap; className: string; iconClassName?: string };
   const tags: CardTag[] = [
-    ...(hasAvailabilityToday ? [{ label: "Huecos hoy", icon: Zap, accent: true }] : []),
-    ...(hasHighRecommendation && !hasAvailabilityToday
-      ? [{ label: "Para ti", icon: Sparkles, accent: true }]
+    ...(hasAvailabilityToday
+      ? [{ label: "Huecos hoy", icon: Clock, className: "bg-emerald-600 text-white" }]
       : []),
-    ...(isNew ? [{ label: "Nuevo", accent: false }] : []),
-    ...(isPopular ? [{ label: "Popular", icon: Sparkles, accent: false }] : []),
+    ...(hasHighRecommendation && !hasAvailabilityToday
+      ? [{ label: "Para ti", icon: Sparkles, className: "bg-[linear-gradient(100deg,var(--glow-brand),#98329A)] text-white" }]
+      : []),
+    ...(isNew ? [{ label: "Nuevo", className: "bg-white text-[#131520] border border-black/5" }] : []),
+    ...(isPopular
+      ? [{ label: "Popular", icon: Flame, className: "bg-amber-500 text-white" }]
+      : []),
   ].slice(0, 2);
 
 
@@ -113,16 +118,11 @@ export function PremiumSalonCard({
                   key={tag.label}
                   className={cn(
                     "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight shadow-[0_3px_10px_-3px_rgba(19,21,32,0.45)]",
-                    tag.accent
-                      ? "bg-[linear-gradient(100deg,var(--glow-brand),#98329A)] text-white"
-                      : "bg-white text-[#131520] border border-black/5",
+                    tag.className,
                   )}
                 >
                   {tag.icon ? (
-                    <tag.icon
-                      className={cn("h-3 w-3", tag.accent ? "text-white" : "text-[var(--glow-brand)]")}
-                      strokeWidth={2.4}
-                    />
+                    <tag.icon className="h-3 w-3" strokeWidth={2.4} />
                   ) : null}
                   <span>{tag.label}</span>
                 </span>

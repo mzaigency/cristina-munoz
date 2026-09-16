@@ -29,7 +29,7 @@ export function ClientPageHeader({
   className,
 }: ClientPageHeaderProps) {
   return (
-    <header className={cn("sticky top-0 z-40", className)}>
+    <header className={cn("sticky top-0 z-40 font-poppins", className)}>
       <div className="bg-white/85 backdrop-blur-xl supports-[backdrop-filter]:bg-white/75 border-b border-line">
         <div className="h-[env(safe-area-inset-top)]" />
 
