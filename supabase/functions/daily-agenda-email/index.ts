@@ -233,7 +233,13 @@ serve(async (req) => {
             expectedRevenue: Math.round(expectedRevenue),
             firstTime: appts[0]?.time || null,
             lastTime: appts.length
-              ? appts[appts.length - 1].endTime || appts[appts.length - 1].time
+              ? appts.reduce(
+                  (max: string, a: any) => {
+                    const end = a.endTime || a.time;
+                    return end > max ? end : max;
+                  },
+                  appts[0].endTime || appts[0].time,
+                )
               : null,
             stylists,
             panelUrl: `https://www.glowapp.app/admin/${tenant.slug}/agenda`,
