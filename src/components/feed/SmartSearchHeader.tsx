@@ -1,4 +1,4 @@
-import { Building2, Shield } from "lucide-react";
+import { Building2, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import glowappLogo from "@/assets/glowapp-logo.png";
