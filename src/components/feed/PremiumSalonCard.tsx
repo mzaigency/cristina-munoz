@@ -58,38 +58,25 @@ export function PremiumSalonCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -4 }}
+      transition={{ duration: 0.5, delay: Math.min(index, 6) * 0.06, ease: [0.23, 1, 0.32, 1] }}
       className="group h-full flex flex-col"
     >
       <Link to={`/${salon.slug}`} className="block h-full flex flex-col flex-1">
-        <div className="relative overflow-hidden rounded-[20px] bg-white dark:bg-[#1A1A24] border border-line/80 dark:border-white/10 shadow-[0_2px_10px_-2px_rgba(19,21,32,0.06),0_12px_24px_-10px_rgba(19,21,32,0.08)] transition-all duration-300 group-hover:shadow-[0_4px_18px_-2px_rgba(19,21,32,0.12),0_20px_32px_-12px_rgba(19,21,32,0.12)] group-hover:-translate-y-1 h-full flex flex-col justify-between">
+        <div className="relative overflow-hidden rounded-[22px] bg-white dark:bg-[#1A1A24] border border-line/70 dark:border-white/10 shadow-[0_1px_2px_rgba(19,21,32,0.04),0_10px_26px_-14px_rgba(19,21,32,0.14)] transition-[transform,box-shadow,border-color] duration-500 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] group-hover:-translate-y-1.5 group-hover:border-[var(--glow-brand)]/25 group-hover:shadow-[0_2px_4px_rgba(19,21,32,0.05),0_26px_48px_-22px_rgba(34,64,140,0.32)] h-full flex flex-col justify-between">
 
           {/* Image Container — strictly fixed height */}
-          <div className={cn("relative overflow-hidden shrink-0", isFeatured ? "h-56 sm:h-64" : "h-44")}>
+          <div className={cn("relative overflow-hidden shrink-0", isFeatured ? "h-56 sm:h-64" : "h-44 md:h-48")}>
             {salon.hero_image_url ? (
-              index === 0 ? (
-                <img
-                  src={supabaseImage(salon.hero_image_url, { width: 800 })}
-                  alt={salon.name}
-                  className="w-full h-full object-cover"
-                  loading="eager"
-                  {...{ fetchpriority: "high" }}
-                  decoding="async"
-                />
-              ) : (
-                <motion.img
-                  src={supabaseImage(salon.hero_image_url, { width: 800 })}
-                  alt={salon.name}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  initial={{ scale: 1.03 }}
-                  whileHover={{ scale: 1.08 }}
-                  transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                />
-              )
+              <img
+                src={supabaseImage(salon.hero_image_url, { width: 800 })}
+                alt={salon.name}
+                className="w-full h-full object-cover transition-transform duration-[900ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.06]"
+                loading={index === 0 ? "eager" : "lazy"}
+                {...(index === 0 ? { fetchpriority: "high" as const } : {})}
+                decoding="async"
+              />
             ) : (
               <div
                 className="w-full h-full flex items-center justify-center"
