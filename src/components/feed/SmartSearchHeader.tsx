@@ -1,4 +1,4 @@
-import { Building2, Shield } from "lucide-react";
+import { Building2, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import glowappLogo from "@/assets/glowapp-logo.png";
@@ -25,9 +25,9 @@ export function SmartSearchHeader() {
               <Link
                 to="/superadmin"
                 aria-label="Panel Superadmin"
-                className="flex items-center justify-center h-9 w-9 rounded-full bg-white/65 backdrop-blur-md border border-white/70 text-foreground shadow-[0_1px_3px_rgba(19,21,32,0.06)] transition-all"
+                className="flex items-center justify-center h-9 w-9 rounded-full bg-amber-500/10 backdrop-blur-md border border-amber-500/25 text-amber-500 shadow-[0_1px_3px_rgba(19,21,32,0.06)] transition-all"
               >
-                <Shield className="h-4 w-4" />
+                <Crown className="h-4 w-4" />
               </Link>
             </motion.div>
           )}
