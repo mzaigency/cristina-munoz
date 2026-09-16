@@ -121,16 +121,17 @@ serve(async (req) => {
 
         // Una cita real puede ser varias filas: partes de un servicio
         // compuesto o varios servicios a la misma hora.
-        const rows = (bookRes.data || []).filter(
-          (b: any) =>
-            !isBlockRow(b.customer_name) &&
-            b.status !== "cancelled" &&
-            b.compound_part !== "part2",
+        const valid = (bookRes.data || []).filter(
+          (b: any) => !isBlockRow(b.customer_name) && b.status !== "cancelled",
         );
+        const rows = valid.filter((b: any) => b.compound_part !== "part2");
+        const part2Rows = valid.filter((b: any) => b.compound_part === "part2");
 
         const merged = new Map<string, any>();
+        const keyById = new Map<string, string>();
         for (const b of rows as any[]) {
           const key = `${b.stylist}|${hhmm(b["Hora"])}|${b.user_id || b.customer_name}`;
+          keyById.set(b.id, key);
           const names = Array.isArray(b.services)
             ? b.services.map((srv: any) => srv?.name).filter(Boolean)
             : [];
@@ -156,6 +157,24 @@ serve(async (req) => {
               createdAt: b.created_at,
             });
           }
+        }
+
+        // La parte 2 de un servicio compuesto (tinte, mechas…) no es una cita
+        // aparte: solo alarga la hora de fin de la parte 1. Sin esto el correo
+        // pintaría un hueco "libre" falso y acabaría el día antes de la cuenta.
+        for (const b of part2Rows as any[]) {
+          const key = b.related_booking_id ? keyById.get(b.related_booking_id) : undefined;
+          const target = key
+            ? merged.get(key)
+            : [...merged.values()].find(
+                (m) =>
+                  m.stylist === b.stylist &&
+                  m.customerName === (b.customer_name || "Cliente") &&
+                  m.time <= hhmm(b["Hora"]),
+              );
+          if (!target) continue;
+          const end = b.end_time ? hhmm(b.end_time) : hhmm(b["Hora"]);
+          if (!target.endTime || end > target.endTime) target.endTime = end;
         }
 
         const appts = [...merged.values()].sort((a, b) => a.time.localeCompare(b.time));
