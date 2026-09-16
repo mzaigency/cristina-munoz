@@ -216,19 +216,11 @@ export default function Profile() {
         noindex={true}
       />
       
-      {/* Standard Desktop Header Bar */}
-      <div className="sticky top-0 z-40 bg-surface/85 backdrop-blur-xl border-b border-line/60 pt-[env(safe-area-inset-top)]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex flex-col min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight">
-              Mi Perfil
-            </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-tight hidden sm:block mt-0.5">
-              Gestiona tu información personal, citas y preferencias
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Cabecera compartida del cliente */}
+      <ClientPageHeader
+        title="Mi Perfil"
+        subtitle="Gestiona tu información personal, citas y preferencias"
+      />
 
       {/* User Hero section */}
       <div className="bg-gradient-to-b from-primary/8 to-transparent pt-6 pb-4 px-4">
