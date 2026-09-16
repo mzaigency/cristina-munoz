@@ -112,10 +112,10 @@ export function PremiumSalonCard({
                 <span
                   key={tag.label}
                   className={cn(
-                    "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold tracking-tight shadow-[0_2px_8px_-2px_rgba(19,21,32,0.25)]",
+                    "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight shadow-[0_3px_10px_-3px_rgba(19,21,32,0.45)]",
                     tag.accent
                       ? "bg-[linear-gradient(100deg,var(--glow-brand),#98329A)] text-white"
-                      : "bg-white/92 backdrop-blur-md text-[#131520] border border-white/60",
+                      : "bg-white text-[#131520] border border-black/5",
                   )}
                 >
                   {tag.icon ? (
@@ -187,7 +187,7 @@ export function PremiumSalonCard({
               {/* 3. Badges / Match Reasons / Lo sigues — fixed 22px height */}
               <div className="h-5.5 mt-2 flex items-center gap-1.5 overflow-hidden">
                 {following && (
-                  <span className="text-[10px] font-bold text-[var(--glow-brand-ink)] bg-[var(--glow-brand-soft)] px-2 py-0.5 rounded-full shrink-0">
+                  <span className="text-[10.5px] font-bold text-[var(--glow-brand-ink)] bg-[var(--glow-brand-soft)] border border-[var(--glow-brand)]/15 px-2 py-0.5 rounded-full shrink-0">
                     Lo sigues
                   </span>
                 )}
@@ -198,13 +198,13 @@ export function PremiumSalonCard({
                     .map((reason, i) => (
                       <span
                         key={i}
-                        className="text-[10px] font-bold text-[var(--glow-brand-ink)] bg-[var(--glow-brand-soft)] px-2 py-0.5 rounded-full shrink-0 truncate max-w-[130px]"
+                        className="text-[10.5px] font-bold text-[var(--glow-brand-ink)] bg-[var(--glow-brand-soft)] border border-[var(--glow-brand)]/15 px-2 py-0.5 rounded-full shrink-0 truncate max-w-[130px]"
                       >
                         {reason}
                       </span>
                     ))
                 ) : !following ? (
-                  <span className="text-[10px] font-medium text-muted-foreground bg-surface-container px-2 py-0.5 rounded-full shrink-0">
+                  <span className="text-[10.5px] font-semibold text-foreground/70 bg-surface-container border border-line/70 px-2 py-0.5 rounded-full shrink-0">
                     Verificado
                   </span>
                 ) : null}
