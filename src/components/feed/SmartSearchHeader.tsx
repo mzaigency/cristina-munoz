@@ -20,7 +20,19 @@ export function SmartSearchHeader() {
       }
       actions={
         <>
+          {isSuperadmin && (
+            <motion.div whileTap={{ scale: 0.92 }} className="md:hidden">
+              <Link
+                to="/superadmin"
+                aria-label="Panel Superadmin"
+                className="flex items-center justify-center h-9 w-9 rounded-full bg-white/65 backdrop-blur-md border border-white/70 text-foreground shadow-[0_1px_3px_rgba(19,21,32,0.06)] transition-all"
+              >
+                <Shield className="h-4 w-4" />
+              </Link>
+            </motion.div>
+          )}
           <NotificationBadge />
+
 
           {/* Solo móvil: en escritorio vive en el menú lateral */}
           <motion.div whileTap={{ scale: 0.95 }} className="md:hidden">
