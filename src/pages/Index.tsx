@@ -333,24 +333,26 @@ const Index = () => {
         {/* Header Bar */}
         <SmartSearchHeader />
 
-        {/* AI Search Bar */}
-        <div className="max-w-2xl sm:max-w-3xl mx-auto px-4 sm:px-6 py-3 lg:py-5">
-          <AISearchBar
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-            recentSearches={recentSearches}
-            onRecentSearchClick={(search) => setSearchQuery(search)}
-            onClearRecents={clearRecentSearches}
-          />
-        </div>
-
-        {/* Feed Toggle */}
-        <div className="flex justify-center mb-3">
-          <FeedToggle mode={feedMode} onChange={handleFeedModeChange} followingCount={followingCount} />
+        {/* Buscador + conmutador — misma rejilla que el contenido */}
+        <div className="max-w-6xl mx-auto sm:px-2 lg:px-4 pt-3 pb-1 lg:pt-6 lg:pb-2">
+          <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+            <div className="flex-1 md:max-w-2xl">
+              <AISearchBar
+                searchQuery={searchQuery}
+                onSearchChange={handleSearchChange}
+                recentSearches={recentSearches}
+                onRecentSearchClick={(search) => setSearchQuery(search)}
+                onClearRecents={clearRecentSearches}
+              />
+            </div>
+            <div className="flex justify-center md:justify-end md:ml-auto px-4 md:px-0">
+              <FeedToggle mode={feedMode} onChange={handleFeedModeChange} followingCount={followingCount} />
+            </div>
+          </div>
         </div>
 
         {/* Main Content */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-1 pb-20 md:pb-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-20 md:pb-16">
           <AnimatePresence mode="wait">
             {feedMode === "following" ? (
               <motion.div
