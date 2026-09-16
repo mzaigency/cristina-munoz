@@ -5,7 +5,6 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useFollows } from "@/hooks/useFollows";
 import { cn } from "@/lib/utils";
 import { supabaseImage } from "@/lib/supabaseImage";
-import { RecommendationBadge } from "./RecommendationBadge";
 
 interface PremiumSalonCardProps {
   salon: {
@@ -56,40 +55,39 @@ export function PremiumSalonCard({
     toggleFavorite(salon.id);
   };
 
+  // Máximo dos etiquetas, mismo lenguaje visual; el degradado de marca es el único acento
+  type CardTag = { label: string; icon?: typeof Zap; accent: boolean };
+  const tags: CardTag[] = [
+    ...(hasAvailabilityToday ? [{ label: "Huecos hoy", icon: Zap, accent: true }] : []),
+    ...(hasHighRecommendation && !hasAvailabilityToday
+      ? [{ label: "Para ti", icon: Sparkles, accent: true }]
+      : []),
+    ...(isNew ? [{ label: "Nuevo", accent: false }] : []),
+    ...(isPopular ? [{ label: "Popular", icon: Sparkles, accent: false }] : []),
+  ].slice(0, 2);
+
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -4 }}
+      transition={{ duration: 0.5, delay: Math.min(index, 6) * 0.06, ease: [0.23, 1, 0.32, 1] }}
       className="group h-full flex flex-col"
     >
       <Link to={`/${salon.slug}`} className="block h-full flex flex-col flex-1">
-        <div className="relative overflow-hidden rounded-[20px] bg-white dark:bg-[#1A1A24] border border-line/80 dark:border-white/10 shadow-[0_2px_10px_-2px_rgba(19,21,32,0.06),0_12px_24px_-10px_rgba(19,21,32,0.08)] transition-all duration-300 group-hover:shadow-[0_4px_18px_-2px_rgba(19,21,32,0.12),0_20px_32px_-12px_rgba(19,21,32,0.12)] group-hover:-translate-y-1 h-full flex flex-col justify-between">
+        <div className="relative overflow-hidden rounded-[22px] bg-white dark:bg-[#1A1A24] border border-line/70 dark:border-white/10 shadow-[0_1px_2px_rgba(19,21,32,0.04),0_10px_26px_-14px_rgba(19,21,32,0.14)] transition-[transform,box-shadow,border-color] duration-500 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] group-hover:-translate-y-1.5 group-hover:border-[var(--glow-brand)]/25 group-hover:shadow-[0_2px_4px_rgba(19,21,32,0.05),0_26px_48px_-22px_rgba(34,64,140,0.32)] h-full flex flex-col justify-between">
 
           {/* Image Container — strictly fixed height */}
-          <div className={cn("relative overflow-hidden shrink-0", isFeatured ? "h-56 sm:h-64" : "h-44")}>
+          <div className={cn("relative overflow-hidden shrink-0", isFeatured ? "h-56 sm:h-64" : "h-44 md:h-48")}>
             {salon.hero_image_url ? (
-              index === 0 ? (
-                <img
-                  src={supabaseImage(salon.hero_image_url, { width: 800 })}
-                  alt={salon.name}
-                  className="w-full h-full object-cover"
-                  loading="eager"
-                  {...{ fetchpriority: "high" }}
-                  decoding="async"
-                />
-              ) : (
-                <motion.img
-                  src={supabaseImage(salon.hero_image_url, { width: 800 })}
-                  alt={salon.name}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  initial={{ scale: 1.03 }}
-                  whileHover={{ scale: 1.08 }}
-                  transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                />
-              )
+              <img
+                src={supabaseImage(salon.hero_image_url, { width: 800 })}
+                alt={salon.name}
+                className="w-full h-full object-cover transition-transform duration-[900ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.06]"
+                loading={index === 0 ? "eager" : "lazy"}
+                {...(index === 0 ? { fetchpriority: "high" as const } : {})}
+                decoding="async"
+              />
             ) : (
               <div
                 className="w-full h-full flex items-center justify-center"
@@ -106,70 +104,54 @@ export function PremiumSalonCard({
             )}
             
             {/* Subtle Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-            
-            {/* Badges */}
-            <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
-              {hasHighRecommendation && !hasAvailabilityToday && !isPopular && !isNew && (
-                <RecommendationBadge score={recommendationScore!} compact />
-              )}
-              {hasAvailabilityToday && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10, scale: 0.9 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                  transition={{ delay: index * 0.06 + 0.25, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-600/90 backdrop-blur-md text-white text-[10px] font-extrabold uppercase tracking-wider shadow-sm"
+            <div className="absolute inset-0 bg-gradient-to-t from-[#131520]/55 via-[#131520]/5 to-transparent" />
+
+            {/* Etiquetas — un único lenguaje visual */}
+            <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+              {tags.map((tag) => (
+                <span
+                  key={tag.label}
+                  className={cn(
+                    "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold tracking-tight shadow-[0_2px_8px_-2px_rgba(19,21,32,0.25)]",
+                    tag.accent
+                      ? "bg-[linear-gradient(100deg,var(--glow-brand),#98329A)] text-white"
+                      : "bg-white/92 backdrop-blur-md text-[#131520] border border-white/60",
+                  )}
                 >
-                  <Zap className="h-3 w-3" />
-                  <span>Huecos hoy</span>
-                </motion.div>
-              )}
-              {isPopular && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10, scale: 0.9 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                  transition={{ delay: index * 0.06 + 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/90 backdrop-blur-md text-white text-[10px] font-extrabold uppercase tracking-wider shadow-sm"
-                >
-                  <Sparkles className="h-3 w-3" />
-                  <span>Popular</span>
-                </motion.div>
-              )}
-              {isNew && (
-                <motion.div
-                  initial={{ opacity: 0, x: -10, scale: 0.9 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                  transition={{ delay: index * 0.06 + 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  className="px-2.5 py-1 rounded-full bg-gradient-to-r from-[var(--glow-brand)] to-[#98329A] text-white text-[10px] font-extrabold uppercase tracking-wider shadow-sm"
-                >
-                  Nuevo
-                </motion.div>
-              )}
+                  {tag.icon ? (
+                    <tag.icon
+                      className={cn("h-3 w-3", tag.accent ? "text-white" : "text-[var(--glow-brand)]")}
+                      strokeWidth={2.4}
+                    />
+                  ) : null}
+                  <span>{tag.label}</span>
+                </span>
+              ))}
             </div>
 
-            {/* Favorite Button — glassmorphic */}
+            {/* Favorito */}
             <motion.button
-              whileTap={{ scale: 0.84 }}
+              whileTap={{ scale: 0.86 }}
               onClick={handleFavoriteClick}
               aria-label={isFav ? `Quitar ${salon.name} de favoritos` : `Añadir ${salon.name} a favoritos`}
               className={cn(
-                "absolute top-2.5 right-2.5 h-9 w-9 rounded-full flex items-center justify-center transition-all duration-300",
+                "absolute top-3 right-3 h-9 w-9 rounded-full flex items-center justify-center transition-all duration-300 border",
                 isFav
-                  ? "bg-rose-500 text-white shadow-md shadow-rose-500/40"
-                  : "bg-black/35 backdrop-blur-md text-white hover:bg-black/50 border border-white/25"
+                  ? "bg-white text-rose-500 border-white shadow-[0_2px_10px_-2px_rgba(19,21,32,0.3)]"
+                  : "bg-white/25 backdrop-blur-md text-white border-white/45 hover:bg-white/40",
               )}
             >
               <motion.div animate={{ scale: isFav ? [1, 1.25, 1] : 1 }} transition={{ duration: 0.25 }}>
-                <Heart className={cn("h-4.5 w-4.5 transition-all duration-200", isFav && "fill-current")} />
+                <Heart className={cn("h-4 w-4 transition-all duration-200", isFav && "fill-current")} />
               </motion.div>
             </motion.button>
 
-            {/* Rating Badge — glass */}
+            {/* Valoración */}
             {salon.avgRating !== null && (
-              <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/90 dark:bg-black/75 backdrop-blur-md shadow-sm border border-white/40 dark:border-white/10">
+              <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/92 backdrop-blur-md border border-white/60 shadow-[0_2px_8px_-2px_rgba(19,21,32,0.25)]">
                 <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                <span className="text-xs font-bold text-foreground">{salon.avgRating.toFixed(1)}</span>
-                <span className="text-[10px] font-medium text-muted-foreground">({salon.reviewCount})</span>
+                <span className="text-xs font-bold text-[#131520]">{salon.avgRating.toFixed(1)}</span>
+                <span className="text-[10px] font-medium text-[#131520]/55">({salon.reviewCount})</span>
               </div>
             )}
           </div>

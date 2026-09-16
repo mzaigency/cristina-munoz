@@ -436,7 +436,7 @@ export default function MyBookings() {
                     </div>
 
                     {/* Booking Cards */}
-                    <div className="space-y-3">
+                    <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0 md:items-start">
                       {groupedBookings[date].map((booking, index) => {
                         const countdown = getCountdown(booking.Fecha, booking.Hora);
                         const logoUrl = booking.tenant_logo_url;
@@ -447,7 +447,7 @@ export default function MyBookings() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05 }}
-                            className="liquid-glass-card !rounded-2xl p-4 active:scale-[0.98] transition-transform"
+                            className="rounded-[20px] border border-line/70 bg-white shadow-[0_1px_2px_rgba(19,21,32,0.04),0_10px_24px_-18px_rgba(19,21,32,0.18)] p-4 md:p-5 active:scale-[0.98] md:active:scale-100 md:hover:-translate-y-0.5 md:hover:border-[var(--glow-brand)]/25 transition-all duration-300"
                           >
                             {/* Countdown badge */}
                             {countdown && (

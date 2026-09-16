@@ -38,7 +38,7 @@ interface DiscoverSectionsProps {
   geoLoading: boolean;
 }
 
-const CAROUSEL_LIMIT = 10;
+const CAROUSEL_LIMIT = 8;
 
 export function DiscoverSections({
   salons,
