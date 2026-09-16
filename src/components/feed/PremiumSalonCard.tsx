@@ -56,18 +56,15 @@ export function PremiumSalonCard({
   };
 
   // Máximo dos etiquetas, mismo lenguaje visual; el degradado de marca es el único acento
-  const tags = [
-    hasAvailabilityToday
-      ? { label: "Huecos hoy", icon: Zap, accent: true }
-      : null,
-    hasHighRecommendation && !hasAvailabilityToday
-      ? { label: "Para ti", icon: Sparkles, accent: true }
-      : null,
-    isNew ? { label: "Nuevo", icon: undefined, accent: false } : null,
-    isPopular ? { label: "Popular", icon: Sparkles, accent: false } : null,
-  ]
-    .filter((t): t is { label: string; icon?: typeof Zap; accent: boolean } => Boolean(t))
-    .slice(0, 2);
+  type CardTag = { label: string; icon?: typeof Zap; accent: boolean };
+  const tags: CardTag[] = [
+    ...(hasAvailabilityToday ? [{ label: "Huecos hoy", icon: Zap, accent: true }] : []),
+    ...(hasHighRecommendation && !hasAvailabilityToday
+      ? [{ label: "Para ti", icon: Sparkles, accent: true }]
+      : []),
+    ...(isNew ? [{ label: "Nuevo", accent: false }] : []),
+    ...(isPopular ? [{ label: "Popular", icon: Sparkles, accent: false }] : []),
+  ].slice(0, 2);
 
 
   return (
