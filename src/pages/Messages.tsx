@@ -138,26 +138,18 @@ export default function Messages() {
         noindex={true}
       />
 
-      {/* Standard Consistent Sticky Header */}
-      <div className="sticky top-0 z-40 bg-surface/85 backdrop-blur-xl border-b border-line/60 pt-[env(safe-area-inset-top)]">
-        <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-tight">
-                Mensajes
-              </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-tight hidden sm:block mt-0.5">
-                Conversaciones directas con tus salones y estilistas
-              </p>
-            </div>
-            {totalUnread > 0 && (
-              <span className="text-xs font-bold text-rose-500 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20">
-                {totalUnread > 99 ? '99+' : totalUnread} sin leer
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Cabecera compartida del cliente */}
+      <ClientPageHeader
+        title="Mensajes"
+        subtitle="Conversaciones directas con tus salones y estilistas"
+        actions={
+          totalUnread > 0 ? (
+            <span className="text-xs font-bold text-rose-600 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/25">
+              {totalUnread > 99 ? '99+' : totalUnread} sin leer
+            </span>
+          ) : undefined
+        }
+      />
 
       {/* Mobile: Clean, natural scrolling conversation list */}
       {isMobile ? (
