@@ -18,6 +18,7 @@ import { AvatarUploader } from "@/components/profile/AvatarUploader";
 import { UserStats } from "@/components/profile/UserStats";
 
 import { useFollows } from "@/hooks/useFollows";
+import { ClientPageHeader } from "@/components/navigation/ClientPageHeader";
 
 const profileSchema = z.object({
   full_name: z.string().trim().min(1, "El nombre es requerido").max(100),

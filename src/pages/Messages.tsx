@@ -15,6 +15,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AppLayout } from '@/components/navigation/AppLayout';
+import { ClientPageHeader } from '@/components/navigation/ClientPageHeader';
 
 export default function Messages() {
   const navigate = useNavigate();

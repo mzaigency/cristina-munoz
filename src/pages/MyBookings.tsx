@@ -28,6 +28,7 @@ import { parseISODateToLocal } from "@/lib/datetime";
 import { formatTimeHHmm } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
 import { ClientCoachmark } from "@/components/coachmark/ClientCoachmark";
+import { ClientPageHeader } from "@/components/navigation/ClientPageHeader";
 
 type Booking = {
   id: string;
