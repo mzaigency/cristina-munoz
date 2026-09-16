@@ -112,10 +112,10 @@ export function PremiumSalonCard({
                 <span
                   key={tag.label}
                   className={cn(
-                    "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold tracking-tight shadow-[0_2px_8px_-2px_rgba(19,21,32,0.25)]",
+                    "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight shadow-[0_3px_10px_-3px_rgba(19,21,32,0.45)]",
                     tag.accent
                       ? "bg-[linear-gradient(100deg,var(--glow-brand),#98329A)] text-white"
-                      : "bg-white/92 backdrop-blur-md text-[#131520] border border-white/60",
+                      : "bg-white text-[#131520] border border-black/5",
                   )}
                 >
                   {tag.icon ? (
