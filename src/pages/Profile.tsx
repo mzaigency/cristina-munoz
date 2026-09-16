@@ -259,7 +259,7 @@ export default function Profile() {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-16">
         {isEditing ? (
           /* Edit Mode */
-          <div className="liquid-glass-card !rounded-2xl p-4">
+          <div className="rounded-[20px] border border-line/70 bg-white shadow-[0_1px_2px_rgba(19,21,32,0.04),0_10px_24px_-18px_rgba(19,21,32,0.18)] p-4">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                 <FormField
@@ -382,7 +382,7 @@ export default function Profile() {
             )}
 
             {/* Personal Info Section */}
-            <div className="liquid-glass-card !rounded-2xl overflow-hidden">
+            <div className="rounded-[20px] border border-line/70 bg-white shadow-[0_1px_2px_rgba(19,21,32,0.04),0_10px_24px_-18px_rgba(19,21,32,0.18)] overflow-hidden">
               <button 
                 onClick={() => setIsEditing(true)}
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
@@ -399,7 +399,7 @@ export default function Profile() {
             </div>
 
             {/* Quick Links */}
-            <div className="liquid-glass-card !rounded-2xl overflow-hidden divide-y divide-border/30">
+            <div className="rounded-[20px] border border-line/70 bg-white shadow-[0_1px_2px_rgba(19,21,32,0.04),0_10px_24px_-18px_rgba(19,21,32,0.18)] overflow-hidden divide-y divide-border/30">
               <button 
                 onClick={() => navigate("/mis-citas")}
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
@@ -430,7 +430,7 @@ export default function Profile() {
             </div>
 
             {/* Notifications */}
-            <div className="liquid-glass-card !rounded-2xl overflow-hidden">
+            <div className="rounded-[20px] border border-line/70 bg-white shadow-[0_1px_2px_rgba(19,21,32,0.04),0_10px_24px_-18px_rgba(19,21,32,0.18)] overflow-hidden">
               <button 
                 onClick={() => navigate("/perfil/notificaciones")}
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
@@ -446,7 +446,7 @@ export default function Profile() {
               </button>
             </div>
 
-            <div className="liquid-glass-card !rounded-2xl overflow-hidden">
+            <div className="rounded-[20px] border border-line/70 bg-white shadow-[0_1px_2px_rgba(19,21,32,0.04),0_10px_24px_-18px_rgba(19,21,32,0.18)] overflow-hidden">
               <div className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                   <Users className="h-5 w-5 text-primary" />
@@ -460,7 +460,7 @@ export default function Profile() {
 
 
             {/* Legal Links */}
-            <div className="liquid-glass-card !rounded-2xl overflow-hidden divide-y divide-border/30">
+            <div className="rounded-[20px] border border-line/70 bg-white shadow-[0_1px_2px_rgba(19,21,32,0.04),0_10px_24px_-18px_rgba(19,21,32,0.18)] overflow-hidden divide-y divide-border/30">
               <Link 
                 to="/privacidad"
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
@@ -489,7 +489,7 @@ export default function Profile() {
             </div>
 
             {/* Logout */}
-            <div className="liquid-glass-card !rounded-2xl overflow-hidden">
+            <div className="rounded-[20px] border border-line/70 bg-white shadow-[0_1px_2px_rgba(19,21,32,0.04),0_10px_24px_-18px_rgba(19,21,32,0.18)] overflow-hidden">
               <button 
                 onClick={handleLogout}
                 className="ios-list-item w-full text-left flex items-center gap-4 border-0 rounded-none"
