@@ -173,7 +173,7 @@ export function AISearchBar({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.5 }}
               >
-                <Button variant="ghost" size="icon" onClick={handleClear} className="h-8 w-8 rounded-full hover:bg-[var(--glow-sunk)]">
+                <Button variant="ghost" size="icon" aria-label="Borrar búsqueda" onClick={handleClear} className="h-8 w-8 rounded-full hover:bg-[var(--glow-sunk)]">
                   <X className="h-4 w-4" />
                 </Button>
               </motion.div>
@@ -184,6 +184,7 @@ export function AISearchBar({
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Búsqueda por voz"
               onClick={handleVoiceSearch}
               className={cn("h-8 w-8 rounded-full hover:bg-[var(--glow-sunk)]", isListening && "bg-[var(--glow-brand)] text-white animate-pulse")}
             >
@@ -195,6 +196,7 @@ export function AISearchBar({
           <motion.div whileTap={{ scale: 0.9 }}>
             <Button
               size="icon"
+              aria-label="Buscar con IA"
               onClick={() => handleAISearch()}
               disabled={!searchQuery.trim() || isAISearching}
               className="h-9 w-9 rounded-xl bg-gradient-to-tr from-[var(--glow-brand)] to-[#98329A] text-white border-0 shadow-md shadow-[var(--glow-brand)]/20 hover:shadow-lg hover:shadow-[var(--glow-brand)]/30 disabled:opacity-40 transition-all"
