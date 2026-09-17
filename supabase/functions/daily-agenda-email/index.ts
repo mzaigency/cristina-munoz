@@ -104,7 +104,7 @@ serve(async (req) => {
         const [bookRes, stylistRes] = await Promise.all([
           supabase
             .from("bookings")
-            .select('id, customer_name, "Telefono", "Hora", end_time, stylist, services, status, compound_part, user_id, created_at')
+            .select('id, customer_name, "Telefono", "Hora", end_time, stylist, services, status, compound_part, related_booking_id, user_id, created_at')
             .eq("tenant_id", tenant.id)
             .eq("Fecha", target)
             .order("Hora", { ascending: true }),
