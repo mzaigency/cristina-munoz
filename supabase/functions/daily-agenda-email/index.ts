@@ -164,14 +164,19 @@ serve(async (req) => {
         // pintaría un hueco "libre" falso y acabaría el día antes de la cuenta.
         for (const b of part2Rows as any[]) {
           const key = b.related_booking_id ? keyById.get(b.related_booking_id) : undefined;
+          // Fallback: la cita padre es la última de esa clienta/estilista que
+          // empieza antes de la parte 2 (no la primera del día).
+          const part2Start = hhmm(b["Hora"]);
           const target = key
             ? merged.get(key)
-            : [...merged.values()].find(
-                (m) =>
-                  m.stylist === b.stylist &&
-                  m.customerName === (b.customer_name || "Cliente") &&
-                  m.time <= hhmm(b["Hora"]),
-              );
+            : [...merged.values()]
+                .filter(
+                  (m) =>
+                    m.stylist === b.stylist &&
+                    m.customerName === (b.customer_name || "Cliente") &&
+                    m.time <= part2Start,
+                )
+                .sort((x, y) => y.time.localeCompare(x.time))[0];
           if (!target) continue;
           const end = b.end_time ? hhmm(b.end_time) : hhmm(b["Hora"]);
           if (!target.endTime || end > target.endTime) target.endTime = end;
