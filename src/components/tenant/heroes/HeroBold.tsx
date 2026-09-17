@@ -139,6 +139,7 @@ export function HeroBold({ tenant, onBookNow }: HeroBoldProps) {
             }}
           >
             {tenant.name}
+            <span className="sr-only">{` — ${tenant.tagline || "Salón de belleza y bienestar"}`}</span>
           </motion.h1>
 
           {/* Barra de acento con gradiente de marca */}

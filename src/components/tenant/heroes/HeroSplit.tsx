@@ -129,6 +129,7 @@ export function HeroSplit({ tenant, onBookNow }: HeroSplitProps) {
               }}
             >
               {tenant.name}
+              <span className="sr-only">{` — ${tenant.tagline || "Salón de belleza y bienestar"}`}</span>
             </h1>
 
             <p className="mt-3 text-white/80 font-body text-base md:text-lg leading-relaxed max-w-lg line-clamp-2">
