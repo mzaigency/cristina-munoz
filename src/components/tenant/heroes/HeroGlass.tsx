@@ -164,6 +164,7 @@ export function HeroGlass({ tenant, onBookNow }: HeroGlassProps) {
                   }}
                 >
                   {tenant.name}
+                  <span className="sr-only">{` — ${tenant.tagline || "Salón de belleza y bienestar"}`}</span>
                 </motion.h1>
 
                 <motion.p

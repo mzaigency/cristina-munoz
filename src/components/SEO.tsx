@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet";
+import { useLocation } from "react-router-dom";
 
 interface BreadcrumbItem {
   name: string;
@@ -76,7 +77,10 @@ export const SEO = ({
   itemList,
 }: SEOProps) => {
   const baseUrl = "https://www.glowapp.app";
-  const fullCanonicalUrl = canonicalUrl ? `${baseUrl}${canonicalUrl}` : baseUrl;
+  const { pathname } = useLocation();
+  // Sin canonicalUrl explícita, la canónica (y og:url) es la ruta actual, no la portada.
+  const normalizedPath = (canonicalUrl ?? pathname ?? "/").replace(/\/+$/, "") || "/";
+  const fullCanonicalUrl = normalizedPath === "/" ? `${baseUrl}/` : `${baseUrl}${normalizedPath}`;
   
   // Ensure title is under 60 characters for SEO
   const optimizedTitle = title.length > 60 ? title.substring(0, 57) + "..." : title;

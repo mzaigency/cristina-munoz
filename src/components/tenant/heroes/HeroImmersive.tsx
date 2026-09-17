@@ -104,6 +104,7 @@ export function HeroImmersive({ tenant, onBookNow }: HeroImmersiveProps) {
             }}
           >
             {tenant.name}
+            <span className="sr-only">{` — ${tenant.tagline || "Salón de belleza y bienestar"}`}</span>
           </motion.h1>
 
           <motion.div

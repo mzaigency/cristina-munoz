@@ -122,6 +122,7 @@ export const TenantHero = ({ tenant, onBookNow, rating, reviewCount }: TenantHer
             style={{ fontFamily: 'var(--tenant-font-heading, "SF Pro Display", system-ui, sans-serif)' }}
           >
             {tenant.name}
+            <span className="sr-only">{` — ${tenant.tagline || "Salón de belleza y bienestar"}`}</span>
           </motion.h1>
 
           {/* Tagline */}
