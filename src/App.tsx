@@ -27,19 +27,43 @@ const isModuleLoadError = (error: unknown) => {
   return /importing a module script failed|failed to fetch dynamically imported module|loading chunk/i.test(message);
 };
 
+// Una versión vieja guardada por el service worker pide archivos que ya no
+// existen tras publicar → pantalla en blanco. Limpiamos SW + cachés y recargamos.
+const purgeStaleAppAndReload = async () => {
+  try {
+    const regs = (await navigator.serviceWorker?.getRegistrations()) ?? [];
+    await Promise.all(
+      regs.filter((r) => !r.active?.scriptURL.includes("firebase-messaging-sw")).map((r) => r.unregister()),
+    );
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+  } catch {
+    /* noop */
+  }
+  window.location.reload();
+};
+
 const lazyWithReload = (factory: () => Promise<any>) =>
   lazy(() =>
-    factory().catch((error) => {
-      if (isModuleLoadError(error)) {
-        const reloadKey = "glowapp_chunk_reload_attempted";
-        if (sessionStorage.getItem(reloadKey) !== "1") {
-          sessionStorage.setItem(reloadKey, "1");
-          window.location.reload();
-          return new Promise(() => {});
+    factory()
+      .then((m) => {
+        sessionStorage.removeItem("glowapp_chunk_reload_attempted");
+        return m;
+      })
+      .catch((error) => {
+        if (isModuleLoadError(error)) {
+          const reloadKey = "glowapp_chunk_reload_attempted";
+          const last = Number(sessionStorage.getItem(reloadKey) || 0);
+          if (Date.now() - last > 30_000) {
+            sessionStorage.setItem(reloadKey, String(Date.now()));
+            purgeStaleAppAndReload();
+            return new Promise(() => {});
+          }
         }
-      }
-      throw error;
-    }),
+        throw error;
+      }),
   );
 
 // Lazy loaded pages
